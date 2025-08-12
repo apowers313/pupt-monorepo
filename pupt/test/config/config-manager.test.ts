@@ -37,8 +37,8 @@ describe('ConfigManager', () => {
     const config = await ConfigManager.load();
 
     expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs[0]).toBe('/custom/prompts');
-    expect(config.historyDir).toBe('/custom/history');
+    expect(config.promptDirs[0]).toBe(path.resolve('/custom/prompts'));
+    expect(config.historyDir).toBe(path.resolve('/custom/history'));
   });
 
   it('should load config from .ptrc.yaml', async () => {
@@ -52,7 +52,7 @@ historyDir: ~/.pt/history
 
     const config = await ConfigManager.load();
     expect(config.promptDirs).toHaveLength(2);
-    expect(config.promptDirs[0]).toBe('/yaml/prompts');
+    expect(config.promptDirs[0]).toBe(path.resolve('/yaml/prompts'));
     expect(config.promptDirs[1]).toBe(path.join(os.homedir(), 'prompts'));
     expect(config.historyDir).toBe(path.join(os.homedir(), '.pt/history'));
   });
@@ -80,9 +80,9 @@ historyDir: ~/.pt/history
     process.chdir('..');
 
     expect(config.promptDirs).toHaveLength(2);
-    expect(config.promptDirs).toContain('/parent/prompts');
-    expect(config.promptDirs).toContain('/child/prompts');
-    expect(config.historyDir).toBe('/parent/history');
+    expect(config.promptDirs).toContain(path.resolve('/parent/prompts'));
+    expect(config.promptDirs).toContain(path.resolve('/child/prompts'));
+    expect(config.historyDir).toBe(path.resolve('/parent/history'));
   });
 
   it('should expand home directory paths', async () => {

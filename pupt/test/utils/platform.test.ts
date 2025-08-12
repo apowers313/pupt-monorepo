@@ -65,8 +65,8 @@ describe('Platform utilities', () => {
       const paths = getConfigPaths();
       expect(paths).toEqual([
         process.cwd(),
-        '/Users/test/Library/Application Support/prompt-tool',
-        '/Users/test/.config/prompt-tool',
+        path.join('/Users/test/Library/Application Support/prompt-tool'),
+        path.join('/Users/test/.config/prompt-tool'),
       ]);
     });
 
@@ -81,7 +81,7 @@ describe('Platform utilities', () => {
       process.env.XDG_CONFIG_HOME = '/home/test/.config';
 
       const paths = getConfigPaths();
-      expect(paths).toEqual([process.cwd(), '/home/test/.config/prompt-tool']);
+      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/prompt-tool')]);
     });
 
     it('should use home directory if XDG_CONFIG_HOME is not set on Linux', () => {
@@ -95,7 +95,7 @@ describe('Platform utilities', () => {
       delete process.env.XDG_CONFIG_HOME;
 
       const paths = getConfigPaths();
-      expect(paths).toEqual([process.cwd(), '/home/test/.config/prompt-tool']);
+      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/prompt-tool')]);
     });
   });
 

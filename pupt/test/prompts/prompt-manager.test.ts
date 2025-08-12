@@ -85,7 +85,7 @@ Just a simple prompt without frontmatter.`;
     const prompts = await manager.discoverPrompts();
 
     expect(prompts).toHaveLength(1);
-    expect(prompts[0].relativePath).toBe('category/nested.md');
+    expect(prompts[0].relativePath).toBe(path.join('category', 'nested.md'));
   });
 
   it('should handle multiple prompt directories', async () => {
