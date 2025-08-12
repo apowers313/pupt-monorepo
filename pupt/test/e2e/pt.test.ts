@@ -36,7 +36,22 @@ Today is {{date}}.`;
   });
   
   afterEach(async () => {
-    await fs.remove(testDir);
+    // On Windows, files might still be in use, so retry removal
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await fs.remove(testDir);
+        break;
+      } catch (error: any) {
+        if (error.code === 'EBUSY' && i < maxRetries - 1) {
+          // Wait a bit before retrying
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } else {
+          // Ignore the error on the last attempt - CI will clean up temp files
+          if (error.code !== 'EBUSY') throw error;
+        }
+      }
+    }
   });
   
   it('should run pt example command', () => {
