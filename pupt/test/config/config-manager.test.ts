@@ -21,7 +21,8 @@ describe('ConfigManager', () => {
   it('should load default config when no config file exists', async () => {
     const config = await ConfigManager.load();
     expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs[0]).toBe(path.join(testDir, 'prompts'));
+    // Use path.resolve to normalize paths consistently across platforms
+    expect(path.resolve(config.promptDirs[0])).toBe(path.resolve(path.join(testDir, 'prompts')));
     expect(config.historyDir).toBeUndefined();
   });
 
