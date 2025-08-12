@@ -21,8 +21,9 @@ describe('ConfigManager', () => {
   it('should load default config when no config file exists', async () => {
     const config = await ConfigManager.load();
     expect(config.promptDirs).toHaveLength(1);
-    // Use path.resolve to normalize paths consistently across platforms
-    expect(path.resolve(config.promptDirs[0])).toBe(path.resolve(path.join(testDir, 'prompts')));
+    // Normalize the testDir path to handle macOS /private prefix
+    const normalizedTestDir = fs.existsSync(testDir) ? fs.realpathSync(testDir) : testDir;
+    expect(config.promptDirs[0]).toBe(path.join(normalizedTestDir, 'prompts'));
     expect(config.historyDir).toBeUndefined();
   });
 
