@@ -42,11 +42,9 @@ export class TemplateContext {
   async processAsyncOperations(template: string): Promise<string> {
     let result = template;
 
-    // Process all async operations
-    const results = await Promise.all(this.asyncOperations.map(op => op()));
-
-    // Replace placeholders with actual values
-    for (const { placeholder, value } of results) {
+    // Process async operations sequentially
+    for (const operation of this.asyncOperations) {
+      const { placeholder, value } = await operation();
       result = result.replace(new RegExp(placeholder, 'g'), String(value));
     }
 

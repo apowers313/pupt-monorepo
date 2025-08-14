@@ -8,8 +8,12 @@ A powerful CLI tool for managing and using AI prompts with template support.
 - 📝 **Template Support** - Use Handlebars templates with user input
 - 📁 **Multi-directory Support** - Organize prompts across multiple directories
 - 🔧 **Cross-platform** - Works on Windows, macOS, and Linux
-- 📊 **History Tracking** - Keep track of generated prompts
+- 📊 **History Tracking** - Keep track of generated prompts and re-run them
 - 🎯 **Variable Definitions** - Define variables with types and validation
+- 🚀 **External Tool Integration** - Run prompts with any command-line tool
+- ✏️ **Prompt Management** - Create, edit, and organize prompts easily
+- 🏷️ **Annotations** - Add notes and tags to your prompt history
+- ⚡ **Enhanced Error Messages** - Helpful suggestions and clear guidance
 
 ## Installation
 
@@ -19,17 +23,78 @@ npm install -g prompt-tool
 
 ## Quick Start
 
-1. Create your first prompt:
+1. Initialize your configuration:
 
 ```bash
-pt example
+pt init
 ```
 
-2. Run the tool:
+2. Create your first prompt:
+
+```bash
+pt add
+```
+
+3. Run the tool:
 
 ```bash
 pt
 ```
+
+## Commands
+
+### `pt`
+Interactive prompt selection and generation. This is the default command that lets you:
+- Search through all your prompts with fuzzy search
+- Preview prompt content before selection
+- Fill in template variables interactively
+- View the generated result
+
+### `pt init`
+Initialize configuration interactively. Sets up:
+- Prompt directories
+- History tracking (optional)
+- Annotation support (optional)
+- Default coding tool configuration
+
+### `pt add`
+Create a new prompt interactively. Features:
+- Guided prompt creation with metadata
+- Automatic author detection from git
+- Label/tag support
+- Opens in your editor automatically
+
+### `pt edit`
+Edit existing prompts in your configured editor. Features:
+- Interactive prompt selection
+- Automatic editor detection ($VISUAL or $EDITOR)
+- Fallback to common editors if not configured
+
+### `pt run [tool] [args...]`
+Execute prompts with external tools. Examples:
+```bash
+pt run                     # Use configured default tool
+pt run claude              # Send to Claude
+pt run code -              # Open in VS Code
+pt run cat                 # Output to terminal
+pt run -- --continue       # Pass args to configured tool
+pt run -h 3                # Re-run history entry #3
+```
+
+### `pt history [options]`
+View prompt execution history. Options:
+- `-l, --limit <number>` - Number of entries to show (default: 20)
+- `-a, --all` - Show all history entries
+
+### `pt annotate [history-number]`
+Add notes to history entries. Features:
+- Mark prompts as success/failure/partial
+- Add searchable tags
+- Write detailed notes in your editor
+- Multiple annotations per history entry
+
+### `pt example`
+Generate an example prompt file to help you get started.
 
 ## Prompt Files
 
@@ -263,6 +328,13 @@ Multiple config files are merged, with closer files taking precedence.
 {
   "promptDirs": ["./prompts", "~/my-prompts"],
   "historyDir": "~/.pt/history",
+  "annotationDir": "~/.pt/history",
+  "codingTool": "claude",
+  "codingToolArgs": ["--model", "claude-3"],
+  "codingToolOptions": {
+    "Continue with context?": "--continue",
+    "Use verbose output?": "--verbose"
+  },
   "partials": {
     "header": {
       "type": "inline",
@@ -272,7 +344,8 @@ Multiple config files are merged, with closer files taking precedence.
       "type": "file",
       "path": "~/.pt/partials/footer.md"
     }
-  }
+  },
+  "version": "2.0.0"
 }
 ```
 
@@ -295,6 +368,47 @@ Multiple config files are merged, with closer files taking precedence.
   - Sensitive values (passwords, API keys) are automatically masked
   - Supports `~` for home directory
 - **Example**: `"~/.pt/history"`
+
+#### `annotationDir` (string, optional)
+- **Purpose**: Directory to save annotations for history entries
+- **Default**: None (annotations disabled)
+- **Notes**: 
+  - Requires history to be enabled
+  - Stores notes, tags, and success/failure status
+  - Supports `~` for home directory
+- **Example**: `"~/.pt/history"`
+
+#### `codingTool` (string, optional)
+- **Purpose**: Default tool to use with `pt run`
+- **Default**: `"claude"`
+- **Notes**: 
+  - Can be any command-line tool that accepts stdin
+  - Override with `pt run <tool>`
+- **Example**: `"claude"`, `"gpt"`, `"code -"`
+
+#### `codingToolArgs` (array of strings, optional)
+- **Purpose**: Default arguments for the coding tool
+- **Default**: `[]`
+- **Notes**: 
+  - Always passed to the tool
+  - Additional args can be added with `pt run -- <args>`
+- **Example**: `["--model", "claude-3-opus"]`
+
+#### `codingToolOptions` (object, optional)
+- **Purpose**: Interactive options to prompt for when running
+- **Default**: `{ "Continue with last context?": "--continue" }`
+- **Structure**: Object where keys are questions and values are arguments
+- **Notes**: 
+  - User is prompted for each option
+  - Arguments added only if user answers "yes"
+- **Example**:
+```json
+{
+  "Continue with context?": "--continue",
+  "Use verbose output?": "--verbose",
+  "Enable debug mode?": "--debug"
+}
+```
 
 #### `partials` (object, optional)
 - **Purpose**: Define reusable template fragments
@@ -338,12 +452,20 @@ Multiple config files are merged, with closer files taking precedence.
     "/shared/company-prompts"
   ],
   "historyDir": "~/.pt/history",
+  "annotationDir": "~/.pt/history",
+  "codingTool": "claude",
+  "codingToolArgs": ["--model", "claude-3-opus"],
+  "codingToolOptions": {
+    "Continue with context?": "--continue",
+    "Use company guidelines?": "--guidelines=/shared/guidelines.md"
+  },
   "partials": {
     "companyHeader": {
       "type": "inline",
       "value": "/* Company Confidential - {{date}} */"
     }
-  }
+  },
+  "version": "2.0.0"
 }
 ```
 
@@ -354,6 +476,21 @@ promptDirs:
   - ~/work-prompts
   - ~/personal-prompts
 historyDir: ~/.pt/history
+annotationDir: ~/.pt/annotations
+codingTool: gpt
+codingToolArgs:
+  - --temperature
+  - "0.7"
+version: "2.0.0"
+```
+
+#### Minimal Configuration with History
+```json
+{
+  "promptDirs": ["./prompts"],
+  "historyDir": "./.pthistory",
+  "version": "2.0.0"
+}
 ```
 
 ## Development

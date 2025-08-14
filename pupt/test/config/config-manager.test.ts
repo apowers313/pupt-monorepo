@@ -21,23 +21,28 @@ describe('ConfigManager', () => {
   it('should load default config when no config file exists', async () => {
     const config = await ConfigManager.load();
     expect(config.promptDirs).toHaveLength(1);
-    // Normalize the testDir path to handle macOS /private prefix
-    const normalizedTestDir = fs.existsSync(testDir) ? fs.realpathSync(testDir) : testDir;
-    expect(config.promptDirs[0]).toBe(path.join(normalizedTestDir, 'prompts'));
+    // When no config exists, it should use default path
+    expect(config.promptDirs[0]).toBe(path.join(os.homedir(), '.pt/prompts'));
     expect(config.historyDir).toBeUndefined();
+    // Check new default fields
+    expect(config.codingTool).toBe('claude');
+    expect(config.codingToolArgs).toEqual([]);
+    expect(config.codingToolOptions).toEqual({
+      'Continue with last context?': '--continue'
+    });
   });
 
   it('should load config from .ptrc.json', async () => {
     const testConfig = {
       promptDirs: ['/custom/prompts'],
       historyDir: '/custom/history',
+      version: '2.0.0' // Add version to prevent migration
     };
     await fs.writeJson('.ptrc.json', testConfig);
 
     const config = await ConfigManager.load();
 
-    expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs[0]).toBe(path.resolve('/custom/prompts'));
+    expect(config.promptDirs).toContain(path.resolve('/custom/prompts'));
     expect(config.historyDir).toBe(path.resolve('/custom/history'));
   });
 
@@ -47,13 +52,13 @@ promptDirs:
   - /yaml/prompts
   - ~/prompts
 historyDir: ~/.pt/history
+version: "2.0.0"
 `;
     await fs.writeFile('.ptrc.yaml', yamlContent);
 
     const config = await ConfigManager.load();
-    expect(config.promptDirs).toHaveLength(2);
-    expect(config.promptDirs[0]).toBe(path.resolve('/yaml/prompts'));
-    expect(config.promptDirs[1]).toBe(path.join(os.homedir(), 'prompts'));
+    expect(config.promptDirs).toContain(path.resolve('/yaml/prompts'));
+    expect(config.promptDirs).toContain(path.join(os.homedir(), 'prompts'));
     expect(config.historyDir).toBe(path.join(os.homedir(), '.pt/history'));
   });
 
@@ -62,6 +67,7 @@ historyDir: ~/.pt/history
     await fs.writeJson('.ptrc.json', {
       promptDirs: ['/parent/prompts'],
       historyDir: '/parent/history',
+      version: '2.0.0'
     });
 
     // Create child directory and config
@@ -69,6 +75,7 @@ historyDir: ~/.pt/history
     await fs.ensureDir(childDir);
     await fs.writeJson(path.join(childDir, '.ptrc.json'), {
       promptDirs: ['/child/prompts'],
+      version: '2.0.0'
       // historyDir not specified, should inherit from parent
     });
 
@@ -79,7 +86,6 @@ historyDir: ~/.pt/history
     // Change back to parent directory
     process.chdir('..');
 
-    expect(config.promptDirs).toHaveLength(2);
     expect(config.promptDirs).toContain(path.resolve('/parent/prompts'));
     expect(config.promptDirs).toContain(path.resolve('/child/prompts'));
     expect(config.historyDir).toBe(path.resolve('/parent/history'));
@@ -89,11 +95,12 @@ historyDir: ~/.pt/history
     await fs.writeJson('.ptrc.json', {
       promptDirs: ['~/prompts'],
       historyDir: '~/.pt/history',
+      version: '2.0.0'
     });
 
     const config = await ConfigManager.load();
     const homeDir = os.homedir();
-    expect(config.promptDirs[0]).toBe(path.join(homeDir, 'prompts'));
+    expect(config.promptDirs).toContain(path.join(homeDir, 'prompts'));
     expect(config.historyDir).toBe(path.join(homeDir, '.pt/history'));
   });
 

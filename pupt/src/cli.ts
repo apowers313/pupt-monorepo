@@ -9,7 +9,15 @@ import { PromptManager } from './prompts/prompt-manager.js';
 import { InteractiveSearch } from './ui/interactive-search.js';
 import { TemplateEngine } from './template/template-engine.js';
 import { HistoryManager } from './history/history-manager.js';
+import { initCommand } from './commands/init.js';
+import { historyCommand } from './commands/history.js';
+import { addCommand } from './commands/add.js';
+import { editCommand } from './commands/edit.js';
+import { runCommand } from './commands/run.js';
+import { annotateCommand } from './commands/annotate.js';
 import fs from 'fs-extra';
+import { errors, displayError } from './utils/errors.js';
+import ora from 'ora';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,18 +39,13 @@ program
       }
 
       // Discover prompts
+      const spinner = ora('Discovering prompts...').start();
       const promptManager = new PromptManager(config.promptDirs);
       const prompts = await promptManager.discoverPrompts();
+      spinner.stop();
 
       if (prompts.length === 0) {
-        console.log(chalk.yellow('\nNo prompts found. Create a prompt file in one of these directories:'));
-        config.promptDirs.forEach(dir => console.log(`  - ${dir}`));
-        console.log(chalk.dim('\nExample prompt file (hello.md):'));
-        console.log(chalk.dim('---'));
-        console.log(chalk.dim('title: Hello World'));
-        console.log(chalk.dim('---'));
-        console.log(chalk.dim('Hello {{input "name" "What is your name?"}}!'));
-        process.exit(0);
+        throw errors.noPromptsFound(config.promptDirs);
       }
 
       // Interactive search
@@ -70,7 +73,8 @@ program
           templatePath: selected.path,
           templateContent: selected.content,
           variables: engine.getContext().getMaskedValues(),
-          finalPrompt: result
+          finalPrompt: result,
+          title: selected.title
         });
         console.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
@@ -79,7 +83,108 @@ program
         // User cancelled
         process.exit(0);
       }
-      console.error(chalk.red('Error:'), error);
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Add init command
+program
+  .command('init')
+  .description('Initialize a new prompt tool configuration')
+  .action(async () => {
+    try {
+      await initCommand();
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Add history command
+program
+  .command('history')
+  .description('Show prompt execution history')
+  .option('-l, --limit <number>', 'Number of entries to show', '20')
+  .option('-a, --all', 'Show all history entries')
+  .action(async (options) => {
+    try {
+      await historyCommand({
+        limit: options.all ? undefined : parseInt(options.limit),
+        all: options.all
+      });
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Add command
+program
+  .command('add')
+  .description('Create a new prompt interactively')
+  .action(async () => {
+    try {
+      await addCommand();
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Edit command
+program
+  .command('edit')
+  .description('Edit an existing prompt in your editor')
+  .action(async () => {
+    try {
+      await editCommand();
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Run command
+program
+  .command('run [tool] [args...]')
+  .description('Execute a prompt with an external tool')
+  .usage('[tool] [args...] [-- tool-specific-args]')
+  .option('-h, --history <number>', 'Use prompt from history by number')
+  .helpOption('--help', 'Display help for run command')
+  .addHelpText('after', `
+Examples:
+  pt run                     # Use configured coding tool
+  pt run cat                 # Pipe prompt to cat
+  pt run code -              # Open in VS Code
+  pt run claude              # Send to Claude
+  pt run -- --continue       # Pass args to configured tool
+  pt run npm test -- --coverage  # Complex command with args
+  pt run -h 3                # Re-run prompt from history #3
+  pt run -h 1 claude         # Send history #1 to claude
+`)
+  .action(async (tool, args, options) => {
+    try {
+      // Combine tool and args into single array
+      const allArgs = tool ? [tool, ...args] : args;
+      await runCommand(allArgs, {
+        historyIndex: options.history ? parseInt(options.history) : undefined
+      });
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Annotate command
+program
+  .command('annotate [history-number]')
+  .description('Add notes to a history entry')
+  .action(async (historyNumber) => {
+    try {
+      await annotateCommand(historyNumber ? parseInt(historyNumber) : undefined);
+    } catch (error) {
+      displayError(error as Error);
       process.exit(1);
     }
   });

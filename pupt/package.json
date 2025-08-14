@@ -17,8 +17,16 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["cli", "prompt", "ai", "template", "handlebars"],
-  "author": "",
+  "keywords": [
+    "cli",
+    "claude",
+    "claude code",
+    "prompt",
+    "ai",
+    "template",
+    "handlebars"
+  ],
+  "author": "Adam Powers <apowers@ato.ms>",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -42,6 +50,7 @@
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/handlebars": "^4.0.40",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.2.1",
     "@types/yaml": "^1.9.6",
     "@typescript-eslint/eslint-plugin": "^8.39.1",
@@ -58,6 +67,8 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^7.8.1",
+    "@types/ora": "^3.1.0",
+    "@types/uuid": "^10.0.0",
     "chalk": "^5.5.0",
     "commander": "^14.0.0",
     "cosmiconfig": "^9.0.0",
@@ -65,6 +76,8 @@
     "gray-matter": "^4.0.3",
     "handlebars": "^4.7.8",
     "minisearch": "^7.1.2",
+    "ora": "^8.2.0",
+    "uuid": "^11.1.0",
     "yaml": "^2.8.1"
   }
 }
