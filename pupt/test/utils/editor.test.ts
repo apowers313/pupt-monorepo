@@ -176,8 +176,7 @@ describe('EditorLauncher', () => {
       await launcher.openInEditor('vim', '/path/to/file.txt');
 
       expect(mockSpawn).toHaveBeenCalledWith('vim', ['/path/to/file.txt'], {
-        detached: true,
-        stdio: 'ignore'
+        stdio: 'inherit'
       });
     });
 
@@ -235,7 +234,7 @@ describe('EditorLauncher', () => {
         .rejects.toThrow('Editor exited with code 1');
     });
 
-    it('should detach the editor process', async () => {
+    it('should wait for editor to close before resolving', async () => {
       const mockProcess = {
         on: vi.fn((event: string, callback: Function) => {
           if (event === 'exit') {
@@ -250,7 +249,20 @@ describe('EditorLauncher', () => {
 
       await launcher.openInEditor('vim', '/path/to/file.txt');
 
-      expect(mockProcess.unref).toHaveBeenCalled();
+      expect(mockProcess.unref).not.toHaveBeenCalled();
+    });
+
+    it('should inherit stdio to allow editor to use terminal', async () => {
+      await launcher.openInEditor('vim', '/path/to/file.txt');
+
+      expect(mockSpawn).toHaveBeenCalledWith('vim', ['/path/to/file.txt'], {
+        stdio: 'inherit'
+      });
+      
+      // Ensure we don't use detached mode
+      const spawnCall = mockSpawn.mock.calls[0][2];
+      expect(spawnCall).not.toHaveProperty('detached');
+      expect(spawnCall.detached).not.toBe(true);
     });
   });
 
@@ -300,8 +312,7 @@ describe('EditorLauncher', () => {
       await launcher.openInEditor('code --wait', '/path/to/file.txt');
 
       expect(mockSpawn).toHaveBeenCalledWith('code --wait', ['/path/to/file.txt'], {
-        detached: true,
-        stdio: 'ignore'
+        stdio: 'inherit'
       });
     });
   });

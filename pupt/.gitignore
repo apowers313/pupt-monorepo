@@ -14,3 +14,7 @@ coverage/
 # Prompt Tool
 .ptrc.json.backup
 .git-prompts
+.pthistory
+
+# wtt worktrees
+.worktrees/

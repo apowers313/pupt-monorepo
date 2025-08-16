@@ -50,7 +50,7 @@ describe('Git Installation - Integration Tests', () => {
     try {
       await fs.rm(testDir, { recursive: true, force: true });
     } catch (error) {
-      console.warn('Failed to clean up test directory:', error);
+      // Ignore cleanup errors
     }
   });
 

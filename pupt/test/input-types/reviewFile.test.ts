@@ -53,6 +53,12 @@ describe('ReviewFile Input Type', () => {
     vi.restoreAllMocks();
   });
 
+  // Helper function to emit editor events after promise starts
+  const emitEditorEvent = (mockChildProcess: EventEmitter, event: string, ...args: any[]) => {
+    // Use setImmediate to ensure the event is emitted after the promise starts
+    setImmediate(() => mockChildProcess.emit(event, ...args));
+  };
+
   describe('inheritance from file input', () => {
     it('should extend file prompt functionality', async () => {
       // Set editor env var
@@ -72,9 +78,7 @@ describe('ReviewFile Input Type', () => {
       });
 
       // Simulate editor closing successfully
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 50);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       const result = await resultPromise;
 
@@ -104,9 +108,7 @@ describe('ReviewFile Input Type', () => {
       });
 
       // Simulate editor closing successfully
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 50);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       await resultPromise;
 
@@ -134,9 +136,7 @@ describe('ReviewFile Input Type', () => {
       });
 
       // Simulate editor closing successfully
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       const result = await resultPromise;
 
@@ -176,9 +176,7 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       const result = await resultPromise;
 
@@ -202,13 +200,11 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       await resultPromise;
 
-      expect(mockSpawn).toHaveBeenCalledWith('vim', ['/path/to/file.txt'], { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('vim', ['/path/to/file.txt'], { stdio: 'inherit' });
       
       delete process.env.VISUAL;
     });
@@ -228,13 +224,11 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 0);
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'exit', 0);
 
       await resultPromise;
 
-      expect(mockSpawn).toHaveBeenCalledWith('nano', ['/path/to/file.txt'], { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('nano', ['/path/to/file.txt'], { stdio: 'inherit' });
       
       delete process.env.EDITOR;
     });
@@ -261,11 +255,10 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      // Wait for editor availability checks
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      // Simulate editor closing
-      mockChildProcess.emit('exit', 0);
+      // Emit editor close event
+      emitEditorEvent(mockChildProcess, 'exit', 0);
+      // Wait a tick for async operations
+      await new Promise(resolve => setImmediate(resolve));
 
       await resultPromise;
 
@@ -275,7 +268,7 @@ describe('ReviewFile Input Type', () => {
       expect(mockExecFileAsync).toHaveBeenCalledWith(process.platform === 'win32' ? 'where' : 'which', ['nano']);
       
       // Should have spawned nano (the first available editor)
-      expect(mockSpawn).toHaveBeenCalledWith('nano', ['/path/to/file.txt'], { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('nano', ['/path/to/file.txt'], { stdio: 'inherit' });
     });
 
     it('should throw error if no editor is available', async () => {
@@ -292,7 +285,7 @@ describe('ReviewFile Input Type', () => {
       mockSpawn.mockImplementation(() => {
         const proc = new EventEmitter() as any;
         proc.unref = vi.fn();
-        setTimeout(() => proc.emit('error', new Error('Not found')), 10);
+        setImmediate(() => proc.emit('error', new Error('Not found')));
         return proc;
       });
 
@@ -315,9 +308,7 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      setTimeout(() => {
-        mockChildProcess.emit('error', new Error('Spawn failed'));
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'error', new Error('Spawn failed'));
 
       await expect(resultPromise).rejects.toThrow('Spawn failed');
       
@@ -339,9 +330,7 @@ describe('ReviewFile Input Type', () => {
       });
 
       // Simulate editor exiting with non-zero code (user cancelled)
-      setTimeout(() => {
-        mockChildProcess.emit('exit', 1);
-      }, 100);
+      emitEditorEvent(mockChildProcess, 'exit', 1);
 
       // Should throw error when editor exits with non-zero code
       await expect(resultPromise).rejects.toThrow('Failed to open editor: Editor exited with code 1');
@@ -392,17 +381,16 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      // Wait for editor checks
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      mockChildProcess.emit('exit', 0);
+      // Emit editor close event and wait
+      emitEditorEvent(mockChildProcess, 'exit', 0);
+      await new Promise(resolve => setImmediate(resolve));
 
       await resultPromise;
 
       // Should have checked all editors including notepad
       expect(mockExecFileAsync).toHaveBeenCalledWith('where', ['notepad']);
       // Should have spawned notepad
-      expect(mockSpawn).toHaveBeenCalledWith('notepad', ['/path/to/file.txt'], { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('notepad', ['/path/to/file.txt'], { stdio: 'inherit' });
     });
 
     it('should try platform-specific editors on macOS', async () => {
@@ -436,10 +424,9 @@ describe('ReviewFile Input Type', () => {
         message: 'Select file:'
       });
 
-      // Wait for editor checks
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      mockChildProcess.emit('exit', 0);
+      // Emit editor close event and wait
+      emitEditorEvent(mockChildProcess, 'exit', 0);
+      await new Promise(resolve => setImmediate(resolve));
 
       await resultPromise;
 

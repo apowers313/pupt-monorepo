@@ -49,7 +49,7 @@ program
         throw errors.noPromptsFound(config.promptDirs);
       }
 
-      // Interactive search
+      // Interactive search to select prompt
       const search = new InteractiveSearch();
       const selected = await search.selectPrompt(prompts);
 
@@ -80,12 +80,11 @@ program
         console.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
       
-      // AutoRun feature: automatically run default command if configured
+      // Check if autoRun is enabled
       if (config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '') {
         // Use the run command implementation
         await runCommand([], {
-          prompt: result,
-          skipPromptSelection: true
+          prompt: result
         });
       }
     } catch (error) {

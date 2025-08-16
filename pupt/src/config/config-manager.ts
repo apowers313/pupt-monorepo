@@ -6,6 +6,8 @@ import { getHomePath } from '../utils/platform.js';
 import fs from 'fs-extra';
 import { errors } from '../utils/errors.js';
 import { migrateConfig } from './migration.js';
+import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
+import { z } from 'zod';
 
 export interface ConfigResult {
   config: Config;
@@ -94,74 +96,96 @@ export class ConfigManager {
     };
   }
 
-  private static validateConfig(config: unknown): void {
-    const cfg = config as Record<string, unknown>;
+  /* private static formatValidationError(issue: z.ZodIssue): string {
+    // Handle specific type validation errors
+    if (issue.code === 'invalid_type') {
+      const fieldName = issue.path[issue.path.length - 1];
+      const expectedType = issue.expected;
+      let typeDescription = expectedType;
+      
+      // Map Zod types to user-friendly descriptions
+      if (expectedType === 'string') {
+        typeDescription = 'a string';
+      } else if (expectedType === 'array') {
+        typeDescription = 'an array';
+      } else if (expectedType === 'boolean') {
+        typeDescription = 'a boolean';
+      } else if (expectedType === 'object') {
+        typeDescription = 'an object';
+      }
+      
+      return `'${fieldName}' must be ${typeDescription}`;
+    }
     
-    // Validate historyDir
-    if (cfg.historyDir !== undefined && typeof cfg.historyDir !== 'string') {
-      throw errors.invalidConfig('historyDir', 'a string path', cfg.historyDir);
+    // Handle union validation messages
+    if (issue.code === 'invalid_union' && issue.path && issue.path.length > 0) {
+      const fieldName = issue.path[issue.path.length - 1];
+      // Try to infer the expected type from the field name
+      if (fieldName === 'historyDir' || fieldName === 'annotationDir' || fieldName === 'gitPromptDir') {
+        return `'${fieldName}' must be a string`;
+      } else if (fieldName === 'autoReview' || fieldName === 'autoRun') {
+        return `'${fieldName}' must be a boolean`;
+      } else if (fieldName === 'handlebarsExtensions' || fieldName === 'defaultCmdArgs') {
+        return `'${fieldName}' must be an array`;
+      } else if (fieldName === 'defaultCmdOptions') {
+        return `'${fieldName}' must be an object`;
+      }
     }
+    
+    // Handle enum validation for handlebarsExtensions type field
+    if (issue.code === 'invalid_enum_value' && issue.path && issue.path.length >= 2) {
+      const fieldPath = issue.path;
+      if (fieldPath[0] === 'handlebarsExtensions' && fieldPath[2] === 'type') {
+        return "handlebarsExtension type must be 'inline' or 'file'";
+      }
+    }
+    
+    return issue.message;
+  } */
 
-    // Validate annotationDir
-    if (cfg.annotationDir !== undefined && typeof cfg.annotationDir !== 'string') {
-      throw errors.invalidConfig('annotationDir', 'a string path', cfg.annotationDir);
-    }
-
-    // Validate defaultCmd (and legacy codingTool)
-    if (cfg.defaultCmd !== undefined && typeof cfg.defaultCmd !== 'string') {
-      throw errors.invalidConfig('defaultCmd', 'a string', cfg.defaultCmd);
-    }
-    if (cfg.codingTool !== undefined && typeof cfg.codingTool !== 'string') {
-      throw errors.invalidConfig('codingTool', 'a string', cfg.codingTool);
-    }
-
-    // Validate defaultCmdArgs (and legacy codingToolArgs)
-    if (cfg.defaultCmdArgs !== undefined && !Array.isArray(cfg.defaultCmdArgs)) {
-      throw errors.invalidConfig('defaultCmdArgs', 'an array of strings', cfg.defaultCmdArgs);
-    }
-    if (cfg.codingToolArgs !== undefined && !Array.isArray(cfg.codingToolArgs)) {
-      throw errors.invalidConfig('codingToolArgs', 'an array of strings', cfg.codingToolArgs);
-    }
-
-    // Validate defaultCmdOptions (and legacy codingToolOptions)
-    if (cfg.defaultCmdOptions !== undefined && 
-        (typeof cfg.defaultCmdOptions !== 'object' || Array.isArray(cfg.defaultCmdOptions))) {
-      throw errors.invalidConfig('defaultCmdOptions', 'an object', cfg.defaultCmdOptions);
-    }
-    if (cfg.codingToolOptions !== undefined && 
-        (typeof cfg.codingToolOptions !== 'object' || Array.isArray(cfg.codingToolOptions))) {
-      throw errors.invalidConfig('codingToolOptions', 'an object', cfg.codingToolOptions);
-    }
-
-    // Validate new fields
-    if (cfg.autoReview !== undefined && typeof cfg.autoReview !== 'boolean') {
-      throw errors.invalidConfig('autoReview', 'a boolean', cfg.autoReview);
-    }
-
-    if (cfg.autoRun !== undefined && typeof cfg.autoRun !== 'boolean') {
-      throw errors.invalidConfig('autoRun', 'a boolean', cfg.autoRun);
-    }
-
-    if (cfg.gitPromptDir !== undefined && typeof cfg.gitPromptDir !== 'string') {
-      throw errors.invalidConfig('gitPromptDir', 'a string path', cfg.gitPromptDir);
-    }
-
-    if (cfg.handlebarsExtensions !== undefined && !Array.isArray(cfg.handlebarsExtensions)) {
-      throw errors.invalidConfig('handlebarsExtensions', 'an array', cfg.handlebarsExtensions);
-    }
-
-    // Validate handlebarsExtensions items
-    if (Array.isArray(cfg.handlebarsExtensions)) {
-      for (const ext of cfg.handlebarsExtensions) {
-        if (typeof ext !== 'object' || !ext || !['inline', 'file'].includes(ext.type)) {
-          throw new Error("Configuration error: handlebarsExtension type must be 'inline' or 'file'");
+  private static validateConfig(config: unknown): void {
+    // First validate that it's a valid config file format (any version)
+    const fileResult = ConfigFileSchema.safeParse(config);
+    if (!fileResult.success) {
+      const issues = fileResult.error.issues;
+      const firstIssue = issues[0];
+      
+      // Handle union errors by looking for the most specific error
+      let specificIssue = firstIssue;
+      if (firstIssue.code === 'invalid_union' && 'unionErrors' in firstIssue) {
+        // Try to find a more specific error in union errors
+        // Look for errors that match the actual config fields (not old schema fields)
+        const cfg = config as Record<string, unknown>;
+        const unionIssue = firstIssue as z.ZodInvalidUnionIssue;
+        for (const unionError of unionIssue.unionErrors) {
+          if (unionError.issues && unionError.issues.length > 0) {
+            const issue = unionError.issues[0];
+            if (issue.path && issue.path.length > 0) {
+              const fieldName = issue.path[0];
+              // Check if this field exists in the actual config
+              if (fieldName in cfg) {
+                specificIssue = issue;
+                break;
+              }
+            }
+          }
         }
+      }
+      
+      // Create user-friendly error messages
+      if (specificIssue.path && specificIssue.path.length > 0) {
+        const field = specificIssue.path.join('.');
+        // const message = this.formatValidationError(specificIssue);
+        
+        throw errors.invalidConfig(field, specificIssue.message, 'invalid value');
+      } else {
+        throw errors.invalidConfig('format', 'valid JSON', 'invalid JSON');
       }
     }
   }
 
   private static async migrateConfig(config: unknown, filepath: string): Promise<Config> {
-    const cfg = config as Partial<Config>;
+    const cfg = config as Record<string, unknown>;
     
     // Check if migration is needed
     if (migrateConfig.needsMigration(cfg)) {
@@ -178,6 +202,15 @@ export class ConfigManager {
       // Apply migration
       const migrated = migrateConfig(cfg);
 
+      // Validate the migrated config with the current schema
+      const result = ConfigSchema.safeParse(migrated);
+      if (!result.success) {
+        const firstIssue = result.error.issues[0];
+        const message = firstIssue.message;
+        
+        throw errors.invalidConfig('migration', 'successful migration', message);
+      }
+
       // Save migrated config back to disk
       if (filepath && filepath.endsWith('.json')) {
         await fs.writeJson(filepath, migrated, { spaces: 2 });
@@ -186,7 +219,24 @@ export class ConfigManager {
       return migrated;
     }
 
-    return cfg as Config;
+    // Validate existing config is valid for current version
+    const result = ConfigSchema.safeParse(cfg);
+    if (!result.success) {
+      // Try to migrate even if needsMigration returned false
+      const migrated = migrateConfig(cfg);
+      const retryResult = ConfigSchema.safeParse(migrated);
+      if (retryResult.success) {
+        return migrated;
+      }
+      
+      // Still invalid after migration attempt
+      const firstIssue = retryResult.error.issues[0];
+      const message = firstIssue.message;
+      
+      throw errors.invalidConfig('validation', 'valid configuration', message);
+    }
+
+    return result.data;
   }
 
   private static mergeConfigs(configs: Config[]): Config {

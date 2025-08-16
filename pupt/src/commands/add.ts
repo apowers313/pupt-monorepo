@@ -5,7 +5,7 @@ import path from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
 import { editorLauncher } from '../utils/editor.js';
-import { errors, PromptToolError } from '../utils/errors.js';
+import { errors } from '../utils/errors.js';
 import { DateFormats } from '../utils/date-formatter.js';
 
 export async function addCommand(): Promise<void> {
@@ -13,12 +13,7 @@ export async function addCommand(): Promise<void> {
   const config = await ConfigManager.load();
   
   if (!config.promptDirs || config.promptDirs.length === 0) {
-    throw new PromptToolError(
-      'No prompt directories configured',
-      'NO_PROMPT_DIRS',
-      [{ text: 'Initialize configuration', command: 'pt init' }],
-      '⚙️'
-    );
+    throw errors.noPromptsFound([]);
   }
 
   // Get prompt title
@@ -82,15 +77,7 @@ labels: [${labels.join(', ')}]
     if (err.code === 'EACCES') {
       throw errors.permissionDenied(targetDir);
     }
-    throw new PromptToolError(
-      `Failed to create prompt: ${err.message}`,
-      'CREATE_FAILED',
-      [
-        { text: 'Check directory exists', command: `ls -la "${targetDir}"` },
-        { text: 'Create directory', command: `mkdir -p "${targetDir}"` }
-      ],
-      '❌'
-    );
+    throw errors.fileNotFound(targetDir);
   }
 
   // Ask to open in editor

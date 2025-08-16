@@ -6,7 +6,7 @@ import { HistoryManager } from '../history/history-manager.js';
 import { spawn } from 'child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
-import { errors, PromptToolError } from '../utils/errors.js';
+import { errors } from '../utils/errors.js';
 import * as path from 'path';
 
 export interface RunOptions {
@@ -66,16 +66,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     finalTool = (config.defaultCmd && config.defaultCmd.trim() !== '' ? config.defaultCmd : config.codingTool)!;
     finalArgs = [...(config.defaultCmdArgs || config.codingToolArgs || []), ...extraArgs];
   } else {
-    throw new PromptToolError(
-      'No tool specified',
-      'NO_TOOL',
-      [
-        { text: 'Specify a tool', command: 'pt run <tool>' },
-        { text: 'Configure default tool', command: 'pt init' },
-        { text: 'Example', command: 'pt run claude' }
-      ],
-      '🔧'
-    );
+    throw errors.toolNotFound('', ['claude', 'copilot', 'chat']);
   }
   
   let promptResult: string;
@@ -89,7 +80,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   let exitCode: number | null = null;
   
   // Check if using provided prompt (from autoRun)
-  if (options.prompt && options.skipPromptSelection) {
+  if (options.prompt) {
     promptResult = options.prompt;
   } else if (options.historyIndex) {
     // Validate history is enabled
@@ -145,8 +136,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     };
   }
   
-  // Handle coding tool options
-  if (!tool && ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) && (config.defaultCmdOptions || config.codingToolOptions) && !options.skipPromptSelection) {
+  // Handle coding tool options - always prompt when using default tool with options configured
+  if (!tool && ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) && (config.defaultCmdOptions || config.codingToolOptions)) {
     // Prompt for each option
     const selectedOptions: string[] = [];
     

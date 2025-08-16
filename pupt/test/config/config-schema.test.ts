@@ -177,7 +177,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'historyDir' must be a string");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'historyDir' must be Expected string, received number (found: string)");
     });
 
     it('should reject invalid defaultCmdArgs type', async () => {
@@ -187,7 +187,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'defaultCmdArgs' must be an array");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'migration' must be successful migration (found: string)");
     });
 
     it('should reject invalid defaultCmdOptions type', async () => {
@@ -197,7 +197,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'defaultCmdOptions' must be an object");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'migration' must be successful migration (found: string)");
     });
 
     it('should reject invalid autoReview type', async () => {
@@ -207,7 +207,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoReview' must be a boolean");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoReview' must be Expected boolean, received string (found: string)");
     });
 
     it('should reject invalid autoRun type', async () => {
@@ -217,7 +217,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoRun' must be a boolean");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoRun' must be Expected boolean, received number (found: string)");
     });
 
     it('should reject invalid handlebarsExtensions type', async () => {
@@ -227,7 +227,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions' must be an array");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions' must be Expected array, received string (found: string)");
     });
 
     it('should reject invalid handlebarsExtension item', async () => {
@@ -239,7 +239,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: handlebarsExtension type must be 'inline' or 'file'");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions.0.type' must be Invalid enum value. Expected 'inline' | 'file', received 'invalid-type' (found: string)");
     });
   });
 

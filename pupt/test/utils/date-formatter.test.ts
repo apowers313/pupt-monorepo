@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DateFormats, formatDate } from '../../src/utils/date-formatter.js';
 
 describe('Date Formatter', () => {
@@ -64,6 +64,10 @@ describe('Date Formatter', () => {
         // Mock Date.now to have consistent relative time
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
       });
 
       it('should format as "just now" for recent times', () => {

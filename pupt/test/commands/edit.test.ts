@@ -89,8 +89,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -158,14 +157,13 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
+      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { stdio: 'inherit' });
     });
 
     it('should fall back to $EDITOR if $VISUAL not set', async () => {
@@ -175,14 +173,13 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('nano', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
+      expect(spawn).toHaveBeenCalledWith('nano', ['/prompts/test.md'], { stdio: 'inherit' });
     });
 
     it('should try common editors if environment variables not set', async () => {
@@ -197,8 +194,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -206,7 +202,7 @@ describe('Edit Command', () => {
       await editCommand();
       
       // Should have tried to spawn code (the first available editor)
-      expect(spawn).toHaveBeenCalledWith('code', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
+      expect(spawn).toHaveBeenCalledWith('code', ['/prompts/test.md'], { stdio: 'inherit' });
     });
 
     it('should show error when no editor found', async () => {
@@ -262,14 +258,13 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
+      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { stdio: 'inherit' });
     });
 
     it('should wait for editor to close', async () => {
@@ -277,8 +272,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') closeCallback = callback;
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -305,8 +299,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(1); // Non-zero exit
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -317,8 +310,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'error') callback(new Error('spawn failed'));
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -329,8 +321,7 @@ describe('Edit Command', () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'exit') callback(0);
-        }),
-        unref: vi.fn()
+        })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       

@@ -13,6 +13,25 @@ export const migrations: ConfigMigration[] = [
     migrate: (config) => {
       const migrated = { ...config };
       
+      // Handle v1 format: promptDirectory -> promptDirs
+      if ('promptDirectory' in config) {
+        const pd = config.promptDirectory;
+        migrated.promptDirs = Array.isArray(pd) ? pd : [pd as string];
+        delete migrated.promptDirectory;
+      }
+      
+      // Handle v1 format: historyDirectory -> historyDir
+      if ('historyDirectory' in config) {
+        migrated.historyDir = config.historyDirectory;
+        delete migrated.historyDirectory;
+      }
+      
+      // Handle v1 format: annotationDirectory -> annotationDir
+      if ('annotationDirectory' in config) {
+        migrated.annotationDir = config.annotationDirectory;
+        delete migrated.annotationDirectory;
+      }
+      
       // Rename fields
       if ('codingTool' in config) {
         migrated.defaultCmd = config.codingTool;
@@ -57,6 +76,11 @@ export const migrateConfig = Object.assign(
   },
   {
     needsMigration(config: Record<string, unknown>): boolean {
+      // Check if config has old v1 field names
+      if ('promptDirectory' in config || 'historyDirectory' in config || 'annotationDirectory' in config) {
+        return true;
+      }
+      
       // Check if config has old field names
       if ('codingTool' in config || 'codingToolArgs' in config || 'codingToolOptions' in config) {
         return true;

@@ -1,298 +1,294 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { migrations, migrateConfig } from '../../src/config/migration';
-import type { Config } from '../../src/types/config';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
-
-vi.mock('fs-extra');
+import path from 'path';
+import { migrateConfig, migrations } from '../../src/config/migration.js';
+import { ConfigSchema, ConfigV1Schema, ConfigV2Schema } from '../../src/schemas/config-schema.js';
 
 describe('Config Migration', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  const tempDir = path.join(process.cwd(), '.test-temp-migration');
+  const configPath = path.join(tempDir, '.ptrc.json');
+
+  beforeEach(async () => {
+    await fs.ensureDir(tempDir);
   });
 
-  afterEach(() => {
-    vi.clearAllMocks();
+  afterEach(async () => {
+    await fs.remove(tempDir);
   });
 
-  describe('Field Name Migration', () => {
-    it('should migrate codingTool to defaultCmd', () => {
-      const oldConfig = {
-        codingTool: 'claude',
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.defaultCmd).toBe('claude');
-      expect(migrated.codingTool).toBeUndefined();
-    });
-
-    it('should migrate codingToolArgs to defaultCmdArgs', () => {
-      const oldConfig = {
-        codingToolArgs: ['-p', '{{prompt}}'],
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.defaultCmdArgs).toEqual(['-p', '{{prompt}}']);
-      expect(migrated.codingToolArgs).toBeUndefined();
-    });
-
-    it('should migrate codingToolOptions to defaultCmdOptions', () => {
-      const oldConfig = {
-        codingToolOptions: { 'Continue?': '--continue' },
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.defaultCmdOptions).toEqual({ 'Continue?': '--continue' });
-      expect(migrated.codingToolOptions).toBeUndefined();
-    });
-
-    it('should migrate all fields at once', () => {
-      const oldConfig = {
-        codingTool: 'claude',
-        codingToolArgs: ['-p', '{{prompt}}'],
-        codingToolOptions: { 'Continue?': '--continue' },
+  describe('migrateConfig', () => {
+    it('should migrate v1 config with codingTool fields', () => {
+      const v1Config = {
         promptDirs: ['./prompts'],
-        historyDir: '.history'
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.defaultCmd).toBe('claude');
-      expect(migrated.defaultCmdArgs).toEqual(['-p', '{{prompt}}']);
-      expect(migrated.defaultCmdOptions).toEqual({ 'Continue?': '--continue' });
-      expect(migrated.promptDirs).toEqual(['./prompts']);
-      expect(migrated.historyDir).toBe('.history');
-      expect(migrated.codingTool).toBeUndefined();
-      expect(migrated.codingToolArgs).toBeUndefined();
-      expect(migrated.codingToolOptions).toBeUndefined();
-    });
-  });
-
-  describe('New Fields Addition', () => {
-    it('should add version field', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.version).toBe('3.0.0');
-    });
-
-    it('should add autoReview field with default true', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.autoReview).toBe(true);
-    });
-
-    it('should preserve existing autoReview if set', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts'],
-        autoReview: false
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.autoReview).toBe(false);
-    });
-
-    it('should add autoRun field with default false', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.autoRun).toBe(false);
-    });
-
-    it('should add gitPromptDir field with default .git-prompts', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.gitPromptDir).toBe('.git-prompts');
-    });
-
-    it('should add handlebarsExtensions field with empty default', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts']
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.handlebarsExtensions).toEqual([]);
-    });
-  });
-
-  describe('Backward Compatibility', () => {
-    it('should preserve unrelated fields', () => {
-      const oldConfig = {
-        promptDirs: ['./prompts', './more-prompts'],
-        historyDir: '.history',
-        annotationDir: '.annotations',
-        helpers: { custom: { type: 'inline', value: 'code' } }
-      };
-      
-      const migrated = migrations[0].migrate(oldConfig);
-      
-      expect(migrated.promptDirs).toEqual(['./prompts', './more-prompts']);
-      expect(migrated.historyDir).toBe('.history');
-      expect(migrated.annotationDir).toBe('.annotations');
-      expect(migrated.helpers).toEqual({ custom: { type: 'inline', value: 'code' } });
-    });
-
-    it('should not modify already migrated config', () => {
-      const newConfig = {
-        defaultCmd: 'claude',
-        defaultCmdArgs: ['-p', '{{prompt}}'],
-        defaultCmdOptions: { 'Continue?': '--continue' },
-        promptDirs: ['./prompts'],
-        version: '3.0.0',
-        autoReview: true,
-        autoRun: false,
-        gitPromptDir: '.git-prompts',
-        handlebarsExtensions: []
-      };
-      
-      const migrated = migrations[0].migrate(newConfig);
-      
-      expect(migrated).toEqual(newConfig);
-    });
-  });
-
-  describe('Migration Detection', () => {
-    it('should detect old config format', () => {
-      const oldConfig = {
-        codingTool: 'claude',
-        promptDirs: ['./prompts']
-      };
-      
-      const needsMigration = migrateConfig.needsMigration(oldConfig);
-      
-      expect(needsMigration).toBe(true);
-    });
-
-    it('should detect new config format', () => {
-      const newConfig = {
-        defaultCmd: 'claude',
-        promptDirs: ['./prompts'],
-        version: '3.0.0'
-      };
-      
-      const needsMigration = migrateConfig.needsMigration(newConfig);
-      
-      expect(needsMigration).toBe(false);
-    });
-
-    it('should detect missing version field', () => {
-      const configWithoutVersion = {
-        defaultCmd: 'claude',
-        promptDirs: ['./prompts']
-      };
-      
-      const needsMigration = migrateConfig.needsMigration(configWithoutVersion);
-      
-      expect(needsMigration).toBe(true);
-    });
-  });
-
-  describe('Full Migration Process', () => {
-    it('should perform complete migration', () => {
-      const oldConfig = {
-        codingTool: 'claude',
-        codingToolArgs: ['-p', '{{prompt}}'],
-        codingToolOptions: { 'Continue?': '--continue' },
-        promptDirs: ['./prompts'],
-        historyDir: '.history',
-        helpers: {
-          upper: { type: 'inline', value: 's => s.toUpperCase()' }
+        historyDir: './.history',
+        codingTool: 'mycli',
+        codingToolArgs: ['--flag'],
+        codingToolOptions: {
+          'Some option': '--opt'
         }
       };
-      
-      const migrated = migrateConfig(oldConfig);
-      
-      expect(migrated).toEqual({
-        defaultCmd: 'claude',
-        defaultCmdArgs: ['-p', '{{prompt}}'],
-        defaultCmdOptions: { 'Continue?': '--continue' },
-        promptDirs: ['./prompts'],
-        historyDir: '.history',
-        helpers: {
-          upper: { type: 'inline', value: 's => s.toUpperCase()' }
-        },
-        version: '3.0.0',
-        autoReview: true,
-        autoRun: false,
-        gitPromptDir: '.git-prompts',
-        handlebarsExtensions: []
-      });
+
+      const migrated = migrateConfig(v1Config);
+
+      expect(migrated.defaultCmd).toBe('mycli');
+      expect(migrated.defaultCmdArgs).toEqual(['--flag']);
+      expect(migrated.defaultCmdOptions).toEqual({ 'Some option': '--opt' });
+      expect(migrated.version).toBe('3.0.0');
+      expect('codingTool' in migrated).toBe(false);
+      expect('codingToolArgs' in migrated).toBe(false);
+      expect('codingToolOptions' in migrated).toBe(false);
     });
 
-    it('should handle partial old config', () => {
-      const partialOldConfig = {
-        promptDirs: ['./prompts'],
-        codingTool: 'echo'
+    it('should add default values for new fields', () => {
+      const oldConfig = {
+        promptDirs: ['./prompts']
       };
-      
-      const migrated = migrateConfig(partialOldConfig);
-      
-      expect(migrated.defaultCmd).toBe('echo');
+
+      const migrated = migrateConfig(oldConfig);
+
+      expect(migrated.version).toBe('3.0.0');
+      expect(migrated.autoReview).toBe(true);
+      expect(migrated.autoRun).toBe(false);
+      expect(migrated.gitPromptDir).toBe('.git-prompts');
+      expect(migrated.handlebarsExtensions).toEqual([]);
+      expect(migrated.defaultCmd).toBe('claude');
       expect(migrated.defaultCmdArgs).toEqual([]);
       expect(migrated.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue'
       });
-      expect(migrated.version).toBe('3.0.0');
+    });
+
+    it('should preserve existing values when migrating', () => {
+      const config = {
+        promptDirs: ['./custom-prompts', './more-prompts'],
+        historyDir: './custom-history',
+        annotationDir: './custom-annotations',
+        autoReview: false,
+        autoRun: true
+      };
+
+      const migrated = migrateConfig(config);
+
+      expect(migrated.promptDirs).toEqual(['./custom-prompts', './more-prompts']);
+      expect(migrated.historyDir).toBe('./custom-history');
+      expect(migrated.annotationDir).toBe('./custom-annotations');
+      expect(migrated.autoReview).toBe(false);
+      expect(migrated.autoRun).toBe(true);
+    });
+
+    it('should ensure promptDirs exists even if missing', () => {
+      const config = {};
+
+      const migrated = migrateConfig(config);
+
+      expect(migrated.promptDirs).toEqual(['./prompts']);
+    });
+
+    it('should validate migrated config with Zod schema', () => {
+      const v1Config = {
+        promptDirs: ['./prompts'],
+        codingTool: 'code',
+        codingToolArgs: ['--wait']
+      };
+
+      const migrated = migrateConfig(v1Config);
+      const result = ConfigSchema.safeParse(migrated);
+
+      expect(result.success).toBe(true);
     });
   });
 
-  describe('Backup Creation', () => {
-    it('should create backup of old config', async () => {
-      const configPath = '/.ptrc.json';
-      const oldConfig = {
-        codingTool: 'claude',
-        promptDirs: ['./prompts']
+  describe('needsMigration', () => {
+    it('should return true for configs with old field names', () => {
+      expect(migrateConfig.needsMigration({ codingTool: 'cli' })).toBe(true);
+      expect(migrateConfig.needsMigration({ codingToolArgs: [] })).toBe(true);
+      expect(migrateConfig.needsMigration({ codingToolOptions: {} })).toBe(true);
+    });
+
+    it('should return true for configs without version', () => {
+      expect(migrateConfig.needsMigration({ promptDirs: ['./prompts'] })).toBe(true);
+    });
+
+    it('should return true for configs with old version', () => {
+      expect(migrateConfig.needsMigration({ version: '2.0.0' })).toBe(true);
+      expect(migrateConfig.needsMigration({ version: '1.0.0' })).toBe(true);
+    });
+
+    it('should return false for up-to-date configs', () => {
+      const config = {
+        version: '3.0.0',
+        promptDirs: ['./prompts'],
+        defaultCmd: 'claude'
       };
-      
-      vi.mocked(fs.pathExists).mockResolvedValue(false);
-      vi.mocked(fs.copy).mockResolvedValue();
-      
+
+      expect(migrateConfig.needsMigration(config)).toBe(false);
+    });
+  });
+
+  describe('createBackup', () => {
+    it('should create a backup file', async () => {
+      const config = { promptDirs: ['./prompts'], version: '2.0.0' };
+      await fs.writeJson(configPath, config);
+
       await migrateConfig.createBackup(configPath);
+
+      const backupPath = configPath + '.backup';
+      expect(await fs.pathExists(backupPath)).toBe(true);
       
-      expect(fs.copy).toHaveBeenCalledWith(configPath, '/.ptrc.json.backup');
+      const backup = await fs.readJson(backupPath);
+      expect(backup).toEqual(config);
     });
 
     it('should create timestamped backup if backup already exists', async () => {
-      const configPath = '/.ptrc.json';
-      const oldConfig = {
-        codingTool: 'claude',
-        promptDirs: ['./prompts']
-      };
+      const config1 = { promptDirs: ['./prompts'], version: '1.0.0' };
+      const config2 = { promptDirs: ['./prompts'], version: '2.0.0' };
       
-      vi.mocked(fs.pathExists).mockResolvedValue(true);
-      vi.mocked(fs.copy).mockResolvedValue();
-      
-      const mockDate = new Date('2025-01-15T10:30:00Z');
-      vi.setSystemTime(mockDate);
-      
+      // Create original and first backup
+      await fs.writeJson(configPath, config1);
       await migrateConfig.createBackup(configPath);
       
-      // The timestamp uses local time hours, so we need to check what was actually called
-      const calls = vi.mocked(fs.copy).mock.calls;
-      expect(calls.length).toBe(1);
-      expect(calls[0][0]).toBe(configPath);
-      expect(calls[0][1]).toMatch(/^\/\.ptrc\.json\.backup\.\d{14}$/);
+      // Update config and create second backup
+      await fs.writeJson(configPath, config2);
+      await migrateConfig.createBackup(configPath);
+
+      // Check that both backups exist
+      const backupPath = configPath + '.backup';
+      expect(await fs.pathExists(backupPath)).toBe(true);
+      
+      const files = await fs.readdir(tempDir);
+      const timestampedBackups = files.filter(f => f.startsWith('.ptrc.json.backup.'));
+      expect(timestampedBackups.length).toBe(1);
+      
+      // Verify content
+      const firstBackup = await fs.readJson(backupPath);
+      expect(firstBackup).toEqual(config1);
+      
+      const timestampedBackup = await fs.readJson(path.join(tempDir, timestampedBackups[0]));
+      expect(timestampedBackup).toEqual(config2);
+    });
+  });
+
+  describe('migration versioning', () => {
+    it('should have at least one migration', () => {
+      expect(migrations.length).toBeGreaterThan(0);
+    });
+
+    it('should apply the latest migration', () => {
+      const config = { promptDirs: ['./prompts'] };
+      const migrated = migrateConfig(config);
+      
+      expect(migrated.version).toBe(migrations[migrations.length - 1].version);
+    });
+
+    it('should handle all legacy config formats', () => {
+      // Test various legacy formats
+      const legacyConfigs = [
+        // V1 format with single promptDirectory
+        {
+          promptDirectory: './prompts',
+          historyDirectory: './.history'
+        },
+        // V1 format with array promptDirectory
+        {
+          promptDirectory: ['./prompts', './more-prompts'],
+          codingTool: 'vim'
+        },
+        // V2 format
+        {
+          promptDirs: ['./prompts'],
+          historyDir: './.history',
+          codingTool: 'code',
+          autoReview: false
+        }
+      ];
+
+      legacyConfigs.forEach((legacy, index) => {
+        const migrated = migrateConfig(legacy);
+        
+        // Should have required fields
+        expect(migrated.promptDirs).toBeDefined();
+        expect(Array.isArray(migrated.promptDirs)).toBe(true);
+        expect(migrated.version).toBe('3.0.0');
+        
+        // Should not have legacy fields
+        expect('promptDirectory' in migrated).toBe(false);
+        expect('historyDirectory' in migrated).toBe(false);
+        expect('codingTool' in migrated).toBe(false);
+        
+        // Should have new field names
+        if ('historyDirectory' in legacy) {
+          expect(migrated.historyDir).toBeDefined();
+        }
+        if ('codingTool' in legacy) {
+          expect(migrated.defaultCmd).toBeDefined();
+        }
+      });
+    });
+  });
+
+  describe('schema validation', () => {
+    it('should accept valid v1 configs', () => {
+      const v1Config = {
+        promptDirectory: './prompts',
+        historyDirectory: './.history',
+        codingTool: 'code',
+        codingToolArgs: ['--wait']
+      };
+
+      const result = ConfigV1Schema.safeParse(v1Config);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept valid v2 configs', () => {
+      const v2Config = {
+        promptDirs: ['./prompts'],
+        historyDir: './.history',
+        codingTool: 'code',
+        autoReview: true,
+        version: '2.0.0'
+      };
+
+      const result = ConfigV2Schema.safeParse(v2Config);
+      expect(result.success).toBe(true);
+    });
+
+    it('should accept valid v3 configs', () => {
+      const v3Config = {
+        promptDirs: ['./prompts'],
+        historyDir: './.history',
+        defaultCmd: 'claude',
+        defaultCmdArgs: [],
+        defaultCmdOptions: {},
+        autoReview: true,
+        autoRun: false,
+        gitPromptDir: '.git-prompts',
+        handlebarsExtensions: [],
+        version: '3.0.0',
+        helpers: {
+          myHelper: {
+            type: 'inline' as const,
+            value: 'return "hello";'
+          }
+        }
+      };
+
+      const result = ConfigSchema.safeParse(v3Config);
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject invalid configs', () => {
+      const invalidConfigs = [
+        { promptDirs: [] }, // Empty array
+        { promptDirs: ['./prompts'], version: 'invalid' }, // Invalid version format
+        { promptDirs: ['./prompts'], helpers: { bad: { type: 'unknown' } } }, // Invalid helper type
+        { promptDirs: ['./prompts'], helpers: { bad: { type: 'inline' } } }, // Missing value for inline
+        { promptDirs: ['./prompts'], helpers: { bad: { type: 'file' } } } // Missing path for file
+      ];
+
+      invalidConfigs.forEach((config, index) => {
+        const result = ConfigSchema.safeParse(config);
+        expect(result.success).toBe(false);
+      });
     });
   });
 });

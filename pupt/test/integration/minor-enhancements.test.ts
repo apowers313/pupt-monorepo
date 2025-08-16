@@ -36,6 +36,7 @@ describe('Minor Enhancements - Integration Tests', () => {
   afterEach(async () => {
     process.chdir(originalCwd);
     await fs.remove(tempDir);
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 

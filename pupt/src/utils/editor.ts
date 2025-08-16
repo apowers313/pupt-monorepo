@@ -55,8 +55,7 @@ export class DefaultEditorLauncher implements EditorLauncher {
   async openInEditor(editor: string, filepath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const child = spawn(editor, [filepath], {
-        detached: true,
-        stdio: 'ignore'
+        stdio: 'inherit'
       });
 
       child.on('error', reject);
@@ -67,8 +66,6 @@ export class DefaultEditorLauncher implements EditorLauncher {
           reject(new Error(`Editor exited with code ${code}`));
         }
       });
-
-      child.unref();
     });
   }
 }

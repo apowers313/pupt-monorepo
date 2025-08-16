@@ -15,6 +15,7 @@ describe('History Timestamp Formatting', () => {
 
   afterEach(async () => {
     await fs.remove(tempDir);
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 

@@ -589,7 +589,7 @@ describe('Run Command', () => {
       });
       
       await expect(runCommand([], {})).rejects.toThrow(
-        'No tool specified'
+        "Tool '' not found"
       );
     });
 

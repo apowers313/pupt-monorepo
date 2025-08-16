@@ -116,7 +116,7 @@ describe('ReviewFile Integration Tests', () => {
       const result = await engine.processTemplate(prompt.content, prompt);
       
       // Verify editor was spawned with selected file
-      expect(mockSpawn).toHaveBeenCalledWith('vim', expect.arrayContaining([path.resolve('./src/test.ts')]), { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('vim', expect.arrayContaining([path.resolve('./src/test.ts')]), { stdio: 'inherit' });
     });
 
     it('should not open editor when autoReview is false', async () => {
@@ -273,7 +273,7 @@ describe('ReviewFile Integration Tests', () => {
       expect(mockExecFileAsync).toHaveBeenCalledWith(process.platform === 'win32' ? 'where' : 'which', ['nano']);
       
       // Should have launched nano editor (the first available)
-      expect(mockSpawn).toHaveBeenCalledWith('nano', expect.arrayContaining([path.resolve('./src/test.ts')]), { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('nano', expect.arrayContaining([path.resolve('./src/test.ts')]), { stdio: 'inherit' });
     });
 
     it('should respect VISUAL over EDITOR environment variable', async () => {
@@ -325,7 +325,7 @@ describe('ReviewFile Integration Tests', () => {
       await engine.processTemplate(prompt.content, prompt);
       
       // Should use VISUAL (emacs) not EDITOR (vim)
-      expect(mockSpawn).toHaveBeenCalledWith('emacs', expect.arrayContaining([path.resolve('./src/test.ts')]), { detached: true, stdio: 'ignore' });
+      expect(mockSpawn).toHaveBeenCalledWith('emacs', expect.arrayContaining([path.resolve('./src/test.ts')]), { stdio: 'inherit' });
       
       delete process.env.VISUAL;
     });

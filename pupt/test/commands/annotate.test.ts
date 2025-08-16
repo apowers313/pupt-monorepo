@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { annotateCommand } from '../../src/commands/annotate';
 import { ConfigManager } from '../../src/config/config-manager';
 import { HistoryManager } from '../../src/history/history-manager';
@@ -95,6 +95,10 @@ describe('annotateCommand', () => {
         listHistory: vi.fn().mockResolvedValue([mockHistoryEntry])
       };
       (HistoryManager as any).mockImplementation(() => mockHistoryManager);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
     it('should create file with correct filename format', async () => {

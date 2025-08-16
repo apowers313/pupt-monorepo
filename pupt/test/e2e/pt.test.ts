@@ -27,12 +27,6 @@ Hello {{input "name" "Your name?"}}!
 Today is {{date}}.`;
     
     await fs.writeFile(path.join(promptsDir, 'test.md'), promptContent);
-    
-    // Build the project
-    execSync('npm run build', { 
-      stdio: 'ignore',
-      cwd: path.join(__dirname, '../..')
-    });
   });
   
   afterEach(async () => {

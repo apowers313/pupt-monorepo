@@ -8,7 +8,15 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test'
     },
-    teardownTimeout: 1000,
+    setupFiles: ['./test/setup.ts'],
+    teardownTimeout: 10000,
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        minForks: 1,
+        maxForks: 1
+      }
+    },
     coverage: {
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'test/', 'dist/', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts', 'vitest.config.ts', 'eslint.config.js', 'src/cli.ts', 'src/index.ts'],

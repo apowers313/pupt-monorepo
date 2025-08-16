@@ -11,6 +11,7 @@ export interface Config {
   handlebarsExtensions?: HandlebarsExtensionConfig[];
   version?: string;
   helpers?: Record<string, HelperConfig>;
+  logLevel?: string;
   // Legacy fields for backward compatibility (will be migrated)
   codingTool?: string;
   codingToolArgs?: string[];
