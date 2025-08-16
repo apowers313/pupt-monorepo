@@ -1,6 +1,6 @@
-import * as vm from 'vm';
-import * as path from 'path';
-import { promises as fs } from 'fs';
+import * as vm from 'node:vm';
+import * as path from 'node:path';
+import { promises as fs } from 'node:fs';
 import type { HandlebarsExtensionConfig } from '../types/config.js';
 import type Handlebars from 'handlebars';
 

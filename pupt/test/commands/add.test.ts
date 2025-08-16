@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vites
 import { addCommand } from '../../src/commands/add.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import fs from 'fs-extra';
-import path from 'path';
-import { execSync, spawn } from 'child_process';
+import path from 'node:path';
+import { execSync, spawn } from 'node:child_process';
 import { input, select, confirm } from '@inquirer/prompts';
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
-vi.mock('child_process', () => ({
+vi.mock('node:child_process', () => ({
   execSync: vi.fn(),
   execFile: vi.fn(),
   spawn: vi.fn()
 }));
-vi.mock('util', () => ({
+vi.mock('node:util', () => ({
   promisify: vi.fn(() => vi.fn())
 }));
 vi.mock('@inquirer/prompts');
@@ -332,7 +332,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Created prompt: prompts/success-test.md')
+        expect.stringContaining(`Created prompt: ${path.join('prompts', 'success-test.md')}`)
       );
     });
   });

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { FileSearchEngine } from '../../src/search/file-search-engine.js';
 import fs from 'fs-extra';
-import * as path from 'path';
-import os from 'os';
+import * as path from 'node:path';
+import os from 'node:os';
 
 vi.mock('fs-extra', () => ({
   default: {
@@ -159,7 +159,7 @@ describe('FileSearchEngine', () => {
 
     it('should parse query with path separator', () => {
       const result = engine.parseSearchQuery('design/phase');
-      expect(result.searchPath).toBe('design' + path.sep);
+      expect(result.searchPath).toBe('design/');
       expect(result.searchTerm).toBe('phase');
     });
 

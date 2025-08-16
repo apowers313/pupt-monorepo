@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { Config } from '../../src/types/config.js';
 import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 
 describe('Config Schema Validation', () => {
   const testDir = path.join(os.tmpdir(), 'pt-config-schema-test');
@@ -15,7 +15,18 @@ describe('Config Schema Validation', () => {
   });
 
   afterEach(async () => {
-    await fs.remove(testDir);
+    // On Windows, files might still be in use, so retry removal
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await fs.remove(testDir);
+        break;
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
   });
 
   describe('new optional fields', () => {
@@ -298,7 +309,18 @@ describe('Config Migration', () => {
   });
 
   afterEach(async () => {
-    await fs.remove(testDir);
+    // On Windows, files might still be in use, so retry removal
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await fs.remove(testDir);
+        break;
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
   });
 
   it('should detect old config version', async () => {

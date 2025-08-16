@@ -1,8 +1,8 @@
 import { input, select, confirm } from '@inquirer/prompts';
 import { ConfigManager } from '../config/config-manager.js';
 import fs from 'fs-extra';
-import path from 'path';
-import { execSync } from 'child_process';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
 import chalk from 'chalk';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';

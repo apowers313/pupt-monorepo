@@ -1,6 +1,6 @@
 import { select, input, editor } from '@inquirer/prompts';
 import fs from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigManager } from '../config/config-manager.js';

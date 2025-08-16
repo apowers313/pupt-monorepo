@@ -3,11 +3,11 @@ import { PromptManager } from '../prompts/prompt-manager.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { TemplateEngine } from '../template/template-engine.js';
 import { HistoryManager } from '../history/history-manager.js';
-import { spawn } from 'child_process';
+import { spawn } from 'node:child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { errors } from '../utils/errors.js';
-import * as path from 'path';
+import * as path from 'node:path';
 
 export interface RunOptions {
   historyIndex?: number;

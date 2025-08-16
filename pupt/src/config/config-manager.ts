@@ -1,7 +1,7 @@
 import { cosmiconfig } from 'cosmiconfig';
 import { Config, DEFAULT_CONFIG } from '../types/config.js';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 import { getHomePath } from '../utils/platform.js';
 import fs from 'fs-extra';
 import { errors } from '../utils/errors.js';

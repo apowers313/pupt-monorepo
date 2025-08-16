@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 import { glob } from 'glob';
 import { minimatch } from 'minimatch';
 import MiniSearch from 'minisearch';

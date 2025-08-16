@@ -1,8 +1,8 @@
 import Handlebars from 'handlebars';
 import { input, select, confirm, editor, checkbox, password } from '@inquirer/prompts';
 import { TemplateContext } from '../template-context.js';
-import crypto from 'crypto';
-import os from 'os';
+import crypto from 'node:crypto';
+import os from 'node:os';
 import { fileSearchPrompt } from '../../prompts/input-types/file-search-prompt.js';
 import { reviewFilePrompt } from '../../prompts/input-types/review-file-prompt.js';
 import { DateFormats } from '../../utils/date-formatter.js';

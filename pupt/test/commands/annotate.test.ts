@@ -4,17 +4,17 @@ import { ConfigManager } from '../../src/config/config-manager';
 import { HistoryManager } from '../../src/history/history-manager';
 import * as prompts from '@inquirer/prompts';
 import fs from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
 vi.mock('../../src/config/config-manager');
 vi.mock('../../src/history/history-manager');
 vi.mock('@inquirer/prompts');
 vi.mock('fs-extra');
 vi.mock('uuid');
-vi.mock('child_process', () => ({
+vi.mock('node:child_process', () => ({
   execFile: vi.fn()
 }));
-vi.mock('util', () => ({
+vi.mock('node:util', () => ({
   promisify: vi.fn(() => vi.fn())
 }));
 
@@ -336,7 +336,7 @@ describe('annotateCommand', () => {
       await annotateCommand();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        '✅ Annotation saved to .pthistory/20240120-103000-abc123-annotation-test-uuid.md'
+        `✅ Annotation saved to ${path.join('.pthistory', '20240120-103000-abc123-annotation-test-uuid.md')}`
       );
     });
   });

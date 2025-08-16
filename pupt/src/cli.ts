@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import * as path from 'path';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import * as path from 'node:path';
 import chalk from 'chalk';
 import { ConfigManager } from './config/config-manager.js';
 import { PromptManager } from './prompts/prompt-manager.js';

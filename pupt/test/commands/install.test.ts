@@ -173,7 +173,7 @@ describe('Install Command', () => {
 
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/test-prompts',
-        '.git-prompts/test-prompts',
+        path.join('.git-prompts', 'test-prompts'),
         ['--depth', '1']
       );
     });
@@ -187,7 +187,7 @@ describe('Install Command', () => {
 
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/repo',
-        '.git-prompts/repo',
+        path.join('.git-prompts', 'repo'),
         ['--depth', '1']
       );
     });

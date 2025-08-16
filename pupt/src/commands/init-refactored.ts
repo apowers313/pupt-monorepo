@@ -1,6 +1,6 @@
 import { input, confirm } from '@inquirer/prompts';
 import fs from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import { BaseCommand, CommandContext, CommandOptions } from './base-command.js';
 import { Config, DEFAULT_CONFIG } from '../types/config.js';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';

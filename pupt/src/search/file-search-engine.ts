@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
-import * as path from 'path';
-import os from 'os';
+import * as path from 'node:path';
+import os from 'node:os';
 
 export interface FileInfo {
   name: string;

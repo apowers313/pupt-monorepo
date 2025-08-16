@@ -1,6 +1,6 @@
 import { input, confirm } from '@inquirer/prompts';
 import fs from 'fs-extra';
-import path from 'path';
+import path from 'node:path';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
