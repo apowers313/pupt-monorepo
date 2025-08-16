@@ -49,10 +49,11 @@ describe('AutoRun Regression Tests', () => {
     // Mock user selecting the second prompt
     const mockInput = '\x1B[B\n'; // Arrow down, then enter to select second prompt
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
     
     // Should show interactive selection happened
@@ -81,10 +82,11 @@ describe('AutoRun Regression Tests', () => {
     // Mock user selecting the first prompt
     const mockInput = '\n'; // Select first prompt
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
     
     // Should show interactive selection happened
@@ -119,10 +121,11 @@ describe('AutoRun Regression Tests', () => {
     // Need extra newlines because of potential buffering
     const mockInput = '\n\n\n'; // Select first prompt, answer no to option, extra newline
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir },
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir },
       timeout: 10000 // 10 second timeout
     });
     
@@ -154,10 +157,11 @@ describe('AutoRun Regression Tests', () => {
     const mockInput = '\x03'; // Ctrl+C
     
     try {
-      execSync(`cd ${testDir} && node ${cliPath}`, {
+      execSync(`node ${cliPath}`, {
         input: mockInput,
         encoding: 'utf-8',
-        env: { ...process.env, HOME: testDir },
+        cwd: testDir,
+        env: { ...process.env, HOME: testDir, USERPROFILE: testDir },
         stdio: ['pipe', 'pipe', 'pipe']
       });
       // Should not reach here

@@ -46,10 +46,11 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt and answering no to continue option
     const mockInput = '\n\n'; // Select first prompt, then answer no to continue option
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
     
     expect(output).toContain('Processing: Test Prompt');
@@ -72,10 +73,11 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt
     const mockInput = '\n'; // Just press enter to select first prompt
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
     
     expect(output).toContain('Generated Prompt:');
@@ -100,10 +102,11 @@ describe('AutoRun Feature', () => {
     const mockInput = '\n'; // Select first prompt
     
     try {
-      execSync(`cd ${testDir} && node ${cliPath}`, {
+      execSync(`node ${cliPath}`, {
         input: mockInput,
         encoding: 'utf-8',
-        env: { ...process.env, HOME: testDir },
+        cwd: testDir,
+        env: { ...process.env, HOME: testDir, USERPROFILE: testDir },
         stdio: ['pipe', 'pipe', 'pipe']
       });
       // Should not reach here
@@ -133,9 +136,10 @@ describe('AutoRun Feature', () => {
     await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
     
     // Run with explicit command - should not trigger autoRun
-    const output = execSync(`cd ${testDir} && node ${cliPath} history`, {
+    const output = execSync(`node ${cliPath} history`, {
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     }).toString();
     
     expect(output).toContain('No history found');
@@ -165,10 +169,11 @@ describe('AutoRun Feature', () => {
     // Need extra newlines because of potential buffering
     const mockInput = '\n\n\n'; // Select prompt, answer no to option, extra newline
     
-    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
+    const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir },
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir },
       timeout: 10000 // 10 second timeout
     });
     
@@ -196,10 +201,11 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt
     
-    execSync(`cd ${testDir} && node ${cliPath}`, {
+    execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
-      env: { ...process.env, HOME: testDir }
+      cwd: testDir,
+      env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
     
     // Check that history was saved
