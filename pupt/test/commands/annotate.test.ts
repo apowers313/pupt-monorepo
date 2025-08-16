@@ -6,15 +6,17 @@ import * as prompts from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import ora from 'ora';
-
 vi.mock('../../src/config/config-manager');
 vi.mock('../../src/history/history-manager');
 vi.mock('@inquirer/prompts');
 vi.mock('fs-extra');
 vi.mock('uuid');
-vi.mock('child_process');
-vi.mock('ora');
+vi.mock('child_process', () => ({
+  execFile: vi.fn()
+}));
+vi.mock('util', () => ({
+  promisify: vi.fn(() => vi.fn())
+}));
 
 describe('annotateCommand', () => {
   let consoleLogSpy: any;
@@ -41,19 +43,6 @@ describe('annotateCommand', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     (ConfigManager.load as Mock).mockResolvedValue(mockConfig);
     (uuidv4 as Mock).mockReturnValue('test-uuid');
-    
-    // Mock ora spinner
-    const mockSpinner = {
-      start: vi.fn().mockReturnThis(),
-      stop: vi.fn().mockReturnThis(),
-      succeed: vi.fn((text) => {
-        // Capture success messages by calling console.log
-        if (text) consoleLogSpy(text);
-        return mockSpinner;
-      }),
-      fail: vi.fn().mockReturnThis()
-    };
-    (ora as any).mockReturnValue(mockSpinner);
   });
 
   describe('Command Registration', () => {
@@ -343,7 +332,7 @@ describe('annotateCommand', () => {
       await annotateCommand();
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        'Annotation saved to .pthistory/20240120-103000-abc123-annotation-test-uuid.md'
+        '✅ Annotation saved to .pthistory/20240120-103000-abc123-annotation-test-uuid.md'
       );
     });
   });

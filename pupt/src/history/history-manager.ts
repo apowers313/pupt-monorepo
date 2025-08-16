@@ -2,6 +2,8 @@ import fs from 'fs-extra';
 import path from 'path';
 import crypto from 'crypto';
 import { HistoryEntry } from '../types/history.js';
+import { sanitizeObject } from '../utils/security.js';
+import { DateFormats } from '../utils/date-formatter.js';
 
 interface HistorySaveOptions {
   templatePath: string;
@@ -16,15 +18,24 @@ export class HistoryManager {
   constructor(private historyDir: string) {}
 
   async savePrompt(options: HistorySaveOptions): Promise<string> {
+    // Don't save empty prompts
+    if (!options.finalPrompt || !options.finalPrompt.trim()) {
+      return '';
+    }
+
     try {
       await fs.ensureDir(this.historyDir);
 
       const now = new Date();
-      const timestamp = now.toISOString();
+      const timestamp = DateFormats.UTC_DATETIME(now);
       
-      // Generate filename: YYYYMMDD-HHMMSS-<random>.json
-      const dateStr = timestamp.slice(0, 10).replace(/-/g, '');
-      const timeStr = timestamp.slice(11, 19).replace(/:/g, '');
+      // Generate filename using local time: YYYYMMDD-HHMMSS-<random>.json
+      const dateStr = DateFormats.YYYYMMDD(now);
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      
+      const timeStr = `${hours}${minutes}${seconds}`;
       const random = crypto.randomBytes(4).toString('hex');
       const filename = `${dateStr}-${timeStr}-${random}.json`;
 
@@ -117,14 +128,7 @@ export class HistoryManager {
 
 
   private maskSensitiveVariables(variables: Map<string, unknown>): Record<string, unknown> {
-    const masked: Record<string, unknown> = {};
-    const sensitivePatterns = [/apikey/i, /password/i, /secret/i, /token/i, /credential/i];
-
-    for (const [key, value] of variables) {
-      const isSensitive = sensitivePatterns.some(pattern => pattern.test(key));
-      masked[key] = isSensitive ? '***' : value;
-    }
-
-    return masked;
+    const obj = Object.fromEntries(variables);
+    return sanitizeObject(obj);
   }
 }

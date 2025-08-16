@@ -9,3 +9,8 @@ coverage/
 .idea/
 *.tgz
 .pt/
+
+
+# Prompt Tool
+.ptrc.json.backup
+.git-prompts

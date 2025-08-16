@@ -11,9 +11,12 @@ export interface Prompt {
 
 export interface VariableDefinition {
   name: string;
-  type: 'input' | 'select' | 'multiselect' | 'editor' | 'confirm' | 'password';
+  type: 'input' | 'select' | 'multiselect' | 'editor' | 'confirm' | 'password' | 'file' | 'reviewFile';
   message?: string;
   default?: unknown;
   choices?: string[];
   validate?: string;
+  basePath?: string;
+  filter?: string;
+  autoReview?: boolean;
 }

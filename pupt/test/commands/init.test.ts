@@ -204,12 +204,12 @@ describe('Init Command', () => {
       await initCommand();
 
       const config = await fs.readJson('.ptrc.json');
-      expect(config.codingTool).toBe('claude');
-      expect(config.codingToolArgs).toEqual([]);
-      expect(config.codingToolOptions).toEqual({
+      expect(config.defaultCmd).toBe('claude');
+      expect(config.defaultCmdArgs).toEqual([]);
+      expect(config.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue'
       });
-      expect(config.version).toBe('2.0.0');
+      expect(config.version).toBe('3.0.0');
     });
 
     it('should only include historyDir when enabled', async () => {

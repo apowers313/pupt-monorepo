@@ -1,4 +1,5 @@
 import { VariableDefinition } from '../types/prompt.js';
+import { maskSensitiveValue } from '../utils/security.js';
 
 export class TemplateContext {
   private values = new Map<string, unknown>();
@@ -19,16 +20,7 @@ export class TemplateContext {
 
   getMasked(name: string): unknown {
     const value = this.get(name);
-    if (value && this.isSensitive(name)) {
-      return '***';
-    }
-    return value;
-  }
-
-  private isSensitive(name: string): boolean {
-    const sensitivePatterns = [/apikey/i, /password/i, /secret/i, /token/i, /credential/i];
-
-    return sensitivePatterns.some(pattern => pattern.test(name));
+    return maskSensitiveValue(name, value);
   }
 
   getVariableDefinition(name: string): VariableDefinition | undefined {
@@ -45,7 +37,9 @@ export class TemplateContext {
     // Process async operations sequentially
     for (const operation of this.asyncOperations) {
       const { placeholder, value } = await operation();
-      result = result.replace(new RegExp(placeholder, 'g'), String(value));
+      // Escape any Handlebars syntax in user input by replacing {{ with a placeholder
+      const escapedValue = String(value).replace(/{{/g, '__ESCAPED_OPEN__').replace(/}}/g, '__ESCAPED_CLOSE__');
+      result = result.replace(new RegExp(placeholder, 'g'), escapedValue);
     }
 
     // Clear operations for next run

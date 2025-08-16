@@ -2,14 +2,20 @@ import Handlebars from 'handlebars';
 import { TemplateContext } from './template-context.js';
 import { registerHelpers } from './helpers/index.js';
 import { Prompt } from '../types/prompt.js';
+import { loadHandlebarsExtensions } from '../utils/handlebars-extensions.js';
+import { Config } from '../types/config.js';
 
 export class TemplateEngine {
   private handlebars: typeof Handlebars;
   private context: TemplateContext;
+  private config?: Config;
+  private configDir?: string;
 
-  constructor() {
+  constructor(config?: Config, configDir?: string) {
     this.handlebars = Handlebars.create();
     this.context = new TemplateContext();
+    this.config = config;
+    this.configDir = configDir;
   }
 
   async processTemplate(template: string, prompt: Partial<Prompt>): Promise<string> {
@@ -19,8 +25,24 @@ export class TemplateEngine {
     // Create a special Handlebars instance that has access to the context
     this.handlebars = Handlebars.create();
 
+    // Load Handlebars extensions from config
+    if (this.config?.handlebarsExtensions) {
+      await loadHandlebarsExtensions(this.handlebars, this.config.handlebarsExtensions, this.configDir);
+    }
+
     // Register helpers with context
     registerHelpers(this.handlebars, this.context);
+    
+    // Pre-process template to extract and protect raw blocks
+    const rawBlocks: Array<{ placeholder: string; content: string }> = [];
+    let rawIndex = 0;
+    
+    // Extract content from {{#raw}}...{{/raw}} blocks before Handlebars processes them
+    template = template.replace(/{{#raw}}([\s\S]*?){{\/raw}}/g, (match, content) => {
+      const placeholder = `__RAW_BLOCK_${rawIndex++}__`;
+      rawBlocks.push({ placeholder, content });
+      return placeholder;
+    });
 
     // Phase 1: Replace variable references with temporary placeholders
     // to prevent them from being processed before values are available
@@ -65,7 +87,17 @@ export class TemplateEngine {
       contextData[key] = value;
     }
 
-    return finalCompiled(contextData);
+    let finalResult = finalCompiled(contextData);
+    
+    // Restore raw blocks
+    for (const block of rawBlocks) {
+      finalResult = finalResult.replace(block.placeholder, block.content);
+    }
+    
+    // Restore escaped Handlebars syntax from user input
+    finalResult = finalResult.replace(/__ESCAPED_OPEN__/g, '{{').replace(/__ESCAPED_CLOSE__/g, '}}');
+    
+    return finalResult;
   }
 
   getContext(): TemplateContext {

@@ -41,32 +41,32 @@ describe('Config Schema Validation', () => {
       expect(loaded.annotationDir).toBe(path.resolve('./.ptannotations'));
     });
 
-    it('should accept valid codingTool', async () => {
+    it('should accept valid defaultCmd (new name for codingTool)', async () => {
       const config = {
         promptDirs: ['./prompts'],
-        codingTool: 'claude'
+        defaultCmd: 'claude'
       };
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.codingTool).toBe('claude');
+      expect(loaded.defaultCmd).toBe('claude');
     });
 
-    it('should accept valid codingToolArgs', async () => {
+    it('should accept valid defaultCmdArgs (new name for codingToolArgs)', async () => {
       const config = {
         promptDirs: ['./prompts'],
-        codingToolArgs: ['--model', 'sonnet']
+        defaultCmdArgs: ['--model', 'sonnet']
       };
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.codingToolArgs).toEqual(['--model', 'sonnet']);
+      expect(loaded.defaultCmdArgs).toEqual(['--model', 'sonnet']);
     });
 
-    it('should accept valid codingToolOptions', async () => {
+    it('should accept valid defaultCmdOptions (new name for codingToolOptions)', async () => {
       const config = {
         promptDirs: ['./prompts'],
-        codingToolOptions: {
+        defaultCmdOptions: {
           'Continue with last context?': '--continue',
           'Enable web search?': '--web'
         }
@@ -74,10 +74,60 @@ describe('Config Schema Validation', () => {
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.codingToolOptions).toEqual({
+      expect(loaded.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue',
         'Enable web search?': '--web'
       });
+    });
+
+    it('should accept valid autoReview field', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        autoReview: false
+      };
+      await fs.writeJson(configPath, config);
+      
+      const loaded = await ConfigManager.load();
+      expect(loaded.autoReview).toBe(false);
+    });
+
+    it('should accept valid autoRun field', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        autoRun: true
+      };
+      await fs.writeJson(configPath, config);
+      
+      const loaded = await ConfigManager.load();
+      expect(loaded.autoRun).toBe(true);
+    });
+
+    it('should accept valid gitPromptDir field', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        gitPromptDir: '.my-git-prompts'
+      };
+      await fs.writeJson(configPath, config);
+      
+      const loaded = await ConfigManager.load();
+      expect(loaded.gitPromptDir).toBe('.my-git-prompts');
+    });
+
+    it('should accept valid handlebarsExtensions field', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        handlebarsExtensions: [
+          { type: 'inline', value: 'Handlebars.registerHelper("upper", s => s.toUpperCase());' },
+          { type: 'file', path: './extensions/my-helpers.js' }
+        ]
+      };
+      await fs.writeJson(configPath, config);
+      
+      const loaded = await ConfigManager.load();
+      expect(loaded.handlebarsExtensions).toEqual([
+        { type: 'inline', value: 'Handlebars.registerHelper("upper", s => s.toUpperCase());' },
+        { type: 'file', path: path.resolve('./extensions/my-helpers.js') }
+      ]);
     });
   });
 
@@ -95,11 +145,15 @@ describe('Config Schema Validation', () => {
       // annotationDir might come from parent config
       expect(typeof loaded.annotationDir === 'string' || loaded.annotationDir === undefined).toBe(true);
       // These get defaults from migration
-      expect(loaded.codingTool).toBe('claude');
-      expect(loaded.codingToolArgs).toEqual([]);
-      expect(loaded.codingToolOptions).toEqual({
+      expect(loaded.defaultCmd).toBe('claude');
+      expect(loaded.defaultCmdArgs).toEqual([]);
+      expect(loaded.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue'
       });
+      expect(loaded.autoReview).toBe(true);
+      expect(loaded.autoRun).toBe(false);
+      expect(loaded.gitPromptDir).toBe('.git-prompts');
+      expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
     it('should preserve existing fields when loading old configs', async () => {
@@ -126,24 +180,66 @@ describe('Config Schema Validation', () => {
       await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'historyDir' must be a string");
     });
 
-    it('should reject invalid codingToolArgs type', async () => {
+    it('should reject invalid defaultCmdArgs type', async () => {
       const config = {
         promptDirs: ['./prompts'],
-        codingToolArgs: 'not-an-array' // should be array
+        defaultCmdArgs: 'not-an-array' // should be array
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'codingToolArgs' must be an array");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'defaultCmdArgs' must be an array");
     });
 
-    it('should reject invalid codingToolOptions type', async () => {
+    it('should reject invalid defaultCmdOptions type', async () => {
       const config = {
         promptDirs: ['./prompts'],
-        codingToolOptions: 'not-an-object' // should be object
+        defaultCmdOptions: 'not-an-object' // should be object
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'codingToolOptions' must be an object");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'defaultCmdOptions' must be an object");
+    });
+
+    it('should reject invalid autoReview type', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        autoReview: 'yes' // should be boolean
+      };
+      await fs.writeJson(configPath, config);
+      
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoReview' must be a boolean");
+    });
+
+    it('should reject invalid autoRun type', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        autoRun: 1 // should be boolean
+      };
+      await fs.writeJson(configPath, config);
+      
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoRun' must be a boolean");
+    });
+
+    it('should reject invalid handlebarsExtensions type', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        handlebarsExtensions: 'not-an-array' // should be array
+      };
+      await fs.writeJson(configPath, config);
+      
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions' must be an array");
+    });
+
+    it('should reject invalid handlebarsExtension item', async () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        handlebarsExtensions: [
+          { type: 'invalid-type' } // type should be 'inline' or 'file'
+        ]
+      };
+      await fs.writeJson(configPath, config);
+      
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: handlebarsExtension type must be 'inline' or 'file'");
     });
   });
 
@@ -153,31 +249,41 @@ describe('Config Schema Validation', () => {
       const loaded = await ConfigManager.load();
       
       expect(loaded.promptDirs).toContain(path.join(os.homedir(), '.pt/prompts'));
-      expect(loaded.codingTool).toBe('claude');
-      expect(loaded.codingToolArgs).toEqual([]);
-      expect(loaded.codingToolOptions).toEqual({
+      expect(loaded.defaultCmd).toBe('claude');
+      expect(loaded.defaultCmdArgs).toEqual([]);
+      expect(loaded.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue'
       });
-      expect(loaded.version).toBe('2.0.0');
+      expect(loaded.version).toBe('3.0.0');
+      expect(loaded.autoReview).toBe(true);
+      expect(loaded.autoRun).toBe(false);
+      expect(loaded.gitPromptDir).toBe('.git-prompts');
+      expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
     it('should not override existing values with defaults', async () => {
       const config = {
         promptDirs: ['./my-prompts'],
-        codingTool: 'gpt',
-        codingToolArgs: ['--custom'],
-        codingToolOptions: {
+        defaultCmd: 'gpt',
+        defaultCmdArgs: ['--custom'],
+        defaultCmdOptions: {
           'My option?': '--my-flag'
-        }
+        },
+        autoReview: false,
+        autoRun: true,
+        gitPromptDir: '.custom-git-prompts'
       };
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.codingTool).toBe('gpt');
-      expect(loaded.codingToolArgs).toEqual(['--custom']);
-      expect(loaded.codingToolOptions).toEqual({
+      expect(loaded.defaultCmd).toBe('gpt');
+      expect(loaded.defaultCmdArgs).toEqual(['--custom']);
+      expect(loaded.defaultCmdOptions).toEqual({
         'My option?': '--my-flag'
       });
+      expect(loaded.autoReview).toBe(false);
+      expect(loaded.autoRun).toBe(true);
+      expect(loaded.gitPromptDir).toBe('.custom-git-prompts');
     });
   });
 });
@@ -203,7 +309,7 @@ describe('Config Migration', () => {
     await fs.writeJson(configPath, oldConfig);
     
     const loaded = await ConfigManager.load();
-    expect(loaded.version).toBe('2.0.0');
+    expect(loaded.version).toBe('3.0.0');
   });
 
   it('should add version to configs without it', async () => {
@@ -215,7 +321,30 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('2.0.0');
+    expect(saved.version).toBe('3.0.0');
+  });
+
+  it('should migrate old field names to new ones', async () => {
+    const oldConfig = {
+      promptDirs: ['./prompts'],
+      codingTool: 'claude',
+      codingToolArgs: ['--model', 'sonnet'],
+      codingToolOptions: {
+        'Continue?': '--continue'
+      }
+    };
+    await fs.writeJson(configPath, oldConfig);
+    
+    const loaded = await ConfigManager.load();
+    
+    expect(loaded.defaultCmd).toBe('claude');
+    expect(loaded.defaultCmdArgs).toEqual(['--model', 'sonnet']);
+    expect(loaded.defaultCmdOptions).toEqual({
+      'Continue?': '--continue'
+    });
+    expect(loaded.codingTool).toBeUndefined();
+    expect(loaded.codingToolArgs).toBeUndefined();
+    expect(loaded.codingToolOptions).toBeUndefined();
   });
 
   it('should add new default fields during migration', async () => {
@@ -226,11 +355,15 @@ describe('Config Migration', () => {
     
     const loaded = await ConfigManager.load();
     
-    expect(loaded.codingTool).toBe('claude');
-    expect(loaded.codingToolArgs).toEqual([]);
-    expect(loaded.codingToolOptions).toEqual({
+    expect(loaded.defaultCmd).toBe('claude');
+    expect(loaded.defaultCmdArgs).toEqual([]);
+    expect(loaded.defaultCmdOptions).toEqual({
       'Continue with last context?': '--continue'
     });
+    expect(loaded.autoReview).toBe(true);
+    expect(loaded.autoRun).toBe(false);
+    expect(loaded.gitPromptDir).toBe('.git-prompts');
+    expect(loaded.handlebarsExtensions).toEqual([]);
   });
 
   it('should preserve existing fields during migration', async () => {
@@ -252,15 +385,15 @@ describe('Config Migration', () => {
   it('should not migrate configs already at current version', async () => {
     const currentConfig = {
       promptDirs: ['./prompts'],
-      version: '2.0.0',
-      codingTool: 'my-tool'
+      version: '3.0.0',
+      defaultCmd: 'my-tool'
     };
     await fs.writeJson(configPath, currentConfig);
     
     const loaded = await ConfigManager.load();
     
-    expect(loaded.codingTool).toBe('my-tool'); // not overridden
-    expect(loaded.version).toBe('2.0.0');
+    expect(loaded.defaultCmd).toBe('my-tool'); // not overridden
+    expect(loaded.version).toBe('3.0.0');
   });
 
   it('should save migrated config back to disk', async () => {
@@ -272,9 +405,27 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('2.0.0');
-    expect(saved.codingTool).toBe('claude');
-    expect(saved.codingToolArgs).toEqual([]);
-    expect(saved.codingToolOptions).toBeDefined();
+    expect(saved.version).toBe('3.0.0');
+    expect(saved.defaultCmd).toBe('claude');
+    expect(saved.defaultCmdArgs).toEqual([]);
+    expect(saved.defaultCmdOptions).toBeDefined();
+  });
+
+  it('should create backup before migration', async () => {
+    const oldConfig = {
+      promptDirs: ['./prompts'],
+      codingTool: 'claude'
+    };
+    await fs.writeJson(configPath, oldConfig);
+    
+    await ConfigManager.load();
+    
+    // Check backup was created
+    const backupPath = configPath + '.backup';
+    expect(await fs.pathExists(backupPath)).toBe(true);
+    
+    const backup = await fs.readJson(backupPath);
+    expect(backup.codingTool).toBe('claude');
+    expect(backup.version).toBeUndefined();
   });
 });

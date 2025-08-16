@@ -5,6 +5,12 @@ import os from 'os';
 import { getHomePath } from '../utils/platform.js';
 import fs from 'fs-extra';
 import { errors } from '../utils/errors.js';
+import { migrateConfig } from './migration.js';
+
+export interface ConfigResult {
+  config: Config;
+  filepath?: string;
+}
 
 export class ConfigManager {
   private static getExplorer() {
@@ -22,6 +28,11 @@ export class ConfigManager {
   }
 
   static async load(startDir?: string): Promise<Config> {
+    const result = await this.loadWithPath(startDir);
+    return result.config;
+  }
+
+  static async loadWithPath(startDir?: string): Promise<ConfigResult> {
     const searchFrom = startDir || process.cwd();
     const explorer = this.getExplorer();
 
@@ -34,7 +45,10 @@ export class ConfigManager {
         promptDirs: [path.join(os.homedir(), '.pt/prompts')],
         ...DEFAULT_CONFIG
       };
-      return this.expandPaths(defaultConfig);
+      return {
+        config: this.expandPaths(defaultConfig),
+        filepath: undefined
+      };
     }
 
     // Validate the loaded config
@@ -74,7 +88,10 @@ export class ConfigManager {
     const merged = this.mergeConfigs(configs);
 
     // Expand paths
-    return this.expandPaths(merged);
+    return {
+      config: this.expandPaths(merged),
+      filepath: result.filepath
+    };
   }
 
   private static validateConfig(config: unknown): void {
@@ -90,20 +107,56 @@ export class ConfigManager {
       throw errors.invalidConfig('annotationDir', 'a string path', cfg.annotationDir);
     }
 
-    // Validate codingTool
+    // Validate defaultCmd (and legacy codingTool)
+    if (cfg.defaultCmd !== undefined && typeof cfg.defaultCmd !== 'string') {
+      throw errors.invalidConfig('defaultCmd', 'a string', cfg.defaultCmd);
+    }
     if (cfg.codingTool !== undefined && typeof cfg.codingTool !== 'string') {
       throw errors.invalidConfig('codingTool', 'a string', cfg.codingTool);
     }
 
-    // Validate codingToolArgs
+    // Validate defaultCmdArgs (and legacy codingToolArgs)
+    if (cfg.defaultCmdArgs !== undefined && !Array.isArray(cfg.defaultCmdArgs)) {
+      throw errors.invalidConfig('defaultCmdArgs', 'an array of strings', cfg.defaultCmdArgs);
+    }
     if (cfg.codingToolArgs !== undefined && !Array.isArray(cfg.codingToolArgs)) {
       throw errors.invalidConfig('codingToolArgs', 'an array of strings', cfg.codingToolArgs);
     }
 
-    // Validate codingToolOptions
+    // Validate defaultCmdOptions (and legacy codingToolOptions)
+    if (cfg.defaultCmdOptions !== undefined && 
+        (typeof cfg.defaultCmdOptions !== 'object' || Array.isArray(cfg.defaultCmdOptions))) {
+      throw errors.invalidConfig('defaultCmdOptions', 'an object', cfg.defaultCmdOptions);
+    }
     if (cfg.codingToolOptions !== undefined && 
         (typeof cfg.codingToolOptions !== 'object' || Array.isArray(cfg.codingToolOptions))) {
       throw errors.invalidConfig('codingToolOptions', 'an object', cfg.codingToolOptions);
+    }
+
+    // Validate new fields
+    if (cfg.autoReview !== undefined && typeof cfg.autoReview !== 'boolean') {
+      throw errors.invalidConfig('autoReview', 'a boolean', cfg.autoReview);
+    }
+
+    if (cfg.autoRun !== undefined && typeof cfg.autoRun !== 'boolean') {
+      throw errors.invalidConfig('autoRun', 'a boolean', cfg.autoRun);
+    }
+
+    if (cfg.gitPromptDir !== undefined && typeof cfg.gitPromptDir !== 'string') {
+      throw errors.invalidConfig('gitPromptDir', 'a string path', cfg.gitPromptDir);
+    }
+
+    if (cfg.handlebarsExtensions !== undefined && !Array.isArray(cfg.handlebarsExtensions)) {
+      throw errors.invalidConfig('handlebarsExtensions', 'an array', cfg.handlebarsExtensions);
+    }
+
+    // Validate handlebarsExtensions items
+    if (Array.isArray(cfg.handlebarsExtensions)) {
+      for (const ext of cfg.handlebarsExtensions) {
+        if (typeof ext !== 'object' || !ext || !['inline', 'file'].includes(ext.type)) {
+          throw new Error("Configuration error: handlebarsExtension type must be 'inline' or 'file'");
+        }
+      }
     }
   }
 
@@ -111,25 +164,22 @@ export class ConfigManager {
     const cfg = config as Partial<Config>;
     
     // Check if migration is needed
-    if (!cfg.version || cfg.version !== '2.0.0') {
-      // Migrate to version 2.0.0
-      const migrated: Config = {
-        ...cfg,
-        ...DEFAULT_CONFIG,
-        // Preserve existing values
-        promptDirs: cfg.promptDirs || [path.join(os.homedir(), '.pt/prompts')],
-        historyDir: cfg.historyDir,
-        annotationDir: cfg.annotationDir,
-        helpers: cfg.helpers,
-        // Override with existing values if present
-        codingTool: cfg.codingTool || DEFAULT_CONFIG.codingTool,
-        codingToolArgs: cfg.codingToolArgs || DEFAULT_CONFIG.codingToolArgs,
-        codingToolOptions: cfg.codingToolOptions || DEFAULT_CONFIG.codingToolOptions,
-        version: '2.0.0'
-      };
+    if (migrateConfig.needsMigration(cfg)) {
+      // Create backup before migration
+      if (filepath && await fs.pathExists(filepath)) {
+        try {
+          await migrateConfig.createBackup(filepath);
+        } catch (error) {
+          // Backup failed, but continue with migration
+          console.warn(`Warning: Could not create backup of config file: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
+      // Apply migration
+      const migrated = migrateConfig(cfg);
 
       // Save migrated config back to disk
-      if (filepath.endsWith('.json')) {
+      if (filepath && filepath.endsWith('.json')) {
         await fs.writeJson(filepath, migrated, { spaces: 2 });
       }
 
@@ -163,6 +213,36 @@ export class ConfigManager {
         merged.annotationDir = config.annotationDir;
       }
 
+      // Merge new field names
+      if (config.defaultCmd) {
+        merged.defaultCmd = config.defaultCmd;
+      }
+
+      if (config.defaultCmdArgs) {
+        merged.defaultCmdArgs = config.defaultCmdArgs;
+      }
+
+      if (config.defaultCmdOptions) {
+        merged.defaultCmdOptions = config.defaultCmdOptions;
+      }
+
+      if (config.autoReview !== undefined) {
+        merged.autoReview = config.autoReview;
+      }
+
+      if (config.autoRun !== undefined) {
+        merged.autoRun = config.autoRun;
+      }
+
+      if (config.gitPromptDir) {
+        merged.gitPromptDir = config.gitPromptDir;
+      }
+
+      if (config.handlebarsExtensions) {
+        merged.handlebarsExtensions = config.handlebarsExtensions;
+      }
+
+      // Also merge legacy fields if present (will be migrated later)
       if (config.codingTool) {
         merged.codingTool = config.codingTool;
       }
@@ -193,14 +273,26 @@ export class ConfigManager {
     }
 
     // Apply defaults for new fields if not present
-    if (!merged.codingTool && DEFAULT_CONFIG.codingTool) {
-      merged.codingTool = DEFAULT_CONFIG.codingTool;
+    if (!merged.defaultCmd && DEFAULT_CONFIG.defaultCmd) {
+      merged.defaultCmd = DEFAULT_CONFIG.defaultCmd;
     }
-    if (!merged.codingToolArgs && DEFAULT_CONFIG.codingToolArgs) {
-      merged.codingToolArgs = DEFAULT_CONFIG.codingToolArgs;
+    if (!merged.defaultCmdArgs && DEFAULT_CONFIG.defaultCmdArgs) {
+      merged.defaultCmdArgs = DEFAULT_CONFIG.defaultCmdArgs;
     }
-    if (!merged.codingToolOptions && DEFAULT_CONFIG.codingToolOptions) {
-      merged.codingToolOptions = DEFAULT_CONFIG.codingToolOptions;
+    if (!merged.defaultCmdOptions && DEFAULT_CONFIG.defaultCmdOptions) {
+      merged.defaultCmdOptions = DEFAULT_CONFIG.defaultCmdOptions;
+    }
+    if (merged.autoReview === undefined && DEFAULT_CONFIG.autoReview !== undefined) {
+      merged.autoReview = DEFAULT_CONFIG.autoReview;
+    }
+    if (merged.autoRun === undefined && DEFAULT_CONFIG.autoRun !== undefined) {
+      merged.autoRun = DEFAULT_CONFIG.autoRun;
+    }
+    if (!merged.gitPromptDir && DEFAULT_CONFIG.gitPromptDir) {
+      merged.gitPromptDir = DEFAULT_CONFIG.gitPromptDir;
+    }
+    if (!merged.handlebarsExtensions && DEFAULT_CONFIG.handlebarsExtensions) {
+      merged.handlebarsExtensions = DEFAULT_CONFIG.handlebarsExtensions;
     }
     if (!merged.version && DEFAULT_CONFIG.version) {
       merged.version = DEFAULT_CONFIG.version;
@@ -236,6 +328,16 @@ export class ConfigManager {
           expanded.helpers[name].path = this.expandPath(helper.path);
         }
       }
+    }
+
+    // Expand handlebars extension paths
+    if (config.handlebarsExtensions) {
+      expanded.handlebarsExtensions = config.handlebarsExtensions.map(ext => {
+        if (ext.type === 'file' && ext.path) {
+          return { ...ext, path: this.expandPath(ext.path) };
+        }
+        return ext;
+      });
     }
 
     return expanded;

@@ -3,19 +3,22 @@ import { input, select, confirm, editor, checkbox, password } from '@inquirer/pr
 import { TemplateContext } from '../template-context.js';
 import crypto from 'crypto';
 import os from 'os';
+import { fileSearchPrompt } from '../../prompts/input-types/file-search-prompt.js';
+import { reviewFilePrompt } from '../../prompts/input-types/review-file-prompt.js';
+import { DateFormats } from '../../utils/date-formatter.js';
 
 export function registerHelpers(handlebars: typeof Handlebars, context: TemplateContext) {
   // Static helpers
   handlebars.registerHelper('date', () => {
-    return new Date().toLocaleDateString();
+    return DateFormats.LOCAL_DATE(new Date());
   });
 
   handlebars.registerHelper('time', () => {
-    return new Date().toLocaleTimeString();
+    return DateFormats.LOCAL_TIME(new Date());
   });
 
   handlebars.registerHelper('datetime', () => {
-    return new Date().toLocaleString();
+    return DateFormats.LOCAL_DATETIME(new Date());
   });
 
   handlebars.registerHelper('timestamp', () => {
@@ -46,6 +49,7 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
       // Parse arguments
       let name: string;
       let message: string | undefined;
+
 
       if (typeof args[0] === 'string') {
         name = args[0];
@@ -83,6 +87,12 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
             };
           }
         }
+        // Add file-specific properties
+        if (type === 'file' || type === 'reviewFile') {
+          if (varDef.basePath) promptConfig.basePath = varDef.basePath;
+          if (varDef.filter) promptConfig.filter = varDef.filter;
+          if (varDef.autoReview !== undefined) promptConfig.autoReview = varDef.autoReview;
+        }
       }
 
       // Handle choices from helper arguments
@@ -111,6 +121,8 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
   createInputHelper('confirm', confirm);
   createInputHelper('editor', editor);
   createInputHelper('password', password);
+  createInputHelper('file', fileSearchPrompt);
+  createInputHelper('reviewFile', reviewFilePrompt);
 }
 
 function generateDefaultMessage(name: string, type: string): string {
@@ -131,6 +143,8 @@ function generateDefaultMessage(name: string, type: string): string {
       confirm: '?',
       editor: ' (press enter to open editor):',
       password: ':',
+      file: ':',
+      reviewFile: ':',
     }[type] || ':';
 
   return `${capitalized}${suffix}`;

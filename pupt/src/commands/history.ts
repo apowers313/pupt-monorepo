@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import { ConfigManager } from '../config/config-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
 import { errors } from '../utils/errors.js';
-import ora from 'ora';
 
 interface HistoryOptions {
   limit?: number;
@@ -36,9 +35,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
   }
 
   // Get history entries
-  const spinner = ora('Loading history...').start();
   const entries = await historyManager.listHistory(limit);
-  spinner.stop();
 
   // Handle empty history
   if (entries.length === 0) {
@@ -69,6 +66,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
 
 function formatDate(timestamp: string): string {
   const date = new Date(timestamp);
+  // For consistency, we'll create a custom format similar to the original
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
   const day = String(date.getUTCDate()).padStart(2, '0');

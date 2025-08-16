@@ -7,10 +7,12 @@ import { spawn } from 'child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { errors, PromptToolError } from '../utils/errors.js';
-import ora from 'ora';
+import * as path from 'path';
 
 export interface RunOptions {
   historyIndex?: number;
+  prompt?: string;
+  skipPromptSelection?: boolean;
 }
 
 interface ParsedArgs {
@@ -44,7 +46,9 @@ export function parseRunArgs(args: string[]): ParsedArgs {
 
 export async function runCommand(args: string[], options: RunOptions): Promise<void> {
   // Load configuration
-  const config = await ConfigManager.load();
+  const configResult = await ConfigManager.loadWithPath();
+  const config = configResult.config;
+  const configDir = configResult.filepath ? path.dirname(configResult.filepath) : undefined;
   
   // Parse arguments
   const { tool, toolArgs, extraArgs } = parseRunArgs(args);
@@ -57,10 +61,10 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     // Explicit tool specified
     finalTool = tool;
     finalArgs = [...toolArgs, ...extraArgs];
-  } else if (config.codingTool) {
-    // Use configured tool
-    finalTool = config.codingTool;
-    finalArgs = [...(config.codingToolArgs || []), ...extraArgs];
+  } else if ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) {
+    // Use configured tool (prefer new field name)
+    finalTool = (config.defaultCmd && config.defaultCmd.trim() !== '' ? config.defaultCmd : config.codingTool)!;
+    finalArgs = [...(config.defaultCmdArgs || config.codingToolArgs || []), ...extraArgs];
   } else {
     throw new PromptToolError(
       'No tool specified',
@@ -75,9 +79,19 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   }
   
   let promptResult: string;
+  let templateInfo: {
+    templatePath: string;
+    templateContent: string;
+    variables: Map<string, unknown>;
+    finalPrompt: string;
+    title?: string;
+  } | undefined;
+  let exitCode: number | null = null;
   
-  // Check if using history
-  if (options.historyIndex) {
+  // Check if using provided prompt (from autoRun)
+  if (options.prompt && options.skipPromptSelection) {
+    promptResult = options.prompt;
+  } else if (options.historyIndex) {
     // Validate history is enabled
     if (!config.historyDir) {
       throw errors.featureNotEnabled('History tracking', [
@@ -88,10 +102,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     }
     
     // Load prompt from history
-    const historySpinner = ora('Loading from history...').start();
     const historyManager = new HistoryManager(config.historyDir);
     const historyEntry = await historyManager.getHistoryEntry(options.historyIndex);
-    historySpinner.stop();
     
     if (!historyEntry) {
       const entries = await historyManager.listHistory();
@@ -105,10 +117,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     promptResult = historyEntry.finalPrompt;
   } else {
     // Normal flow - discover and process prompts
-    const discoverSpinner = ora('Discovering prompts...').start();
     const promptManager = new PromptManager(config.promptDirs);
     const prompts = await promptManager.discoverPrompts();
-    discoverSpinner.stop();
     
     if (prompts.length === 0) {
       throw errors.noPromptsFound(config.promptDirs);
@@ -122,28 +132,25 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     console.log(chalk.dim(`Location: ${selected.path}\n`));
     
     // Process template
-    const engine = new TemplateEngine();
+    const engine = new TemplateEngine(config, configDir);
     promptResult = await engine.processTemplate(selected.content, selected);
     
-    // Save to history if configured
-    if (config.historyDir) {
-      const historyManager = new HistoryManager(config.historyDir);
-      await historyManager.savePrompt({
-        templatePath: selected.path,
-        templateContent: selected.content,
-        variables: engine.getContext().getMaskedValues(),
-        finalPrompt: promptResult,
-        title: selected.title
-      });
-    }
+    // Store template info for history saving after successful execution
+    templateInfo = {
+      templatePath: selected.path,
+      templateContent: selected.content,
+      variables: engine.getContext().getMaskedValues(),
+      finalPrompt: promptResult,
+      title: selected.title
+    };
   }
   
   // Handle coding tool options
-  if (!tool && config.codingTool && config.codingToolOptions) {
+  if (!tool && ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) && (config.defaultCmdOptions || config.codingToolOptions) && !options.skipPromptSelection) {
     // Prompt for each option
     const selectedOptions: string[] = [];
     
-    for (const [question, arg] of Object.entries(config.codingToolOptions)) {
+    for (const [question, arg] of Object.entries(config.defaultCmdOptions || config.codingToolOptions || {})) {
       const answer = await confirm({
         message: question,
         default: false
@@ -156,7 +163,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     
     // Insert options before extra args
     finalArgs = [
-      ...(config.codingToolArgs || []),
+      ...(config.defaultCmdArgs || config.codingToolArgs || []),
       ...selectedOptions,
       ...extraArgs
     ];
@@ -166,13 +173,23 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   console.log(chalk.blue(`\nRunning: ${finalTool} ${finalArgs.join(' ')}`));
   console.log(chalk.dim('─'.repeat(60)));
   
-  const executeSpinner = ora('Executing tool...').start();
-  executeSpinner.stop(); // Stop immediately as tool will show output
+  try {
+    exitCode = await executeTool(finalTool, finalArgs, promptResult);
+  } finally {
+    // Save to history regardless of exit code
+    if (config.historyDir && templateInfo && promptResult.trim().length > 0) {
+      const historyManager = new HistoryManager(config.historyDir);
+      await historyManager.savePrompt(templateInfo);
+    }
+  }
   
-  await executeTool(finalTool, finalArgs, promptResult);
+  // Exit with the same code as the tool
+  if (exitCode !== null && exitCode !== 0) {
+    process.exit(exitCode);
+  }
 }
 
-async function executeTool(tool: string, args: string[], prompt: string): Promise<void> {
+async function executeTool(tool: string, args: string[], prompt: string): Promise<number | null> {
   return new Promise((resolve, reject) => {
     const child = spawn(tool, args, {
       stdio: ['pipe', 'inherit', 'inherit']
@@ -193,18 +210,31 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
     });
     
     child.on('close', (code) => {
-      if (code !== null) {
-        process.exit(code);
-      }
-      resolve();
+      resolve(code);
     });
     
     // Write prompt to stdin
     try {
-      child.stdin?.write(prompt);
-      child.stdin?.end();
+      if (child.stdin) {
+        // Only add error handler if stdin has on method (not mocked in tests)
+        if (typeof child.stdin.on === 'function') {
+          child.stdin.on('error', (error) => {
+            // Ignore EPIPE errors which happen when the tool closes stdin early
+            const errorCode = (error as NodeJS.ErrnoException).code;
+            if (errorCode !== 'EPIPE') {
+              console.error('stdin error:', error);
+            }
+          });
+        }
+        child.stdin.write(prompt);
+        child.stdin.end();
+      }
     } catch (error) {
-      reject(new Error(`Failed to write prompt to tool: ${error instanceof Error ? error.message : String(error)}`));
+      // Ignore EPIPE errors which happen when the tool closes stdin early
+      const errorCode = (error as NodeJS.ErrnoException).code;
+      if (errorCode !== 'EPIPE') {
+        reject(new Error(`Failed to write prompt to tool: ${error instanceof Error ? error.message : String(error)}`));
+      }
     }
   });
 }

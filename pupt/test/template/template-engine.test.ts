@@ -106,4 +106,37 @@ Path: /src/{{projectName}}/index.ts
     expect(context.get('apiKey')).toBe('secret-key-123');
     expect(context.getMasked('apiKey')).toBe('***');
   });
+
+  it('should handle raw blocks to preserve handlebars syntax', async () => {
+    const template = `
+This is how to use a custom helper: {{#raw}}{{customFile "example.txt"}}{{/raw}}
+And here's a real input helper: {{input "name" "Enter name:"}}
+More examples: {{#raw}}{{helper1}} and {{helper2 "arg"}}{{/raw}}
+    `.trim();
+
+    vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('John');
+
+    const result = await engine.processTemplate(template, {});
+
+    expect(result).toBe(`
+This is how to use a custom helper: {{customFile "example.txt"}}
+And here's a real input helper: John
+More examples: {{helper1}} and {{helper2 "arg"}}
+    `.trim());
+  });
+
+  it('should handle raw blocks in documentation', async () => {
+    // This test ensures that raw blocks preserve handlebars syntax
+    const template = 'Documentation: {{#raw}}{{myHelper "readme.md"}}{{/raw}} explains how to use {{input "tool" "Which tool?"}}';
+    
+    // Reset mocks and engine
+    vi.clearAllMocks();
+    engine = new TemplateEngine();
+    vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('prompt-tool');
+
+    const result = await engine.processTemplate(template, {});
+
+    expect(result).toBe('Documentation: {{myHelper "readme.md"}} explains how to use prompt-tool');
+    expect(inquirerPrompts.input).toHaveBeenCalledTimes(1); // Only called for the real helper
+  });
 });

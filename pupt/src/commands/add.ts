@@ -4,8 +4,9 @@ import fs from 'fs-extra';
 import path from 'path';
 import { execSync } from 'child_process';
 import chalk from 'chalk';
+import { editorLauncher } from '../utils/editor.js';
 import { errors, PromptToolError } from '../utils/errors.js';
-import ora from 'ora';
+import { DateFormats } from '../utils/date-formatter.js';
 
 export async function addCommand(): Promise<void> {
   // Load configuration
@@ -60,7 +61,7 @@ export async function addCommand(): Promise<void> {
 
   // Create prompt content
   const date = new Date();
-  const dateStr = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}`;
+  const dateStr = DateFormats.YYYYMMDD(date);
   
   const content = `---
 title: ${title}
@@ -73,12 +74,10 @@ labels: [${labels.join(', ')}]
 `;
 
   // Write file
-  const writeSpinner = ora('Creating prompt file...').start();
   try {
     await fs.writeFile(filepath, content);
-    writeSpinner.succeed(chalk.green('Created prompt: ') + filepath);
+    console.log(chalk.green('✅ Created prompt: ') + filepath);
   } catch (error) {
-    writeSpinner.fail();
     const err = error as NodeJS.ErrnoException;
     if (err.code === 'EACCES') {
       throw errors.permissionDenied(targetDir);
@@ -160,38 +159,9 @@ async function generateFilename(title: string, directory: string): Promise<strin
 }
 
 async function openInEditor(filepath: string): Promise<void> {
-  const spinner = ora('Opening in editor...').start();
+  const editor = await editorLauncher.findEditor();
   
-  // Check environment variables first
-  const envEditor = process.env.VISUAL || process.env.EDITOR;
-  
-  if (envEditor) {
-    try {
-      execSync(`${envEditor} "${filepath}"`, { stdio: 'inherit' });
-      spinner.succeed('Opened in editor');
-      return;
-    } catch {
-      spinner.fail();
-      // Fall through to try other editors
-    }
-  }
-  
-  // Try common editors
-  const editors = ['code', 'vim', 'nano', 'emacs'];
-  let editorPath: string | null = null;
-  
-  for (const editor of editors) {
-    try {
-      execSync(`which ${editor}`, { encoding: 'utf8' });
-      editorPath = editor;
-      break;
-    } catch {
-      // Editor not found, try next
-    }
-  }
-
-  if (!editorPath) {
-    spinner.fail();
+  if (!editor) {
     console.log(errors.noEditor().message);
     console.log(chalk.yellow('\n📝 Open the file manually:'), filepath);
     return;
@@ -199,10 +169,8 @@ async function openInEditor(filepath: string): Promise<void> {
 
   // Open the file
   try {
-    execSync(`${editorPath} "${filepath}"`, { stdio: 'inherit' });
-    spinner.succeed('Opened in editor');
+    await editorLauncher.openInEditor(editor, filepath);
   } catch {
-    spinner.fail();
     console.log(chalk.yellow('⚠️  Failed to open editor'));
     console.log(chalk.yellow('📝 Open the file manually:'), filepath);
   }

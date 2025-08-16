@@ -4,16 +4,26 @@ import { ConfigManager } from '../../src/config/config-manager.js';
 import { PromptManager } from '../../src/prompts/prompt-manager.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { spawn } from 'child_process';
+import { promisify } from 'util';
 import chalk from 'chalk';
-import ora from 'ora';
+
+// Use vi.hoisted to ensure mocks are available before imports
+const { mockExecFileAsync } = vi.hoisted(() => {
+  return {
+    mockExecFileAsync: vi.fn()
+  };
+});
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/prompts/prompt-manager.js');
 vi.mock('../../src/ui/interactive-search.js');
 vi.mock('child_process', () => ({
-  spawn: vi.fn()
+  spawn: vi.fn(),
+  execFile: vi.fn()
 }));
-vi.mock('ora');
+vi.mock('util', () => ({
+  promisify: vi.fn(() => mockExecFileAsync)
+}));
 
 describe('Edit Command', () => {
   let consoleLogSpy: any;
@@ -22,22 +32,11 @@ describe('Edit Command', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockExecFileAsync.mockReset();
+    mockExecFileAsync.mockResolvedValue(undefined);
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     process.env = { ...originalEnv };
-    
-    // Mock ora spinner
-    const mockSpinner = {
-      start: vi.fn().mockReturnThis(),
-      stop: vi.fn().mockReturnThis(),
-      succeed: vi.fn((text) => {
-        // Capture success messages by calling console.log
-        if (text) consoleLogSpy(text);
-        return mockSpinner;
-      }),
-      fail: vi.fn().mockReturnThis()
-    };
-    vi.mocked(ora).mockReturnValue(mockSpinner as any);
   });
 
   afterEach(() => {
@@ -89,8 +88,9 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -157,14 +157,15 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { stdio: 'inherit' });
+      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
     });
 
     it('should fall back to $EDITOR if $VISUAL not set', async () => {
@@ -173,59 +174,64 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('nano', ['/prompts/test.md'], { stdio: 'inherit' });
+      expect(spawn).toHaveBeenCalledWith('nano', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
     });
 
     it('should try common editors if environment variables not set', async () => {
       delete process.env.VISUAL;
       delete process.env.EDITOR;
       
-      const mockSpawn = {
-        on: vi.fn((event, callback) => {
-          if (event === 'error') {
-            // First attempts fail
-            callback(new Error('not found'));
-          }
-        })
-      };
-      
-      // Make code work
-      vi.mocked(spawn)
-        .mockReturnValueOnce(mockSpawn as any) // vim fails
-        .mockReturnValueOnce(mockSpawn as any) // nano fails
-        .mockReturnValueOnce({
-          on: vi.fn((event, callback) => {
-            if (event === 'close') callback(0);
-          })
-        } as any); // code succeeds
-      
-      await editCommand();
-      
-      expect(spawn).toHaveBeenCalledWith('vim', expect.any(Array), expect.any(Object));
-      expect(spawn).toHaveBeenCalledWith('nano', expect.any(Array), expect.any(Object));
-      expect(spawn).toHaveBeenCalledWith('code', expect.any(Array), expect.any(Object));
-    });
-
-    it('should show error when no editor found', async () => {
-      delete process.env.VISUAL;
-      delete process.env.EDITOR;
+      // Mock execFileAsync to simulate checking for editor availability
+      // The editor launcher checks for editors in this order: code, vim, nano, emacs, subl, atom, gedit, notepad
+      mockExecFileAsync
+        .mockResolvedValueOnce(undefined); // code is available
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'error') {
-            callback(new Error('not found'));
-          }
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
+      
+      await editCommand();
+      
+      // Should have tried to spawn code (the first available editor)
+      expect(spawn).toHaveBeenCalledWith('code', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
+    });
+
+    it('should show error when no editor found', async () => {
+      const mockPrompts = [
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+      ];
+      
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./prompts']
+      } as any);
+      
+      vi.mocked(PromptManager).mockImplementation(() => ({
+        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      } as any));
+      
+      vi.mocked(InteractiveSearch).mockImplementation(() => ({
+        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+      } as any));
+      
+      delete process.env.VISUAL;
+      delete process.env.EDITOR;
+      
+      // Mock all editor checks to fail
+      mockExecFileAsync.mockReset();
+      mockExecFileAsync.mockRejectedValue(new Error('not found'));
       
       await expect(editCommand()).rejects.toThrow('No editor configured');
     });
@@ -255,22 +261,24 @@ describe('Edit Command', () => {
     it('should spawn editor with correct arguments', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { stdio: 'inherit' });
+      expect(spawn).toHaveBeenCalledWith('vim', ['/prompts/test.md'], { detached: true, stdio: 'ignore' });
     });
 
     it('should wait for editor to close', async () => {
       let closeCallback: any;
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') closeCallback = callback;
-        })
+          if (event === 'exit') closeCallback = callback;
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -290,32 +298,27 @@ describe('Edit Command', () => {
       }
       await promise;
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Editor closed')
-      );
+      // The edit command doesn't print any messages when editor closes
     });
 
     it('should handle non-zero exit codes', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(1); // Non-zero exit
-        })
+          if (event === 'exit') callback(1); // Non-zero exit
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
-      await editCommand();
-      
-      // Current implementation shows "Editor closed" regardless of exit code
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Editor closed')
-      );
+      await expect(editCommand()).rejects.toThrow('Failed to open editor: Editor exited with code 1');
     });
 
     it('should handle editor spawn errors', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
           if (event === 'error') callback(new Error('spawn failed'));
-        })
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
@@ -325,17 +328,15 @@ describe('Edit Command', () => {
     it('should show opening message', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
-        })
+          if (event === 'exit') callback(0);
+        }),
+        unref: vi.fn()
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await editCommand();
       
-      // Spinner messages are handled by ora, final message is "Editor closed"
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Editor closed')
-      );
+      // The edit command doesn't print any messages when opening editor
     });
   });
 
@@ -362,20 +363,33 @@ describe('Edit Command', () => {
     });
 
     it('should include notepad on Windows', async () => {
+      const mockPrompts = [
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+      ];
+      
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./prompts']
+      } as any);
+      
+      vi.mocked(PromptManager).mockImplementation(() => ({
+        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      } as any));
+      
+      vi.mocked(InteractiveSearch).mockImplementation(() => ({
+        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+      } as any));
+      
       Object.defineProperty(process, 'platform', {
         value: 'win32',
         configurable: true
       });
       
-      const mockSpawn = {
-        on: vi.fn((event, callback) => {
-          if (event === 'error') {
-            callback(new Error('not found'));
-          }
-        })
-      };
+      delete process.env.VISUAL;
+      delete process.env.EDITOR;
       
-      vi.mocked(spawn).mockReturnValue(mockSpawn as any);
+      // Mock all editor availability checks to fail
+      mockExecFileAsync.mockReset();
+      mockExecFileAsync.mockRejectedValue(new Error('not found'));
       
       try {
         await editCommand();
@@ -383,7 +397,8 @@ describe('Edit Command', () => {
         // Expected to fail
       }
       
-      expect(spawn).toHaveBeenCalledWith('notepad', expect.any(Array), expect.any(Object));
+      // Should have checked for notepad availability on Windows
+      expect(mockExecFileAsync).toHaveBeenCalledWith('where', ['notepad']);
       
       // Reset platform
       Object.defineProperty(process, 'platform', {

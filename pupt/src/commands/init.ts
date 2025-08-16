@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
+import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 
 export async function initCommand(): Promise<void> {
   // Check for existing config
@@ -71,6 +72,28 @@ export async function initCommand(): Promise<void> {
 
   // Save config
   await fs.writeJson(configPath, config, { spaces: 2 });
+
+  // Add to .gitignore if in git repository
+  if (await isGitRepository()) {
+    const entriesToIgnore: string[] = [];
+    
+    // Add config backup file
+    entriesToIgnore.push('.ptrc.json.backup');
+    
+    // Add history directory if it's a local directory
+    if (historyDir && !path.isAbsolute(historyDir) && !historyDir.startsWith('~')) {
+      entriesToIgnore.push(historyDir);
+    }
+    
+    // Add git prompts directory
+    const gitPromptDir = config.gitPromptDir || DEFAULT_CONFIG.gitPromptDir || '.git-prompts';
+    entriesToIgnore.push(gitPromptDir);
+    
+    // Add all entries to .gitignore
+    for (const entry of entriesToIgnore) {
+      await addToGitignore(entry);
+    }
+  }
 
   console.log(chalk.green('✓ Configuration created successfully!'));
 }

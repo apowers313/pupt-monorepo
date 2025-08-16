@@ -40,13 +40,14 @@ variables:
 
 **Implementation Details**:
 - Use `fs.readdir` with recursive option for file listing
+- Sort files by modification time (most recent first) using `fs.stat`
 - Implement trie data structure for efficient prefix matching
 - Handle special characters and spaces in filenames
 - Support both relative and absolute paths
 - Cache directory contents for performance
 
 **User Interaction Flow**:
-1. Prompt displays current directory contents
+1. Prompt displays current directory contents (ordered by modification time, newest first)
 2. User types characters to filter files
 3. Tab completes common prefix among matches
 4. Enter selects file, `/` navigates into directory
@@ -113,7 +114,7 @@ variables:
   "historyDir": "./.pthistory",
   "annotationDir": "./.pthistory",
   "defaultCmd": "claude",
-  "defaultCmdArgs": [],
+  "defaultCmdArgs": ["-p", "{{prompt}}"],
   "defaultCmdOptions": {
     "Continue with last context?": "--continue"
   },
@@ -124,6 +125,24 @@ variables:
   "version": "3.0.0"
 }
 ```
+
+**Template Substitution**:
+- The `defaultCmdArgs` array supports template substitution using Handlebars syntax
+- Available template variables:
+  - `{{prompt}}` - The generated prompt content
+  - `{{promptPath}}` - Path to the temporary prompt file
+  - `{{timestamp}}` - Current timestamp
+- Example configurations:
+  ```json
+  // Pass prompt as argument
+  "defaultCmdArgs": ["-p", "{{prompt}}"]
+  
+  // Pass prompt file path
+  "defaultCmdArgs": ["--prompt-file", "{{promptPath}}"]
+  
+  // Custom format
+  "defaultCmdArgs": ["--input", "{{prompt}}", "--timestamp", "{{timestamp}}"]
+  ```
 
 ### 4. `pt install` Command
 
@@ -138,12 +157,12 @@ pt install @company/prompt-collection
 ```
 
 **Git Installation Flow**:
-1. Detect git URL (starts with http:// or https://)
+1. Detect git URL (starts with http://, https://, git://, or git@)
 2. Determine installation directory:
    - Use `gitPromptDir` from config (default: `.git-prompts`)
    - If relative path and in git repo, use git root
-3. Clone with depth 1: `git clone --depth 1 <url> <dir>`
-4. Add to .gitignore if in git repository
+3. Clone with depth 1 using simple-git: `git.clone(url, dir, ['--depth', '1'])`
+4. Add to .gitignore if in git repository (check with `git.checkIsRepo()`)
 5. Add `<gitPromptDir>/<repo-name>/prompts` to promptDirs in local config
 
 **NPM Installation Flow**:
@@ -156,10 +175,11 @@ pt install @company/prompt-collection
    - Default: `node_modules/<package>/prompts`
 
 **Implementation Details**:
-- Use `child_process.exec` for git/npm commands
+- Use `simple-git` library for all git operations
+- Use `child_process.exec` for npm commands only
 - Parse package.json to find prompt directory
 - Handle nested gitPromptDir paths (create recursively)
-- Detect git repository root using `git rev-parse --show-toplevel`
+- Detect git repository root using `simple-git().revparse(['--show-toplevel'])`
 - Update local config file, not global
 
 ### 5. Handlebars Extensions
@@ -225,8 +245,8 @@ module.exports = function(Handlebars) {
    - When creating gitPromptDir in git repository
 
 **Implementation Details**:
-- Check if directory is git-controlled: `git rev-parse --git-dir`
-- Find .gitignore location (git root)
+- Check if directory is git-controlled: `git.checkIsRepo()`
+- Find .gitignore location using `git.revparse(['--show-toplevel'])`
 - Check if entry already exists before adding
 - Add entries with descriptive comments:
   ```
@@ -341,17 +361,36 @@ Low Priority:
 - Search result context extraction
 
 ### Integration Tests
-- Full `pt install` flow for both git and npm
+- Full `pt install` flow for both git and npm (with mocked simple-git)
 - File input with special characters
 - Editor integration for reviewFile
 - Handlebars extension loading
 - .gitignore modification
 
+### Git Testing Strategy
+To avoid slow and flaky tests that depend on actual git operations:
+- All git operations will use the `simple-git` library
+- Unit tests will mock the simple-git instance completely
+- Integration tests will use a mocked simple-git to simulate git operations
+- Mock responses will simulate successful clones, repo checks, and errors
+- This approach ensures fast, reliable tests without network or file system delays
+
+Example mock setup:
+```javascript
+vi.mock('simple-git', () => ({
+  default: () => ({
+    clone: vi.fn().mockResolvedValue(undefined),
+    checkIsRepo: vi.fn().mockResolvedValue(true),
+    revparse: vi.fn().mockResolvedValue('/path/to/repo')
+  })
+}));
+```
+
 ### Cross-Platform Testing
 - File path handling (Windows vs Unix)
 - Editor detection across OS
 - Timezone handling
-- Git command availability
+- Git command availability (handled by simple-git)
 
 ## Security Considerations
 

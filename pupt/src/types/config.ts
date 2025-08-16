@@ -2,11 +2,19 @@ export interface Config {
   promptDirs: string[];
   historyDir?: string;
   annotationDir?: string;
+  defaultCmd?: string;
+  defaultCmdArgs?: string[];
+  defaultCmdOptions?: Record<string, string>;
+  autoReview?: boolean;
+  autoRun?: boolean;
+  gitPromptDir?: string;
+  handlebarsExtensions?: HandlebarsExtensionConfig[];
+  version?: string;
+  helpers?: Record<string, HelperConfig>;
+  // Legacy fields for backward compatibility (will be migrated)
   codingTool?: string;
   codingToolArgs?: string[];
   codingToolOptions?: Record<string, string>;
-  version?: string;
-  helpers?: Record<string, HelperConfig>;
 }
 
 export interface HelperConfig {
@@ -15,11 +23,21 @@ export interface HelperConfig {
   path?: string;
 }
 
+export interface HandlebarsExtensionConfig {
+  type: 'inline' | 'file';
+  value?: string;
+  path?: string;
+}
+
 export const DEFAULT_CONFIG: Partial<Config> = {
-  codingTool: 'claude',
-  codingToolArgs: [],
-  codingToolOptions: {
+  defaultCmd: 'claude',
+  defaultCmdArgs: [],
+  defaultCmdOptions: {
     'Continue with last context?': '--continue'
   },
-  version: '2.0.0'
+  autoReview: true,
+  autoRun: false,
+  gitPromptDir: '.git-prompts',
+  handlebarsExtensions: [],
+  version: '3.0.0'
 };

@@ -3,6 +3,7 @@ import { program } from 'commander';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import * as path from 'path';
 import chalk from 'chalk';
 import { ConfigManager } from './config/config-manager.js';
 import { PromptManager } from './prompts/prompt-manager.js';
@@ -15,9 +16,9 @@ import { addCommand } from './commands/add.js';
 import { editCommand } from './commands/edit.js';
 import { runCommand } from './commands/run.js';
 import { annotateCommand } from './commands/annotate.js';
+import { installCommand } from './commands/install.js';
 import fs from 'fs-extra';
 import { errors, displayError } from './utils/errors.js';
-import ora from 'ora';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -31,7 +32,9 @@ program
   .action(async () => {
     try {
       // Load configuration
-      const config = await ConfigManager.load();
+      const configResult = await ConfigManager.loadWithPath();
+      const config = configResult.config;
+      const configDir = configResult.filepath ? path.dirname(configResult.filepath) : undefined;
       
       // Ensure prompt directories exist
       for (const dir of config.promptDirs) {
@@ -39,10 +42,8 @@ program
       }
 
       // Discover prompts
-      const spinner = ora('Discovering prompts...').start();
       const promptManager = new PromptManager(config.promptDirs);
       const prompts = await promptManager.discoverPrompts();
-      spinner.stop();
 
       if (prompts.length === 0) {
         throw errors.noPromptsFound(config.promptDirs);
@@ -56,7 +57,7 @@ program
       console.log(chalk.dim(`Location: ${selected.path}\n`));
 
       // Process template
-      const engine = new TemplateEngine();
+      const engine = new TemplateEngine(config, configDir);
       const result = await engine.processTemplate(selected.content, selected);
 
       // Display result
@@ -77,6 +78,15 @@ program
           title: selected.title
         });
         console.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
+      }
+      
+      // AutoRun feature: automatically run default command if configured
+      if (config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '') {
+        // Use the run command implementation
+        await runCommand([], {
+          prompt: result,
+          skipPromptSelection: true
+        });
       }
     } catch (error) {
       if (error instanceof Error && error.message.includes('User force closed')) {
@@ -183,6 +193,25 @@ program
   .action(async (historyNumber) => {
     try {
       await annotateCommand(historyNumber ? parseInt(historyNumber) : undefined);
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Install command
+program
+  .command('install <source>')
+  .description('Install prompts from a git repository or npm package')
+  .addHelpText('after', `
+Examples:
+  pt install https://github.com/user/prompts     # Install from GitHub
+  pt install git@github.com:user/prompts.git     # Install via SSH
+  pt install @org/prompts                        # Install from npm (coming soon)
+`)
+  .action(async (source) => {
+    try {
+      await installCommand(source);
     } catch (error) {
       displayError(error as Error);
       process.exit(1);

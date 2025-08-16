@@ -5,13 +5,16 @@ import fs from 'fs-extra';
 import path from 'path';
 import { execSync } from 'child_process';
 import { input, select, confirm } from '@inquirer/prompts';
-import ora from 'ora';
-
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
-vi.mock('child_process');
+vi.mock('child_process', () => ({
+  execSync: vi.fn(),
+  execFile: vi.fn()
+}));
+vi.mock('util', () => ({
+  promisify: vi.fn(() => vi.fn())
+}));
 vi.mock('@inquirer/prompts');
-vi.mock('ora');
 
 describe('Add Command', () => {
   let consoleLogSpy: any;
@@ -21,19 +24,6 @@ describe('Add Command', () => {
     vi.clearAllMocks();
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    // Mock ora spinner
-    const mockSpinner = {
-      start: vi.fn().mockReturnThis(),
-      stop: vi.fn().mockReturnThis(),
-      succeed: vi.fn((text) => {
-        // Capture success messages by calling console.log
-        if (text) consoleLogSpy(text);
-        return mockSpinner;
-      }),
-      fail: vi.fn().mockReturnThis()
-    };
-    vi.mocked(ora).mockReturnValue(mockSpinner as any);
   });
 
   afterEach(() => {
@@ -368,9 +358,6 @@ describe('Add Command', () => {
       });
 
       await addCommand();
-
-      // Verify ora was called for opening editor
-      expect(ora).toHaveBeenCalledWith('Opening in editor...');
     });
   });
 

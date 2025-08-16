@@ -85,6 +85,9 @@ export class PromptManager {
         default: variable.default,
         choices: variable.choices as string[] | undefined,
         validate: variable.validate as string | undefined,
+        basePath: variable.basePath as string | undefined,
+        filter: variable.filter as string | undefined,
+        autoReview: variable.autoReview as boolean | undefined,
       };
     });
   }

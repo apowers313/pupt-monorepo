@@ -63,8 +63,8 @@ describe('HistoryManager', () => {
       const filePath = writeCall[0] as string;
       const entry = writeCall[1] as any;
 
-      // Check filename format
-      expect(filename).toMatch(/^20240115-103045-[a-f0-9]{8}\.json$/);
+      // Check filename format (now using local time, not UTC)
+      expect(filename).toMatch(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/);
       expect(filePath).toBe(path.join(testHistoryDir, filename));
 
       // Check entry content
@@ -116,6 +116,46 @@ describe('HistoryManager', () => {
       };
 
       await expect(manager.savePrompt(options)).rejects.toThrow('Failed to save prompt to history');
+    });
+
+    it('should not save prompts with empty or whitespace-only finalPrompt', async () => {
+      const testCases = [
+        { finalPrompt: '', title: 'Empty' },
+        { finalPrompt: '   ', title: 'Spaces' },
+        { finalPrompt: '\n\t  \n', title: 'Whitespace' },
+        { finalPrompt: '\r\n', title: 'Newlines' },
+      ];
+
+      for (const testCase of testCases) {
+        const options = {
+          templatePath: '/templates/test.md',
+          templateContent: '{{!-- Just a comment --}}',
+          variables: new Map(),
+          finalPrompt: testCase.finalPrompt,
+          title: testCase.title
+        };
+
+        await manager.savePrompt(options);
+        
+        // Verify that writeJson was NOT called
+        expect(vi.mocked(fs.writeJson)).not.toHaveBeenCalled();
+        vi.clearAllMocks();
+      }
+    });
+
+    it('should save prompts with non-empty finalPrompt', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: '{{input}}',
+        variables: new Map([['input', 'Hello world']]),
+        finalPrompt: 'Hello world',
+        title: 'Test'
+      };
+
+      await manager.savePrompt(options);
+      
+      // Verify that writeJson WAS called
+      expect(vi.mocked(fs.writeJson)).toHaveBeenCalledTimes(1);
     });
   });
 

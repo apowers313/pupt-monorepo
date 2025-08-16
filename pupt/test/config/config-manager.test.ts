@@ -25,9 +25,9 @@ describe('ConfigManager', () => {
     expect(config.promptDirs[0]).toBe(path.join(os.homedir(), '.pt/prompts'));
     expect(config.historyDir).toBeUndefined();
     // Check new default fields
-    expect(config.codingTool).toBe('claude');
-    expect(config.codingToolArgs).toEqual([]);
-    expect(config.codingToolOptions).toEqual({
+    expect(config.defaultCmd).toBe('claude');
+    expect(config.defaultCmdArgs).toEqual([]);
+    expect(config.defaultCmdOptions).toEqual({
       'Continue with last context?': '--continue'
     });
   });
@@ -36,7 +36,7 @@ describe('ConfigManager', () => {
     const testConfig = {
       promptDirs: ['/custom/prompts'],
       historyDir: '/custom/history',
-      version: '2.0.0' // Add version to prevent migration
+      version: '3.0.0' // Add version to prevent migration
     };
     await fs.writeJson('.ptrc.json', testConfig);
 
