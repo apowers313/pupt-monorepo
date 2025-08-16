@@ -1,5 +1,5 @@
 {
-  "name": "prompt-tool",
+  "name": "cli-prompt-tool",
   "version": "0.1.0",
   "description": "CLI tool for managing AI prompts",
   "type": "module",

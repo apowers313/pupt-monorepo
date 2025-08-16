@@ -18,7 +18,7 @@ A powerful CLI tool for managing and using AI prompts with template support.
 ## Installation
 
 ```bash
-npm install -g prompt-tool
+npm install -g cli-prompt-tool
 ```
 
 ## Quick Start
