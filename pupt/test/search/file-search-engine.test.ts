@@ -15,7 +15,6 @@ describe('FileSearchEngine', () => {
   let engine: FileSearchEngine;
   const mockFiles = [
     { name: 'design', isDirectory: true, modTime: new Date() },
-    { name: 'docs', isDirectory: true, modTime: new Date() },
     { name: 'demo.txt', isDirectory: false, modTime: new Date() },
     { name: 'README.md', isDirectory: false, modTime: new Date() },
     { name: 'file-input.md', isDirectory: false, modTime: new Date() },
