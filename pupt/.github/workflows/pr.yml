@@ -1,0 +1,83 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+# Cancel in-progress runs when a new run is triggered
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # Quick validation job that runs first
+  validate:
+    name: Quick Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
+      - name: Install dependencies
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests (Ubuntu only for PRs)
+        run: npm run test:ci
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-build-artifacts
+          path: |
+            dist/
+            node_modules/
+          retention-days: 1
+
+  # Optional matrix tests for comprehensive PR validation
+  test-matrix:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    needs: validate
+    if: contains(github.event.pull_request.labels.*.name, 'full-test') || contains(github.event.pull_request.title, '[full-test]')
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: pr-build-artifacts
+
+      - name: Run unit tests
+        run: npm run test:ci

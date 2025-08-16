@@ -12,6 +12,7 @@
     "dev": "tsc --watch",
     "pretest": "npm run build",
     "test": "vitest run --no-coverage",
+    "test:ci": "vitest run --no-coverage --passWithNoTests",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
