@@ -47,7 +47,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
-          path: dist/
+          path: |
+            dist/
+            node_modules/
           retention-days: 1
 
   # Parallel test jobs that use the build artifacts
@@ -68,14 +70,10 @@ jobs:
         with:
           node-version: 22.x
 
-      - name: Install dependencies
-        run: npm ci --force
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts
-          path: dist/
 
       - name: Run unit tests
         run: npm run test:ci
