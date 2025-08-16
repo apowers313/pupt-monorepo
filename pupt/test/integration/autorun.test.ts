@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { execSync } from 'child_process';
-import * as path from 'path';
+import { execSync } from 'node:child_process';
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
-import * as os from 'os';
+import * as os from 'node:os';
 
 describe('AutoRun Feature', () => {
   let testDir: string;
@@ -46,7 +46,7 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt and answering no to continue option
     const mockInput = '\n\n'; // Select first prompt, then answer no to continue option
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }
@@ -72,7 +72,7 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt
     const mockInput = '\n'; // Just press enter to select first prompt
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }
@@ -100,7 +100,7 @@ describe('AutoRun Feature', () => {
     const mockInput = '\n'; // Select first prompt
     
     try {
-      execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+      execSync(`cd ${testDir} && node ${cliPath}`, {
         input: mockInput,
         encoding: 'utf-8',
         env: { ...process.env, HOME: testDir },
@@ -133,7 +133,7 @@ describe('AutoRun Feature', () => {
     await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
     
     // Run with explicit command - should not trigger autoRun
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath} history`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath} history`, {
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }
     }).toString();
@@ -165,7 +165,7 @@ describe('AutoRun Feature', () => {
     // Need extra newlines because of potential buffering
     const mockInput = '\n\n\n'; // Select prompt, answer no to option, extra newline
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir },
@@ -196,7 +196,7 @@ describe('AutoRun Feature', () => {
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt
     
-    execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
-import * as path from 'path';
-import * as fs from 'fs/promises';
-import * as os from 'os';
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
 import { installCommand } from '../../src/commands/install.js';
 import simpleGit from 'simple-git';
 
@@ -78,7 +78,7 @@ describe('Git Installation - Integration Tests', () => {
       // Verify git clone was called correctly
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/mock-repo',
-        '.git-prompts/mock-repo',
+        path.join('.git-prompts', 'mock-repo'),
         ['--depth', '1']
       );
       
@@ -225,7 +225,7 @@ describe('Git Installation - Integration Tests', () => {
       // Check custom directory was used
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/mock-repo-custom',
-        '.custom-git-prompts/mock-repo-custom',
+        path.join('.custom-git-prompts', 'mock-repo-custom'),
         ['--depth', '1']
       );
       

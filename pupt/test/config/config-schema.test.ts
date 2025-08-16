@@ -15,6 +15,9 @@ describe('Config Schema Validation', () => {
   });
 
   afterEach(async () => {
+    // Change out of the test directory before trying to remove it
+    process.chdir(os.tmpdir());
+    
     // On Windows, files might still be in use, so retry removal
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
@@ -309,6 +312,9 @@ describe('Config Migration', () => {
   });
 
   afterEach(async () => {
+    // Change out of the test directory before trying to remove it
+    process.chdir(os.tmpdir());
+    
     // On Windows, files might still be in use, so retry removal
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {

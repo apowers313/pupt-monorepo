@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { promises as fs } from 'fs';
-import * as path from 'path';
-import os from 'os';
+import { promises as fs } from 'node:fs';
+import * as path from 'node:path';
+import os from 'node:os';
 import { runCommand } from '../../src/commands/run.js';
 import * as inquirerPrompts from '@inquirer/prompts';
 
@@ -61,8 +61,21 @@ describe('User Input Protection from Handlebars Processing', () => {
   });
 
   afterEach(async () => {
-    // Cleanup
-    await fs.rm(tempDir, { recursive: true, force: true });
+    // Change out of the test directory before trying to remove it
+    process.chdir(os.tmpdir());
+    
+    // On Windows, files might still be in use, so retry removal
+    const maxRetries = 3;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+        break;
+      } catch (error) {
+        if (i === maxRetries - 1) throw error;
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
   });
 
   it('should handle user discussing {{file}} helper without errors', async () => {

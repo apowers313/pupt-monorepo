@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
+import path from 'node:path';
+import os from 'node:os';
 import { FileSystemService } from '../../src/services/file-system-service';
 
 describe('FileSystemService', () => {
@@ -28,7 +28,7 @@ describe('FileSystemService', () => {
     });
 
     it('should keep absolute paths unchanged', () => {
-      const absPath = '/usr/local/bin';
+      const absPath = process.platform === 'win32' ? 'C:\\Users\\test' : '/usr/local/bin';
       expect(service.expandPath(absPath)).toBe(absPath);
     });
   });
@@ -193,9 +193,9 @@ describe('FileSystemService', () => {
         ignore: ['**/utils/**']
       });
       const paths = files.map(f => f.relativePath);
-      expect(paths).toContain('src/index.ts');
+      expect(paths).toContain(path.join('src', 'index.ts'));
       expect(paths).toContain('README.md');
-      expect(paths).not.toContain('src/utils/helper.ts');
+      expect(paths).not.toContain(path.join('src', 'utils', 'helper.ts'));
     });
   });
 });

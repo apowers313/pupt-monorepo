@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import fs2 from 'fs-extra';
 
 // Mock simple-git before importing install commands
@@ -329,7 +329,7 @@ describe('Install Command', () => {
 
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/repo',
-        '.custom-git-prompts/repo',
+        path.join('.custom-git-prompts', 'repo'),
         ['--depth', '1']
       );
 

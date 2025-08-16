@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { execSync } from 'child_process';
-import * as path from 'path';
+import { execSync } from 'node:child_process';
+import * as path from 'node:path';
 import * as fs from 'fs-extra';
-import * as os from 'os';
+import * as os from 'node:os';
 
 describe('AutoRun Regression Tests', () => {
   let testDir: string;
@@ -49,7 +49,7 @@ describe('AutoRun Regression Tests', () => {
     // Mock user selecting the second prompt
     const mockInput = '\x1B[B\n'; // Arrow down, then enter to select second prompt
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }
@@ -81,7 +81,7 @@ describe('AutoRun Regression Tests', () => {
     // Mock user selecting the first prompt
     const mockInput = '\n'; // Select first prompt
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir }
@@ -119,7 +119,7 @@ describe('AutoRun Regression Tests', () => {
     // Need extra newlines because of potential buffering
     const mockInput = '\n\n\n'; // Select first prompt, answer no to option, extra newline
     
-    const output = execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+    const output = execSync(`cd ${testDir} && node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       env: { ...process.env, HOME: testDir },
@@ -154,7 +154,7 @@ describe('AutoRun Regression Tests', () => {
     const mockInput = '\x03'; // Ctrl+C
     
     try {
-      execSync(`cd ${testDir} && HOME=${testDir} node ${cliPath}`, {
+      execSync(`cd ${testDir} && node ${cliPath}`, {
         input: mockInput,
         encoding: 'utf-8',
         env: { ...process.env, HOME: testDir },

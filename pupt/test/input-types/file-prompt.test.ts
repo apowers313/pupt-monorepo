@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { filePrompt } from '../../src/prompts/input-types/file-prompt.js';
 import { render } from '@inquirer/testing';
 import { listFilesWithCache } from '../../src/utils/file-utils.js';
-import path from 'path';
+import path from 'node:path';
 
 vi.mock('../../src/utils/file-utils.js', () => ({
   listFilesWithCache: vi.fn(),
@@ -217,7 +217,7 @@ describe('File Prompt', () => {
     events.keypress('s');
     events.keypress('r');
     events.keypress('c');
-    events.keypress('/');
+    events.keypress(path.sep);
     events.keypress('tab');
     
     // Should show files in the directory
