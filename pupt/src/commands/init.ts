@@ -7,7 +7,7 @@ import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 
 export async function initCommand(): Promise<void> {
   // Check for existing config
-  const configPath = path.join(process.cwd(), '.ptrc.json');
+  const configPath = path.join(process.cwd(), '.pt-config.json');
   if (await fs.pathExists(configPath)) {
     const overwrite = await confirm({
       message: 'Config file already exists. Overwrite?',
@@ -78,7 +78,7 @@ export async function initCommand(): Promise<void> {
     const entriesToIgnore: string[] = [];
     
     // Add config backup file
-    entriesToIgnore.push('.ptrc.json.backup');
+    entriesToIgnore.push('.pt-config.json.backup');
     
     // Add history directory if it's a local directory
     if (historyDir && !path.isAbsolute(historyDir) && !historyDir.startsWith('~')) {

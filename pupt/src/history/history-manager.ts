@@ -69,11 +69,11 @@ export class HistoryManager {
         f.match(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/)
       );
 
-      // Sort by date (newest first)
-      historyFiles.sort((a, b) => b.localeCompare(a));
+      // Sort by date (oldest first)
+      historyFiles.sort();
 
-      // Apply limit if specified
-      const filesToLoad = limit ? historyFiles.slice(0, limit) : historyFiles;
+      // Apply limit if specified (get most recent entries)
+      const filesToLoad = limit ? historyFiles.slice(-limit) : historyFiles;
 
       // Load entries
       const entries: HistoryEntry[] = [];
@@ -99,13 +99,32 @@ export class HistoryManager {
     }
   }
 
+  async getTotalCount(): Promise<number> {
+    try {
+      await fs.ensureDir(this.historyDir);
+      const files = await fs.readdir(this.historyDir);
+      
+      // Count JSON files with expected format
+      const historyFiles = files.filter(f => 
+        f.match(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/)
+      );
+      
+      return historyFiles.length;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        return 0;
+      }
+      throw error;
+    }
+  }
+
   async getHistoryEntry(index: number): Promise<HistoryEntry | null> {
     try {
-      // Get all history files sorted by date (newest first)
+      // Get all history files sorted by date (oldest first)
       const files = await fs.readdir(this.historyDir);
       const historyFiles = files
         .filter(f => f.match(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/))
-        .sort((a, b) => b.localeCompare(a));
+        .sort();
 
       // Check if index is valid (1-based)
       if (index < 1 || index > historyFiles.length) {

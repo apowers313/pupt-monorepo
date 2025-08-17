@@ -32,13 +32,13 @@ describe('ConfigManager', () => {
     });
   });
 
-  it('should load config from .ptrc.json', async () => {
+  it('should load config from .pt-config.json', async () => {
     const testConfig = {
       promptDirs: ['/custom/prompts'],
       historyDir: '/custom/history',
       version: '3.0.0' // Add version to prevent migration
     };
-    await fs.writeJson('.ptrc.json', testConfig);
+    await fs.writeJson('.pt-config.json', testConfig);
 
     const config = await ConfigManager.load();
 
@@ -46,7 +46,7 @@ describe('ConfigManager', () => {
     expect(config.historyDir).toBe(path.resolve('/custom/history'));
   });
 
-  it('should load config from .ptrc.yaml', async () => {
+  it('should load config from .pt-config.yaml', async () => {
     const yamlContent = `
 promptDirs:
   - /yaml/prompts
@@ -54,7 +54,7 @@ promptDirs:
 historyDir: ~/.pt/history
 version: "2.0.0"
 `;
-    await fs.writeFile('.ptrc.yaml', yamlContent);
+    await fs.writeFile('.pt-config.yaml', yamlContent);
 
     const config = await ConfigManager.load();
     expect(config.promptDirs).toContain(path.resolve('/yaml/prompts'));
@@ -64,7 +64,7 @@ version: "2.0.0"
 
   it('should merge configs from multiple directories', async () => {
     // Create parent config in test directory
-    await fs.writeJson('.ptrc.json', {
+    await fs.writeJson('.pt-config.json', {
       promptDirs: ['/parent/prompts'],
       historyDir: '/parent/history',
       version: '2.0.0'
@@ -73,7 +73,7 @@ version: "2.0.0"
     // Create child directory and config
     const childDir = 'child';
     await fs.ensureDir(childDir);
-    await fs.writeJson(path.join(childDir, '.ptrc.json'), {
+    await fs.writeJson(path.join(childDir, '.pt-config.json'), {
       promptDirs: ['/child/prompts'],
       version: '2.0.0'
       // historyDir not specified, should inherit from parent
@@ -92,7 +92,7 @@ version: "2.0.0"
   });
 
   it('should expand home directory paths', async () => {
-    await fs.writeJson('.ptrc.json', {
+    await fs.writeJson('.pt-config.json', {
       promptDirs: ['~/prompts'],
       historyDir: '~/.pt/history',
       version: '2.0.0'
@@ -105,7 +105,7 @@ version: "2.0.0"
   });
 
   it('should load and expand helper configurations', async () => {
-    await fs.writeJson('.ptrc.json', {
+    await fs.writeJson('.pt-config.json', {
       promptDirs: ['./prompts'],
       helpers: {
         customDate: {

@@ -44,7 +44,7 @@ describe('ReviewFile Integration Tests', () => {
     
     // Setup temp directory - use actual fs for this
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-test-'));
-    configPath = path.join(tempDir, '.ptrc.json');
+    configPath = path.join(tempDir, '.pt-config.json');
     
     // Create test directories and files
     await fs.ensureDir(path.join(tempDir, 'prompts'));

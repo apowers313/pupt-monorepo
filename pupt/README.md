@@ -315,7 +315,7 @@ Variables are cached, so asking for the same variable multiple times will reuse 
 
 ### Overview
 
-The configuration file (`.ptrc.json`, `.ptrc.yaml`, or `.ptrc.js`) controls how the prompt tool behaves. The tool searches for configuration files in:
+The configuration file (`.pt-config.json`, `.pt-config.yaml`, or `.pt-config.js`) controls how the prompt tool behaves. The tool searches for configuration files in:
 1. Current directory and all parent directories
 2. Your home directory
 3. Platform-specific config directories

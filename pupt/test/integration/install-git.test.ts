@@ -35,7 +35,7 @@ describe('Git Installation - Integration Tests', () => {
     process.chdir(testDir);
 
     // Initialize a basic pt config
-    await fs.writeFile('.ptrc.json', JSON.stringify({
+    await fs.writeFile('.pt-config.json', JSON.stringify({
       promptDirs: ['./prompts'],
       gitPromptDir: '.git-prompts',
       version: '3.0.0'
@@ -83,7 +83,7 @@ describe('Git Installation - Integration Tests', () => {
       );
       
       // Check config was updated
-      const config = JSON.parse(await fs.readFile('.ptrc.json', 'utf-8'));
+      const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
       expect(config.promptDirs).toContain(path.join('.git-prompts', 'mock-repo', 'prompts'));
     });
 
@@ -155,7 +155,7 @@ describe('Git Installation - Integration Tests', () => {
       await installCommand('https://github.com/user/mock-repo-no-prompts');
       
       // Config should be updated with the path even if it doesn't exist yet
-      const config = JSON.parse(await fs.readFile('.ptrc.json', 'utf-8'));
+      const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
       expect(config.promptDirs).toContain(path.join('.git-prompts', 'mock-repo-no-prompts', 'prompts'));
     });
 
@@ -176,7 +176,7 @@ describe('Git Installation - Integration Tests', () => {
       await installCommand('https://github.com/user/mock-repo-duplicate');
       
       // Check config doesn't have duplicates
-      const config = JSON.parse(await fs.readFile('.ptrc.json', 'utf-8'));
+      const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
       const promptPath = path.join('.git-prompts', 'mock-repo-duplicate', 'prompts');
       const occurrences = config.promptDirs.filter((dir: string) => dir === promptPath).length;
       expect(occurrences).toBe(1);
@@ -202,7 +202,7 @@ describe('Git Installation - Integration Tests', () => {
 
     it('should handle custom gitPromptDir from config', { timeout: 10000 }, async () => {
       // Update config with custom directory
-      await fs.writeFile('.ptrc.json', JSON.stringify({
+      await fs.writeFile('.pt-config.json', JSON.stringify({
         promptDirs: ['./prompts'],
         gitPromptDir: '.custom-git-prompts',
         version: '3.0.0'
@@ -230,7 +230,7 @@ describe('Git Installation - Integration Tests', () => {
       );
       
       // Check config uses custom path
-      const config = JSON.parse(await fs.readFile('.ptrc.json', 'utf-8'));
+      const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
       expect(config.promptDirs).toContain(path.join('.custom-git-prompts', 'mock-repo-custom', 'prompts'));
     });
   });

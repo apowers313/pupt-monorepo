@@ -44,7 +44,7 @@ describe('AutoRun Regression Tests', () => {
       defaultCmdArgs: ['SHOULD_NOT_SEE_THIS']
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the second prompt
     const mockInput = '\x1B[B\n'; // Arrow down, then enter to select second prompt
@@ -77,7 +77,7 @@ describe('AutoRun Regression Tests', () => {
       defaultCmdOptions: {} // Explicitly empty to override default
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the first prompt
     const mockInput = '\n'; // Select first prompt
@@ -115,7 +115,7 @@ describe('AutoRun Regression Tests', () => {
       }
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting prompt and answering NO to option
     // Need extra newlines because of potential buffering
@@ -151,7 +151,7 @@ describe('AutoRun Regression Tests', () => {
       defaultCmdArgs: ['SHOULD_NOT_RUN']
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user cancelling (Ctrl+C)
     const mockInput = '\x03'; // Ctrl+C

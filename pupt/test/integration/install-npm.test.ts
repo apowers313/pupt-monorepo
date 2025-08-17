@@ -42,11 +42,11 @@ describe('NPM Installation Integration Tests', () => {
       version: '3.0.0',
       promptDirs: ['./prompts']
     };
-    await fs.writeJson('.ptrc.json', testConfig);
+    await fs.writeJson('.pt-config.json', testConfig);
     
     // Mock ConfigManager to use our test config
     vi.mocked(ConfigManager.load).mockImplementation(async () => {
-      const configContent = await fs.readJson('.ptrc.json');
+      const configContent = await fs.readJson('.pt-config.json');
       return configContent;
     });
     
@@ -111,7 +111,7 @@ describe('NPM Installation Integration Tests', () => {
       });
       
       // Verify config was updated
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toContain(path.join('node_modules', 'my-prompts', 'templates'));
       
       // Verify console output
@@ -151,7 +151,7 @@ describe('NPM Installation Integration Tests', () => {
       });
       
       // Verify config was updated with default prompts directory
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toContain(path.join('node_modules', '@myorg/prompts', 'prompts'));
     });
 
@@ -190,7 +190,7 @@ describe('NPM Installation Integration Tests', () => {
       
       // Create config with existing path
       const existingPath = path.join('node_modules', 'existing-package', 'prompts');
-      await fs.writeJson('.ptrc.json', {
+      await fs.writeJson('.pt-config.json', {
         version: '3.0.0',
         promptDirs: ['./prompts', existingPath]
       });
@@ -215,7 +215,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('existing-package');
       
       // Verify config was not modified
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toHaveLength(2);
       expect(config.promptDirs.filter(dir => dir === existingPath)).toHaveLength(1);
       
@@ -310,7 +310,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('custom-prompts');
       
       // Verify config uses custom directory
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toContain(path.join('node_modules', 'custom-prompts', 'my-templates'));
     });
 
@@ -341,7 +341,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('default-prompts');
       
       // Verify config uses default directory
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toContain(path.join('node_modules', 'default-prompts', 'prompts'));
     });
 
@@ -368,7 +368,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('no-metadata');
       
       // Verify config uses default directory
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toContain(path.join('node_modules', 'no-metadata', 'prompts'));
     });
   });

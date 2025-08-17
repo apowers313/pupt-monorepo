@@ -24,7 +24,7 @@ describe('Full Integration Flow', () => {
   describe('Complete User Journey', () => {
     it('should support full workflow from init to annotate', async () => {
       // 1. Initialize configuration
-      const configPath = path.join(testDir, '.ptrc.json');
+      const configPath = path.join(testDir, '.pt-config.json');
       const config = {
         promptDirs: ['./prompts'],
         historyDir: './.pthistory',
@@ -175,7 +175,7 @@ This test was successful.`;
       const minimalConfig = {
         promptDirs: ['./prompts']
       };
-      await fs.writeJson('.ptrc.json', minimalConfig);
+      await fs.writeJson('.pt-config.json', minimalConfig);
       await fs.ensureDir('./prompts');
 
       // Create a simple prompt
@@ -199,7 +199,7 @@ This test was successful.`;
         },
         version: '3.0.0'
       };
-      await fs.writeJson('.ptrc.json', fullConfig);
+      await fs.writeJson('.pt-config.json', fullConfig);
       await fs.ensureDir('./templates');
 
       // Create prompt in second directory

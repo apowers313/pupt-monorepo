@@ -47,7 +47,7 @@ This is a CLI tool for managing AI prompts with template support, built with Typ
 2. **Configuration System** (`src/config/`):
    - `ConfigManager`: Loads and merges configuration from multiple sources using cosmiconfig
    - `migration.ts`: Handles version migrations between config formats
-   - Supports `.ptrc.json`, `.ptrc.yaml`, and `.ptrc.js` files
+   - Supports `.pt-config.json`, `.pt-config.yaml`, and `.pt-config.js` files
 
 3. **Prompt Management** (`src/prompts/`):
    - `PromptManager`: Discovers and loads prompt files from configured directories

@@ -8,7 +8,7 @@ import { execa } from 'execa';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 
 async function saveConfig(config: Config): Promise<void> {
-  const configPath = path.join(process.cwd(), '.ptrc.json');
+  const configPath = path.join(process.cwd(), '.pt-config.json');
   await fs2.writeJson(configPath, config, { spaces: 2 });
 }
 

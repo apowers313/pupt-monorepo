@@ -14,7 +14,7 @@ describe('pt CLI E2E', () => {
     process.chdir(testDir);
     
     // Create test config
-    await fs.writeJson('.ptrc.json', {
+    await fs.writeJson('.pt-config.json', {
       promptDirs: ['./prompts']
     });
     

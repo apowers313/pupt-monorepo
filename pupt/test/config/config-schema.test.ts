@@ -7,7 +7,7 @@ import os from 'node:os';
 
 describe('Config Schema Validation', () => {
   const testDir = path.join(os.tmpdir(), 'pt-config-schema-test');
-  const configPath = path.join(testDir, '.ptrc.json');
+  const configPath = path.join(testDir, '.pt-config.json');
 
   beforeEach(async () => {
     await fs.ensureDir(testDir);
@@ -304,7 +304,7 @@ describe('Config Schema Validation', () => {
 
 describe('Config Migration', () => {
   const testDir = path.join(os.tmpdir(), 'pt-config-migration-test');
-  const configPath = path.join(testDir, '.ptrc.json');
+  const configPath = path.join(testDir, '.pt-config.json');
 
   beforeEach(async () => {
     await fs.ensureDir(testDir);

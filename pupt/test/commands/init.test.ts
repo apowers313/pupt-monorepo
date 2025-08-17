@@ -40,7 +40,7 @@ describe('Init Command', () => {
   describe('existing config handling', () => {
     it('should prompt before overwriting existing config', async () => {
       // Create existing config
-      await fs.writeJson('.ptrc.json', { promptDirs: ['./existing'] });
+      await fs.writeJson('.pt-config.json', { promptDirs: ['./existing'] });
 
       // Mock user declining overwrite
       vi.mocked(inquirerPrompts.confirm).mockResolvedValue(false);
@@ -48,13 +48,13 @@ describe('Init Command', () => {
       await initCommand();
 
       // Config should remain unchanged
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toEqual(['./existing']);
     });
 
     it('should overwrite when user confirms', async () => {
       // Create existing config
-      await fs.writeJson('.ptrc.json', { promptDirs: ['./existing'] });
+      await fs.writeJson('.pt-config.json', { promptDirs: ['./existing'] });
 
       // Mock prompts
       vi.mocked(inquirerPrompts.confirm)
@@ -67,7 +67,7 @@ describe('Init Command', () => {
       await initCommand();
 
       // Config should be overwritten
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toEqual(['./prompts']);
     });
   });
@@ -137,7 +137,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.promptDirs).toEqual(['./prompts']);
     });
 
@@ -152,7 +152,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.historyDir).toBe('./.pthistory');
     });
 
@@ -190,7 +190,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config).toBeDefined();
       expect(Array.isArray(config.promptDirs)).toBe(true);
     });
@@ -203,7 +203,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual([]);
       expect(config.defaultCmdOptions).toEqual({
@@ -220,7 +220,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.historyDir).toBeUndefined();
     });
 
@@ -235,7 +235,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       expect(config.historyDir).toBe('./.pthistory');
       expect(config.annotationDir).toBe('./.ptannotations');
     });
@@ -248,7 +248,7 @@ describe('Init Command', () => {
 
       await initCommand();
 
-      const config = await fs.readJson('.ptrc.json');
+      const config = await fs.readJson('.pt-config.json');
       // Should store relative path in config
       expect(config.promptDirs).toEqual(['../prompts']);
       // But directory should be created at resolved location

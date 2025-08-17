@@ -18,15 +18,61 @@ export class ConfigManager {
   private static getExplorer() {
     return cosmiconfig('pt', {
       searchPlaces: [
-        '.ptrc',
-        '.ptrc.json',
-        '.ptrc.yaml',
-        '.ptrc.yml',
-        '.ptrc.js',
-        '.ptrc.cjs',
+        '.pt-config',
+        '.pt-config.json',
+        '.pt-config.yaml',
+        '.pt-config.yml',
+        '.pt-config.js',
+        '.pt-config.cjs',
         'pt.config.js',
       ],
     });
+  }
+
+  static async checkForOldConfigFiles(dir: string = process.cwd()): Promise<string[]> {
+    const oldConfigPatterns = ['.ptrc', '.ptrc.json', '.ptrc.yaml', '.ptrc.yml', '.ptrc.js', '.ptrc.cjs'];
+    const foundOldFiles: string[] = [];
+    
+    for (const pattern of oldConfigPatterns) {
+      const filePath = path.join(dir, pattern);
+      if (await fs.pathExists(filePath)) {
+        foundOldFiles.push(filePath);
+      }
+    }
+    
+    return foundOldFiles;
+  }
+
+  static async renameOldConfigFile(oldPath: string): Promise<string> {
+    const dir = path.dirname(oldPath);
+    const filename = path.basename(oldPath);
+    
+    // Map old names to new names
+    const nameMapping: Record<string, string> = {
+      '.ptrc': '.pt-config',
+      '.ptrc.json': '.pt-config.json',
+      '.ptrc.yaml': '.pt-config.yaml',
+      '.ptrc.yml': '.pt-config.yml',
+      '.ptrc.js': '.pt-config.js',
+      '.ptrc.cjs': '.pt-config.cjs'
+    };
+    
+    const newFilename = nameMapping[filename];
+    if (!newFilename) {
+      throw new Error(`Unknown config file pattern: ${filename}`);
+    }
+    
+    const newPath = path.join(dir, newFilename);
+    
+    // Check if new file already exists
+    if (await fs.pathExists(newPath)) {
+      throw new Error(`Cannot rename ${filename} to ${newFilename}: destination file already exists`);
+    }
+    
+    // Rename the file
+    await fs.rename(oldPath, newPath);
+    
+    return newPath;
   }
 
   static async load(startDir?: string): Promise<Config> {

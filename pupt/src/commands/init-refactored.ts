@@ -19,7 +19,7 @@ export class InitCommand extends BaseCommand<InitInput, void> {
 
   constructor(context: CommandContext, options: CommandOptions = {}) {
     super(context, options);
-    this.configPath = path.join(process.cwd(), '.ptrc.json');
+    this.configPath = path.join(process.cwd(), '.pt-config.json');
   }
 
   protected get name(): string {
@@ -131,7 +131,7 @@ export class InitCommand extends BaseCommand<InitInput, void> {
       const entriesToIgnore: string[] = [];
       
       // Add config backup file
-      entriesToIgnore.push('.ptrc.json.backup');
+      entriesToIgnore.push('.pt-config.json.backup');
       
       // Add history directory if it's a local directory
       if (input.historyDir && !path.isAbsolute(input.historyDir) && !input.historyDir.startsWith('~')) {

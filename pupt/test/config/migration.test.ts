@@ -6,7 +6,7 @@ import { ConfigSchema, ConfigV1Schema, ConfigV2Schema } from '../../src/schemas/
 
 describe('Config Migration', () => {
   const tempDir = path.join(process.cwd(), '.test-temp-migration');
-  const configPath = path.join(tempDir, '.ptrc.json');
+  const configPath = path.join(tempDir, '.pt-config.json');
 
   beforeEach(async () => {
     await fs.ensureDir(tempDir);
@@ -156,7 +156,7 @@ describe('Config Migration', () => {
       expect(await fs.pathExists(backupPath)).toBe(true);
       
       const files = await fs.readdir(tempDir);
-      const timestampedBackups = files.filter(f => f.startsWith('.ptrc.json.backup.'));
+      const timestampedBackups = files.filter(f => f.startsWith('.pt-config.json.backup.'));
       expect(timestampedBackups.length).toBe(1);
       
       // Verify content

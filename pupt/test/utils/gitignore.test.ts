@@ -72,11 +72,11 @@ describe('Gitignore Utils', () => {
       const gitignorePath = path.join(tempDir, '.gitignore');
       
       await addToGitignore('.pthistory');
-      await addToGitignore('.ptrc.json.backup');
+      await addToGitignore('.pt-config.json.backup');
 
       const content = await fs.readFile(gitignorePath, 'utf-8');
       expect(content).toContain('.pthistory');
-      expect(content).toContain('.ptrc.json.backup');
+      expect(content).toContain('.pt-config.json.backup');
     });
 
     it('should add comment header only once', async () => {

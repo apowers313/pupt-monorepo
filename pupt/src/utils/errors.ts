@@ -192,7 +192,7 @@ export const errors = {
     code: 'INVALID_CONFIG',
     category: ErrorCategory.CONFIG_ERROR,
     suggestions: [
-      { text: `Edit .ptrc.json and fix the '${field}' value` },
+      { text: `Edit .pt-config.json and fix the '${field}' value` },
       { text: `Expected format: ${expected}` }
     ],
     icon: '⚙️'

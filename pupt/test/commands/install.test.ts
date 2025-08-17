@@ -290,7 +290,7 @@ describe('Install Command', () => {
       await installFromGit('https://github.com/user/my-prompts');
 
       expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.ptrc.json'),
+        expect.stringContaining('.pt-config.json'),
         expect.objectContaining({
           promptDirs: expect.arrayContaining([
             './prompts',
@@ -334,7 +334,7 @@ describe('Install Command', () => {
       );
 
       expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.ptrc.json'),
+        expect.stringContaining('.pt-config.json'),
         expect.objectContaining({
           promptDirs: expect.arrayContaining([
             path.join('.custom-git-prompts', 'repo', 'prompts')
@@ -514,7 +514,7 @@ describe('Install Command', () => {
         );
         
         expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.ptrc.json'),
+          expect.stringContaining('.pt-config.json'),
           expect.objectContaining({
             promptDirs: expect.arrayContaining([
               path.join('node_modules', '@my-org/prompt-pack', 'custom-prompts')
@@ -545,7 +545,7 @@ describe('Install Command', () => {
         await installFromNpm('@my-org/prompt-pack');
         
         expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.ptrc.json'),
+          expect.stringContaining('.pt-config.json'),
           expect.objectContaining({
             promptDirs: expect.arrayContaining([
               './prompts',
@@ -570,7 +570,7 @@ describe('Install Command', () => {
         await installFromNpm('simple-prompts');
         
         expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.ptrc.json'),
+          expect.stringContaining('.pt-config.json'),
           expect.objectContaining({
             promptDirs: expect.arrayContaining([
               path.join('node_modules', 'simple-prompts', 'prompts')

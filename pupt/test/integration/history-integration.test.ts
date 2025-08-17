@@ -22,7 +22,7 @@ describe('History Integration', () => {
       historyDir: './.pthistory',
       version: '2.0.0'
     };
-    await fs.writeJson('.ptrc.json', config);
+    await fs.writeJson('.pt-config.json', config);
 
     // Create a simple prompt
     const promptContent = `---

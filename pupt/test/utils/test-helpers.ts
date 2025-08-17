@@ -83,7 +83,7 @@ Hello {{name}}, you chose {{choice}}.`
   
   // Create a config file
   await writeFile(
-    join(baseDir, '.ptrc.json'),
+    join(baseDir, '.pt-config.json'),
     JSON.stringify({
       promptDirectory: ['./prompts'],
       historyDirectory: './.pthistory'
@@ -93,7 +93,7 @@ Hello {{name}}, you chose {{choice}}.`
   return {
     promptsDir,
     historyDir,
-    configPath: join(baseDir, '.ptrc.json')
+    configPath: join(baseDir, '.pt-config.json')
   };
 }
 

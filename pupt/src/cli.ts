@@ -25,6 +25,47 @@ const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
+async function checkAndMigrateOldConfig(): Promise<void> {
+  // Skip the check in test environment or non-TTY (non-interactive) mode
+  if (process.env.NODE_ENV === 'test' || !process.stdin.isTTY) {
+    return;
+  }
+  
+  // Check for old config files in current directory
+  const oldFiles = await ConfigManager.checkForOldConfigFiles();
+  
+  if (oldFiles.length > 0) {
+    console.warn(chalk.yellow('\n⚠️  Warning: Found old config file(s):'));
+    oldFiles.forEach(file => {
+      console.warn(chalk.yellow(`   - ${path.basename(file)}`));
+    });
+    
+    console.warn(chalk.yellow('\nThe config file naming has changed from .ptrc to .pt-config'));
+    console.warn(chalk.yellow('Would you like to rename your config file(s)? (y/n): '));
+    
+    // Get user input
+    const { confirm } = await import('@inquirer/prompts');
+    const shouldRename = await confirm({
+      message: 'Rename config file(s) to new format?',
+      default: true
+    });
+    
+    if (shouldRename) {
+      for (const oldFile of oldFiles) {
+        try {
+          const newPath = await ConfigManager.renameOldConfigFile(oldFile);
+          console.log(chalk.green(`✓ Renamed ${path.basename(oldFile)} to ${path.basename(newPath)}`));
+        } catch (error) {
+          console.error(chalk.red(`✗ Failed to rename ${path.basename(oldFile)}: ${error instanceof Error ? error.message : String(error)}`));
+        }
+      }
+    }
+  }
+}
+
+// Check for old config files before running commands
+await checkAndMigrateOldConfig();
+
 program
   .name('pt')
   .description('CLI tool for managing AI prompts')
@@ -112,15 +153,16 @@ program
 
 // Add history command
 program
-  .command('history')
-  .description('Show prompt execution history')
+  .command('history [entry]')
+  .description('Show prompt execution history or a specific entry')
   .option('-l, --limit <number>', 'Number of entries to show', '20')
   .option('-a, --all', 'Show all history entries')
-  .action(async (options) => {
+  .action(async (entry, options) => {
     try {
       await historyCommand({
         limit: options.all ? undefined : parseInt(options.limit),
-        all: options.all
+        all: options.all,
+        entry: entry ? parseInt(entry) : undefined
       });
     } catch (error) {
       displayError(error as Error);

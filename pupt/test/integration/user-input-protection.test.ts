@@ -52,7 +52,7 @@ describe('User Input Protection from Handlebars Processing', () => {
       codingToolArgs: []
     };
     await fs.writeFile(
-      path.join(tempDir, '.ptrc.json'),
+      path.join(tempDir, '.pt-config.json'),
       JSON.stringify(config, null, 2)
     );
 

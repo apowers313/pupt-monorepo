@@ -37,7 +37,7 @@ describe('Config Migration Integration', () => {
         }
       };
       
-      await fs.writeJson('.ptrc.json', oldConfig);
+      await fs.writeJson('.pt-config.json', oldConfig);
       
       // Load config (triggers migration)
       const config = await ConfigManager.load();
@@ -68,14 +68,14 @@ describe('Config Migration Integration', () => {
       expect(config.helpers?.upper).toEqual({ type: 'inline', value: 's => s.toUpperCase()' });
       
       // Check that config file was updated
-      const savedConfig = await fs.readJson('.ptrc.json');
+      const savedConfig = await fs.readJson('.pt-config.json');
       expect(savedConfig.defaultCmd).toBe('claude');
       expect(savedConfig.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
       expect(savedConfig.defaultCmdOptions).toBeDefined();
       expect(savedConfig.version).toBe('3.0.0');
       
       // Check that backup was created
-      const backupPath = '.ptrc.json.backup';
+      const backupPath = '.pt-config.json.backup';
       expect(await fs.pathExists(backupPath)).toBe(true);
       
       const backup = await fs.readJson(backupPath);
@@ -91,7 +91,7 @@ describe('Config Migration Integration', () => {
         codingToolArgs: ['--api-key', 'sk-123']
       };
       
-      await fs.writeJson('.ptrc.json', oldConfig);
+      await fs.writeJson('.pt-config.json', oldConfig);
       
       // First load
       let config = await ConfigManager.load();
@@ -104,29 +104,29 @@ describe('Config Migration Integration', () => {
       expect(config.version).toBe('3.0.0');
       
       // Verify only one backup exists
-      const backupPath = '.ptrc.json.backup';
+      const backupPath = '.pt-config.json.backup';
       expect(await fs.pathExists(backupPath)).toBe(true);
-      expect(await fs.pathExists('.ptrc.json.backup.1')).toBe(false);
+      expect(await fs.pathExists('.pt-config.json.backup.1')).toBe(false);
     });
 
     it('should create timestamped backup for subsequent migrations', async () => {
       // Create initial config and backup
-      await fs.writeJson('.ptrc.json', { promptDirs: ['./prompts'] });
-      await fs.writeFile('.ptrc.json.backup', 'existing backup');
+      await fs.writeJson('.pt-config.json', { promptDirs: ['./prompts'] });
+      await fs.writeFile('.pt-config.json.backup', 'existing backup');
       
       // Create old config that needs migration
       const oldConfig = {
         promptDirs: ['./prompts'],
         codingTool: 'claude'
       };
-      await fs.writeJson('.ptrc.json', oldConfig);
+      await fs.writeJson('.pt-config.json', oldConfig);
       
       // Trigger migration
       await ConfigManager.load();
       
       // Check that timestamped backup was created
       const files = await fs.readdir('.');
-      const timestampedBackup = files.find(f => f.match(/^\.ptrc\.json\.backup\.\d{14}$/));
+      const timestampedBackup = files.find(f => f.match(/^\.pt-config\.json\.backup\.\d{14}$/));
       expect(timestampedBackup).toBeDefined();
     });
 
@@ -138,7 +138,7 @@ describe('Config Migration Integration', () => {
         // No args or options
       };
       
-      await fs.writeJson('.ptrc.json', partialOldConfig);
+      await fs.writeJson('.pt-config.json', partialOldConfig);
       
       const config = await ConfigManager.load();
       
@@ -162,11 +162,11 @@ describe('Config Migration Integration', () => {
         }
       };
       
-      await fs.writeJson('.ptrc.json', configWithCustomFields);
+      await fs.writeJson('.pt-config.json', configWithCustomFields);
       
       await ConfigManager.load();
       
-      const savedConfig = await fs.readJson('.ptrc.json');
+      const savedConfig = await fs.readJson('.pt-config.json');
       expect(savedConfig.customField1).toBe('value1');
       expect(savedConfig.customNested).toEqual({ field2: 'value2' });
     });
@@ -179,12 +179,12 @@ describe('Config Migration Integration', () => {
         version: '3.0.0'
       };
       
-      await fs.writeJson('.ptrc.json', newConfig);
+      await fs.writeJson('.pt-config.json', newConfig);
       
       const config = await ConfigManager.load();
       
       // Should not create backup for already migrated config
-      expect(await fs.pathExists('.ptrc.json.backup')).toBe(false);
+      expect(await fs.pathExists('.pt-config.json.backup')).toBe(false);
       
       // Config should remain unchanged
       expect(config.defaultCmd).toBe('claude');
@@ -203,7 +203,7 @@ codingToolOptions:
   Continue?: --continue
 `;
       
-      await fs.writeFile('.ptrc.yaml', yamlContent);
+      await fs.writeFile('.pt-config.yaml', yamlContent);
       
       const config = await ConfigManager.load();
       
@@ -213,7 +213,7 @@ codingToolOptions:
       
       // YAML files should not be automatically updated
       // (cosmiconfig doesn't support writing YAML)
-      const updatedYaml = await fs.readFile('.ptrc.yaml', 'utf8');
+      const updatedYaml = await fs.readFile('.pt-config.yaml', 'utf8');
       expect(updatedYaml).toBe(yamlContent);
     });
 
@@ -222,7 +222,7 @@ codingToolOptions:
         promptDirs: ['./prompts']
       };
       
-      await fs.writeJson('.ptrc.json', minimalOldConfig);
+      await fs.writeJson('.pt-config.json', minimalOldConfig);
       
       const config = await ConfigManager.load();
       
@@ -250,7 +250,7 @@ codingToolOptions:
         // Without version, migration will be triggered
       };
       
-      await fs.writeJson('.ptrc.json', mixedConfig);
+      await fs.writeJson('.pt-config.json', mixedConfig);
       
       const config = await ConfigManager.load();
       
@@ -262,7 +262,7 @@ codingToolOptions:
 
   describe('Error Handling', () => {
     it('should handle corrupted config gracefully', async () => {
-      await fs.writeFile('.ptrc.json', '{ invalid json');
+      await fs.writeFile('.pt-config.json', '{ invalid json');
       
       // Should throw a meaningful error
       await expect(ConfigManager.load()).rejects.toThrow();
@@ -279,7 +279,7 @@ codingToolOptions:
         codingTool: 'claude'
       };
       
-      await fs.writeJson('.ptrc.json', oldConfig);
+      await fs.writeJson('.pt-config.json', oldConfig);
       
       // Make directory read-only
       await fs.chmod(readOnlyDir, 0o555);

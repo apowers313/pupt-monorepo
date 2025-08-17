@@ -15,6 +15,7 @@ coverage/
 .ptrc.json.backup
 .git-prompts
 .pthistory
+.pt-config.json.backup
 
 # wtt worktrees
 .worktrees/

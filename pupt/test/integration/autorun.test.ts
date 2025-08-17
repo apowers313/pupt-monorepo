@@ -41,7 +41,7 @@ describe('AutoRun Feature', () => {
       defaultCmdOptions: {} // Explicitly empty to override default
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the prompt and answering no to continue option
     const mockInput = '\n\n'; // Select first prompt, then answer no to continue option
@@ -68,7 +68,7 @@ describe('AutoRun Feature', () => {
       defaultCmdArgs: ['{{prompt}}']
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the prompt
     const mockInput = '\n'; // Just press enter to select first prompt
@@ -96,7 +96,7 @@ describe('AutoRun Feature', () => {
       defaultCmdOptions: {} // Explicitly empty to override default
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt
@@ -133,7 +133,7 @@ describe('AutoRun Feature', () => {
       defaultCmdArgs: ['{{prompt}}']
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Run with explicit command - should not trigger autoRun
     const output = execSync(`node ${cliPath} history`, {
@@ -163,7 +163,7 @@ describe('AutoRun Feature', () => {
       }
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the prompt and then answering no to option
     // Need extra newlines because of potential buffering
@@ -196,7 +196,7 @@ describe('AutoRun Feature', () => {
       defaultCmdOptions: {} // Explicitly empty to override default
     };
     
-    await fs.writeJson(path.join(testDir, '.ptrc.json'), config);
+    await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
     
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt

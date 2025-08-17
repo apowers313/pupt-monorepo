@@ -97,11 +97,11 @@ describe('Minor Enhancements - Integration Tests', () => {
       // List history
       const entries = await historyManager.listHistory();
       
-      // Should be sorted newest first
+      // Should be sorted oldest first
       expect(entries).toHaveLength(3);
-      expect(entries[0].title).toContain('16:00:00');
+      expect(entries[0].title).toContain('08:00:00');
       expect(entries[1].title).toContain('12:00:00');
-      expect(entries[2].title).toContain('08:00:00');
+      expect(entries[2].title).toContain('16:00:00');
     });
   });
 
@@ -127,7 +127,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       // Check content
       const content = await fs.readFile(gitignorePath, 'utf-8');
       expect(content).toContain('# Prompt Tool');
-      expect(content).toContain('.ptrc.json.backup');
+      expect(content).toContain('.pt-config.json.backup');
       expect(content).toContain('.pthistory');
       expect(content).toContain('.git-prompts');
     });
@@ -157,7 +157,7 @@ describe('Minor Enhancements - Integration Tests', () => {
         defaultCmd: 'echo',
         defaultCmdArgs: ['{{prompt}}']
       };
-      await fs.writeJson('.ptrc.json', config);
+      await fs.writeJson('.pt-config.json', config);
       
       // Mock git operations
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(true);
@@ -217,7 +217,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       // Check .gitignore
       const content = await fs.readFile('.gitignore', 'utf-8');
       expect(content).not.toContain('/var/log/pthistory');
-      expect(content).toContain('.ptrc.json.backup'); // Should still have other entries
+      expect(content).toContain('.pt-config.json.backup'); // Should still have other entries
     });
 
     it('should handle home directory paths correctly (not added to gitignore)', async () => {
@@ -237,7 +237,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       // Check .gitignore
       const content = await fs.readFile('.gitignore', 'utf-8');
       expect(content).not.toContain('~/.pthistory');
-      expect(content).toContain('.ptrc.json.backup'); // Should still have other entries
+      expect(content).toContain('.pt-config.json.backup'); // Should still have other entries
     });
   });
 });
