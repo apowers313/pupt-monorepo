@@ -5,19 +5,81 @@ creationDate: 20250815
 labels: []
 ---
 
-Please perform a comprehensive code review of our project. My primary concerns for the code review are:
-{{editor "codeReviewConcerns"}}
+**Role & Context**: You are a meticulous code reviewer with expertise in identifying both human and AI-generated code issues, focusing on maintainability, correctness, and common LLM coding mistakes.
 
-In addition, look for common problems with LLM-generated code including:
-  - Repeated implementations of similar functionality
-  - Inconsistent patterns across files
-  - Not using shared utilities when appropriate
-  - Verbose implementations instead of concise ones
-  - Reinventing the wheel
-  - Inconsistent error handling
-  - Copy-paste style code with slight variations
-  - Not following DRY principles
+**Objective**: Perform a comprehensive multi-pass code review identifying issues and improvement opportunities.
 
-Please create a scratchpad of every file in the project, and review each file one at a time until you have reviewed EVERY FILE. Be meticulous and comprehensive. Think harder. Review the file for my concerns and identify if the file has any issues that need to be remediated. Store the remediations for each file in a scratchpad. 
+**Specific Requirements**:
+- **Pass 1 - Critical Issues**: Security, correctness, data loss risks
+- **Pass 2 - Code Quality**: 
+  {{editor "codeReviewConcerns"}}
+- **Pass 3 - LLM-Specific Issues**: 
+  - Hallucinated APIs or methods that don't exist
+  - Incorrect error handling patterns
+  - Overly complex solutions to simple problems
+  - Inconsistent code style within same file
+  - Copy-paste errors and duplicated logic
+  - Missing edge case handling
+  
+- Create file inventory first, then review systematically
+- For each issue found:
+  - Verify it's a real issue (not test code, not intentional)
+  - Assess actual impact on system
+  - Provide specific fix with code example
+- Group similar issues for batch remediation
 
-After you have reviewed each file, look at common themes for the remediations and group together any common remediations into themes. Write the themes and remediations to {{input "codeReviewFile"}}. The file should be grouped into priorities of which issues are "critical", "high", "medium", and "low". Ensure each issue has sufficient description of what the problem is, thoughts on how to remediate it, and pointers to any source files that need to be remediated. Make sure the code review is easy for a human to read, but has enough detail for AI tooling to create a plan for remediating the problems.
+**Format & Structure**: 
+```markdown
+# Code Review Report - {{date}}
+
+## Executive Summary
+- Files reviewed: X
+- Critical issues: X
+- High priority issues: X  
+- Medium priority issues: X
+- Low priority issues: X
+
+## Critical Issues (Fix Immediately)
+### 1. [Issue Title]
+- **Files**: [List affected files]
+- **Description**: [What and why it's critical]
+- **Example**: `path/to/file.js:123`
+```javascript
+// Problem code
+```
+- **Fix**:
+```javascript  
+// Corrected code
+```
+
+## High Priority Issues (Fix Soon)
+[Same format as critical]
+
+## Medium Priority Issues (Technical Debt)
+[Same format, grouped by theme]
+
+## Low Priority Issues (Nice to Have)
+[Brief list with file references]
+
+## Positive Findings
+- [Good patterns to replicate elsewhere]
+
+## Recommendations
+1. [Highest impact improvement]
+2. [Next priority]
+...
+```
+
+**Examples**: Included in format above
+
+**Constraints**: 
+- Don't flag test utilities for production code issues
+- Consider project conventions before suggesting changes
+- Focus on measurable improvements
+- Distinguish must-fix from nice-to-have
+
+**Success Criteria**: 
+- All significant issues caught and correctly prioritized
+- Fixes are specific and implementable
+- Report enables systematic remediation
+- No false positives that waste developer time

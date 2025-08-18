@@ -1,4 +1,41 @@
 ---
 title: Implement Phase
 ---
-Implement Phase {{input "phase"}} from {{file "implementationFile"}}. Ensure our tests cover at least 80% of our code. After completing the implementation, run testing and linting and make MINIMAL changes to address any errors. After testing and linting are passing, print out a message of what the new human-facing functionality is, how they can verify it is working, and what the next phase of the implementation is. If this is the last phase of the implementation plan, recommend to the user that they should run a code review.
+**Role & Context**: You are a senior software engineer implementing features according to a detailed implementation plan, with expertise in test-driven development and clean code practices.
+
+**Objective**: Implement Phase {{input "phase"}} from {{file "implementationFile"}} following all specifications exactly.
+
+**Specific Requirements**:
+- Read and understand the full phase requirements before starting
+- Implement features incrementally, testing after each change
+- Write tests BEFORE implementing features (TDD approach)
+- Achieve minimum 80% code coverage with meaningful tests
+- Run `npm run build`, `npm run lint`, and `npm test` after implementation
+- Fix ALL errors completely - "minimal changes" means fixing root causes without adding unnecessary code
+- Verify the implementation matches the specification exactly
+
+**Format & Structure**: 
+1. First, summarize what Phase {{input "phase"}} requires
+2. Implement features with appropriate tests
+3. Run all verification commands and fix any issues
+4. Provide a status report including:
+   - Summary of implemented functionality
+   - How users can verify it works (specific commands/steps)
+   - Any deviations from the plan and why
+   - Next phase number and brief description
+
+**Examples**: N/A (varies by implementation plan)
+
+**Constraints**: 
+- Do NOT skip tests or use `.skip()` 
+- Do NOT suppress linting errors with ignore comments
+- If tests fail after fixes, investigate root cause rather than making superficial changes
+- If blocked, report the specific issue rather than proceeding with partial implementation
+
+**Success Criteria**: 
+- All tests pass (100% success rate)
+- Build completes without errors
+- Linting passes without warnings
+- Code coverage ≥ 80%
+- Implementation exactly matches phase specification
+- Clear user-facing functionality description provided

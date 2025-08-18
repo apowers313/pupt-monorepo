@@ -8,6 +8,9 @@ import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { errors } from '../utils/errors.js';
 import * as path from 'node:path';
+import { pathExists } from 'fs-extra';
+import { editorLauncher } from '../utils/editor.js';
+import type { Config } from '../types/config.js';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -76,6 +79,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     variables: Map<string, unknown>;
     finalPrompt: string;
     title?: string;
+    reviewFiles?: Array<{ name: string; value: unknown }>;
   } | undefined;
   let exitCode: number | null = null;
   
@@ -172,6 +176,11 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       const historyManager = new HistoryManager(config.historyDir);
       await historyManager.savePrompt(templateInfo);
     }
+    
+    // Handle post-run file reviews
+    if (templateInfo?.reviewFiles && templateInfo.reviewFiles.length > 0) {
+      await handlePostRunReviews(templateInfo.reviewFiles, config);
+    }
   }
   
   // Exit with the same code as the tool
@@ -228,4 +237,48 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
       }
     }
   });
+}
+
+async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: unknown }>, config: Config): Promise<void> {
+  console.log(chalk.dim('\n' + '─'.repeat(60)));
+  
+  for (const { name, value } of reviewFiles) {
+    const filePath = String(value);
+    
+    // Check if file exists
+    const fileExists = await pathExists(filePath);
+    if (!fileExists) {
+      console.log(chalk.yellow(`\nFile for '${name}' not found: ${filePath}`));
+      continue;
+    }
+    
+    // Prompt user to review the file
+    const shouldReview = await confirm({
+      message: `Would you like to review the file '${name}' (${filePath})?`,
+      default: true
+    });
+    
+    if (shouldReview) {
+      // Check autoReview setting (default to true)
+      const autoReview = config.autoReview ?? true;
+      
+      if (autoReview) {
+        // Find an editor and open the file
+        const editor = await editorLauncher.findEditor();
+        if (!editor) {
+          console.log(chalk.yellow('No editor found. Please configure an editor or set autoReview to false.'));
+          continue;
+        }
+        
+        try {
+          console.log(chalk.blue(`Opening ${filePath} in ${editor}...`));
+          await editorLauncher.openInEditor(editor, filePath);
+        } catch (error) {
+          console.error(chalk.red(`Failed to open editor: ${error instanceof Error ? error.message : String(error)}`));
+        }
+      } else {
+        console.log(chalk.dim(`File saved at: ${filePath}`));
+      }
+    }
+  }
 }

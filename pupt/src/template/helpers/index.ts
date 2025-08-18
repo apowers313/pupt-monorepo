@@ -107,6 +107,7 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
       context.queueAsyncOperation(async () => {
         const value = await (promptFn as (config: unknown) => Promise<unknown>)(promptConfig);
         context.set(name, value);
+        context.setType(name, type);
         return { placeholder, value: String(value) };
       });
 

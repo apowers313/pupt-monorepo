@@ -5,6 +5,7 @@ export class TemplateContext {
   private values = new Map<string, unknown>();
   private asyncOperations: Array<() => Promise<{ placeholder: string; value: unknown }>> = [];
   private variableDefinitions: VariableDefinition[] = [];
+  private variableTypes = new Map<string, string>();
 
   constructor(variables?: VariableDefinition[]) {
     this.variableDefinitions = variables || [];
@@ -16,6 +17,24 @@ export class TemplateContext {
 
   set(name: string, value: unknown): void {
     this.values.set(name, value);
+  }
+
+  setType(name: string, type: string): void {
+    this.variableTypes.set(name, type);
+  }
+
+  getType(name: string): string | undefined {
+    return this.variableTypes.get(name);
+  }
+
+  getVariablesByType(type: string): Array<{ name: string; value: unknown }> {
+    const result: Array<{ name: string; value: unknown }> = [];
+    for (const [name, varType] of this.variableTypes) {
+      if (varType === type) {
+        result.push({ name, value: this.values.get(name) });
+      }
+    }
+    return result;
   }
 
   getMasked(name: string): unknown {
