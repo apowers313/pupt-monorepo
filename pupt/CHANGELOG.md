@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/apowers313/prompt-tool/compare/v1.0.0...v1.0.1) (2025-08-17)
+
+
+### Bug Fixes
+
+* aesthetic cli changes ([478c0d3](https://github.com/apowers313/prompt-tool/commit/478c0d3e51b2f9a76e49b8d082c96dea1c6f1da4))
+
 # 1.0.0 (2025-08-16)
 
 
