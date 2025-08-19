@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runCommand } from '../../src/commands/run.js';
-import { join } from 'path';
+import path, { join } from 'path';
 import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { existsSync } from 'fs';
@@ -121,7 +121,7 @@ Auto-generated report saved to {{outputFile}}`;
     const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
     const promptManager = new PromptManager(['./.prompts']);
     const prompts = await promptManager.discoverPrompts();
-    const relativePath = promptPath.replace(testDir + '/', '');
+    const relativePath = path.relative(testDir, promptPath);
     const prompt = prompts.find(p => p.path === relativePath)!;
     
     const engine = new TemplateEngine();
@@ -192,7 +192,7 @@ Process {{sourceFile}} to {{destFile}}`;
     const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
     const promptManager = new PromptManager(['./.prompts']);
     const prompts = await promptManager.discoverPrompts();
-    const relativePath = promptPath.replace(testDir + '/', '');
+    const relativePath = path.relative(testDir, promptPath);
     const prompt = prompts.find(p => p.path === relativePath)!;
     
     const engine = new TemplateEngine();
@@ -243,7 +243,7 @@ Report without review`;
     const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
     const promptManager = new PromptManager(['./.prompts']);
     const prompts = await promptManager.discoverPrompts();
-    const relativePath = promptPath.replace(testDir + '/', '');
+    const relativePath = path.relative(testDir, promptPath);
     const prompt = prompts.find(p => p.path === relativePath)!;
     
     const engine = new TemplateEngine();
@@ -311,7 +311,7 @@ This command will fail`;
     const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
     const promptManager = new PromptManager(['./.prompts']);
     const prompts = await promptManager.discoverPrompts();
-    const relativePath = promptPath.replace(testDir + '/', '');
+    const relativePath = path.relative(testDir, promptPath);
     const prompt = prompts.find(p => p.path === relativePath)!;
     
     const engine = new TemplateEngine();
@@ -360,7 +360,7 @@ Create new file at {{newFile}}`;
     const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
     const promptManager = new PromptManager(['./.prompts']);
     const prompts = await promptManager.discoverPrompts();
-    const relativePath = promptPath.replace(testDir + '/', '');
+    const relativePath = path.relative(testDir, promptPath);
     const prompt = prompts.find(p => p.path === relativePath)!;
     
     const engine = new TemplateEngine();

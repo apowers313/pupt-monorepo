@@ -6,11 +6,14 @@ import path from 'node:path';
 import os from 'node:os';
 
 describe('Config Schema Validation', () => {
-  const testDir = path.join(os.tmpdir(), 'pt-config-schema-test');
-  const configPath = path.join(testDir, '.pt-config.json');
+  let testDir: string;
+  let configPath: string;
 
   beforeEach(async () => {
-    await fs.ensureDir(testDir);
+    const tmpDir = path.join(os.tmpdir(), 'pt-config-schema-test');
+    await fs.ensureDir(tmpDir);
+    testDir = fs.realpathSync(tmpDir);
+    configPath = path.join(testDir, '.pt-config.json');
     process.chdir(testDir);
   });
 

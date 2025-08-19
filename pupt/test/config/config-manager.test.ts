@@ -5,11 +5,13 @@ import path from 'path';
 import os from 'os';
 
 describe('ConfigManager', () => {
-  const testDir = path.join(os.tmpdir(), 'pt-test-config');
+  let testDir: string;
   const originalCwd = process.cwd();
 
   beforeEach(async () => {
-    await fs.ensureDir(testDir);
+    const tmpDir = path.join(os.tmpdir(), 'pt-test-config');
+    await fs.ensureDir(tmpDir);
+    testDir = fs.realpathSync(tmpDir);
     process.chdir(testDir);
   });
 
@@ -32,22 +34,22 @@ describe('ConfigManager', () => {
 
   it('should load config from .pt-config.json', async () => {
     const testConfig = {
-      promptDirs: ['/custom/prompts'],
-      historyDir: '/custom/history',
+      promptDirs: ['./custom/prompts'],
+      historyDir: './custom/history',
       version: '3.0.0' // Add version to prevent migration
     };
     await fs.writeJson('.pt-config.json', testConfig);
 
     const config = await ConfigManager.load();
 
-    expect(config.promptDirs).toContain(path.resolve('/custom/prompts'));
-    expect(config.historyDir).toBe(path.resolve('/custom/history'));
+    expect(config.promptDirs).toContain(path.join(testDir, 'custom/prompts'));
+    expect(config.historyDir).toBe(path.join(testDir, 'custom/history'));
   });
 
   it('should load config from .pt-config.yaml', async () => {
     const yamlContent = `
 promptDirs:
-  - /yaml/prompts
+  - ./yaml/prompts
   - ~/prompts
 historyDir: ~/.pt/history
 version: "2.0.0"
@@ -55,7 +57,7 @@ version: "2.0.0"
     await fs.writeFile('.pt-config.yaml', yamlContent);
 
     const config = await ConfigManager.load();
-    expect(config.promptDirs).toContain(path.resolve('/yaml/prompts'));
+    expect(config.promptDirs).toContain(path.join(testDir, 'yaml/prompts'));
     expect(config.promptDirs).toContain(path.join(os.homedir(), 'prompts'));
     expect(config.historyDir).toBe(path.join(os.homedir(), '.pt/history'));
   });
@@ -72,8 +74,8 @@ version: "2.0.0"
     const childDir = 'child';
     await fs.ensureDir(childDir);
     await fs.writeJson(path.join(childDir, '.pt-config.json'), {
-      promptDirs: ['/child/prompts'],
-      historyDir: '/child/history',
+      promptDirs: ['./prompts'],
+      historyDir: './history',
       version: '3.0.0'
     });
 
@@ -86,8 +88,8 @@ version: "2.0.0"
 
     // Should only use the child config (nearest one)
     expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs).toContain(path.resolve('/child/prompts'));
-    expect(config.historyDir).toBe(path.resolve('/child/history'));
+    expect(config.promptDirs).toContain(path.join(testDir, childDir, 'prompts'));
+    expect(config.historyDir).toBe(path.join(testDir, childDir, 'history'));
   });
 
   it('should expand home directory paths', async () => {

@@ -25,13 +25,21 @@ describe('Logger', () => {
   });
 
   describe('line endings', () => {
-    it('should use LF on Unix platforms', () => {
+    it('should use platform-specific line endings', () => {
+      const isWindows = os.platform() === 'win32';
+      const expectedEnding = isWindows ? '\r\n' : '\n';
+      
       logger.log('test');
       
       expect(stdoutSpy).toHaveBeenCalled();
       const call = stdoutSpy.mock.calls[0][0];
-      expect(call).toBe('test\n');
-      expect(call.charCodeAt(call.length - 1)).toBe(10); // LF
+      expect(call).toBe('test' + expectedEnding);
+      
+      if (isWindows) {
+        expect(call.slice(-2)).toBe('\r\n');
+      } else {
+        expect(call.charCodeAt(call.length - 1)).toBe(10); // LF
+      }
     });
 
     it('should use CRLF on Windows', () => {
