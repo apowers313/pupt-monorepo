@@ -109,13 +109,20 @@ export class ConfigManager {
     // Check if migration is needed
     const migrated = await this.migrateConfig(result.config, result.filepath);
 
+    // Normalize the filepath to handle macOS symlinks
+    // On macOS, cosmiconfig may return paths with /private/var instead of /var
+    let normalizedFilepath = result.filepath;
+    if (process.platform === 'darwin' && normalizedFilepath.startsWith('/private/var/')) {
+      normalizedFilepath = normalizedFilepath.replace('/private/var/', '/var/');
+    }
+
     // Get the directory containing the config file
-    const configDir = path.dirname(result.filepath);
+    const configDir = path.dirname(normalizedFilepath);
 
     // Expand paths relative to the config file directory
     return {
       config: this.expandPaths(migrated, configDir),
-      filepath: result.filepath,
+      filepath: normalizedFilepath,
       configDir: configDir
     };
   }
@@ -423,17 +430,21 @@ export class ConfigManager {
       return filepath;
     }
     
+    let expandedPath: string;
+    
     // If we have a config directory, resolve relative paths from there
     if (configDir) {
-      // Use path.join instead of path.resolve to avoid symlink resolution on macOS
-      const joined = path.join(configDir, filepath);
-      // Normalize the path to handle .. and . without resolving symlinks
-      return path.normalize(joined);
+      expandedPath = path.resolve(configDir, filepath);
+    } else {
+      // Otherwise resolve from current working directory
+      expandedPath = path.resolve(filepath);
     }
     
-    // Otherwise resolve from current working directory
-    // Use path.join with cwd to avoid symlink resolution
-    const joined = path.join(process.cwd(), filepath);
-    return path.normalize(joined);
+    // On macOS, normalize paths to remove /private prefix
+    if (process.platform === 'darwin' && expandedPath.startsWith('/private/var/')) {
+      expandedPath = expandedPath.replace('/private/var/', '/var/');
+    }
+    
+    return expandedPath;
   }
 }
