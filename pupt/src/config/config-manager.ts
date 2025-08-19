@@ -425,10 +425,15 @@ export class ConfigManager {
     
     // If we have a config directory, resolve relative paths from there
     if (configDir) {
-      return path.resolve(configDir, filepath);
+      // Use path.join instead of path.resolve to avoid symlink resolution on macOS
+      const joined = path.join(configDir, filepath);
+      // Normalize the path to handle .. and . without resolving symlinks
+      return path.normalize(joined);
     }
     
     // Otherwise resolve from current working directory
-    return path.resolve(filepath);
+    // Use path.join with cwd to avoid symlink resolution
+    const joined = path.join(process.cwd(), filepath);
+    return path.normalize(joined);
   }
 }

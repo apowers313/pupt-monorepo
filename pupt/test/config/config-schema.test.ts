@@ -5,14 +5,6 @@ import fs from 'fs-extra';
 import path from 'node:path';
 import os from 'node:os';
 
-// Helper to normalize paths for comparison on macOS
-function normalizePath(p: string): string {
-  // On macOS, /var is symlinked to /private/var
-  if (process.platform === 'darwin' && p.startsWith('/var/')) {
-    return '/private' + p;
-  }
-  return p;
-}
 
 describe('Config Schema Validation', () => {
   let testDir: string;
@@ -135,7 +127,7 @@ describe('Config Schema Validation', () => {
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.gitPromptDir).toBe(normalizePath(path.join(testDir, '.my-git-prompts')));
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.my-git-prompts'));
     });
 
     it('should accept valid handlebarsExtensions field', async () => {
@@ -177,7 +169,7 @@ describe('Config Schema Validation', () => {
       });
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
-      expect(loaded.gitPromptDir).toBe(normalizePath(path.join(testDir, '.git-prompts')));
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
@@ -281,7 +273,7 @@ describe('Config Schema Validation', () => {
       expect(loaded.version).toBe('3.0.0');
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
-      expect(loaded.gitPromptDir).toBe(normalizePath(path.join(testDir, '.git-prompts')));
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
