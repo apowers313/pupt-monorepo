@@ -17,6 +17,7 @@ import { editCommand } from './commands/edit.js';
 import { runCommand } from './commands/run.js';
 import { annotateCommand } from './commands/annotate.js';
 import { installCommand } from './commands/install.js';
+import { helpCommand } from './commands/help.js';
 import fs from 'fs-extra';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
@@ -308,6 +309,19 @@ Generated on {{date}} by {{username}}.
     
     logger.log(chalk.green(`Created example prompt: ${examplePath}`));
     logger.log(chalk.dim('\nRun "pt" to try it out!'));
+  });
+
+// Help command
+program
+  .command('help [command]')
+  .description('Display help information for a command')
+  .action(async (command) => {
+    try {
+      await helpCommand(command);
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
   });
 
 program.parse();

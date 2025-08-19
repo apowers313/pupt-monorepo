@@ -123,13 +123,6 @@ function formatDate(timestamp: string): string {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
-function truncatePrompt(prompt: string, maxLength: number): string {
-  if (prompt.length <= maxLength) {
-    return prompt;
-  }
-  return prompt.substring(0, maxLength) + '...';
-}
-
 function processSummaryTemplate(summary: string, variables: Record<string, unknown>): string {
   try {
     const template = Handlebars.compile(summary);
