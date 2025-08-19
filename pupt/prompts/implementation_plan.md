@@ -24,7 +24,7 @@ title: Implementation Plan
   - External libraries that solve common problems
   - Refactoring to reduce duplication
 
-**Format & Structure**: Use this template for the implementation plan:
+**Format & Structure**: Write the impleementation plan {{reviewFile "planFile"}}. Use this template for the implementation plan:
 
 ```markdown
 # Implementation Plan for [Feature Name]
