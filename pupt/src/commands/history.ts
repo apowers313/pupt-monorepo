@@ -170,9 +170,8 @@ function formatVariables(variables: Record<string, unknown>): string[] {
       } else {
         // Escape any quotes in the string to prevent display issues
         const escaped = normalized.replace(/"/g, '\\"');
-        // Truncate long strings at 80 characters
-        const truncated = escaped.length > 80 ? escaped.substring(0, 77) + '...' : escaped;
-        formatted.push(`${key}: "${truncated}"`);
+        // Don't truncate individual variables here - let createAutoSummary handle it
+        formatted.push(`${key}: "${escaped}"`);
       }
     } else if (typeof value === 'boolean') {
       formatted.push(`${key}: ${value}`);
@@ -191,22 +190,30 @@ function formatVariables(variables: Record<string, unknown>): string[] {
 }
 
 function createAutoSummary(entry: HistoryEntry): string {
+  // Account for 3 spaces of indentation in the display
+  const maxSummaryLength = 77; // 80 - 3 spaces
+  
+  let summary: string;
+  
   // If there's a summary field, use it
   if (entry.summary) {
-    return processSummaryTemplate(entry.summary, entry.variables);
+    summary = processSummaryTemplate(entry.summary, entry.variables);
+  } else {
+    // Otherwise, show the most relevant user inputs
+    const varDisplay = formatVariables(entry.variables);
+    
+    if (varDisplay.length > 0) {
+      // Show up to 2 variables in a concise format
+      summary = varDisplay.slice(0, 2).join(', ');
+    } else {
+      // Fall back to showing a truncated version of the prompt
+      summary = entry.finalPrompt.split('\n')[0].trim();
+    }
   }
   
-  // Otherwise, show the most relevant user inputs
-  const varDisplay = formatVariables(entry.variables);
-  
-  if (varDisplay.length > 0) {
-    // Show up to 2 variables in a concise format
-    const summary = varDisplay.slice(0, 2).join(', ');
-    // Ensure the overall line doesn't exceed 80 characters
-    return summary.length > 80 ? summary.substring(0, 77) + '...' : summary;
+  // Ensure consistent truncation for alignment
+  if (summary.length > maxSummaryLength) {
+    return summary.substring(0, maxSummaryLength - 3) + '...';
   }
-  
-  // Fall back to showing a truncated version of the prompt
-  const firstLine = entry.finalPrompt.split('\n')[0].trim();
-  return truncatePrompt(firstLine, 80);
+  return summary;
 }
