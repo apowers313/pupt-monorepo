@@ -11,8 +11,10 @@ describe('Config Schema Validation', () => {
   let configPath: string;
 
   beforeEach(async () => {
-    testDir = path.join(os.tmpdir(), 'pt-config-schema-test-' + Date.now());
-    await fs.ensureDir(testDir);
+    const tempDir = path.join(os.tmpdir(), 'pt-config-schema-test-' + Date.now());
+    await fs.ensureDir(tempDir);
+    // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
+    testDir = fs.realpathSync(tempDir);
     configPath = path.join(testDir, '.pt-config.json');
     process.chdir(testDir);
   });
@@ -305,11 +307,15 @@ describe('Config Schema Validation', () => {
 });
 
 describe('Config Migration', () => {
-  const testDir = path.join(os.tmpdir(), 'pt-config-migration-test');
-  const configPath = path.join(testDir, '.pt-config.json');
+  let testDir: string;
+  let configPath: string;
 
   beforeEach(async () => {
-    await fs.ensureDir(testDir);
+    const tempDir = path.join(os.tmpdir(), 'pt-config-migration-test-' + Date.now());
+    await fs.ensureDir(tempDir);
+    // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
+    testDir = fs.realpathSync(tempDir);
+    configPath = path.join(testDir, '.pt-config.json');
     process.chdir(testDir);
   });
 

@@ -4,22 +4,16 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 
-// Helper to normalize paths for comparison on macOS
-function normalizePath(p: string): string {
-  // On macOS, /var is symlinked to /private/var
-  if (process.platform === 'darwin' && p.startsWith('/var/')) {
-    return '/private' + p;
-  }
-  return p;
-}
-
 describe('ConfigManager', () => {
   let testDir: string;
   const originalCwd = process.cwd();
 
   beforeEach(async () => {
-    testDir = path.join(os.tmpdir(), 'pt-test-config-' + Date.now());
-    await fs.ensureDir(testDir);
+    // Create temp directory and resolve to canonical path
+    const tempDir = path.join(os.tmpdir(), 'pt-test-config-' + Date.now());
+    await fs.ensureDir(tempDir);
+    // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
+    testDir = fs.realpathSync(tempDir);
     process.chdir(testDir);
   });
 
@@ -50,8 +44,8 @@ describe('ConfigManager', () => {
 
     const config = await ConfigManager.load();
 
-    expect(config.promptDirs).toContain(normalizePath(path.join(testDir, 'custom/prompts')));
-    expect(config.historyDir).toBe(normalizePath(path.join(testDir, 'custom/history')));
+    expect(config.promptDirs).toContain(path.join(testDir, 'custom/prompts'));
+    expect(config.historyDir).toBe(path.join(testDir, 'custom/history'));
   });
 
   it('should load config from .pt-config.yaml', async () => {
@@ -65,7 +59,7 @@ version: "2.0.0"
     await fs.writeFile('.pt-config.yaml', yamlContent);
 
     const config = await ConfigManager.load();
-    expect(config.promptDirs).toContain(normalizePath(path.join(testDir, 'yaml/prompts')));
+    expect(config.promptDirs).toContain(path.join(testDir, 'yaml/prompts'));
     expect(config.promptDirs).toContain(path.join(os.homedir(), 'prompts'));
     expect(config.historyDir).toBe(path.join(os.homedir(), '.pt/history'));
   });
@@ -96,8 +90,8 @@ version: "2.0.0"
 
     // Should only use the child config (nearest one)
     expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs).toContain(normalizePath(path.join(testDir, childDir, 'prompts')));
-    expect(config.historyDir).toBe(normalizePath(path.join(testDir, childDir, 'history')));
+    expect(config.promptDirs).toContain(path.join(testDir, childDir, 'prompts'));
+    expect(config.historyDir).toBe(path.join(testDir, childDir, 'history'));
   });
 
   it('should expand home directory paths', async () => {
@@ -161,12 +155,12 @@ version: "2.0.0"
       const result = await ConfigManager.loadWithPath();
       
       // Config should be found in parent directory
-      expect(result.filepath).toBe(normalizePath(path.join(testDir, '.pt-config.json')));
-      expect(result.configDir).toBe(normalizePath(testDir));
+      expect(result.filepath).toBe(path.join(testDir, '.pt-config.json'));
+      expect(result.configDir).toBe(testDir);
       
       // Paths should be resolved relative to config file location
-      expect(result.config.promptDirs).toContain(normalizePath(path.join(testDir, 'prompts')));
-      expect(result.config.historyDir).toBe(normalizePath(path.join(testDir, '.pthistory')));
+      expect(result.config.promptDirs).toContain(path.join(testDir, 'prompts'));
+      expect(result.config.historyDir).toBe(path.join(testDir, '.pthistory'));
     });
 
     it('should search up to home directory for config', async () => {
@@ -186,7 +180,7 @@ version: "2.0.0"
       const config = await ConfigManager.load();
       
       // Should find config at top level
-      expect(config.promptDirs).toContain(normalizePath(path.join(testDir, 'prompts')));
+      expect(config.promptDirs).toContain(path.join(testDir, 'prompts'));
     });
 
     it('should stop searching at home directory', async () => {
@@ -225,11 +219,11 @@ version: "2.0.0"
       const result = await ConfigManager.loadWithPath();
       
       // All paths should be resolved relative to the config file location (testDir)
-      expect(result.config.promptDirs).toContain(normalizePath(path.join(testDir, 'prompts')));
-      expect(result.config.promptDirs).toContain(normalizePath(path.resolve(testDir, '../shared-prompts')));
-      expect(result.config.historyDir).toBe(normalizePath(path.join(testDir, '.pthistory')));
-      expect(result.config.annotationDir).toBe(normalizePath(path.join(testDir, 'annotations')));
-      expect(result.config.gitPromptDir).toBe(normalizePath(path.join(testDir, '.git-prompts')));
+      expect(result.config.promptDirs).toContain(path.join(testDir, 'prompts'));
+      expect(result.config.promptDirs).toContain(path.resolve(testDir, '../shared-prompts'));
+      expect(result.config.historyDir).toBe(path.join(testDir, '.pthistory'));
+      expect(result.config.annotationDir).toBe(path.join(testDir, 'annotations'));
+      expect(result.config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
     });
 
     it('should handle absolute paths correctly', async () => {
@@ -273,8 +267,8 @@ version: "2.0.0"
       const config = await ConfigManager.load();
       
       // Paths should be resolved relative to config file
-      expect(config.helpers?.myHelper.path).toBe(normalizePath(path.join(testDir, 'helpers/custom.js')));
-      expect(config.handlebarsExtensions?.[0].path).toBe(normalizePath(path.join(testDir, 'extensions/ext.js')));
+      expect(config.helpers?.myHelper.path).toBe(path.join(testDir, 'helpers/custom.js'));
+      expect(config.handlebarsExtensions?.[0].path).toBe(path.join(testDir, 'extensions/ext.js'));
     });
 
     it('should handle mixed relative and absolute paths', async () => {
@@ -295,13 +289,13 @@ version: "2.0.0"
       const config = await ConfigManager.load();
       
       // Relative path resolved from config dir
-      expect(config.promptDirs).toContain(normalizePath(path.join(testDir, 'local-prompts')));
+      expect(config.promptDirs).toContain(path.join(testDir, 'local-prompts'));
       // Absolute path unchanged
       expect(config.promptDirs).toContain('/absolute/prompts');
       // Home path expanded
       expect(config.promptDirs).toContain(path.join(os.homedir(), 'user-prompts'));
       // Relative path with .. resolved from config dir
-      expect(config.historyDir).toBe(normalizePath(path.resolve(testDir, '../shared/.pthistory')));
+      expect(config.historyDir).toBe(path.resolve(testDir, '../shared/.pthistory'));
     });
   });
 });

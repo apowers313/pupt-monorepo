@@ -9,7 +9,9 @@ describe('Config Migration Integration', () => {
   let originalCwd: string;
 
   beforeEach(async () => {
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-migration-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-migration-test-'));
+    // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
+    testDir = fs.realpathSync(tempDir);
     originalCwd = process.cwd();
     process.chdir(testDir);
   });

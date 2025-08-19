@@ -109,20 +109,13 @@ export class ConfigManager {
     // Check if migration is needed
     const migrated = await this.migrateConfig(result.config, result.filepath);
 
-    // Normalize the filepath to handle macOS symlinks
-    // On macOS, cosmiconfig may return paths with /private/var instead of /var
-    let normalizedFilepath = result.filepath;
-    if (process.platform === 'darwin' && normalizedFilepath.startsWith('/private/var/')) {
-      normalizedFilepath = normalizedFilepath.replace('/private/var/', '/var/');
-    }
-
     // Get the directory containing the config file
-    const configDir = path.dirname(normalizedFilepath);
+    const configDir = path.dirname(result.filepath);
 
     // Expand paths relative to the config file directory
     return {
       config: this.expandPaths(migrated, configDir),
-      filepath: normalizedFilepath,
+      filepath: result.filepath,
       configDir: configDir
     };
   }
@@ -430,21 +423,12 @@ export class ConfigManager {
       return filepath;
     }
     
-    let expandedPath: string;
-    
     // If we have a config directory, resolve relative paths from there
     if (configDir) {
-      expandedPath = path.resolve(configDir, filepath);
-    } else {
-      // Otherwise resolve from current working directory
-      expandedPath = path.resolve(filepath);
+      return path.resolve(configDir, filepath);
     }
     
-    // On macOS, normalize paths to remove /private prefix
-    if (process.platform === 'darwin' && expandedPath.startsWith('/private/var/')) {
-      expandedPath = expandedPath.replace('/private/var/', '/var/');
-    }
-    
-    return expandedPath;
+    // Otherwise resolve from current working directory
+    return path.resolve(filepath);
   }
 }
