@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { HistoryEntry } from '../types/history.js';
 import { sanitizeObject } from '../utils/security.js';
 import { DateFormats } from '../utils/date-formatter.js';
+import { logger } from '../utils/logger.js';
 
 interface HistorySaveOptions {
   templatePath: string;
@@ -11,6 +12,7 @@ interface HistorySaveOptions {
   variables: Map<string, unknown>;
   finalPrompt: string;
   title?: string;
+  summary?: string;
 }
 
 
@@ -46,7 +48,8 @@ export class HistoryManager {
         templateContent: options.templateContent,
         variables: this.maskSensitiveVariables(options.variables),
         finalPrompt: options.finalPrompt,
-        title: options.title
+        title: options.title,
+        summary: options.summary
       };
 
       // Save to history
@@ -85,7 +88,7 @@ export class HistoryManager {
         } catch {
           // Skip invalid files silently in tests
           if (process.env.NODE_ENV !== 'test') {
-            console.warn(`Skipping invalid history file: ${filename}`);
+            logger.warn(`Skipping invalid history file: ${filename}`);
           }
         }
       }
@@ -139,7 +142,7 @@ export class HistoryManager {
       return { ...entry, filename };
     } catch (error) {
       if (process.env.NODE_ENV !== 'test') {
-        console.error(`Failed to get history entry ${index}:`, error);
+        logger.error(`Failed to get history entry ${index}: ${error}`);
       }
       return null;
     }

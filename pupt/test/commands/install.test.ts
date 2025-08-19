@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import fs2 from 'fs-extra';
+import { logger } from '../../src/utils/logger.js';
 
 // Mock simple-git before importing install commands
 vi.mock('simple-git', () => ({
@@ -26,19 +27,18 @@ vi.mock('fs/promises');
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
 
+vi.mock('../../src/utils/logger.js');
 describe('Install Command', () => {
-  let consoleLogSpy: any;
-  let consoleWarnSpy: any;
+  let loggerLogSpy: any;
+  let loggerWarnSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
   });
 
   describe('Git URL Detection', () => {
@@ -150,7 +150,7 @@ describe('Install Command', () => {
     
     beforeEach(() => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.git-prompts',
         version: '3.0.0'
       } as any);
@@ -280,7 +280,7 @@ describe('Install Command', () => {
 
     it('should add cloned prompts directory to config', async () => {
       const initialConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.git-prompts',
         version: '3.0.0'
       };
@@ -293,7 +293,7 @@ describe('Install Command', () => {
         expect.stringContaining('.pt-config.json'),
         expect.objectContaining({
           promptDirs: expect.arrayContaining([
-            './prompts',
+            './.prompts',
             path.join('.git-prompts', 'my-prompts', 'prompts')
           ])
         }),
@@ -304,7 +304,7 @@ describe('Install Command', () => {
     it('should not duplicate prompt directories in config', async () => {
       const existingPath = path.join('.git-prompts', 'existing-repo', 'prompts');
       const initialConfig = {
-        promptDirs: ['./prompts', existingPath],
+        promptDirs: ['./.prompts', existingPath],
         gitPromptDir: '.git-prompts',
         version: '3.0.0'
       };
@@ -318,7 +318,7 @@ describe('Install Command', () => {
 
     it('should handle custom gitPromptDir from config', async () => {
       const initialConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.custom-git-prompts',
         version: '3.0.0'
       };
@@ -459,7 +459,7 @@ describe('Install Command', () => {
     describe('installFromNpm', () => {
       beforeEach(() => {
         vi.mocked(ConfigManager.load).mockResolvedValue({
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           npmPromptDir: 'node_modules',
           version: '3.0.0'
         } as any);
@@ -548,7 +548,7 @@ describe('Install Command', () => {
           expect.stringContaining('.pt-config.json'),
           expect.objectContaining({
             promptDirs: expect.arrayContaining([
-              './prompts',
+              './.prompts',
               path.join('node_modules', '@my-org/prompt-pack', 'prompts')
             ])
           }),
@@ -596,7 +596,7 @@ describe('Install Command', () => {
         
         const existingPath = path.join('node_modules', 'existing-package', 'prompts');
         vi.mocked(ConfigManager.load).mockResolvedValue({
-          promptDirs: ['./prompts', existingPath],
+          promptDirs: ['./.prompts', existingPath],
           npmPromptDir: 'node_modules',
           version: '3.0.0'
         } as any);

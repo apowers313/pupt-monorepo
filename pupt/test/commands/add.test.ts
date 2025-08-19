@@ -5,6 +5,7 @@ import fs from 'fs-extra';
 import path from 'node:path';
 import { execSync, spawn } from 'node:child_process';
 import { input, select, confirm } from '@inquirer/prompts';
+import { logger } from '../../src/utils/logger.js';
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
 vi.mock('node:child_process', () => ({
@@ -22,6 +23,7 @@ vi.mock('../../src/utils/editor.js', () => ({
     openInEditor: vi.fn().mockResolvedValue(undefined)
   }
 }));
+vi.mock('../../src/utils/logger.js');
 
 // Ensure mocks are cleared after all tests
 afterAll(() => {
@@ -29,18 +31,16 @@ afterAll(() => {
 });
 
 describe('Add Command', () => {
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
     vi.clearAllMocks();
     vi.restoreAllMocks();
   });
@@ -52,13 +52,13 @@ describe('Add Command', () => {
 
     it('should return a promise', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
         .mockResolvedValueOnce(''); // labels
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -100,7 +100,7 @@ describe('Add Command', () => {
 
     it('should handle missing git gracefully', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(execSync).mockImplementation(() => {
@@ -110,7 +110,7 @@ describe('Add Command', () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
         .mockResolvedValueOnce(''); // labels
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -124,7 +124,7 @@ describe('Add Command', () => {
 
     it('should handle unconfigured git user', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
@@ -134,7 +134,7 @@ describe('Add Command', () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
         .mockResolvedValueOnce(''); // labels
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -150,12 +150,12 @@ describe('Add Command', () => {
   describe('filename generation', () => {
     beforeEach(() => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
         return Buffer.from('');
       });
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
       // Reset pathExists mock to prevent infinite loops
@@ -245,7 +245,7 @@ describe('Add Command', () => {
   describe('prompt creation', () => {
     beforeEach(() => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
         if (cmd === 'git config user.name') return Buffer.from('Jane Smith\n');
@@ -254,7 +254,7 @@ describe('Add Command', () => {
       });
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
     });
 
@@ -308,7 +308,7 @@ describe('Add Command', () => {
 
     it('should create file in selected directory', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts', './templates', './custom']
+        promptDirs: ['./.prompts', './templates', './custom']
       } as any);
       
       vi.mocked(input)
@@ -331,8 +331,8 @@ describe('Add Command', () => {
 
       await addCommand();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`Created prompt: ${path.join('prompts', 'success-test.md')}`)
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining(`Created prompt: ${path.join('.prompts', 'success-test.md')}`)
       );
     });
   });
@@ -340,7 +340,7 @@ describe('Add Command', () => {
   describe('editor integration', () => {
     beforeEach(() => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
         return Buffer.from('');
@@ -348,7 +348,7 @@ describe('Add Command', () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
         .mockResolvedValueOnce(''); // labels
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
     });
@@ -382,7 +382,7 @@ describe('Add Command', () => {
   describe('error handling', () => {
     it('should handle write errors gracefully', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
         return Buffer.from('');
@@ -390,7 +390,7 @@ describe('Add Command', () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
         .mockResolvedValueOnce(''); // labels
-      vi.mocked(select).mockResolvedValue('./prompts');
+      vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false); // File doesn't exist
       const accessError = new Error('EACCES: permission denied') as NodeJS.ErrnoException;

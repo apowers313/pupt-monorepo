@@ -6,7 +6,7 @@ import { spawn } from 'child_process';
 
 export function createMockConfig(overrides: Partial<Config> = {}): Config {
   return {
-    promptDirectory: ['./prompts'],
+    promptDirectory: ['./.prompts'],
     historyDirectory: './.pthistory',
     editor: 'code',
     ...overrides

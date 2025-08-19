@@ -10,22 +10,26 @@ import {
   isRecoverableError,
   getErrorCategory
 } from '../../src/utils/errors.js';
+import { logger } from '../../src/utils/logger.js';
+
+vi.mock('../../src/utils/logger.js');
 
 describe('Enhanced Error System', () => {
-  let consoleSpy: {
-    error: ReturnType<typeof vi.spyOn>;
-    warn: ReturnType<typeof vi.spyOn>;
+  let loggerSpy: {
+    error: ReturnType<typeof vi.mocked>;
+    warn: ReturnType<typeof vi.mocked>;
   };
 
   beforeEach(() => {
-    consoleSpy = {
-      error: vi.spyOn(console, 'error').mockImplementation(() => {}),
-      warn: vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.clearAllMocks();
+    loggerSpy = {
+      error: vi.mocked(logger.error).mockImplementation(() => {}),
+      warn: vi.mocked(logger.warn).mockImplementation(() => {})
     };
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('PromptToolError', () => {
@@ -188,11 +192,11 @@ describe('Enhanced Error System', () => {
       displayError(error);
       
       // First call shows the error message
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(loggerSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('⚙️ Error: No configuration found')
       );
       // Second call shows suggestions header
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(loggerSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('💡 Suggestions:')
       );
     });
@@ -201,7 +205,7 @@ describe('Enhanced Error System', () => {
       const warning = errors.validationError('field', 'format', 'example');
       displayError(warning);
       
-      expect(consoleSpy.warn).toHaveBeenCalled();
+      expect(loggerSpy.warn).toHaveBeenCalled();
     });
 
     it('should display fatal errors prominently', () => {
@@ -212,7 +216,7 @@ describe('Enhanced Error System', () => {
       });
       displayError(fatal);
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(loggerSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('FATAL ERROR:')
       );
     });
@@ -222,7 +226,7 @@ describe('Enhanced Error System', () => {
       const error = new Error('Test error');
       displayError(error);
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(loggerSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('Stack trace:')
       );
       delete process.env.DEBUG;
@@ -232,7 +236,7 @@ describe('Enhanced Error System', () => {
       const error = new Error('Generic error');
       displayError(error);
       
-      expect(consoleSpy.error).toHaveBeenCalledWith(
+      expect(loggerSpy.error).toHaveBeenCalledWith(
         expect.stringContaining('Error:'),
         'Generic error'
       );
@@ -252,7 +256,7 @@ describe('Enhanced Error System', () => {
     });
 
     it('should provide multiple suggestions when applicable', () => {
-      const promptError = errors.noPromptsFound(['./prompts', './templates']);
+      const promptError = errors.noPromptsFound(['./.prompts', './templates']);
       expect(promptError.suggestions.length).toBeGreaterThan(2);
     });
   });

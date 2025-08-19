@@ -5,5 +5,6 @@ export interface HistoryEntry {
   variables: Record<string, unknown>;
   finalPrompt: string;
   title?: string;
+  summary?: string;
   filename: string;
 }

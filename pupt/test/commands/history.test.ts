@@ -2,21 +2,23 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { historyCommand } from '../../src/commands/history.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
+import { logger } from '../../src/utils/logger.js';
 import chalk from 'chalk';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/history/history-manager.js');
+vi.mock('../../src/utils/logger.js');
 
 describe('History Command', () => {
-  let consoleSpy: any;
+  let loggerSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    loggerSpy = vi.mocked(logger.log).mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
+    vi.clearAllMocks();
   });
 
   describe('command registration', () => {
@@ -26,7 +28,7 @@ describe('History Command', () => {
 
     it('should return a promise', () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -43,7 +45,7 @@ describe('History Command', () => {
   describe('error handling', () => {
     it('should show friendly error when history is not enabled', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
         // No historyDir
       } as any);
 
@@ -54,7 +56,7 @@ describe('History Command', () => {
 
     it('should show message for empty history', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -65,7 +67,7 @@ describe('History Command', () => {
 
       await historyCommand({});
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         chalk.yellow('📋 No history found')
       );
     });
@@ -101,7 +103,7 @@ describe('History Command', () => {
 
     it('should display history entries with proper formatting', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -113,27 +115,32 @@ describe('History Command', () => {
       await historyCommand({});
 
       // Check header
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.bold('\nPrompt History:'));
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.gray('─'.repeat(80)));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.bold('\nPrompt History:'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.gray('─'.repeat(80)));
 
       // Check first entry formatting (now the oldest)
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('1.')
       );
       // Calculate expected local time from UTC timestamp
       const date1 = new Date('2024-01-14T16:45:00.000Z');
       const expectedTime1 = `[${date1.getFullYear()}-${String(date1.getMonth() + 1).padStart(2, '0')}-${String(date1.getDate()).padStart(2, '0')} ${String(date1.getHours()).padStart(2, '0')}:${String(date1.getMinutes()).padStart(2, '0')}]`;
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining(expectedTime1)
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Database Schema')
+      );
+      
+      // Should show summary instead of raw prompt
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Design PostgreSQL schema for user management system')
       );
     });
 
-    it('should truncate long prompts at 60 characters', async () => {
+    it('should display variables when no summary is available', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -144,12 +151,12 @@ describe('History Command', () => {
 
       await historyCommand({});
 
-      // Check that one of the calls contains the truncated prompt
-      const calls = consoleSpy.mock.calls.map(call => call[0]);
-      const hasTruncatedPrompt = calls.some(call => 
-        call.includes('Generate a TypeScript API client for the weather service wit...')
+      // Check that one of the calls contains the variable display
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const hasVariables = calls.some(call => 
+        call.includes('service: "weather"')
       );
-      expect(hasTruncatedPrompt).toBe(true);
+      expect(hasVariables).toBe(true);
     });
 
     it('should handle prompts without titles', async () => {
@@ -162,7 +169,7 @@ describe('History Command', () => {
       };
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -173,16 +180,301 @@ describe('History Command', () => {
 
       await historyCommand({});
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Untitled')
       );
+    });
+  });
+
+  describe('summary display', () => {
+    it('should display summary field when available', async () => {
+      const entryWithSummary = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: '**Role & Context**: You are a versatile AI assistant...\n\n**Objective**: Create a test',
+        title: 'Test Prompt',
+        summary: 'Create a plan from {{design}} and write it to {{plan}}',
+        templateContent: 'template',
+        variables: { design: 'design.md', plan: 'plan.md' }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entryWithSummary]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      // Should show processed summary with variable substitution
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Create a plan from design.md and write it to plan.md')
+      );
+    });
+
+    it('should display variables instead of extracting from prompt', async () => {
+      const entryWithVariables = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: '**Role & Context**: You are a versatile AI assistant capable of handling various technical tasks.\n\n**Objective**: Build a secure authentication system\n\nImplement OAuth2 authentication flow with JWT tokens for the user management module',
+        title: 'Auth Implementation',
+        templateContent: 'template',
+        variables: { authType: 'OAuth2', tokenType: 'JWT', module: 'user-management' }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entryWithVariables]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      // Should show variables
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const hasVariables = calls.some(call => 
+        call.includes('authType: "OAuth2"') && call.includes('tokenType: "JWT"')
+      );
+      expect(hasVariables).toBe(true);
+    });
+
+    it('should handle empty prompts gracefully', async () => {
+      const emptyEntry = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/empty.md',
+        finalPrompt: '',
+        title: 'Empty Prompt',
+        templateContent: 'template',
+        variables: {}
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([emptyEntry]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      // Should not crash and should show the title
+      expect(loggerSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Empty Prompt')
+      );
+    });
+
+    it('should handle newlines in variable values', async () => {
+      const entryWithNewlines = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: 'Process request',
+        title: 'Multi-line Input',
+        templateContent: 'template',
+        variables: { 
+          prompt: 'First line\n\nSecond line\n\nThird line with lots of text',
+          config: 'value1\nvalue2\nvalue3'
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entryWithNewlines]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      // Should normalize newlines to spaces
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const hasNormalized = calls.some(call => 
+        call.includes('prompt: "First line Second line Third line with lots of text"')
+      );
+      expect(hasNormalized).toBe(true);
+      
+      // Should not contain actual newlines
+      const hasNewlines = calls.some(call => 
+        call.includes('\n\n')
+      );
+      expect(hasNewlines).toBe(false);
+    });
+
+    it('should truncate individual variables at 80 characters', async () => {
+      const longString = 'a'.repeat(100); // 100 character string
+      const longEntry = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: 'Process',
+        title: 'Long Variable',
+        templateContent: 'template',
+        variables: { 
+          prompt: longString
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([longEntry]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      
+      // Find the line with the variable display
+      const varLine = calls.find(call => call.includes('prompt: "'));
+      expect(varLine).toBeDefined();
+      
+      // Extract just the variable value to check its length
+      if (varLine) {
+        // The value should be exactly 80 chars: 77 'a's + '...'
+        const match = varLine.match(/prompt: "([^"]+)"/);
+        if (match) {
+          const value = match[1];
+          expect(value).toBe('a'.repeat(77) + '...');
+          expect(value.length).toBe(80);
+        }
+      }
+    });
+
+    it('should only treat file-named variables as file paths', async () => {
+      const entry = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: 'Process',
+        title: 'Mixed Variables',
+        templateContent: 'template',
+        variables: { 
+          prompt: '/home/user/docs/review.md',  // Not a file variable name
+          designFile: '/home/user/projects/design.md',  // Is a file variable name
+          outputPath: 'C:\\Users\\name\\output.txt'  // Is a path variable name
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entry]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const summaryLine = calls.find(call => call.includes('prompt: "') || call.includes('designFile: "'));
+      
+      expect(summaryLine).toBeDefined();
+      if (summaryLine) {
+        // 'prompt' should show full path (not a file variable)
+        expect(summaryLine).toContain('/home/user/docs/review.md');
+        // 'designFile' should show only filename
+        expect(summaryLine).toContain('designFile: "design.md"');
+        // Note: outputPath won't be shown because only 2 variables are displayed
+      }
+    });
+
+    it('should handle strings with quotes correctly', async () => {
+      const entry = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: 'Process',
+        title: 'Quotes Test',
+        templateContent: 'template',
+        variables: { 
+          prompt: 'The user said "hello world" and then continued',
+          config: 'Use "double quotes" for strings'
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entry]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      
+      // Should escape quotes properly
+      const hasEscapedQuotes = calls.some(call => 
+        call.includes('prompt: "The user said \\"hello world\\"') ||
+        call.includes('config: "Use \\"double quotes\\"')
+      );
+      expect(hasEscapedQuotes).toBe(true);
+    });
+
+    it('should format file paths to show only filename', async () => {
+      const entryWithFilePaths = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: 'Process the design document',
+        title: 'File Processing',
+        templateContent: 'template',
+        variables: { 
+          designFile: '/home/user/projects/my-app/docs/design.md',
+          outputFile: 'C:\\Users\\name\\Documents\\output.pdf'
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entryWithFilePaths]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({});
+
+      // Should show only filenames, not full paths
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const hasFilenames = calls.some(call => 
+        call.includes('designFile: "design.md"') && 
+        call.includes('outputFile: "output.pdf"')
+      );
+      expect(hasFilenames).toBe(true);
+      
+      // Should not show full paths
+      const hasFullPaths = calls.some(call => 
+        call.includes('/home/user/projects') || call.includes('C:\\Users')
+      );
+      expect(hasFullPaths).toBe(false);
     });
   });
 
   describe('pagination', () => {
     it('should apply default limit of 20 entries', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -199,7 +491,7 @@ describe('History Command', () => {
 
     it('should respect --limit flag', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -216,7 +508,7 @@ describe('History Command', () => {
 
     it('should show all entries with --all flag', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -245,7 +537,7 @@ describe('History Command', () => {
       };
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -257,35 +549,35 @@ describe('History Command', () => {
       await historyCommand({ entry: 5 });
 
       // Check header
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.bold('\nHistory Entry #5:'));
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.gray('─'.repeat(80)));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.bold('\nHistory Entry #5:'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.gray('─'.repeat(80)));
       
       // Check details
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Timestamp:')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Title:') && expect.stringContaining('Test Prompt')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Template:') && expect.stringContaining('/templates/test.md')
       );
       
       // Check variables
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.cyan('\nVariables:'));
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.cyan('\nVariables:'));
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('name') && expect.stringContaining('"TestUser"')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('apiKey') && expect.stringContaining('"***"')
       );
       
       // Check final prompt
-      expect(consoleSpy).toHaveBeenCalledWith(chalk.cyan('\nFinal Prompt:'));
-      expect(consoleSpy).toHaveBeenCalledWith('This is the final generated prompt with TestUser');
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.cyan('\nFinal Prompt:'));
+      expect(loggerSpy).toHaveBeenCalledWith('This is the final generated prompt with TestUser');
       
       // Check filename
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('History file: 20240115-103045-abc123.json')
       );
     });
@@ -302,7 +594,7 @@ describe('History Command', () => {
       };
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -314,12 +606,12 @@ describe('History Command', () => {
       await historyCommand({ entry: 1 });
 
       // Should not show variables section
-      expect(consoleSpy).not.toHaveBeenCalledWith(chalk.cyan('\nVariables:'));
+      expect(loggerSpy).not.toHaveBeenCalledWith(chalk.cyan('\nVariables:'));
     });
 
     it('should show error for non-existent entry', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -330,17 +622,17 @@ describe('History Command', () => {
 
       await historyCommand({ entry: 10 });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         chalk.red('History entry 10 not found')
       );
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         chalk.dim('Available entries: 1-5')
       );
     });
 
     it('should not show available entries when history is empty', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -351,10 +643,10 @@ describe('History Command', () => {
 
       await historyCommand({ entry: 1 });
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         chalk.red('History entry 1 not found')
       );
-      expect(consoleSpy).not.toHaveBeenCalledWith(
+      expect(loggerSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('Available entries:')
       );
     });
@@ -372,7 +664,7 @@ describe('History Command', () => {
       }];
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -386,7 +678,7 @@ describe('History Command', () => {
       // Should format as YYYY-MM-DD HH:MM in local time
       const date = new Date('2024-01-15T10:30:00.000Z');
       const expectedTime = `[${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}]`;
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining(expectedTime)
       );
     });
@@ -402,7 +694,7 @@ describe('History Command', () => {
       }));
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -414,9 +706,9 @@ describe('History Command', () => {
       await historyCommand({});
 
       // Check numbers are sequential
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('1.'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('2.'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('3.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('1.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('2.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('3.'));
     });
 
     it('should maintain consistent numbering with limited entries', async () => {
@@ -431,7 +723,7 @@ describe('History Command', () => {
       }));
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
       
@@ -443,9 +735,9 @@ describe('History Command', () => {
       await historyCommand({ limit: 3 });
 
       // Should show numbers 8, 9, 10 (not 1, 2, 3)
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('8.'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('9.'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('10.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('8.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('9.'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('10.'));
     });
   });
 });

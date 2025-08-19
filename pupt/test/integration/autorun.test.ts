@@ -16,7 +16,7 @@ describe('AutoRun Feature', () => {
     cliPath = path.resolve('./dist/cli.js');
     
     // Create a simple prompt
-    const promptDir = path.join(testDir, 'prompts');
+    const promptDir = path.join(testDir, '.prompts');
     await fs.ensureDir(promptDir);
     await fs.writeFile(
       path.join(promptDir, 'test.md'),
@@ -34,7 +34,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun enabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'echo',
       defaultCmdArgs: ['{{prompt}}'],
@@ -62,7 +62,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun disabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: false,
       defaultCmd: 'echo',
       defaultCmdArgs: ['{{prompt}}']
@@ -89,7 +89,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun and a command that will fail
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'nonexistentcommand12345',
       defaultCmdArgs: ['{{prompt}}'],
@@ -126,7 +126,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun enabled and history enabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       historyDir: path.join(testDir, '.pthistory'),
       autoRun: true,
       defaultCmd: 'echo',
@@ -154,7 +154,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun and options
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'echo',
       defaultCmdArgs: ['-n', '{{prompt}}'],
@@ -188,7 +188,7 @@ describe('AutoRun Feature', () => {
     // Create config with autoRun and history enabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       historyDir: historyDir,
       autoRun: true,
       defaultCmd: 'echo',

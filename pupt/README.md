@@ -326,7 +326,7 @@ Multiple config files are merged, with closer files taking precedence.
 
 ```json
 {
-  "promptDirs": ["./prompts", "~/my-prompts"],
+  "promptDirs": ["./.prompts", "~/my-prompts"],
   "historyDir": "~/.pt/history",
   "annotationDir": "~/.pt/history",
   "codingTool": "claude",
@@ -353,12 +353,12 @@ Multiple config files are merged, with closer files taking precedence.
 
 #### `promptDirs` (array of strings)
 - **Purpose**: Directories to search for prompt files
-- **Default**: `["./prompts"]`
+- **Default**: `["./.prompts"]`
 - **Notes**: 
   - Searches recursively for `.md` files
   - Supports `~` for home directory
   - Relative paths are resolved from config file location
-- **Example**: `["./prompts", "~/global-prompts", "/usr/share/pt/prompts"]`
+- **Example**: `["./.prompts", "~/global-prompts", "/usr/share/pt/prompts"]`
 
 #### `historyDir` (string, optional)
 - **Purpose**: Directory to save generated prompts history
@@ -439,7 +439,7 @@ Multiple config files are merged, with closer files taking precedence.
 #### Minimal Configuration
 ```json
 {
-  "promptDirs": ["./prompts"]
+  "promptDirs": ["./.prompts"]
 }
 ```
 
@@ -447,7 +447,7 @@ Multiple config files are merged, with closer files taking precedence.
 ```json
 {
   "promptDirs": [
-    "./prompts",
+    "./.prompts",
     "~/team-prompts",
     "/shared/company-prompts"
   ],
@@ -487,7 +487,7 @@ version: "2.0.0"
 #### Minimal Configuration with History
 ```json
 {
-  "promptDirs": ["./prompts"],
+  "promptDirs": ["./.prompts"],
   "historyDir": "./.pthistory",
   "version": "2.0.0"
 }

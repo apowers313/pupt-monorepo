@@ -19,7 +19,7 @@ describe('Config Migration', () => {
   describe('migrateConfig', () => {
     it('should migrate v1 config with codingTool fields', () => {
       const v1Config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.history',
         codingTool: 'mycli',
         codingToolArgs: ['--flag'],
@@ -41,7 +41,7 @@ describe('Config Migration', () => {
 
     it('should add default values for new fields', () => {
       const oldConfig = {
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       };
 
       const migrated = migrateConfig(oldConfig);
@@ -81,12 +81,12 @@ describe('Config Migration', () => {
 
       const migrated = migrateConfig(config);
 
-      expect(migrated.promptDirs).toEqual(['./prompts']);
+      expect(migrated.promptDirs).toEqual(['./.prompts']);
     });
 
     it('should validate migrated config with Zod schema', () => {
       const v1Config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'code',
         codingToolArgs: ['--wait']
       };
@@ -106,7 +106,7 @@ describe('Config Migration', () => {
     });
 
     it('should return true for configs without version', () => {
-      expect(migrateConfig.needsMigration({ promptDirs: ['./prompts'] })).toBe(true);
+      expect(migrateConfig.needsMigration({ promptDirs: ['./.prompts'] })).toBe(true);
     });
 
     it('should return true for configs with old version', () => {
@@ -117,7 +117,7 @@ describe('Config Migration', () => {
     it('should return false for up-to-date configs', () => {
       const config = {
         version: '3.0.0',
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmd: 'claude'
       };
 
@@ -127,7 +127,7 @@ describe('Config Migration', () => {
 
   describe('createBackup', () => {
     it('should create a backup file', async () => {
-      const config = { promptDirs: ['./prompts'], version: '2.0.0' };
+      const config = { promptDirs: ['./.prompts'], version: '2.0.0' };
       await fs.writeJson(configPath, config);
 
       await migrateConfig.createBackup(configPath);
@@ -140,8 +140,8 @@ describe('Config Migration', () => {
     });
 
     it('should create timestamped backup if backup already exists', async () => {
-      const config1 = { promptDirs: ['./prompts'], version: '1.0.0' };
-      const config2 = { promptDirs: ['./prompts'], version: '2.0.0' };
+      const config1 = { promptDirs: ['./.prompts'], version: '1.0.0' };
+      const config2 = { promptDirs: ['./.prompts'], version: '2.0.0' };
       
       // Create original and first backup
       await fs.writeJson(configPath, config1);
@@ -174,7 +174,7 @@ describe('Config Migration', () => {
     });
 
     it('should apply the latest migration', () => {
-      const config = { promptDirs: ['./prompts'] };
+      const config = { promptDirs: ['./.prompts'] };
       const migrated = migrateConfig(config);
       
       expect(migrated.version).toBe(migrations[migrations.length - 1].version);
@@ -185,17 +185,17 @@ describe('Config Migration', () => {
       const legacyConfigs = [
         // V1 format with single promptDirectory
         {
-          promptDirectory: './prompts',
+          promptDirectory: './.prompts',
           historyDirectory: './.history'
         },
         // V1 format with array promptDirectory
         {
-          promptDirectory: ['./prompts', './more-prompts'],
+          promptDirectory: ['./.prompts', './more-prompts'],
           codingTool: 'vim'
         },
         // V2 format
         {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.history',
           codingTool: 'code',
           autoReview: false
@@ -229,7 +229,7 @@ describe('Config Migration', () => {
   describe('schema validation', () => {
     it('should accept valid v1 configs', () => {
       const v1Config = {
-        promptDirectory: './prompts',
+        promptDirectory: './.prompts',
         historyDirectory: './.history',
         codingTool: 'code',
         codingToolArgs: ['--wait']
@@ -241,7 +241,7 @@ describe('Config Migration', () => {
 
     it('should accept valid v2 configs', () => {
       const v2Config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.history',
         codingTool: 'code',
         autoReview: true,
@@ -254,7 +254,7 @@ describe('Config Migration', () => {
 
     it('should accept valid v3 configs', () => {
       const v3Config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.history',
         defaultCmd: 'claude',
         defaultCmdArgs: [],
@@ -279,10 +279,10 @@ describe('Config Migration', () => {
     it('should reject invalid configs', () => {
       const invalidConfigs = [
         { promptDirs: [] }, // Empty array
-        { promptDirs: ['./prompts'], version: 'invalid' }, // Invalid version format
-        { promptDirs: ['./prompts'], helpers: { bad: { type: 'unknown' } } }, // Invalid helper type
-        { promptDirs: ['./prompts'], helpers: { bad: { type: 'inline' } } }, // Missing value for inline
-        { promptDirs: ['./prompts'], helpers: { bad: { type: 'file' } } } // Missing path for file
+        { promptDirs: ['./.prompts'], version: 'invalid' }, // Invalid version format
+        { promptDirs: ['./.prompts'], helpers: { bad: { type: 'unknown' } } }, // Invalid helper type
+        { promptDirs: ['./.prompts'], helpers: { bad: { type: 'inline' } } }, // Missing value for inline
+        { promptDirs: ['./.prompts'], helpers: { bad: { type: 'file' } } } // Missing path for file
       ];
 
       invalidConfigs.forEach((config, index) => {

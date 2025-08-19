@@ -4,6 +4,7 @@ import * as os from 'os';
 import fs from 'fs-extra';
 import { installCommand } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
+import { logger } from '../../src/utils/logger.js';
 
 // Mock execa
 vi.mock('execa', () => ({
@@ -21,12 +22,13 @@ vi.mock('simple-git', () => ({
 // Mock ConfigManager to use test configs
 vi.mock('../../src/config/config-manager.js');
 
+vi.mock('../../src/utils/logger.js');
 describe('NPM Installation Integration Tests', () => {
   let tempDir: string;
   let originalCwd: string;
   let mockExeca: any;
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
 
   beforeEach(async () => {
     // Save original cwd
@@ -40,7 +42,7 @@ describe('NPM Installation Integration Tests', () => {
     // Create initial config
     const testConfig = {
       version: '3.0.0',
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     };
     await fs.writeJson('.pt-config.json', testConfig);
     
@@ -58,14 +60,12 @@ describe('NPM Installation Integration Tests', () => {
     mockExeca = execaMock.execa as any;
     
     // Setup console spies
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
   });
 
   afterEach(async () => {
     // Restore console
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
     
     // Restore cwd
     process.chdir(originalCwd);
@@ -115,8 +115,8 @@ describe('NPM Installation Integration Tests', () => {
       expect(config.promptDirs).toContain(path.join('node_modules', 'my-prompts', 'templates'));
       
       // Verify console output
-      expect(consoleLogSpy).toHaveBeenCalledWith('Installing npm package my-prompts...');
-      expect(consoleLogSpy).toHaveBeenCalledWith('Successfully installed prompts from my-prompts');
+      expect(loggerLogSpy).toHaveBeenCalledWith('Installing npm package my-prompts...');
+      expect(loggerLogSpy).toHaveBeenCalledWith('Successfully installed prompts from my-prompts');
     });
 
     it('should install a scoped npm package', async () => {
@@ -192,7 +192,7 @@ describe('NPM Installation Integration Tests', () => {
       const existingPath = path.join('node_modules', 'existing-package', 'prompts');
       await fs.writeJson('.pt-config.json', {
         version: '3.0.0',
-        promptDirs: ['./prompts', existingPath]
+        promptDirs: ['./.prompts', existingPath]
       });
       
       // Mock successful npm install
@@ -220,7 +220,7 @@ describe('NPM Installation Integration Tests', () => {
       expect(config.promptDirs.filter(dir => dir === existingPath)).toHaveLength(1);
       
       // Verify appropriate console output
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(loggerLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('already configured at')
       );
     });
@@ -230,7 +230,7 @@ describe('NPM Installation Integration Tests', () => {
         'Invalid installation source'
       );
       
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('neither a valid git URL nor an npm package name')
       );
     });

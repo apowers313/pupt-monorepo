@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
+import { logger } from '../utils/logger.js';
 
 export enum LogLevel {
   ERROR = 0,
@@ -28,32 +29,32 @@ export class ConsoleUI {
   success(message: string): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const formatted = this.useColor ? chalk.green('✅ ' + message) : '✅ ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   error(error: Error | string): void {
     if (this.silent || this.logLevel < LogLevel.ERROR) return;
     const message = error instanceof Error ? error.message : error;
     const formatted = this.useColor ? chalk.red('❌ ' + message) : '❌ ' + message;
-    console.error(formatted);
+    logger.error(formatted);
   }
 
   warn(message: string): void {
     if (this.silent || this.logLevel < LogLevel.WARN) return;
     const formatted = this.useColor ? chalk.yellow('⚠️  ' + message) : '⚠️  ' + message;
-    console.warn(formatted);
+    logger.warn(formatted);
   }
 
   info(message: string): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const formatted = this.useColor ? chalk.blue('ℹ️  ' + message) : 'ℹ️  ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   debug(message: string): void {
     if (this.silent || this.logLevel < LogLevel.DEBUG) return;
     const formatted = this.useColor ? chalk.gray('🐛 ' + message) : '🐛 ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   spinner(text: string) {
@@ -71,13 +72,14 @@ export class ConsoleUI {
 
   table(data: unknown[]): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
+    // console.table doesn't have line ending issues, so we keep it
     console.table(data);
   }
 
   json(data: unknown, pretty = true): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const output = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
-    console.log(output);
+    logger.log(output);
   }
 
   setLogLevel(level: LogLevel): void {

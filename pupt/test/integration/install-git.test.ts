@@ -36,7 +36,7 @@ describe('Git Installation - Integration Tests', () => {
 
     // Initialize a basic pt config
     await fs.writeFile('.pt-config.json', JSON.stringify({
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       gitPromptDir: '.git-prompts',
       version: '3.0.0'
     }, null, 2));
@@ -78,13 +78,15 @@ describe('Git Installation - Integration Tests', () => {
       // Verify git clone was called correctly
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/mock-repo',
-        path.join('.git-prompts', 'mock-repo'),
+        expect.stringContaining(path.join('.git-prompts', 'mock-repo')),
         ['--depth', '1']
       );
       
       // Check config was updated
       const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
-      expect(config.promptDirs).toContain(path.join('.git-prompts', 'mock-repo', 'prompts'));
+      expect(config.promptDirs.some((dir: string) => 
+        dir.includes(path.join('.git-prompts', 'mock-repo', 'prompts'))
+      )).toBe(true);
     });
 
     it('should handle installation in git repository with .gitignore update', { timeout: 10000 }, async () => {
@@ -156,7 +158,9 @@ describe('Git Installation - Integration Tests', () => {
       
       // Config should be updated with the path even if it doesn't exist yet
       const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
-      expect(config.promptDirs).toContain(path.join('.git-prompts', 'mock-repo-no-prompts', 'prompts'));
+      expect(config.promptDirs.some((dir: string) => 
+        dir.includes(path.join('.git-prompts', 'mock-repo-no-prompts', 'prompts'))
+      )).toBe(true);
     });
 
     it('should not duplicate prompt directories in config', { timeout: 10000 }, async () => {
@@ -178,7 +182,9 @@ describe('Git Installation - Integration Tests', () => {
       // Check config doesn't have duplicates
       const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
       const promptPath = path.join('.git-prompts', 'mock-repo-duplicate', 'prompts');
-      const occurrences = config.promptDirs.filter((dir: string) => dir === promptPath).length;
+      const occurrences = config.promptDirs.filter((dir: string) => 
+        dir.includes(promptPath)
+      ).length;
       expect(occurrences).toBe(1);
     });
 
@@ -203,7 +209,7 @@ describe('Git Installation - Integration Tests', () => {
     it('should handle custom gitPromptDir from config', { timeout: 10000 }, async () => {
       // Update config with custom directory
       await fs.writeFile('.pt-config.json', JSON.stringify({
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.custom-git-prompts',
         version: '3.0.0'
       }, null, 2));
@@ -225,13 +231,15 @@ describe('Git Installation - Integration Tests', () => {
       // Check custom directory was used
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/mock-repo-custom',
-        path.join('.custom-git-prompts', 'mock-repo-custom'),
+        expect.stringContaining(path.join('.custom-git-prompts', 'mock-repo-custom')),
         ['--depth', '1']
       );
       
       // Check config uses custom path
       const config = JSON.parse(await fs.readFile('.pt-config.json', 'utf-8'));
-      expect(config.promptDirs).toContain(path.join('.custom-git-prompts', 'mock-repo-custom', 'prompts'));
+      expect(config.promptDirs.some((dir: string) => 
+        dir.includes(path.join('.custom-git-prompts', 'mock-repo-custom', 'prompts'))
+      )).toBe(true);
     });
   });
 });

@@ -4,9 +4,17 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 import * as inquirerPrompts from '@inquirer/prompts';
+import { logger } from '../../src/utils/logger.js';
 
 // Mock inquirer prompts
 vi.mock('@inquirer/prompts');
+
+vi.mock('../../src/utils/logger.js');
+// Mock tool detection
+vi.mock('../../src/utils/tool-detection.js', () => ({
+  detectInstalledTools: vi.fn(() => []),
+  getToolByName: vi.fn()
+}));
 
 describe('Init Command', () => {
   const testDir = path.join(os.tmpdir(), 'pt-init-test');
@@ -62,13 +70,13 @@ describe('Init Command', () => {
         .mockResolvedValueOnce(false); // No history
 
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
 
       await initCommand();
 
       // Config should be overwritten
       const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toEqual(['./prompts']);
+      expect(config.promptDirs).toEqual(['./.prompts']);
     });
   });
 
@@ -86,7 +94,7 @@ describe('Init Command', () => {
 
     it('should create history directory when enabled', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValueOnce('./prompts')
+        .mockResolvedValueOnce('./.prompts')
         .mockResolvedValueOnce('./.pthistory');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValueOnce(true)   // Enable history
@@ -99,7 +107,7 @@ describe('Init Command', () => {
 
     it('should create annotation directory when enabled', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValueOnce('./prompts')
+        .mockResolvedValueOnce('./.prompts')
         .mockResolvedValueOnce('./.pthistory')
         .mockResolvedValueOnce('./.ptannotations');
       vi.mocked(inquirerPrompts.confirm)
@@ -113,10 +121,10 @@ describe('Init Command', () => {
 
     it('should handle existing directories gracefully', async () => {
       // Pre-create directory
-      await fs.ensureDir('./prompts');
+      await fs.ensureDir('./.prompts');
       
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false);
 
@@ -138,7 +146,7 @@ describe('Init Command', () => {
       await initCommand();
 
       const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toEqual(['./prompts']);
+      expect(config.promptDirs).toEqual(['./.prompts']);
     });
 
     it('should use default history directory', async () => {
@@ -158,7 +166,7 @@ describe('Init Command', () => {
 
     it('should only ask about annotations if history is enabled', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValueOnce(false); // No history
 
@@ -184,7 +192,7 @@ describe('Init Command', () => {
   describe('config file generation', () => {
     it('should create valid JSON config', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false);
 
@@ -195,26 +203,124 @@ describe('Init Command', () => {
       expect(Array.isArray(config.promptDirs)).toBe(true);
     });
 
-    it('should include default coding tool settings', async () => {
+    it('should not include default tool settings when no tools are detected', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false);
 
       await initCommand();
 
       const config = await fs.readJson('.pt-config.json');
+      expect(config.defaultCmd).toBeUndefined();
+      expect(config.defaultCmdArgs).toBeUndefined();
+      expect(config.defaultCmdOptions).toBeUndefined();
+      expect(config.autoRun).toBe(false);
+      expect(config.version).toBe('3.0.0');
+    });
+
+    it('should prompt for tool selection when Claude is detected', async () => {
+      const { detectInstalledTools, getToolByName } = await import('../../src/utils/tool-detection.js');
+      
+      vi.mocked(detectInstalledTools).mockReturnValue([{
+        name: 'claude',
+        displayName: 'Claude',
+        command: 'claude',
+        defaultArgs: ['--permission-mode', 'acceptEdits'],
+        defaultOptions: { 'Continue with last context?': '--continue' }
+      }]);
+      
+      vi.mocked(getToolByName).mockReturnValue({
+        name: 'claude',
+        displayName: 'Claude',
+        command: 'claude',
+        defaultArgs: ['--permission-mode', 'acceptEdits'],
+        defaultOptions: { 'Continue with last context?': '--continue' }
+      });
+
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValue('./.prompts');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValue(false);
+      vi.mocked(inquirerPrompts.select)
+        .mockResolvedValue('claude');
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
       expect(config.defaultCmd).toBe('claude');
-      expect(config.defaultCmdArgs).toEqual([]);
+      expect(config.defaultCmdArgs).toEqual(['--permission-mode', 'acceptEdits']);
       expect(config.defaultCmdOptions).toEqual({
         'Continue with last context?': '--continue'
       });
-      expect(config.version).toBe('3.0.0');
+      expect(config.autoRun).toBe(true);
+    });
+
+    it('should prompt for tool selection when Amazon Q is detected', async () => {
+      const { detectInstalledTools, getToolByName } = await import('../../src/utils/tool-detection.js');
+      
+      vi.mocked(detectInstalledTools).mockReturnValue([{
+        name: 'q',
+        displayName: 'Amazon Q',
+        command: 'q',
+        defaultArgs: [],
+        defaultOptions: {}
+      }]);
+      
+      vi.mocked(getToolByName).mockReturnValue({
+        name: 'q',
+        displayName: 'Amazon Q',
+        command: 'q',
+        defaultArgs: [],
+        defaultOptions: {}
+      });
+
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValue('./.prompts');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValue(false);
+      vi.mocked(inquirerPrompts.select)
+        .mockResolvedValue('q');
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+      expect(config.defaultCmd).toBe('q');
+      expect(config.defaultCmdArgs).toBeUndefined();
+      expect(config.defaultCmdOptions).toBeUndefined();
+      expect(config.autoRun).toBe(true);
+    });
+
+    it('should not set defaultCmd when user selects none', async () => {
+      const { detectInstalledTools } = await import('../../src/utils/tool-detection.js');
+      
+      vi.mocked(detectInstalledTools).mockReturnValue([{
+        name: 'claude',
+        displayName: 'Claude',
+        command: 'claude',
+        defaultArgs: ['--permission-mode', 'acceptEdits'],
+        defaultOptions: { 'Continue with last context?': '--continue' }
+      }]);
+
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValue('./.prompts');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValue(false);
+      vi.mocked(inquirerPrompts.select)
+        .mockResolvedValue('none');
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+      expect(config.defaultCmd).toBeUndefined();
+      expect(config.defaultCmdArgs).toBeUndefined();
+      expect(config.defaultCmdOptions).toBeUndefined();
+      expect(config.autoRun).toBe(false);
     });
 
     it('should only include historyDir when enabled', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false); // No history
 
@@ -226,7 +332,7 @@ describe('Init Command', () => {
 
     it('should include both history and annotation dirs when enabled', async () => {
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValueOnce('./prompts')
+        .mockResolvedValueOnce('./.prompts')
         .mockResolvedValueOnce('./.pthistory')
         .mockResolvedValueOnce('./.ptannotations');
       vi.mocked(inquirerPrompts.confirm)
@@ -258,20 +364,20 @@ describe('Init Command', () => {
 
   describe('success messaging', () => {
     it('should log success message', async () => {
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
       
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue('./prompts');
+        .mockResolvedValue('./.prompts');
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false);
 
       await initCommand();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(loggerLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Configuration created successfully')
       );
 
-      consoleSpy.mockRestore();
+      loggerLogSpy.mockRestore();
     });
   });
 });

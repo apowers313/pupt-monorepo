@@ -8,12 +8,14 @@ import { HistoryManager } from '../../src/history/history-manager.js';
 import { spawn } from 'child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/prompts/prompt-manager.js');
 vi.mock('../../src/ui/interactive-search.js');
 vi.mock('../../src/template/template-engine.js');
 vi.mock('../../src/history/history-manager.js');
+vi.mock('../../src/utils/logger.js');
 vi.mock('child_process', () => ({
   spawn: vi.fn(),
   execFile: vi.fn()
@@ -26,28 +28,27 @@ vi.mock('@inquirer/prompts', () => ({
 }));
 
 describe('Run Command', () => {
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
   let processExitSpy: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
     processExitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     
     // Default mock for ConfigManager.loadWithPath
     vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
       config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
       filepath: undefined
     });
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+    vi.clearAllMocks();
     processExitSpy.mockRestore();
   });
 
@@ -59,7 +60,7 @@ describe('Run Command', () => {
     it('should return a promise', () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
@@ -127,7 +128,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
@@ -143,7 +144,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello World'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -167,7 +169,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           defaultCmd: 'claude',
           defaultCmdArgs: ['--model', 'sonnet']
         } as any,
@@ -185,7 +187,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -209,7 +212,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           defaultCmd: 'claude',
           defaultCmdArgs: ['--model', 'sonnet']
         } as any,
@@ -227,7 +230,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -251,7 +255,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
@@ -267,7 +271,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -293,7 +298,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
@@ -309,7 +314,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello World'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
     });
@@ -349,7 +355,7 @@ describe('Run Command', () => {
     it('should propagate exit code', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
           // No historyDir, so no history to save
         } as any,
         filepath: undefined
@@ -409,7 +415,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -426,7 +432,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -450,7 +457,8 @@ describe('Run Command', () => {
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
-        title: 'Test Prompt'
+        title: 'Test Prompt',
+        reviewFiles: []
       });
     });
 
@@ -461,7 +469,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
           // No historyDir
         } as any,
         filepath: undefined
@@ -478,7 +486,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -502,7 +511,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -519,7 +528,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue(''), // Empty result
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -543,7 +553,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -560,7 +570,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('   \n\t   '), // Only whitespace
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -582,7 +593,7 @@ describe('Run Command', () => {
     it('should require a tool', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
           // No defaultCmd configured
         } as any,
         filepath: undefined
@@ -596,7 +607,7 @@ describe('Run Command', () => {
     it('should handle no prompts found', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
@@ -626,7 +637,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
     });
@@ -636,7 +648,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           defaultCmd: 'claude',
           defaultCmdArgs: ['--model', 'sonnet'],
           defaultCmdOptions: {
@@ -675,7 +687,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           defaultCmd: 'claude',
           defaultCmdArgs: ['--model', 'sonnet'],
           defaultCmdOptions: {
@@ -704,7 +716,7 @@ describe('Run Command', () => {
     it('should skip options when using explicit tool', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           defaultCmd: 'claude',
           defaultCmdOptions: {
             'Continue?': '--continue'
@@ -732,7 +744,7 @@ describe('Run Command', () => {
     it('should load prompt from history', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -774,7 +786,7 @@ describe('Run Command', () => {
     it('should show helpful output when using history', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -803,10 +815,10 @@ describe('Run Command', () => {
       
       await runCommand(['echo'], { historyIndex: 1 });
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(loggerLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Using prompt from history #1')
       );
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(loggerLogSpy).toHaveBeenCalledWith(
         expect.stringContaining('Test Prompt')
       );
     });
@@ -814,7 +826,7 @@ describe('Run Command', () => {
     it('should error for invalid history number', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory'
         } as any,
         filepath: undefined
@@ -833,7 +845,7 @@ describe('Run Command', () => {
     it('should error when history not configured', async () => {
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts']
+          promptDirs: ['./.prompts']
           // No historyDir
         } as any,
         filepath: undefined
@@ -853,7 +865,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory',
           defaultCmd: 'false' // Command that always fails
         } as any,
@@ -876,7 +888,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello world'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map([['name', 'world']]))
+          getMaskedValues: vi.fn().mockReturnValue(new Map([['name', 'world']])),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -902,7 +915,8 @@ describe('Run Command', () => {
         templateContent: 'Hello {{name}}',
         variables: new Map([['name', 'world']]),
         finalPrompt: 'Hello world',
-        title: 'Test Prompt'
+        title: 'Test Prompt',
+        reviewFiles: []
       });
       
       // Verify process.exit was called with the tool's exit code
@@ -918,7 +932,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory',
           defaultCmd: 'nonexistent-command'
         } as any,
@@ -941,7 +955,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -965,7 +980,8 @@ describe('Run Command', () => {
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
-        title: 'Test Prompt'
+        title: 'Test Prompt',
+        reviewFiles: []
       });
     });
 
@@ -976,7 +992,7 @@ describe('Run Command', () => {
       
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
-          promptDirs: ['./prompts'],
+          promptDirs: ['./.prompts'],
           historyDir: './.pthistory',
           defaultCmd: 'echo'
         } as any,
@@ -999,7 +1015,8 @@ describe('Run Command', () => {
       vi.mocked(TemplateEngine).mockImplementation(() => ({
         processTemplate: vi.fn().mockResolvedValue('Hello'),
         getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map())
+          getMaskedValues: vi.fn().mockReturnValue(new Map()),
+          getVariablesByType: vi.fn().mockReturnValue([])
         })
       } as any));
       
@@ -1019,7 +1036,8 @@ describe('Run Command', () => {
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
-        title: 'Test Prompt'
+        title: 'Test Prompt',
+        reviewFiles: []
       });
     });
   });

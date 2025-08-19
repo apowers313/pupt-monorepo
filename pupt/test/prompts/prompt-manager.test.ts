@@ -6,7 +6,7 @@ import os from 'os';
 
 describe('PromptManager', () => {
   const testDir = path.join(os.tmpdir(), 'pt-test-prompts');
-  const promptsDir = path.join(testDir, 'prompts');
+  const promptsDir = path.join(testDir, '.prompts');
 
   beforeEach(async () => {
     await fs.ensureDir(promptsDir);
@@ -57,6 +57,30 @@ This is the prompt content.
     expect(prompt.content).toContain('This is the prompt content');
     expect(prompt.variables).toHaveLength(1);
     expect(prompt.variables![0].name).toBe('serviceName');
+  });
+
+  it('should parse summary from frontmatter', async () => {
+    const promptContent = `---
+title: Implementation Plan
+summary: Create a plan from {{file "design"}} and write it to {{reviewFile "plan"}}
+labels: [planning]
+---
+
+# Implementation Plan
+
+Generate implementation plan...
+`;
+
+    const promptPath = path.join(promptsDir, 'plan.md');
+    await fs.writeFile(promptPath, promptContent);
+
+    const manager = new PromptManager([promptsDir]);
+    const prompts = await manager.discoverPrompts();
+    const prompt = prompts[0];
+
+    expect(prompt.title).toBe('Implementation Plan');
+    expect(prompt.summary).toBe('Create a plan from {{file "design"}} and write it to {{reviewFile "plan"}}');
+    expect(prompt.labels).toEqual(['planning']);
   });
 
   it('should handle prompts without frontmatter', async () => {

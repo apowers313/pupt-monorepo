@@ -2,28 +2,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ConsoleUI, LogLevel } from '../../src/ui/console-ui';
 import chalk from 'chalk';
 import ora from 'ora';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('ora');
 
+vi.mock('../../src/utils/logger.js');
 describe('ConsoleUI', () => {
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
-  let consoleWarnSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
+  let loggerWarnSpy: any;
   let consoleTableSpy: any;
   let ui: ConsoleUI;
 
   beforeEach(() => {
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
+    loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
     consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
     ui = new ConsoleUI();
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
     consoleTableSpy.mockRestore();
     vi.clearAllMocks();
   });
@@ -33,7 +32,7 @@ describe('ConsoleUI', () => {
       const ui = new ConsoleUI();
       // Test by checking output
       ui.info('test');
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalled();
     });
 
     it('should accept custom options', () => {
@@ -45,101 +44,101 @@ describe('ConsoleUI', () => {
       
       // Should not output due to silent mode
       ui.info('test');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('success', () => {
     it('should log success message with color', () => {
       ui.success('Operation completed');
-      expect(consoleLogSpy).toHaveBeenCalledWith(chalk.green('✅ Operation completed'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(chalk.green('✅ Operation completed'));
     });
 
     it('should log success message without color', () => {
       const ui = new ConsoleUI({ useColor: false });
       ui.success('Operation completed');
-      expect(consoleLogSpy).toHaveBeenCalledWith('✅ Operation completed');
+      expect(loggerLogSpy).toHaveBeenCalledWith('✅ Operation completed');
     });
 
     it('should not log when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.success('Operation completed');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
 
     it('should not log when log level is below INFO', () => {
       const ui = new ConsoleUI({ logLevel: LogLevel.ERROR });
       ui.success('Operation completed');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('error', () => {
     it('should log error message with color', () => {
       ui.error('Something went wrong');
-      expect(consoleErrorSpy).toHaveBeenCalledWith(chalk.red('❌ Something went wrong'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(chalk.red('❌ Something went wrong'));
     });
 
     it('should log Error object message', () => {
       const error = new Error('Test error');
       ui.error(error);
-      expect(consoleErrorSpy).toHaveBeenCalledWith(chalk.red('❌ Test error'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(chalk.red('❌ Test error'));
     });
 
     it('should log error without color', () => {
       const ui = new ConsoleUI({ useColor: false });
       ui.error('Something went wrong');
-      expect(consoleErrorSpy).toHaveBeenCalledWith('❌ Something went wrong');
+      expect(loggerErrorSpy).toHaveBeenCalledWith('❌ Something went wrong');
     });
 
     it('should not log when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.error('Something went wrong');
-      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      expect(loggerErrorSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('warn', () => {
     it('should log warning message with color', () => {
       ui.warn('This is a warning');
-      expect(consoleWarnSpy).toHaveBeenCalledWith(chalk.yellow('⚠️  This is a warning'));
+      expect(loggerWarnSpy).toHaveBeenCalledWith(chalk.yellow('⚠️  This is a warning'));
     });
 
     it('should log warning without color', () => {
       const ui = new ConsoleUI({ useColor: false });
       ui.warn('This is a warning');
-      expect(consoleWarnSpy).toHaveBeenCalledWith('⚠️  This is a warning');
+      expect(loggerWarnSpy).toHaveBeenCalledWith('⚠️  This is a warning');
     });
 
     it('should not log when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.warn('This is a warning');
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
 
     it('should not log when log level is ERROR', () => {
       const ui = new ConsoleUI({ logLevel: LogLevel.ERROR });
       ui.warn('This is a warning');
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
   });
 
   describe('info', () => {
     it('should log info message with color', () => {
       ui.info('Information');
-      expect(consoleLogSpy).toHaveBeenCalledWith(chalk.blue('ℹ️  Information'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(chalk.blue('ℹ️  Information'));
     });
 
     it('should log info without color', () => {
       const ui = new ConsoleUI({ useColor: false });
       ui.info('Information');
-      expect(consoleLogSpy).toHaveBeenCalledWith('ℹ️  Information');
+      expect(loggerLogSpy).toHaveBeenCalledWith('ℹ️  Information');
     });
 
     it('should not log when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.info('Information');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -147,18 +146,18 @@ describe('ConsoleUI', () => {
     it('should log debug message when log level is DEBUG', () => {
       ui.setLogLevel(LogLevel.DEBUG);
       ui.debug('Debug info');
-      expect(consoleLogSpy).toHaveBeenCalledWith(chalk.gray('🐛 Debug info'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(chalk.gray('🐛 Debug info'));
     });
 
     it('should not log debug when log level is INFO', () => {
       ui.debug('Debug info');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
 
     it('should log debug without color', () => {
       const ui = new ConsoleUI({ useColor: false, logLevel: LogLevel.DEBUG });
       ui.debug('Debug info');
-      expect(consoleLogSpy).toHaveBeenCalledWith('🐛 Debug info');
+      expect(loggerLogSpy).toHaveBeenCalledWith('🐛 Debug info');
     });
   });
 
@@ -215,19 +214,19 @@ describe('ConsoleUI', () => {
     it('should display JSON data pretty printed', () => {
       const data = { name: 'test', value: 123 };
       ui.json(data);
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
     });
 
     it('should display JSON data compact', () => {
       const data = { name: 'test', value: 123 };
       ui.json(data, false);
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(data));
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data));
     });
 
     it('should not display JSON when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.json({ a: 1 });
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -235,12 +234,12 @@ describe('ConsoleUI', () => {
     it('should change log level', () => {
       ui.setLogLevel(LogLevel.DEBUG);
       ui.debug('Debug message');
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalled();
       
       ui.setLogLevel(LogLevel.ERROR);
-      consoleLogSpy.mockClear();
+      loggerLogSpy.mockClear();
       ui.debug('Debug message');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -248,11 +247,11 @@ describe('ConsoleUI', () => {
     it('should toggle silent mode', () => {
       ui.setSilent(true);
       ui.info('Message');
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
       
       ui.setSilent(false);
       ui.info('Message');
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalled();
     });
   });
 });

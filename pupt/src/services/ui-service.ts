@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import ora, { Ora } from 'ora';
 import boxen from 'boxen';
+import { logger } from '../utils/logger.js';
 
 export enum LogLevel {
   ERROR = 0,
@@ -39,39 +40,39 @@ export class ConsoleUI {
   success(message: string): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const formatted = this.useColor ? chalk.green('✅ ' + message) : '✅ ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   error(error: Error | string): void {
     if (this.silent || this.logLevel < LogLevel.ERROR) return;
     const message = error instanceof Error ? error.message : error;
     const formatted = this.useColor ? chalk.red('❌ ' + message) : '❌ ' + message;
-    console.error(formatted);
+    logger.error(formatted);
   }
 
   warn(message: string): void {
     if (this.silent || this.logLevel < LogLevel.WARN) return;
     const formatted = this.useColor ? chalk.yellow('⚠️  ' + message) : '⚠️  ' + message;
-    console.warn(formatted);
+    logger.warn(formatted);
   }
 
   info(message: string): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const formatted = this.useColor ? chalk.blue('ℹ️  ' + message) : 'ℹ️  ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   debug(message: string): void {
     if (this.silent || this.logLevel < LogLevel.DEBUG) return;
     const formatted = this.useColor ? chalk.gray('🐛 ' + message) : '🐛 ' + message;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   prompt(title: string, description?: string): void {
     if (this.silent) return;
-    console.log(this.useColor ? chalk.bold.blue(`\n📝 ${title}`) : `\n📝 ${title}`);
+    logger.log(this.useColor ? chalk.bold.blue(`\n📝 ${title}`) : `\n📝 ${title}`);
     if (description) {
-      console.log(this.useColor ? chalk.dim(description) : description);
+      logger.log(this.useColor ? chalk.dim(description) : description);
     }
   }
 
@@ -82,7 +83,7 @@ export class ConsoleUI {
     const formatted = this.useColor 
       ? `${chalk.cyan(progress)} ${message}`
       : `${progress} ${message}`;
-    console.log(formatted);
+    logger.log(formatted);
   }
 
   spinner(text: string): Ora {
@@ -110,7 +111,7 @@ export class ConsoleUI {
   json(data: unknown, pretty = true): void {
     if (this.silent || this.logLevel < LogLevel.INFO) return;
     const output = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
-    console.log(output);
+    logger.log(output);
   }
 
   list(items: string[], options: ListOptions = {}): void {
@@ -123,15 +124,15 @@ export class ConsoleUI {
       const formatted = this.useColor
         ? chalk.dim(`${indentation}${prefix} ${item}`)
         : `${indentation}${prefix} ${item}`;
-      console.log(formatted);
+      logger.log(formatted);
     });
   }
 
   header(text: string): void {
     if (this.silent) return;
     const divider = '─'.repeat(text.length + 4);
-    console.log(this.useColor ? chalk.bold(`\n${text}`) : `\n${text}`);
-    console.log(this.useColor ? chalk.dim(divider) : divider);
+    logger.log(this.useColor ? chalk.bold(`\n${text}`) : `\n${text}`);
+    logger.log(this.useColor ? chalk.dim(divider) : divider);
   }
 
   box(content: string, title?: string): void {
@@ -144,13 +145,13 @@ export class ConsoleUI {
       ...(title ? { title, titleAlignment: 'center' as const } : {})
     };
     
-    console.log(boxen(content, boxOptions));
+    logger.log(boxen(content, boxOptions));
   }
 
   divider(): void {
     if (this.silent) return;
     const line = '─'.repeat(50);
-    console.log(this.useColor ? chalk.dim(line) : line);
+    logger.log(this.useColor ? chalk.dim(line) : line);
   }
 
   // Formatting helpers
@@ -201,7 +202,7 @@ export class ConsoleUI {
 
   newline(): void {
     if (!this.silent) {
-      console.log();
+      logger.log();
     }
   }
 }

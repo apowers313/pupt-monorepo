@@ -35,7 +35,7 @@ describe('Config Schema Validation', () => {
   describe('new optional fields', () => {
     it('should accept valid historyDir', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       };
       await fs.writeJson(configPath, config);
@@ -46,7 +46,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid annotationDir', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         annotationDir: './.ptannotations'
       };
       await fs.writeJson(configPath, config);
@@ -57,7 +57,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid defaultCmd (new name for codingTool)', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmd: 'claude'
       };
       await fs.writeJson(configPath, config);
@@ -68,7 +68,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid defaultCmdArgs (new name for codingToolArgs)', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmdArgs: ['--model', 'sonnet']
       };
       await fs.writeJson(configPath, config);
@@ -79,7 +79,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid defaultCmdOptions (new name for codingToolOptions)', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmdOptions: {
           'Continue with last context?': '--continue',
           'Enable web search?': '--web'
@@ -96,7 +96,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid autoReview field', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         autoReview: false
       };
       await fs.writeJson(configPath, config);
@@ -107,7 +107,7 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid autoRun field', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         autoRun: true
       };
       await fs.writeJson(configPath, config);
@@ -118,18 +118,18 @@ describe('Config Schema Validation', () => {
 
     it('should accept valid gitPromptDir field', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.my-git-prompts'
       };
       await fs.writeJson(configPath, config);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.gitPromptDir).toBe('.my-git-prompts');
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.my-git-prompts'));
     });
 
     it('should accept valid handlebarsExtensions field', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         handlebarsExtensions: [
           { type: 'inline', value: 'Handlebars.registerHelper("upper", s => s.toUpperCase());' },
           { type: 'file', path: './extensions/my-helpers.js' }
@@ -148,12 +148,12 @@ describe('Config Schema Validation', () => {
   describe('backward compatibility', () => {
     it('should work with configs missing new fields', async () => {
       const oldConfig = {
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       };
       await fs.writeJson(configPath, oldConfig);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.promptDirs).toContain(path.resolve('./prompts'));
+      expect(loaded.promptDirs).toContain(path.resolve('./.prompts'));
       // historyDir might come from parent config, so just check it's a string or undefined
       expect(typeof loaded.historyDir === 'string' || loaded.historyDir === undefined).toBe(true);
       // annotationDir might come from parent config
@@ -166,19 +166,19 @@ describe('Config Schema Validation', () => {
       });
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
-      expect(loaded.gitPromptDir).toBe('.git-prompts');
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
     it('should preserve existing fields when loading old configs', async () => {
       const oldConfig = {
-        promptDirs: ['./prompts', './templates'],
+        promptDirs: ['./.prompts', './templates'],
         someCustomField: 'value'
       };
       await fs.writeJson(configPath, oldConfig);
       
       const loaded = await ConfigManager.load();
-      expect(loaded.promptDirs).toContain(path.resolve('./prompts'));
+      expect(loaded.promptDirs).toContain(path.resolve('./.prompts'));
       expect(loaded.promptDirs).toContain(path.resolve('./templates'));
     });
   });
@@ -186,7 +186,7 @@ describe('Config Schema Validation', () => {
   describe('field type validation', () => {
     it('should reject invalid historyDir type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: 123 // should be string
       };
       await fs.writeJson(configPath, config);
@@ -196,7 +196,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid defaultCmdArgs type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmdArgs: 'not-an-array' // should be array
       };
       await fs.writeJson(configPath, config);
@@ -206,7 +206,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid defaultCmdOptions type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmdOptions: 'not-an-object' // should be object
       };
       await fs.writeJson(configPath, config);
@@ -216,7 +216,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid autoReview type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         autoReview: 'yes' // should be boolean
       };
       await fs.writeJson(configPath, config);
@@ -226,7 +226,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid autoRun type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         autoRun: 1 // should be boolean
       };
       await fs.writeJson(configPath, config);
@@ -236,7 +236,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid handlebarsExtensions type', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         handlebarsExtensions: 'not-an-array' // should be array
       };
       await fs.writeJson(configPath, config);
@@ -246,7 +246,7 @@ describe('Config Schema Validation', () => {
 
     it('should reject invalid handlebarsExtension item', async () => {
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         handlebarsExtensions: [
           { type: 'invalid-type' } // type should be 'inline' or 'file'
         ]
@@ -263,15 +263,14 @@ describe('Config Schema Validation', () => {
       const loaded = await ConfigManager.load();
       
       expect(loaded.promptDirs).toContain(path.join(os.homedir(), '.pt/prompts'));
-      expect(loaded.defaultCmd).toBe('claude');
-      expect(loaded.defaultCmdArgs).toEqual([]);
-      expect(loaded.defaultCmdOptions).toEqual({
-        'Continue with last context?': '--continue'
-      });
+      // Default tool settings are no longer hardcoded
+      expect(loaded.defaultCmd).toBeUndefined();
+      expect(loaded.defaultCmdArgs).toBeUndefined();
+      expect(loaded.defaultCmdOptions).toBeUndefined();
       expect(loaded.version).toBe('3.0.0');
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
-      expect(loaded.gitPromptDir).toBe('.git-prompts');
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
@@ -297,7 +296,7 @@ describe('Config Schema Validation', () => {
       });
       expect(loaded.autoReview).toBe(false);
       expect(loaded.autoRun).toBe(true);
-      expect(loaded.gitPromptDir).toBe('.custom-git-prompts');
+      expect(loaded.gitPromptDir).toBe(path.join(testDir, '.custom-git-prompts'));
     });
   });
 });
@@ -331,7 +330,7 @@ describe('Config Migration', () => {
 
   it('should detect old config version', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
       // no version field
     };
     await fs.writeJson(configPath, oldConfig);
@@ -342,7 +341,7 @@ describe('Config Migration', () => {
 
   it('should add version to configs without it', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     };
     await fs.writeJson(configPath, oldConfig);
     
@@ -354,7 +353,7 @@ describe('Config Migration', () => {
 
   it('should migrate old field names to new ones', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       codingTool: 'claude',
       codingToolArgs: ['--model', 'sonnet'],
       codingToolOptions: {
@@ -377,7 +376,7 @@ describe('Config Migration', () => {
 
   it('should add new default fields during migration', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     };
     await fs.writeJson(configPath, oldConfig);
     
@@ -390,20 +389,20 @@ describe('Config Migration', () => {
     });
     expect(loaded.autoReview).toBe(true);
     expect(loaded.autoRun).toBe(false);
-    expect(loaded.gitPromptDir).toBe('.git-prompts');
+    expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
     expect(loaded.handlebarsExtensions).toEqual([]);
   });
 
   it('should preserve existing fields during migration', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts', './templates'],
+      promptDirs: ['./.prompts', './templates'],
       customField: 'should-remain'
     };
     await fs.writeJson(configPath, oldConfig);
     
     const loaded = await ConfigManager.load();
     
-    expect(loaded.promptDirs).toContain(path.resolve('./prompts'));
+    expect(loaded.promptDirs).toContain(path.resolve('./.prompts'));
     expect(loaded.promptDirs).toContain(path.resolve('./templates'));
     
     const saved = await fs.readJson(configPath);
@@ -412,7 +411,7 @@ describe('Config Migration', () => {
 
   it('should not migrate configs already at current version', async () => {
     const currentConfig = {
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       version: '3.0.0',
       defaultCmd: 'my-tool'
     };
@@ -426,7 +425,7 @@ describe('Config Migration', () => {
 
   it('should save migrated config back to disk', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     };
     await fs.writeJson(configPath, oldConfig);
     
@@ -441,7 +440,7 @@ describe('Config Migration', () => {
 
   it('should create backup before migration', async () => {
     const oldConfig = {
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       codingTool: 'claude'
     };
     await fs.writeJson(configPath, oldConfig);

@@ -6,6 +6,7 @@ import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { spawn } from 'child_process';
 import { promisify } from 'util';
 import chalk from 'chalk';
+import { logger } from '../../src/utils/logger.js';
 
 // Use vi.hoisted to ensure mocks are available before imports
 const { mockExecFileAsync } = vi.hoisted(() => {
@@ -17,6 +18,7 @@ const { mockExecFileAsync } = vi.hoisted(() => {
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/prompts/prompt-manager.js');
 vi.mock('../../src/ui/interactive-search.js');
+vi.mock('../../src/utils/logger.js');
 vi.mock('child_process', () => ({
   spawn: vi.fn(),
   execFile: vi.fn()
@@ -26,22 +28,20 @@ vi.mock('util', () => ({
 }));
 
 describe('Edit Command', () => {
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
   const originalEnv = process.env;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mockExecFileAsync.mockReset();
     mockExecFileAsync.mockResolvedValue(undefined);
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
     process.env = { ...originalEnv };
   });
 
   afterEach(() => {
-    consoleLogSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
     process.env = originalEnv;
   });
 
@@ -52,7 +52,7 @@ describe('Edit Command', () => {
 
     it('should return a promise', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -74,7 +74,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -100,7 +100,7 @@ describe('Edit Command', () => {
 
     it('should handle no prompts found', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -116,7 +116,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -138,7 +138,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -211,7 +211,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -240,7 +240,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -282,7 +282,7 @@ describe('Edit Command', () => {
       await new Promise(resolve => setTimeout(resolve, 10));
       
       // Editor hasn't closed yet
-      expect(consoleLogSpy).not.toHaveBeenCalledWith(
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('Editor closed')
       );
       
@@ -338,7 +338,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({
@@ -359,7 +359,7 @@ describe('Edit Command', () => {
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       } as any);
       
       vi.mocked(PromptManager).mockImplementation(() => ({

@@ -6,12 +6,12 @@ import type { HistoryEntry } from '../../src/types/history.js';
 export const fixtures = {
   configs: {
     minimal: {
-      promptDirectory: ['./prompts'],
+      promptDirectory: ['./.prompts'],
       historyDirectory: './.pthistory'
     } as Config,
     
     complete: {
-      promptDirectory: ['./prompts', './custom-prompts'],
+      promptDirectory: ['./.prompts', './custom-prompts'],
       historyDirectory: './.pthistory',
       editor: 'vim',
       defaultModel: 'gpt-4',
@@ -23,7 +23,7 @@ export const fixtures = {
     
     withMultipleDirectories: {
       promptDirectory: [
-        './prompts',
+        './.prompts',
         './shared-prompts',
         '~/Documents/prompts'
       ],
@@ -152,7 +152,7 @@ No additional context provided.
 {{/if}}`,
     
     yamlConfig: `promptDirectory:
-  - ./prompts
+  - ./.prompts
   - ./templates
 historyDirectory: ~/.prompt-tool/history
 editor: code

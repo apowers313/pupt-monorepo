@@ -31,11 +31,6 @@ export interface HandlebarsExtensionConfig {
 }
 
 export const DEFAULT_CONFIG: Partial<Config> = {
-  defaultCmd: 'claude',
-  defaultCmdArgs: [],
-  defaultCmdOptions: {
-    'Continue with last context?': '--continue'
-  },
   autoReview: true,
   autoRun: false,
   gitPromptDir: '.git-prompts',

@@ -8,6 +8,7 @@ import { HistoryManager } from '../history/history-manager.js';
 import { HistoryEntry } from '../types/history.js';
 import { errors } from '../utils/errors.js';
 import { DateFormats } from '../utils/date-formatter.js';
+import { logger } from '../utils/logger.js';
 
 interface AnnotationMetadata {
   historyFile: string;
@@ -102,7 +103,7 @@ ${notes}
   
   try {
     await fs.writeFile(filepath, content);
-    console.log(`✅ Annotation saved to ${filepath}`);
+    logger.log(`✅ Annotation saved to ${filepath}`);
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === 'EACCES') {

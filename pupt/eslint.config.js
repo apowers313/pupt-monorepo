@@ -36,7 +36,7 @@ export default [
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_'
       }],
-      'no-console': 'off'
+      'no-console': ['error', { allow: ['table', 'clear'] }]
     }
   },
   eslintConfigPrettier

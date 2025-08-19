@@ -26,7 +26,7 @@ describe('Logging Service', () => {
   describe('createLogger', () => {
     it('should create logger with production settings', () => {
       process.env.NODE_ENV = 'production';
-      const config: Config = { promptDirectory: ['./prompts'] } as Config;
+      const config: Config = { promptDirectory: ['./.prompts'] } as Config;
       const logger = createLogger(config);
       
       expect(logger.level).toBe('info');
@@ -34,7 +34,7 @@ describe('Logging Service', () => {
 
     it('should create logger with development settings', () => {
       delete process.env.NODE_ENV;
-      const config: Config = { promptDirectory: ['./prompts'] } as Config;
+      const config: Config = { promptDirectory: ['./.prompts'] } as Config;
       const logger = createLogger(config);
       
       expect(logger.level).toBe('debug');
@@ -42,7 +42,7 @@ describe('Logging Service', () => {
 
     it('should respect LOG_LEVEL environment variable', () => {
       process.env.LOG_LEVEL = 'warn';
-      const config: Config = { promptDirectory: ['./prompts'] } as Config;
+      const config: Config = { promptDirectory: ['./.prompts'] } as Config;
       const logger = createLogger(config);
       
       expect(logger.level).toBe('warn');
@@ -50,7 +50,7 @@ describe('Logging Service', () => {
 
     it('should respect config log level over defaults', () => {
       const config: Config = { 
-        promptDirectory: ['./prompts'],
+        promptDirectory: ['./.prompts'],
         logLevel: 'error'
       } as Config;
       const logger = createLogger(config);
@@ -59,7 +59,7 @@ describe('Logging Service', () => {
     });
 
     it('should redact sensitive fields', () => {
-      const config: Config = { promptDirs: ['./prompts'] } as Config;
+      const config: Config = { promptDirs: ['./.prompts'] } as Config;
       
       // Create a writable stream to capture output
       const chunks: any[] = [];
@@ -364,7 +364,7 @@ describe('Logging Service', () => {
       
       testCases.forEach(({ input, expected }) => {
         const logger = createLogger({
-          promptDirectory: ['./prompts'],
+          promptDirectory: ['./.prompts'],
           logLevel: input
         } as Config);
         

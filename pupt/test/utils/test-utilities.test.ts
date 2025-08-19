@@ -25,7 +25,7 @@ describe('Mock Factories', () => {
   describe('createMockConfig', () => {
     it('should create a basic config with defaults', () => {
       const config = createMockConfig();
-      expect(config.promptDirectory).toEqual(['./prompts']);
+      expect(config.promptDirectory).toEqual(['./.prompts']);
       expect(config.historyDirectory).toBe('./.pthistory');
       expect(config.editor).toBe('code');
     });
@@ -37,7 +37,7 @@ describe('Mock Factories', () => {
       });
       expect(config.editor).toBe('vim');
       expect(config.defaultModel).toBe('gpt-4');
-      expect(config.promptDirectory).toEqual(['./prompts']); // Default preserved
+      expect(config.promptDirectory).toEqual(['./.prompts']); // Default preserved
     });
   });
 

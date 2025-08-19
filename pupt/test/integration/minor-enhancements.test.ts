@@ -111,7 +111,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(true);
       
       // Mock user inputs
-      vi.mocked(inquirer.input).mockResolvedValueOnce('./prompts'); // prompt dir
+      vi.mocked(inquirer.input).mockResolvedValueOnce('./.prompts'); // prompt dir
       vi.mocked(inquirer.confirm)
         .mockResolvedValueOnce(true)  // enable history
         .mockResolvedValueOnce(true); // enable annotations
@@ -137,7 +137,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(false);
       
       // Mock user inputs
-      vi.mocked(inquirer.input).mockResolvedValueOnce('./prompts');
+      vi.mocked(inquirer.input).mockResolvedValueOnce('./.prompts');
       vi.mocked(inquirer.confirm)
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(false); // no history
@@ -152,7 +152,7 @@ describe('Minor Enhancements - Integration Tests', () => {
     it('should add git prompts directory to .gitignore during install', async () => {
       // Setup config
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         gitPromptDir: '.git-prompts',
         defaultCmd: 'echo',
         defaultCmdArgs: ['{{prompt}}']
@@ -183,7 +183,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(true);
       
       // Mock user inputs for init
-      vi.mocked(inquirer.input).mockResolvedValueOnce('./prompts');
+      vi.mocked(inquirer.input).mockResolvedValueOnce('./.prompts');
       vi.mocked(inquirer.confirm)
         .mockResolvedValueOnce(true)
         .mockResolvedValueOnce(false);
@@ -205,7 +205,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(true);
       
       // Mock user inputs with absolute path
-      vi.mocked(inquirer.input).mockResolvedValueOnce('./prompts');
+      vi.mocked(inquirer.input).mockResolvedValueOnce('./.prompts');
       vi.mocked(inquirer.confirm)
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(true)
@@ -225,7 +225,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       vi.mocked(mockGit.checkIsRepo).mockResolvedValue(true);
       
       // Mock user inputs with home path
-      vi.mocked(inquirer.input).mockResolvedValueOnce('./prompts');
+      vi.mocked(inquirer.input).mockResolvedValueOnce('./.prompts');
       vi.mocked(inquirer.confirm)
         .mockResolvedValueOnce(false)
         .mockResolvedValueOnce(true)

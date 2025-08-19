@@ -23,7 +23,7 @@ describe('Config Migration Integration', () => {
     it('should migrate old config when running pt init', async () => {
       // Create old config file
       const oldConfig = {
-        promptDirs: ['./prompts', './templates'],
+        promptDirs: ['./.prompts', './templates'],
         historyDir: './.history',
         annotationDir: './.annotations',
         codingTool: 'claude',
@@ -52,7 +52,7 @@ describe('Config Migration Integration', () => {
       expect(config.version).toBe('3.0.0');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
-      expect(config.gitPromptDir).toBe('.git-prompts');
+      expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(config.handlebarsExtensions).toEqual([]);
       
       // Check that old fields are removed from runtime config
@@ -61,7 +61,7 @@ describe('Config Migration Integration', () => {
       expect(config.codingToolOptions).toBeUndefined();
       
       // Check that other fields are preserved
-      expect(config.promptDirs).toContain(path.resolve('./prompts'));
+      expect(config.promptDirs).toContain(path.resolve('./.prompts'));
       expect(config.promptDirs).toContain(path.resolve('./templates'));
       expect(config.historyDir).toBe(path.resolve('./.history'));
       expect(config.annotationDir).toBe(path.resolve('./.annotations'));
@@ -86,7 +86,7 @@ describe('Config Migration Integration', () => {
     it('should handle multiple migrations without data loss', async () => {
       // First migration
       const oldConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'gpt',
         codingToolArgs: ['--api-key', 'sk-123']
       };
@@ -111,12 +111,12 @@ describe('Config Migration Integration', () => {
 
     it('should create timestamped backup for subsequent migrations', async () => {
       // Create initial config and backup
-      await fs.writeJson('.pt-config.json', { promptDirs: ['./prompts'] });
+      await fs.writeJson('.pt-config.json', { promptDirs: ['./.prompts'] });
       await fs.writeFile('.pt-config.json.backup', 'existing backup');
       
       // Create old config that needs migration
       const oldConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'claude'
       };
       await fs.writeJson('.pt-config.json', oldConfig);
@@ -133,7 +133,7 @@ describe('Config Migration Integration', () => {
     it('should handle partial configs correctly', async () => {
       // Config with only some old fields
       const partialOldConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'echo'
         // No args or options
       };
@@ -153,7 +153,7 @@ describe('Config Migration Integration', () => {
 
     it('should preserve custom fields during migration', async () => {
       const configWithCustomFields = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'claude',
         // Custom fields
         customField1: 'value1',
@@ -173,7 +173,7 @@ describe('Config Migration Integration', () => {
 
     it('should not migrate already-migrated configs', async () => {
       const newConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
         version: '3.0.0'
@@ -219,7 +219,7 @@ codingToolOptions:
 
     it('should apply defaults during migration', async () => {
       const minimalOldConfig = {
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       };
       
       await fs.writeJson('.pt-config.json', minimalOldConfig);
@@ -234,7 +234,7 @@ codingToolOptions:
       });
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
-      expect(config.gitPromptDir).toBe('.git-prompts');
+      expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(config.handlebarsExtensions).toEqual([]);
       expect(config.version).toBe('3.0.0');
     });
@@ -244,7 +244,7 @@ codingToolOptions:
     it('should support migration from mixed old and new fields', async () => {
       // This test ensures migration handles configs with both old and new fields
       const mixedConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         // Old field names (will be migrated)
         codingTool: 'oldtool',
         // Without version, migration will be triggered
@@ -275,7 +275,7 @@ codingToolOptions:
       process.chdir(readOnlyDir);
       
       const oldConfig = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         codingTool: 'claude'
       };
       

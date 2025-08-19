@@ -18,6 +18,7 @@ import { runCommand } from './commands/run.js';
 import { annotateCommand } from './commands/annotate.js';
 import { installCommand } from './commands/install.js';
 import fs from 'fs-extra';
+import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,13 +36,13 @@ async function checkAndMigrateOldConfig(): Promise<void> {
   const oldFiles = await ConfigManager.checkForOldConfigFiles();
   
   if (oldFiles.length > 0) {
-    console.warn(chalk.yellow('\n⚠️  Warning: Found old config file(s):'));
+    logger.warn(chalk.yellow('\n⚠️  Warning: Found old config file(s):'));
     oldFiles.forEach(file => {
-      console.warn(chalk.yellow(`   - ${path.basename(file)}`));
+      logger.warn(chalk.yellow(`   - ${path.basename(file)}`));
     });
     
-    console.warn(chalk.yellow('\nThe config file naming has changed from .ptrc to .pt-config'));
-    console.warn(chalk.yellow('Would you like to rename your config file(s)? (y/n): '));
+    logger.warn(chalk.yellow('\nThe config file naming has changed from .ptrc to .pt-config'));
+    logger.warn(chalk.yellow('Would you like to rename your config file(s)? (y/n): '));
     
     // Get user input
     const { confirm } = await import('@inquirer/prompts');
@@ -54,9 +55,9 @@ async function checkAndMigrateOldConfig(): Promise<void> {
       for (const oldFile of oldFiles) {
         try {
           const newPath = await ConfigManager.renameOldConfigFile(oldFile);
-          console.log(chalk.green(`✓ Renamed ${path.basename(oldFile)} to ${path.basename(newPath)}`));
+          logger.log(chalk.green(`✓ Renamed ${path.basename(oldFile)} to ${path.basename(newPath)}`));
         } catch (error) {
-          console.error(chalk.red(`✗ Failed to rename ${path.basename(oldFile)}: ${error instanceof Error ? error.message : String(error)}`));
+          logger.error(chalk.red(`✗ Failed to rename ${path.basename(oldFile)}: ${error instanceof Error ? error.message : String(error)}`));
         }
       }
     }
@@ -94,19 +95,19 @@ program
       const search = new InteractiveSearch();
       const selected = await search.selectPrompt(prompts);
 
-      console.log(chalk.blue(`\nProcessing: ${selected.title}`));
-      console.log(chalk.dim(`Location: ${selected.path}\n`));
+      logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
+      logger.log(chalk.dim(`Location: ${selected.path}\n`));
 
       // Process template
       const engine = new TemplateEngine(config, configDir);
       const result = await engine.processTemplate(selected.content, selected);
 
       // Display result
-      console.log(chalk.green('\n' + '='.repeat(60)));
-      console.log(chalk.bold('Generated Prompt:'));
-      console.log(chalk.green('='.repeat(60) + '\n'));
-      console.log(result);
-      console.log(chalk.green('\n' + '='.repeat(60)));
+      logger.log(chalk.green('\n' + '='.repeat(60)));
+      logger.log(chalk.bold('Generated Prompt:'));
+      logger.log(chalk.green('='.repeat(60) + '\n'));
+      logger.log(result);
+      logger.log(chalk.green('\n' + '='.repeat(60)));
       
       // Save to history if configured
       if (config.historyDir) {
@@ -118,7 +119,7 @@ program
           finalPrompt: result,
           title: selected.title
         });
-        console.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
+        logger.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
       
       // Check if autoRun is enabled
@@ -264,7 +265,7 @@ program
   .command('example')
   .description('Create an example prompt in the current directory')
   .action(async () => {
-    const examplePath = './prompts/example-api-client.md';
+    const examplePath = './.prompts/example-api-client.md';
     const exampleContent = `---
 title: API Client Generator
 labels: [api, typescript, client]
@@ -302,11 +303,11 @@ export class {{serviceName}}Client {
 Generated on {{date}} by {{username}}.
 `;
     
-    await fs.ensureDir('./prompts');
+    await fs.ensureDir('./.prompts');
     await fs.writeFile(examplePath, exampleContent);
     
-    console.log(chalk.green(`Created example prompt: ${examplePath}`));
-    console.log(chalk.dim('\nRun "pt" to try it out!'));
+    logger.log(chalk.green(`Created example prompt: ${examplePath}`));
+    logger.log(chalk.dim('\nRun "pt" to try it out!'));
   });
 
 program.parse();

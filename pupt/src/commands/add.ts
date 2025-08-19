@@ -7,6 +7,7 @@ import chalk from 'chalk';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
 import { DateFormats } from '../utils/date-formatter.js';
+import { logger } from '../utils/logger.js';
 
 export async function addCommand(): Promise<void> {
   // Load configuration
@@ -71,7 +72,7 @@ labels: [${labels.join(', ')}]
   // Write file
   try {
     await fs.writeFile(filepath, content);
-    console.log(chalk.green('✅ Created prompt: ') + filepath);
+    logger.log(chalk.green('✅ Created prompt: ') + filepath);
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === 'EACCES') {
@@ -149,8 +150,8 @@ async function openInEditor(filepath: string): Promise<void> {
   const editor = await editorLauncher.findEditor();
   
   if (!editor) {
-    console.log(errors.noEditor().message);
-    console.log(chalk.yellow('\n📝 Open the file manually:'), filepath);
+    logger.log(errors.noEditor().message);
+    logger.log(chalk.yellow('\n📝 Open the file manually:'), filepath);
     return;
   }
 
@@ -158,7 +159,7 @@ async function openInEditor(filepath: string): Promise<void> {
   try {
     await editorLauncher.openInEditor(editor, filepath);
   } catch {
-    console.log(chalk.yellow('⚠️  Failed to open editor'));
-    console.log(chalk.yellow('📝 Open the file manually:'), filepath);
+    logger.log(chalk.yellow('⚠️  Failed to open editor'));
+    logger.log(chalk.yellow('📝 Open the file manually:'), filepath);
   }
 }

@@ -44,7 +44,7 @@ describe('Edit Command Regression Test', () => {
     ];
     
     vi.mocked(ConfigManager.load).mockResolvedValue({
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     } as any);
     
     vi.mocked(PromptManager).mockImplementation(() => ({
@@ -107,7 +107,7 @@ describe('Edit Command Regression Test', () => {
     ];
     
     vi.mocked(ConfigManager.load).mockResolvedValue({
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     } as any);
     
     vi.mocked(PromptManager).mockImplementation(() => ({

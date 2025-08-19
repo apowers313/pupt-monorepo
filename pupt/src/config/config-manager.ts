@@ -8,10 +8,12 @@ import { errors } from '../utils/errors.js';
 import { migrateConfig } from './migration.js';
 import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
 import { z } from 'zod';
+import { logger } from '../utils/logger.js';
 
 export interface ConfigResult {
   config: Config;
   filepath?: string;
+  configDir?: string;
 }
 
 export class ConfigManager {
@@ -26,6 +28,7 @@ export class ConfigManager {
         '.pt-config.cjs',
         'pt.config.js',
       ],
+      stopDir: os.homedir(), // This enables parent directory search up to home directory
     });
   }
 
@@ -84,7 +87,7 @@ export class ConfigManager {
     const searchFrom = startDir || process.cwd();
     const explorer = this.getExplorer();
 
-    // Use cosmiconfig's search which handles the directory traversal
+    // Use cosmiconfig's search which handles the directory traversal up to the root
     const result = await explorer.search(searchFrom);
 
     if (!result || !result.config) {
@@ -95,7 +98,8 @@ export class ConfigManager {
       };
       return {
         config: this.expandPaths(defaultConfig),
-        filepath: undefined
+        filepath: undefined,
+        configDir: undefined
       };
     }
 
@@ -105,40 +109,14 @@ export class ConfigManager {
     // Check if migration is needed
     const migrated = await this.migrateConfig(result.config, result.filepath);
 
-    // Collect all configs in the hierarchy
-    const configs: Config[] = [];
+    // Get the directory containing the config file
+    const configDir = path.dirname(result.filepath);
 
-    // Add the found config
-    configs.push(migrated);
-
-    // Check if we should search parent directories
-    const currentDir = path.dirname(result.filepath);
-    const parentDir = path.dirname(currentDir);
-
-    // Search parent directories if not at root
-    if (parentDir !== currentDir) {
-      const parentResult = await explorer.search(parentDir);
-      if (parentResult && parentResult.config) {
-        configs.unshift(parentResult.config);
-      }
-    }
-
-    // Also check home directory
-    const homeDir = os.homedir();
-    if (currentDir !== homeDir && parentDir !== homeDir) {
-      const homeResult = await explorer.search(homeDir);
-      if (homeResult && homeResult.config) {
-        configs.unshift(homeResult.config);
-      }
-    }
-
-    // Merge configs
-    const merged = this.mergeConfigs(configs);
-
-    // Expand paths
+    // Expand paths relative to the config file directory
     return {
-      config: this.expandPaths(merged),
-      filepath: result.filepath
+      config: this.expandPaths(migrated, configDir),
+      filepath: result.filepath,
+      configDir: configDir
     };
   }
 
@@ -241,7 +219,7 @@ export class ConfigManager {
           await migrateConfig.createBackup(filepath);
         } catch (error) {
           // Backup failed, but continue with migration
-          console.warn(`Warning: Could not create backup of config file: ${error instanceof Error ? error.message : String(error)}`);
+          logger.warn(`Warning: Could not create backup of config file: ${error instanceof Error ? error.message : String(error)}`);
         }
       }
 
@@ -368,16 +346,7 @@ export class ConfigManager {
       merged.promptDirs = [path.join(os.homedir(), '.pt/prompts')];
     }
 
-    // Apply defaults for new fields if not present
-    if (!merged.defaultCmd && DEFAULT_CONFIG.defaultCmd) {
-      merged.defaultCmd = DEFAULT_CONFIG.defaultCmd;
-    }
-    if (!merged.defaultCmdArgs && DEFAULT_CONFIG.defaultCmdArgs) {
-      merged.defaultCmdArgs = DEFAULT_CONFIG.defaultCmdArgs;
-    }
-    if (!merged.defaultCmdOptions && DEFAULT_CONFIG.defaultCmdOptions) {
-      merged.defaultCmdOptions = DEFAULT_CONFIG.defaultCmdOptions;
-    }
+    // Don't apply default tool settings here anymore - they come from tool detection during init
     if (merged.autoReview === undefined && DEFAULT_CONFIG.autoReview !== undefined) {
       merged.autoReview = DEFAULT_CONFIG.autoReview;
     }
@@ -397,22 +366,27 @@ export class ConfigManager {
     return merged;
   }
 
-  private static expandPaths(config: Config): Config {
+  private static expandPaths(config: Config, configDir?: string): Config {
     const expanded = { ...config };
 
     // Expand prompt directories
     if (config.promptDirs) {
-      expanded.promptDirs = config.promptDirs.map(dir => this.expandPath(dir));
+      expanded.promptDirs = config.promptDirs.map(dir => this.expandPath(dir, configDir));
     }
 
     // Expand history directory
     if (config.historyDir) {
-      expanded.historyDir = this.expandPath(config.historyDir);
+      expanded.historyDir = this.expandPath(config.historyDir, configDir);
     }
 
     // Expand annotation directory
     if (config.annotationDir) {
-      expanded.annotationDir = this.expandPath(config.annotationDir);
+      expanded.annotationDir = this.expandPath(config.annotationDir, configDir);
+    }
+
+    // Expand git prompt directory
+    if (config.gitPromptDir) {
+      expanded.gitPromptDir = this.expandPath(config.gitPromptDir, configDir);
     }
 
     // Expand helper paths
@@ -421,7 +395,7 @@ export class ConfigManager {
       for (const [name, helper] of Object.entries(config.helpers)) {
         expanded.helpers[name] = { ...helper };
         if (helper.type === 'file' && helper.path) {
-          expanded.helpers[name].path = this.expandPath(helper.path);
+          expanded.helpers[name].path = this.expandPath(helper.path, configDir);
         }
       }
     }
@@ -430,7 +404,7 @@ export class ConfigManager {
     if (config.handlebarsExtensions) {
       expanded.handlebarsExtensions = config.handlebarsExtensions.map(ext => {
         if (ext.type === 'file' && ext.path) {
-          return { ...ext, path: this.expandPath(ext.path) };
+          return { ...ext, path: this.expandPath(ext.path, configDir) };
         }
         return ext;
       });
@@ -439,10 +413,22 @@ export class ConfigManager {
     return expanded;
   }
 
-  private static expandPath(filepath: string): string {
+  private static expandPath(filepath: string, configDir?: string): string {
     if (filepath.startsWith('~/')) {
       return path.join(getHomePath(), filepath.slice(2));
     }
+    
+    // If the path is already absolute, return it as is
+    if (path.isAbsolute(filepath)) {
+      return filepath;
+    }
+    
+    // If we have a config directory, resolve relative paths from there
+    if (configDir) {
+      return path.resolve(configDir, filepath);
+    }
+    
+    // Otherwise resolve from current working directory
     return path.resolve(filepath);
   }
 }

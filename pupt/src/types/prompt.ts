@@ -7,6 +7,7 @@ export interface Prompt {
   content: string; // Markdown content without frontmatter
   frontmatter: Record<string, unknown>; // Raw frontmatter data
   variables?: VariableDefinition[];
+  summary?: string; // Summary from frontmatter for history display
 }
 
 export interface VariableDefinition {

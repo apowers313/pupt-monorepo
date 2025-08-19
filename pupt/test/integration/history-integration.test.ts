@@ -6,7 +6,7 @@ import os from 'os';
 
 describe('History Integration', () => {
   const testDir = path.join(os.tmpdir(), 'pt-history-integration-test');
-  const promptsDir = path.join(testDir, 'prompts');
+  const promptsDir = path.join(testDir, '.prompts');
   const historyDir = path.join(testDir, '.pthistory');
   const cliPath = path.join(process.cwd(), 'dist/cli.js');
 
@@ -18,7 +18,7 @@ describe('History Integration', () => {
 
     // Create config with history enabled
     const config = {
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       historyDir: './.pthistory',
       version: '2.0.0'
     };

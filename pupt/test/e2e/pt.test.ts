@@ -6,7 +6,7 @@ import * as os from 'os';
 
 describe('pt CLI E2E', () => {
   const testDir = path.join(os.tmpdir(), 'pt-e2e-test');
-  const promptsDir = path.join(testDir, 'prompts');
+  const promptsDir = path.join(testDir, '.prompts');
   const cliPath = path.join(__dirname, '../../dist/cli.js');
   
   beforeEach(async () => {
@@ -15,7 +15,7 @@ describe('pt CLI E2E', () => {
     
     // Create test config
     await fs.writeJson('.pt-config.json', {
-      promptDirs: ['./prompts']
+      promptDirs: ['./.prompts']
     });
     
     // Create test prompt
@@ -55,7 +55,7 @@ Today is {{date}}.`;
     });
     
     expect(output).toContain('Created example prompt');
-    expect(fs.existsSync(path.join(testDir, 'prompts/example-api-client.md'))).toBe(true);
+    expect(fs.existsSync(path.join(testDir, '.prompts/example-api-client.md'))).toBe(true);
   });
   
   it('should display help', () => {

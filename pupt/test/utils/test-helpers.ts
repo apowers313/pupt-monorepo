@@ -85,7 +85,7 @@ Hello {{name}}, you chose {{choice}}.`
   await writeFile(
     join(baseDir, '.pt-config.json'),
     JSON.stringify({
-      promptDirectory: ['./prompts'],
+      promptDirectory: ['./.prompts'],
       historyDirectory: './.pthistory'
     }, null, 2)
   );

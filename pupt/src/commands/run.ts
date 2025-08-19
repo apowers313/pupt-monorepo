@@ -7,6 +7,7 @@ import { spawn } from 'node:child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
 import { errors } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 import * as path from 'node:path';
 import { pathExists } from 'fs-extra';
 import { editorLauncher } from '../utils/editor.js';
@@ -79,6 +80,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     variables: Map<string, unknown>;
     finalPrompt: string;
     title?: string;
+    summary?: string;
     reviewFiles?: Array<{ name: string; value: unknown }>;
   } | undefined;
   let exitCode: number | null = null;
@@ -105,9 +107,9 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       throw errors.historyNotFound(options.historyIndex, entries.length);
     }
     
-    console.log(chalk.blue(`\nUsing prompt from history #${options.historyIndex}`));
-    console.log(chalk.dim(`Original: ${historyEntry.title || 'Untitled'}`));
-    console.log(chalk.dim(`From: ${new Date(historyEntry.timestamp).toLocaleString()}\n`));
+    logger.log(chalk.blue(`\nUsing prompt from history #${options.historyIndex}`));
+    logger.log(chalk.dim(`Original: ${historyEntry.title || 'Untitled'}`));
+    logger.log(chalk.dim(`From: ${new Date(historyEntry.timestamp).toLocaleString()}\n`));
     
     promptResult = historyEntry.finalPrompt;
   } else {
@@ -123,8 +125,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     const search = new InteractiveSearch();
     const selected = await search.selectPrompt(prompts);
     
-    console.log(chalk.blue(`\nProcessing: ${selected.title}`));
-    console.log(chalk.dim(`Location: ${selected.path}\n`));
+    logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
+    logger.log(chalk.dim(`Location: ${selected.path}\n`));
     
     // Process template
     const engine = new TemplateEngine(config, configDir);
@@ -136,7 +138,9 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       templateContent: selected.content,
       variables: engine.getContext().getMaskedValues(),
       finalPrompt: promptResult,
-      title: selected.title
+      title: selected.title,
+      summary: selected.summary,
+      reviewFiles: engine.getContext().getVariablesByType('reviewFile')
     };
   }
   
@@ -165,8 +169,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   }
   
   // Execute tool with prompt
-  console.log(chalk.blue(`\nRunning: ${finalTool} ${finalArgs.join(' ')}`));
-  console.log(chalk.dim('─'.repeat(60)));
+  logger.log(chalk.blue(`\nRunning: ${finalTool} ${finalArgs.join(' ')}`));
+  logger.log(chalk.dim('─'.repeat(60)));
   
   try {
     exitCode = await executeTool(finalTool, finalArgs, promptResult);
@@ -222,7 +226,7 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
             // Ignore EPIPE errors which happen when the tool closes stdin early
             const errorCode = (error as NodeJS.ErrnoException).code;
             if (errorCode !== 'EPIPE') {
-              console.error('stdin error:', error);
+              logger.error(`stdin error: ${error}`);
             }
           });
         }
@@ -240,7 +244,7 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
 }
 
 async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: unknown }>, config: Config): Promise<void> {
-  console.log(chalk.dim('\n' + '─'.repeat(60)));
+  logger.log(chalk.dim('\n' + '─'.repeat(60)));
   
   for (const { name, value } of reviewFiles) {
     const filePath = String(value);
@@ -248,7 +252,7 @@ async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: un
     // Check if file exists
     const fileExists = await pathExists(filePath);
     if (!fileExists) {
-      console.log(chalk.yellow(`\nFile for '${name}' not found: ${filePath}`));
+      logger.log(chalk.yellow(`\nFile for '${name}' not found: ${filePath}`));
       continue;
     }
     
@@ -266,18 +270,18 @@ async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: un
         // Find an editor and open the file
         const editor = await editorLauncher.findEditor();
         if (!editor) {
-          console.log(chalk.yellow('No editor found. Please configure an editor or set autoReview to false.'));
+          logger.log(chalk.yellow('No editor found. Please configure an editor or set autoReview to false.'));
           continue;
         }
         
         try {
-          console.log(chalk.blue(`Opening ${filePath} in ${editor}...`));
+          logger.log(chalk.blue(`Opening ${filePath} in ${editor}...`));
           await editorLauncher.openInEditor(editor, filePath);
         } catch (error) {
-          console.error(chalk.red(`Failed to open editor: ${error instanceof Error ? error.message : String(error)}`));
+          logger.error(chalk.red(`Failed to open editor: ${error instanceof Error ? error.message : String(error)}`));
         }
       } else {
-        console.log(chalk.dim(`File saved at: ${filePath}`));
+        logger.log(chalk.dim(`File saved at: ${filePath}`));
       }
     }
   }

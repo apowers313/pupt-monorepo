@@ -6,6 +6,7 @@ import * as prompts from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../../src/utils/logger.js';
 vi.mock('../../src/config/config-manager');
 vi.mock('../../src/history/history-manager');
 vi.mock('@inquirer/prompts');
@@ -17,12 +18,13 @@ vi.mock('node:child_process', () => ({
 vi.mock('node:util', () => ({
   promisify: vi.fn(() => vi.fn())
 }));
+vi.mock('../../src/utils/logger.js');
 
 describe('annotateCommand', () => {
-  let consoleLogSpy: any;
+  let loggerLogSpy: any;
   
   const mockConfig = {
-    promptDirs: ['./prompts'],
+    promptDirs: ['./.prompts'],
     historyDir: './.pthistory',
     annotationDir: './.pthistory'
   };
@@ -39,8 +41,8 @@ describe('annotateCommand', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    vi.mocked(logger.error).mockImplementation(() => {});
     (ConfigManager.load as Mock).mockResolvedValue(mockConfig);
     (uuidv4 as Mock).mockReturnValue('test-uuid');
   });
@@ -335,7 +337,7 @@ describe('annotateCommand', () => {
 
       await annotateCommand();
 
-      expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect(loggerLogSpy).toHaveBeenCalledWith(
         `✅ Annotation saved to ${path.join('.pthistory', '20240120-103000-abc123-annotation-test-uuid.md')}`
       );
     });

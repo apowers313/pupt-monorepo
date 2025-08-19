@@ -16,7 +16,7 @@ describe('AutoRun Regression Tests', () => {
     cliPath = path.resolve('./dist/cli.js');
     
     // Create multiple prompts to ensure we're not just selecting the first one
-    const promptDir = path.join(testDir, 'prompts');
+    const promptDir = path.join(testDir, '.prompts');
     await fs.ensureDir(promptDir);
     await fs.writeFile(
       path.join(promptDir, 'first.md'),
@@ -38,7 +38,7 @@ describe('AutoRun Regression Tests', () => {
     // Create config with autoRun disabled (default)
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: false,
       defaultCmd: 'echo',
       defaultCmdArgs: ['SHOULD_NOT_SEE_THIS']
@@ -70,7 +70,7 @@ describe('AutoRun Regression Tests', () => {
     // Create config with autoRun enabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'echo',
       defaultCmdArgs: ['SELECTED_PROMPT'],
@@ -106,7 +106,7 @@ describe('AutoRun Regression Tests', () => {
     // Create config with autoRun enabled and options
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'echo',
       defaultCmdArgs: [],
@@ -145,7 +145,7 @@ describe('AutoRun Regression Tests', () => {
     // Create config with autoRun enabled
     const config = {
       version: '3.0.0',
-      promptDirs: ['./prompts'],
+      promptDirs: ['./.prompts'],
       autoRun: true,
       defaultCmd: 'echo',
       defaultCmdArgs: ['SHOULD_NOT_RUN']

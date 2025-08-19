@@ -55,7 +55,7 @@ export class InitCommand extends BaseCommand<InitInput, void> {
     // Prompt for configuration
     const promptDir = await input({
       message: 'Where should prompts be stored?',
-      default: './prompts'
+      default: './.prompts'
     });
 
     const enableHistory = await confirm({
@@ -156,7 +156,7 @@ export class InitCommand extends BaseCommand<InitInput, void> {
 export async function initCommand(context?: CommandContext, options?: CommandOptions): Promise<void> {
   // If no context provided, create a minimal one
   const defaultConfig: Config = {
-    promptDirs: ['./prompts'],
+    promptDirs: ['./.prompts'],
     ...DEFAULT_CONFIG
   };
   

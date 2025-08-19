@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Prompt, VariableDefinition } from '../types/prompt.js';
 import { normalizeLineEndings } from '../utils/platform.js';
 import { errors } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 // Zod schemas for validation
 const VariableSchema = z.object({
@@ -222,13 +223,13 @@ export class PromptService {
             prompts.push(prompt);
           } catch (error) {
             // Log error but continue discovering other prompts
-            console.error(`Error loading prompt ${fullPath}:`, error);
+            logger.error(`Error loading prompt ${fullPath}:`, error);
           }
         }
       }
     } catch (error) {
       // Log error but don't fail the entire discovery
-      console.error(`Error reading directory ${dir}:`, error);
+      logger.error(`Error reading directory ${dir}:`, error);
     }
 
     return prompts;

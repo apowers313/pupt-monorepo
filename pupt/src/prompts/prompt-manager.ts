@@ -59,6 +59,9 @@ export class PromptManager {
     // Extract variables
     const variables = this.parseVariables(frontmatter.variables);
 
+    // Extract summary
+    const summary = typeof frontmatter.summary === 'string' ? frontmatter.summary : undefined;
+
     return {
       path: filePath,
       relativePath,
@@ -68,6 +71,7 @@ export class PromptManager {
       content: markdownContent.trim(),
       frontmatter,
       variables,
+      summary,
     };
   }
 

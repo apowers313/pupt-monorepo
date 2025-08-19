@@ -1,9 +1,11 @@
-import { input, confirm } from '@inquirer/prompts';
+import { input, confirm, select } from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'node:path';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
+import { detectInstalledTools, getToolByName } from '../utils/tool-detection.js';
+import { logger } from '../utils/logger.js';
 
 export async function initCommand(): Promise<void> {
   // Check for existing config
@@ -19,7 +21,7 @@ export async function initCommand(): Promise<void> {
   // Prompt for configuration
   const promptDir = await input({
     message: 'Where should prompts be stored?',
-    default: './prompts'
+    default: './.prompts'
   });
 
   const enableHistory = await confirm({
@@ -62,12 +64,52 @@ export async function initCommand(): Promise<void> {
     await fs.ensureDir(resolvedDir);
   }
 
+  // Detect installed tools and prompt for default command
+  const installedTools = detectInstalledTools();
+  let selectedTool: string | undefined;
+  let defaultCmd: string | undefined;
+  let defaultCmdArgs: string[] | undefined;
+  let defaultCmdOptions: Record<string, string> | undefined;
+  let autoRun = false; // Default to false
+
+  if (installedTools.length > 0) {
+    const toolChoices = [
+      ...installedTools.map(tool => ({
+        name: tool.displayName,
+        value: tool.name
+      })),
+      { name: 'None', value: 'none' }
+    ];
+
+    selectedTool = await select({
+      message: 'Select a default AI tool to use with prompts:',
+      choices: toolChoices
+    });
+
+    if (selectedTool !== 'none') {
+      const toolConfig = getToolByName(selectedTool);
+      if (toolConfig) {
+        defaultCmd = toolConfig.command;
+        defaultCmdArgs = toolConfig.defaultArgs;
+        defaultCmdOptions = toolConfig.defaultOptions;
+        autoRun = true; // Set autoRun to true when a tool is selected
+      }
+    }
+  }
+
   // Generate config
+  // Create base config from DEFAULT_CONFIG, excluding tool-specific settings
+  const { defaultCmd: _, defaultCmdArgs: __, defaultCmdOptions: ___, autoRun: ____, ...baseDefaults } = DEFAULT_CONFIG;
+  
   const config = {
+    ...baseDefaults,
     promptDirs: [promptDir],
     ...(historyDir && { historyDir }),
     ...(annotationDir && { annotationDir }),
-    ...DEFAULT_CONFIG
+    ...(defaultCmd && { defaultCmd }),
+    ...(defaultCmdArgs && defaultCmdArgs.length > 0 && { defaultCmdArgs }),
+    ...(defaultCmdOptions && Object.keys(defaultCmdOptions).length > 0 && { defaultCmdOptions }),
+    autoRun // Always set autoRun based on tool selection
   };
 
   // Save config
@@ -95,5 +137,5 @@ export async function initCommand(): Promise<void> {
     }
   }
 
-  console.log(chalk.green('✓ Configuration created successfully!'));
+  logger.log(chalk.green('✓ Configuration created successfully!'));
 }

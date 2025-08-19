@@ -61,7 +61,7 @@ export const migrations: ConfigMigration[] = [
       };
       
       // Ensure required fields exist
-      migrated.promptDirs = migrated.promptDirs ?? ['./prompts'];
+      migrated.promptDirs = migrated.promptDirs ?? ['./.prompts'];
       
       return migrated;
     }

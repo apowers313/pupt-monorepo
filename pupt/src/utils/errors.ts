@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { logger } from './logger.js';
 
 export enum ErrorCategory {
   USER_ERROR = 'USER_ERROR',
@@ -89,7 +90,7 @@ export function displayError(error: PromptToolError | Error): void {
       ? chalk.yellow('Warning:')
       : chalk.red('Error:');
     
-    const displayFn = error.severity === ErrorSeverity.WARNING ? console.warn : console.error;
+    const displayFn = error.severity === ErrorSeverity.WARNING ? logger.warn.bind(logger) : logger.error.bind(logger);
     
     displayFn(`${error.icon} ${prefix} ${error.message}`);
     
@@ -103,12 +104,12 @@ export function displayError(error: PromptToolError | Error): void {
       });
     }
   } else {
-    console.error(chalk.red('Error:'), error.message);
+    logger.error(chalk.red('Error:'), error.message);
   }
   
   if (process.env.DEBUG === 'true') {
-    console.error(chalk.dim('\nStack trace:'));
-    console.error(chalk.dim(error.stack || 'No stack trace available'));
+    logger.error(chalk.dim('\nStack trace:'));
+    logger.error(chalk.dim(error.stack || 'No stack trace available'));
   }
 }
 

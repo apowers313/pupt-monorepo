@@ -6,6 +6,7 @@ import fs2 from 'fs-extra';
 import simpleGit, { SimpleGit } from 'simple-git';
 import { execa } from 'execa';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
+import { logger } from '../utils/logger.js';
 
 async function saveConfig(config: Config): Promise<void> {
   const configPath = path.join(process.cwd(), '.pt-config.json');
@@ -91,7 +92,7 @@ export async function installFromGit(url: string, git: SimpleGit = simpleGit()):
   // Get installation path
   const installPath = await getGitInstallPath(repoName);
   
-  console.log(`Installing prompts from ${url}...`);
+  logger.log(`Installing prompts from ${url}...`);
   
   // Clone repository with depth 1
   try {
@@ -114,9 +115,9 @@ export async function installFromGit(url: string, git: SimpleGit = simpleGit()):
   if (!config.promptDirs.includes(promptPath)) {
     config.promptDirs.push(promptPath);
     await saveConfig(config);
-    console.log(`Successfully installed prompts to ${promptPath}`);
+    logger.log(`Successfully installed prompts to ${promptPath}`);
   } else {
-    console.log(`Prompts already installed at ${promptPath}`);
+    logger.log(`Prompts already installed at ${promptPath}`);
   }
 }
 
@@ -183,7 +184,7 @@ export async function installFromNpm(packageName: string): Promise<void> {
     throw new Error('NPM package installation requires a package.json file. Run "npm init" first.');
   }
 
-  console.log(`Installing npm package ${packageName}...`);
+  logger.log(`Installing npm package ${packageName}...`);
   
   try {
     // Install the package using execa
@@ -219,10 +220,10 @@ export async function installFromNpm(packageName: string): Promise<void> {
   if (!config.promptDirs.includes(fullPromptPath)) {
     config.promptDirs.push(fullPromptPath);
     await saveConfig(config);
-    console.log(`Successfully installed prompts from ${packageName}`);
-    console.log(`Added prompt directory: ${fullPromptPath}`);
+    logger.log(`Successfully installed prompts from ${packageName}`);
+    logger.log(`Added prompt directory: ${fullPromptPath}`);
   } else {
-    console.log(`Prompts from ${packageName} already configured at ${fullPromptPath}`);
+    logger.log(`Prompts from ${packageName} already configured at ${fullPromptPath}`);
   }
 }
 
@@ -244,10 +245,10 @@ export async function installCommand(source: string): Promise<void> {
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (errorMessage.includes('Invalid git URL')) {
-      console.error(`Error: "${source}" is neither a valid git URL nor an npm package name`);
-      console.error('\nExamples of valid sources:');
-      console.error('  Git:  https://github.com/user/repo');
-      console.error('  NPM:  @org/package or package-name');
+      logger.error(`Error: "${source}" is neither a valid git URL nor an npm package name`);
+      logger.error('\nExamples of valid sources:');
+      logger.error('  Git:  https://github.com/user/repo');
+      logger.error('  NPM:  @org/package or package-name');
       throw new Error(`Invalid installation source: ${source}`);
     } else {
       throw error;

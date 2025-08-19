@@ -99,7 +99,7 @@ describe('BaseCommand', () => {
 
     mockContext = {
       config: {
-        promptDirectory: ['./prompts'],
+        promptDirectory: ['./.prompts'],
         historyDirectory: './.pthistory'
       },
       ui: mockUI,

@@ -26,7 +26,7 @@ describe('Full Integration Flow', () => {
       // 1. Initialize configuration
       const configPath = path.join(testDir, '.pt-config.json');
       const config = {
-        promptDirs: ['./prompts'],
+        promptDirs: ['./.prompts'],
         historyDir: './.pthistory',
         annotationDir: './.pthistory',
         defaultCmd: 'echo',
@@ -35,7 +35,7 @@ describe('Full Integration Flow', () => {
         version: '3.0.0'
       };
       await fs.writeJson(configPath, config);
-      await fs.ensureDir('./prompts');
+      await fs.ensureDir('./.prompts');
       await fs.ensureDir('./.pthistory');
 
       // 2. Create a prompt using add command
@@ -48,11 +48,11 @@ labels: [test]
 
 This is a test prompt with {{input "name" "What is your name?"}}`;
       
-      await fs.writeFile('./prompts/test-prompt.md', promptContent);
+      await fs.writeFile('./.prompts/test-prompt.md', promptContent);
 
       // 3. Verify prompt discovery
       const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
-      const promptManager = new PromptManager(['./prompts']);
+      const promptManager = new PromptManager(['./.prompts']);
       const prompts = await promptManager.discoverPrompts();
       
       expect(prompts).toHaveLength(1);
@@ -60,7 +60,7 @@ This is a test prompt with {{input "name" "What is your name?"}}`;
 
       // 4. Skip interactive template processing in tests
       // Instead, verify the prompt was created correctly
-      const savedPromptContent = await fs.readFile('./prompts/test-prompt.md', 'utf-8');
+      const savedPromptContent = await fs.readFile('./.prompts/test-prompt.md', 'utf-8');
       expect(savedPromptContent).toContain('This is a test prompt with {{input "name" "What is your name?"}}');
       
       // Mock the processed result for history saving
@@ -71,7 +71,7 @@ This is a test prompt with {{input "name" "What is your name?"}}`;
       const historyManager = new HistoryManager('./.pthistory');
       
       const filename = await historyManager.savePrompt({
-        templatePath: './prompts/test-prompt.md',
+        templatePath: './.prompts/test-prompt.md',
         templateContent: promptContent,
         variables: new Map([['name', 'TestUser']]),
         finalPrompt: result,
@@ -125,11 +125,11 @@ This test was successful.`;
     });
 
     it('should handle invalid prompt files', async () => {
-      await fs.ensureDir('./prompts');
-      await fs.writeFile('./prompts/invalid.md', 'Not a valid prompt');
+      await fs.ensureDir('./.prompts');
+      await fs.writeFile('./.prompts/invalid.md', 'Not a valid prompt');
       
       const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
-      const promptManager = new PromptManager(['./prompts']);
+      const promptManager = new PromptManager(['./.prompts']);
       const prompts = await promptManager.discoverPrompts();
       
       // Should still discover the file
@@ -173,23 +173,23 @@ This test was successful.`;
     it('should handle all commands with various configurations', async () => {
       // Test with minimal config
       const minimalConfig = {
-        promptDirs: ['./prompts']
+        promptDirs: ['./.prompts']
       };
       await fs.writeJson('.pt-config.json', minimalConfig);
-      await fs.ensureDir('./prompts');
+      await fs.ensureDir('./.prompts');
 
       // Create a simple prompt
-      await fs.writeFile('./prompts/simple.md', '# Simple Prompt\n\nHello World!');
+      await fs.writeFile('./.prompts/simple.md', '# Simple Prompt\n\nHello World!');
 
       // Test prompt discovery works
       const { PromptManager } = await import('../../src/prompts/prompt-manager.js');
-      const promptManager = new PromptManager(['./prompts']);
+      const promptManager = new PromptManager(['./.prompts']);
       const prompts = await promptManager.discoverPrompts();
       expect(prompts).toHaveLength(1);
 
       // Test with full config
       const fullConfig = {
-        promptDirs: ['./prompts', './templates'],
+        promptDirs: ['./.prompts', './templates'],
         historyDir: './history',
         annotationDir: './annotations',
         defaultCmd: 'cat',
@@ -206,7 +206,7 @@ This test was successful.`;
       await fs.writeFile('./templates/template.md', '# Template\n\nTemplate content');
 
       // Test discovery from multiple directories
-      const multiPromptManager = new PromptManager(['./prompts', './templates']);
+      const multiPromptManager = new PromptManager(['./.prompts', './templates']);
       const multiPrompts = await multiPromptManager.discoverPrompts();
       expect(multiPrompts).toHaveLength(2);
     });

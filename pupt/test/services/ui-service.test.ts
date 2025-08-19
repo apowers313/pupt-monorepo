@@ -1,19 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConsoleUI, LogLevel } from '../../src/services/ui-service';
 import chalk from 'chalk';
+import { logger } from '../../src/utils/logger.js';
+
+vi.mock('../../src/utils/logger.js');
 
 describe('ConsoleUI', () => {
   let ui: ConsoleUI;
-  let consoleLogSpy: any;
-  let consoleErrorSpy: any;
-  let consoleWarnSpy: any;
+  let loggerLogSpy: any;
+  let loggerErrorSpy: any;
+  let loggerWarnSpy: any;
   let consoleTableSpy: any;
 
   beforeEach(() => {
     ui = new ConsoleUI();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
+    loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
     consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
   });
 
@@ -25,22 +28,22 @@ describe('ConsoleUI', () => {
     it('should log success message with green color', () => {
       ui.success('Operation completed');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('✅'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Operation completed'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('✅'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Operation completed'));
     });
 
     it('should not log when silent', () => {
       ui.setSilent(true);
       ui.success('Operation completed');
       
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
 
     it('should not log when log level is below INFO', () => {
       ui.setLogLevel(LogLevel.ERROR);
       ui.success('Operation completed');
       
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -48,22 +51,22 @@ describe('ConsoleUI', () => {
     it('should log error message with red color', () => {
       ui.error('Something went wrong');
       
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('❌'));
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Something went wrong'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('❌'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Something went wrong'));
     });
 
     it('should handle Error objects', () => {
       const error = new Error('Test error');
       ui.error(error);
       
-      expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test error'));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Test error'));
     });
 
     it('should log even at ERROR level', () => {
       ui.setLogLevel(LogLevel.ERROR);
       ui.error('Error message');
       
-      expect(consoleErrorSpy).toHaveBeenCalled();
+      expect(loggerErrorSpy).toHaveBeenCalled();
     });
   });
 
@@ -71,15 +74,15 @@ describe('ConsoleUI', () => {
     it('should log warning message with yellow color', () => {
       ui.warn('Warning message');
       
-      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('⚠️'));
-      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Warning message'));
+      expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('⚠️'));
+      expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Warning message'));
     });
 
     it('should not log when log level is ERROR', () => {
       ui.setLogLevel(LogLevel.ERROR);
       ui.warn('Warning message');
       
-      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(loggerWarnSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -87,8 +90,8 @@ describe('ConsoleUI', () => {
     it('should log info message with blue color', () => {
       ui.info('Information');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('ℹ️'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Information'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('ℹ️'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Information'));
     });
   });
 
@@ -97,14 +100,14 @@ describe('ConsoleUI', () => {
       ui.setLogLevel(LogLevel.DEBUG);
       ui.debug('Debug info');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('🐛'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Debug info'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('🐛'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Debug info'));
     });
 
     it('should not log when log level is INFO', () => {
       ui.debug('Debug info');
       
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -112,8 +115,8 @@ describe('ConsoleUI', () => {
     it('should display prompt header', () => {
       ui.prompt('Test Prompt', 'This is a test prompt');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('📝 Test Prompt'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('This is a test prompt'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('📝 Test Prompt'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('This is a test prompt'));
     });
   });
 
@@ -121,8 +124,8 @@ describe('ConsoleUI', () => {
     it('should show progress message', () => {
       ui.progress('Loading...', 1, 3);
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('[1/3]'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Loading...'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('[1/3]'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Loading...'));
     });
   });
 
@@ -143,7 +146,7 @@ describe('ConsoleUI', () => {
       spinner.succeed();
       spinner.fail();
       
-      expect(consoleLogSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -172,14 +175,14 @@ describe('ConsoleUI', () => {
       const data = { test: 'value', nested: { key: 'value' } };
       ui.json(data);
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
     });
 
     it('should display compact JSON when specified', () => {
       const data = { test: 'value' };
       ui.json(data, false);
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify(data));
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data));
     });
   });
 
@@ -204,17 +207,17 @@ describe('ConsoleUI', () => {
     it('should display bulleted list', () => {
       ui.list(['Item 1', 'Item 2', 'Item 3']);
       
-      expect(consoleLogSpy).toHaveBeenCalledTimes(3);
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 1'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 2'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 3'));
+      expect(loggerLogSpy).toHaveBeenCalledTimes(3);
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 1'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 2'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('• Item 3'));
     });
 
     it('should display numbered list', () => {
       ui.list(['Item 1', 'Item 2'], { numbered: true });
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('1. Item 1'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('2. Item 2'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('1. Item 1'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('2. Item 2'));
     });
   });
 
@@ -222,8 +225,8 @@ describe('ConsoleUI', () => {
     it('should display header with divider', () => {
       ui.header('Section Title');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Section Title'));
-      expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('─'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Section Title'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('─'));
     });
   });
 
@@ -231,9 +234,9 @@ describe('ConsoleUI', () => {
     it('should display content in a box', () => {
       ui.box('Important message');
       
-      expect(consoleLogSpy).toHaveBeenCalled();
+      expect(loggerLogSpy).toHaveBeenCalled();
       // Box should have borders (rounded corners)
-      const calls = consoleLogSpy.mock.calls.map((call: any[]) => call[0]);
+      const calls = loggerLogSpy.mock.calls.map((call: any[]) => call[0]);
       const output = calls.join('\n');
       expect(output).toContain('╭');
       expect(output).toContain('╰');
@@ -246,7 +249,7 @@ describe('ConsoleUI', () => {
       ui = new ConsoleUI({ useColor: false });
       ui.success('Test');
       
-      expect(consoleLogSpy).toHaveBeenCalledWith('✅ Test');
+      expect(loggerLogSpy).toHaveBeenCalledWith('✅ Test');
     });
   });
 });
