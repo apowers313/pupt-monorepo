@@ -99,6 +99,9 @@ program
       logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
       logger.log(chalk.dim(`Location: ${selected.path}\n`));
 
+      // Capture timestamp at start of prompt processing
+      const startTimestamp = new Date();
+
       // Process template
       const engine = new TemplateEngine(config, configDir);
       const result = await engine.processTemplate(selected.content, selected);
@@ -121,7 +124,8 @@ program
           templateContent: selected.content,
           variables: engine.getContext().getMaskedValues(),
           finalPrompt: result,
-          title: selected.title
+          title: selected.title,
+          timestamp: startTimestamp
         });
         logger.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
@@ -137,6 +141,7 @@ program
             variables: engine.getContext().getMaskedValues(),
             finalPrompt: result,
             title: selected.title,
+            timestamp: startTimestamp,
             summary: selected.summary,
             reviewFiles: engine.getContext().getVariablesByType('reviewFile')
           },

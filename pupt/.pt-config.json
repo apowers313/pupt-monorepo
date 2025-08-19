@@ -7,7 +7,9 @@
   "version": "3.0.0",
   "defaultCmd": "claude",
   "defaultCmdArgs": [
-    "--permission-mode", "acceptEdits"
+    "--permission-mode",
+    "acceptEdits",
+    "--verbose"
   ],
   "defaultCmdOptions": {
     "Continue with last context?": "--continue"

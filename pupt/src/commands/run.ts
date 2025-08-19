@@ -25,6 +25,7 @@ export interface RunOptions {
     title?: string;
     summary?: string;
     reviewFiles?: Array<{ name: string; value: unknown }>;
+    timestamp?: Date;
   };
   isAutoRun?: boolean;
 }
@@ -59,6 +60,9 @@ export function parseRunArgs(args: string[]): ParsedArgs {
 }
 
 export async function runCommand(args: string[], options: RunOptions): Promise<void> {
+  // Capture start timestamp for history
+  const startTimestamp = new Date();
+  
   // Load configuration
   const configResult = await ConfigManager.loadWithPath();
   const config = configResult.config;
@@ -92,6 +96,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     title?: string;
     summary?: string;
     reviewFiles?: Array<{ name: string; value: unknown }>;
+    timestamp?: Date;
   } | undefined;
   let exitCode: number | null = null;
   
@@ -153,6 +158,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       variables: engine.getContext().getMaskedValues(),
       finalPrompt: promptResult,
       title: selected.title,
+      timestamp: startTimestamp,
       summary: selected.summary,
       reviewFiles: engine.getContext().getVariablesByType('reviewFile')
     };

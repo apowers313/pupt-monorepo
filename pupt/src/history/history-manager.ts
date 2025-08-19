@@ -13,6 +13,7 @@ interface HistorySaveOptions {
   finalPrompt: string;
   title?: string;
   summary?: string;
+  timestamp?: Date;
 }
 
 
@@ -28,7 +29,7 @@ export class HistoryManager {
     try {
       await fs.ensureDir(this.historyDir);
 
-      const now = new Date();
+      const now = options.timestamp || new Date();
       const timestamp = DateFormats.UTC_DATETIME(now);
       
       // Generate filename using local time: YYYYMMDD-HHMMSS-<random>.json

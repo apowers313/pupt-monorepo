@@ -452,14 +452,15 @@ describe('Run Command', () => {
       
       await runCommand(['echo'], {});
       
-      expect(mockSavePrompt).toHaveBeenCalledWith({
+      expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
         title: 'Test Prompt',
-        reviewFiles: []
-      });
+        reviewFiles: [],
+        timestamp: expect.any(Date)
+      }));
     });
 
     it('should not save to history when not configured', async () => {
@@ -910,14 +911,15 @@ describe('Run Command', () => {
       await runCommand([], {});
       
       // Verify history WAS saved despite non-zero exit code
-      expect(mockSavePrompt).toHaveBeenCalledWith({
+      expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello {{name}}',
         variables: new Map([['name', 'world']]),
         finalPrompt: 'Hello world',
         title: 'Test Prompt',
-        reviewFiles: []
-      });
+        reviewFiles: [],
+        timestamp: expect.any(Date)
+      }));
       
       // Verify process.exit was called with the tool's exit code
       expect(mockExit).toHaveBeenCalledWith(1);
@@ -975,14 +977,15 @@ describe('Run Command', () => {
       await expect(runCommand([], {})).rejects.toThrow('not found');
       
       // Verify history WAS saved even though spawn failed
-      expect(mockSavePrompt).toHaveBeenCalledWith({
+      expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
         title: 'Test Prompt',
-        reviewFiles: []
-      });
+        reviewFiles: [],
+        timestamp: expect.any(Date)
+      }));
     });
 
     it('should save history when tool execution succeeds', async () => {
@@ -1031,14 +1034,15 @@ describe('Run Command', () => {
       await runCommand([], {});
       
       // Verify history WAS saved
-      expect(mockSavePrompt).toHaveBeenCalledWith({
+      expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello',
         variables: new Map(),
         finalPrompt: 'Hello',
         title: 'Test Prompt',
-        reviewFiles: []
-      });
+        reviewFiles: [],
+        timestamp: expect.any(Date)
+      }));
     });
   });
 });
