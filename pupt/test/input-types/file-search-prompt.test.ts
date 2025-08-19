@@ -133,17 +133,17 @@ describe('fileSearchPrompt', () => {
     vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('dem', { signal: new AbortController().signal });
-      // Should now have 2 results: the manual input option + demo.txt
+      // Should now have 2 results: demo.txt + the manual input option
       expect(results).toHaveLength(2);
       expect(results[0]).toEqual({
-        name: '📝 Use typed path: dem',
-        value: '/home/user/project/dem',
-        description: 'Create or use non-existent file',
-      });
-      expect(results[1]).toEqual({
         name: 'demo.txt',
         value: '/home/user/project/demo.txt',
         description: 'demo.txt',
+      });
+      expect(results[1]).toEqual({
+        name: '📝 Use typed path: dem',
+        value: '/home/user/project/dem',
+        description: 'Create or use non-existent file',
       });
       return '/home/user/project/demo.txt';
     });
@@ -183,14 +183,14 @@ describe('fileSearchPrompt', () => {
     vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('design/ph', { signal: new AbortController().signal });
-      // Should now have 2 results: the manual input option + phase1.md
+      // Should now have 2 results: phase1.md + the manual input option
       expect(results).toHaveLength(2);
-      expect(results[0]).toEqual({
+      expect(results[0].name).toBe('phase1.md');
+      expect(results[1]).toEqual({
         name: '📝 Use typed path: design/ph',
         value: '/home/user/project/design/ph',
         description: 'Create or use non-existent file',
       });
-      expect(results[1].name).toBe('phase1.md');
       return designFiles[0].absolutePath;
     });
 
@@ -204,4 +204,73 @@ describe('fileSearchPrompt', () => {
 
   // Note: @inquirer/search doesn't support default values
   // The default property in FileSearchConfig is kept for future compatibility
+
+  it('should show matches before "Use typed path" option', async () => {
+    // Test specifically for the ordering issue: matches should come before manual input
+    const matchingFiles = [
+      {
+        name: 'design',
+        absolutePath: '/home/user/project/design',
+        relativePath: 'design',
+        isDirectory: true,
+        modTime: new Date(),
+      },
+      {
+        name: 'desktop.ini',
+        absolutePath: '/home/user/project/desktop.ini',
+        relativePath: 'desktop.ini',
+        isDirectory: false,
+        modTime: new Date(),
+      },
+    ];
+
+    const mockSearchEngine = {
+      search: vi.fn().mockResolvedValue(matchingFiles),
+      listDirectory: vi.fn(),
+      formatFileInfo: vi.fn((info) => ({
+        display: info.name + (info.isDirectory ? '/' : ''),
+        value: info.absolutePath,
+        description: info.relativePath,
+      })),
+      normalizePathInput: vi.fn((input) => input),
+      resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
+    };
+
+    vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
+    vi.mocked(search).mockImplementation(async ({ source }) => {
+      const results = await source('des', { signal: new AbortController().signal });
+      
+      // Verify we have 3 results: 2 matches + manual input option
+      expect(results).toHaveLength(3);
+      
+      // First two results should be the matches
+      expect(results[0]).toEqual({
+        name: 'design/',
+        value: '/home/user/project/design',
+        description: 'design',
+      });
+      expect(results[1]).toEqual({
+        name: 'desktop.ini',
+        value: '/home/user/project/desktop.ini',
+        description: 'desktop.ini',
+      });
+      
+      // Last result should be the manual input option
+      expect(results[2]).toEqual({
+        name: '📝 Use typed path: des',
+        value: '/home/user/project/des',
+        description: 'Create or use non-existent file',
+      });
+      
+      return '/home/user/project/design';
+    });
+
+    const result = await fileSearchPrompt({
+      message: 'Select a file',
+      basePath: '.',
+    });
+
+    expect(mockSearchEngine.search).toHaveBeenCalledWith('des', expect.any(AbortSignal));
+    expect(result).toBe('/home/user/project/design');
+  });
 });

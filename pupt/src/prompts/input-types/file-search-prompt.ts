@@ -56,8 +56,8 @@ export async function fileSearchPrompt(config: FileSearchConfig): Promise<string
         const pathAlreadyInResults = choices.some(choice => choice.value === absolutePath);
         
         if (!pathAlreadyInResults) {
-          // Add the manual input option at the beginning
-          choices.unshift({
+          // Add the manual input option at the end
+          choices.push({
             name: `📝 Use typed path: ${input}`,
             value: absolutePath,
             description: 'Create or use non-existent file',

@@ -17,6 +17,16 @@ export interface RunOptions {
   historyIndex?: number;
   prompt?: string;
   skipPromptSelection?: boolean;
+  templateInfo?: {
+    templatePath: string;
+    templateContent: string;
+    variables: Map<string, unknown>;
+    finalPrompt: string;
+    title?: string;
+    summary?: string;
+    reviewFiles?: Array<{ name: string; value: unknown }>;
+  };
+  isAutoRun?: boolean;
 }
 
 interface ParsedArgs {
@@ -88,6 +98,10 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   // Check if using provided prompt (from autoRun)
   if (options.prompt) {
     promptResult = options.prompt;
+    // Use templateInfo if provided
+    if (options.templateInfo) {
+      templateInfo = options.templateInfo;
+    }
   } else if (options.historyIndex) {
     // Validate history is enabled
     if (!config.historyDir) {
@@ -183,7 +197,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     
     // Handle post-run file reviews
     if (templateInfo?.reviewFiles && templateInfo.reviewFiles.length > 0) {
-      await handlePostRunReviews(templateInfo.reviewFiles, config);
+      await handlePostRunReviews(templateInfo.reviewFiles, config, options.isAutoRun);
     }
   }
   
@@ -243,7 +257,7 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
   });
 }
 
-async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: unknown }>, config: Config): Promise<void> {
+async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: unknown }>, config: Config, isAutoRun?: boolean): Promise<void> {
   logger.log(chalk.dim('\n' + '─'.repeat(60)));
   
   for (const { name, value } of reviewFiles) {
@@ -256,11 +270,18 @@ async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: un
       continue;
     }
     
-    // Prompt user to review the file
-    const shouldReview = await confirm({
-      message: `Would you like to review the file '${name}' (${filePath})?`,
-      default: true
-    });
+    // In autoRun mode, skip the confirmation prompt and directly open the file
+    let shouldReview = false;
+    if (isAutoRun) {
+      shouldReview = true;
+      logger.log(chalk.blue(`\nAuto-reviewing file '${name}' (${filePath})`));
+    } else {
+      // Prompt user to review the file
+      shouldReview = await confirm({
+        message: `Would you like to review the file '${name}' (${filePath})?`,
+        default: true
+      });
+    }
     
     if (shouldReview) {
       // Check autoReview setting (default to true)

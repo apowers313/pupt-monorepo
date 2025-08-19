@@ -127,7 +127,17 @@ program
       if (config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '') {
         // Use the run command implementation
         await runCommand([], {
-          prompt: result
+          prompt: result,
+          templateInfo: {
+            templatePath: selected.path,
+            templateContent: selected.content,
+            variables: engine.getContext().getMaskedValues(),
+            finalPrompt: result,
+            title: selected.title,
+            summary: selected.summary,
+            reviewFiles: engine.getContext().getVariablesByType('reviewFile')
+          },
+          isAutoRun: true
         });
       }
     } catch (error) {
