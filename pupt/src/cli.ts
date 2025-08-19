@@ -110,8 +110,11 @@ program
       logger.log(result);
       logger.log(chalk.green('\n' + '='.repeat(60)));
       
-      // Save to history if configured
-      if (config.historyDir) {
+      // Check if autoRun is enabled
+      const willAutoRun = config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '';
+      
+      // Save to history if configured and NOT autoRunning (autoRun saves its own history)
+      if (config.historyDir && !willAutoRun) {
         const historyManager = new HistoryManager(config.historyDir);
         await historyManager.savePrompt({
           templatePath: selected.path,
@@ -123,8 +126,8 @@ program
         logger.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
       
-      // Check if autoRun is enabled
-      if (config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '') {
+      // Execute autoRun if enabled
+      if (willAutoRun) {
         // Use the run command implementation
         await runCommand([], {
           prompt: result,

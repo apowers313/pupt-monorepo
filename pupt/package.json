@@ -11,6 +11,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "pretest": "npm run build",
+    "check": "npm run lint && npm run build && npm run test:coverage",
     "test": "vitest run --no-coverage",
     "test:ci": "vitest run --no-coverage --passWithNoTests",
     "test:watch": "vitest",
