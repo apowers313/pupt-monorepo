@@ -9,8 +9,7 @@ describe('Config Migration Integration', () => {
   let originalCwd: string;
 
   beforeEach(async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-migration-test-'));
-    testDir = fs.realpathSync(tmpDir);
+    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-migration-test-'));
     originalCwd = process.cwd();
     process.chdir(testDir);
   });

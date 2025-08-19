@@ -10,9 +10,8 @@ describe('Config Schema Validation', () => {
   let configPath: string;
 
   beforeEach(async () => {
-    const tmpDir = path.join(os.tmpdir(), 'pt-config-schema-test');
-    await fs.ensureDir(tmpDir);
-    testDir = fs.realpathSync(tmpDir);
+    testDir = path.join(os.tmpdir(), 'pt-config-schema-test-' + Date.now());
+    await fs.ensureDir(testDir);
     configPath = path.join(testDir, '.pt-config.json');
     process.chdir(testDir);
   });
@@ -392,6 +391,7 @@ describe('Config Migration', () => {
     });
     expect(loaded.autoReview).toBe(true);
     expect(loaded.autoRun).toBe(false);
+    // Just compare the paths directly - they should both be resolved the same way
     expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
     expect(loaded.handlebarsExtensions).toEqual([]);
   });

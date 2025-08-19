@@ -37,9 +37,11 @@ vi.mock('../../src/prompts/input-types/file-search-prompt.js', () => ({
 
 describe('ReviewFile AutoRun Integration Tests', () => {
   let testDir: string;
+  let originalCwd: string;
   let mockSpawn: any;
 
   beforeEach(async () => {
+    originalCwd = process.cwd();
     testDir = await mkdtemp(join(tmpdir(), 'pt-reviewfile-autorun-'));
     
     // Create prompts directory
@@ -72,8 +74,9 @@ describe('ReviewFile AutoRun Integration Tests', () => {
 
   afterEach(async () => {
     vi.clearAllMocks();
+    process.chdir(originalCwd);
     if (existsSync(testDir)) {
-      await rm(testDir, { recursive: true });
+      await rm(testDir, { recursive: true, force: true });
     }
   });
 

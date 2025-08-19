@@ -9,9 +9,8 @@ describe('ConfigManager', () => {
   const originalCwd = process.cwd();
 
   beforeEach(async () => {
-    const tmpDir = path.join(os.tmpdir(), 'pt-test-config');
-    await fs.ensureDir(tmpDir);
-    testDir = fs.realpathSync(tmpDir);
+    testDir = path.join(os.tmpdir(), 'pt-test-config-' + Date.now());
+    await fs.ensureDir(testDir);
     process.chdir(testDir);
   });
 

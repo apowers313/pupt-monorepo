@@ -13,15 +13,18 @@ import { handlePostRunReviews } from '../../src/commands/run.js';
 
 describe('ReviewFile Tracking and Post-Run Review', () => {
   let testDir: string;
+  let originalCwd: string;
 
   beforeEach(async () => {
+    originalCwd = process.cwd();
     testDir = await mkdtemp(join(tmpdir(), 'pt-reviewfile-simple-'));
     process.chdir(testDir);
   });
 
   afterEach(async () => {
+    process.chdir(originalCwd);
     if (existsSync(testDir)) {
-      await rm(testDir, { recursive: true });
+      await rm(testDir, { recursive: true, force: true });
     }
   });
 
