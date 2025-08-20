@@ -136,11 +136,15 @@ describe('OutputCaptureService - Piping Tests', () => {
       // Save original TTY state
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
+      const originalSetRawMode = process.stdin.setRawMode;
       
       try {
         // Force TTY mode
         process.stdin.isTTY = true;
         process.stdout.isTTY = true;
+        
+        // Mock setRawMode to prevent test interference
+        process.stdin.setRawMode = () => process.stdin;
         
         // Get temp files before
         const tempDir = os.tmpdir();
@@ -156,8 +160,11 @@ describe('OutputCaptureService - Piping Tests', () => {
           outputFile
         );
         
-        // Should complete (might exit with 1 due to setRawMode issues in test environment)
+        // Should complete
         expect(result.exitCode !== null).toBe(true);
+        
+        // Add small delay to ensure cleanup completes
+        await new Promise(resolve => setTimeout(resolve, 100));
         
         // For non-Claude commands, no temp files should be created
         const filesAfter = await fs.readdir(tempDir);
@@ -165,9 +172,10 @@ describe('OutputCaptureService - Piping Tests', () => {
         expect(ptFilesAfter.length).toBe(beforeCount);
         
       } finally {
-        // Restore TTY state
+        // Restore TTY state and setRawMode
         process.stdin.isTTY = originalStdinTTY;
         process.stdout.isTTY = originalStdoutTTY;
+        process.stdin.setRawMode = originalSetRawMode;
       }
     });
 
@@ -178,11 +186,15 @@ describe('OutputCaptureService - Piping Tests', () => {
       // Save original TTY state
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
+      const originalSetRawMode = process.stdin.setRawMode;
       
       try {
         // Force TTY mode
         process.stdin.isTTY = true;
         process.stdout.isTTY = true;
+        
+        // Mock setRawMode to prevent test interference
+        process.stdin.setRawMode = () => process.stdin;
         
         const result = await service.captureCommand(
           'cat',
@@ -191,19 +203,26 @@ describe('OutputCaptureService - Piping Tests', () => {
           outputFile
         );
         
-        // Should complete (might exit with 1 due to setRawMode issues in test environment)
+        // Should complete
         expect(result.exitCode !== null).toBe(true);
         
-        // Only check output if file exists (might not exist if error occurred early)
+        // Add small delay to ensure file is fully written
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check output
         if (await fs.pathExists(outputFile)) {
           const output = await fs.readFile(outputFile, 'utf-8');
           expect(output).toContain('Direct write test');
+        } else {
+          // If file doesn't exist, the test should fail
+          throw new Error('Output file was not created');
         }
         
       } finally {
-        // Restore TTY state
+        // Restore TTY state and setRawMode
         process.stdin.isTTY = originalStdinTTY;
         process.stdout.isTTY = originalStdoutTTY;
+        process.stdin.setRawMode = originalSetRawMode;
       }
     });
   });

@@ -88,6 +88,7 @@ export class OutputCaptureService {
     // Create a wrapper to track bytes and enforce size limit
     const limitedWrite = (data: string): void => {
       if (truncated) return;
+      if (!writeStream.writable) return; // Prevent writes after stream is closed
 
       const cleanData = stripAnsi(data);
       const dataSize = Buffer.byteLength(cleanData);
@@ -113,8 +114,17 @@ export class OutputCaptureService {
       const isTTY = process.stdin.isTTY && process.stdout.isTTY;
 
       const cleanup = () => {
+        // Kill PTY process if still running
+        if (ptyProcess) {
+          try {
+            ptyProcess.kill();
+          } catch {
+            // Process might already be dead
+          }
+        }
+        
         // Restore terminal mode
-        if (isTTY && ptyProcess) {
+        if (isTTY) {
           try {
             process.stdin.setRawMode(false);
           } catch {
@@ -131,7 +141,11 @@ export class OutputCaptureService {
         }
         
         process.stdin.pause();
-        writeStream.end();
+        
+        // End the write stream only if it's still writable
+        if (writeStream.writable) {
+          writeStream.end();
+        }
       };
 
       try {
@@ -179,12 +193,13 @@ export class OutputCaptureService {
         }
 
         // Handle data from PTY
-        ptyProcess.onData((data) => {
+        const dataHandler = (data: string) => {
           // Pass through to terminal (preserving colors)
           process.stdout.write(data);
           // Capture clean version
           limitedWrite(data);
-        });
+        };
+        ptyProcess.onData(dataHandler);
 
         // Set up bidirectional communication for TTY
         if (isTTY) {
@@ -216,9 +231,8 @@ export class OutputCaptureService {
           const CHUNK_SIZE = 1024; // Safe chunk size for PTY buffers
           let written = 0;
           
-          if (process.env.CI) {
-            console.log(`[DEBUG PTY] Starting chunked write for ${prompt.length} bytes`);
-          }
+          // Debug logging for CI environments is intentionally disabled
+          // to avoid linting errors. Use environment-specific debugging instead.
           
           let writeTimeout: NodeJS.Timeout | null = null;
           const maxWriteTime = 5000; // 5 second max for writing all data
@@ -228,12 +242,10 @@ export class OutputCaptureService {
               const chunk = prompt.slice(written, written + CHUNK_SIZE);
               
               try {
-                const writeResult = ptyProcess.write(chunk);
+                ptyProcess.write(chunk);
                 written += chunk.length;
                 
-                if (process.env.CI && written % 5000 === 0) {
-                  console.log(`[DEBUG PTY] Written ${written}/${prompt.length} bytes, writeResult: ${writeResult}`);
-                }
+                // Progress tracking disabled for production
                 
                 // For macOS CI, use a small delay to prevent buffer overflow
                 if (process.platform === 'darwin' && process.env.CI) {
@@ -242,19 +254,13 @@ export class OutputCaptureService {
                   // Use setImmediate to allow PTY to process data
                   setImmediate(writeNextChunk);
                 }
-              } catch (writeError) {
-                if (process.env.CI) {
-                  console.error('[DEBUG PTY] Write error:', writeError);
-                }
+              } catch {
+                // Write errors are expected in some environments
                 // Continue anyway, command might still complete
               }
             } else if (ptyProcess) {
               if (writeTimeout) {
                 clearTimeout(writeTimeout);
-              }
-              
-              if (process.env.CI) {
-                console.log(`[DEBUG PTY] Finished writing ${written} bytes, sending EOF`);
               }
               
               // After all data is written, send newline and EOF
@@ -268,13 +274,8 @@ export class OutputCaptureService {
                   if (ptyProcess) {
                     try {
                       ptyProcess.write('\x04'); // EOT
-                      if (process.env.CI) {
-                        console.log('[DEBUG PTY] Sent EOF signal');
-                      }
-                    } catch (eofError) {
-                      if (process.env.CI) {
-                        console.error('[DEBUG PTY] EOF write error:', eofError);
-                      }
+                    } catch {
+                      // EOF errors are non-critical
                     }
                   }
                 }, 50); // Reduced delay since we're already async
@@ -284,9 +285,7 @@ export class OutputCaptureService {
           
           // Set a timeout to prevent infinite hangs
           writeTimeout = setTimeout(() => {
-            if (process.env.CI) {
-              console.error(`[DEBUG PTY] Write timeout after ${maxWriteTime}ms, written ${written}/${prompt.length} bytes`);
-            }
+            // Timeout reached, but process may still complete
           }, maxWriteTime);
           
           writeNextChunk();
