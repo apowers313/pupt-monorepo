@@ -206,7 +206,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'migration' must be successful migration (found: string)");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration migration failed: Expected array, received string");
     });
 
     it('should reject invalid defaultCmdOptions type', async () => {
@@ -216,7 +216,7 @@ describe('Config Schema Validation', () => {
       };
       await fs.writeJson(configPath, config);
       
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'migration' must be successful migration (found: string)");
+      await expect(ConfigManager.load()).rejects.toThrow("Configuration migration failed: Expected object, received string");
     });
 
     it('should reject invalid autoReview type', async () => {

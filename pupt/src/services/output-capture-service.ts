@@ -12,6 +12,11 @@ export interface CaptureResult {
   error?: string;
 }
 
+export interface CaptureHandle {
+  promise: Promise<CaptureResult>;
+  kill: () => void;
+}
+
 export interface OutputCaptureOptions {
   outputDirectory?: string;
   maxOutputSize?: number; // in bytes
@@ -28,11 +33,47 @@ export class OutputCaptureService {
     };
   }
 
+  captureCommandWithHandle(
+    command: string,
+    args: string[],
+    prompt: string,
+    outputPath: string
+  ): CaptureHandle {
+    let ptyProcess: pty.IPty | null = null;
+    
+    const promise = this._captureCommandInternal(command, args, prompt, outputPath, (process) => {
+      ptyProcess = process;
+    });
+    
+    return {
+      promise,
+      kill: () => {
+        if (ptyProcess) {
+          try {
+            ptyProcess.kill();
+          } catch {
+            // Process might already be dead
+          }
+        }
+      }
+    };
+  }
+
   async captureCommand(
     command: string,
     args: string[],
     prompt: string,
     outputPath: string
+  ): Promise<CaptureResult> {
+    return this._captureCommandInternal(command, args, prompt, outputPath);
+  }
+
+  private async _captureCommandInternal(
+    command: string,
+    args: string[],
+    prompt: string,
+    outputPath: string,
+    onProcessCreated?: (process: pty.IPty) => void
   ): Promise<CaptureResult> {
     
     // Ensure output directory exists
@@ -76,7 +117,7 @@ export class OutputCaptureService {
         if (isTTY && ptyProcess) {
           try {
             process.stdin.setRawMode(false);
-          } catch (e) {
+          } catch {
             // Ignore errors if stdin is already closed
           }
         }
@@ -130,6 +171,11 @@ export class OutputCaptureService {
             cwd: process.cwd(),
             env: process.env as Record<string, string>
           });
+        }
+        
+        // Notify callback if provided
+        if (onProcessCreated && ptyProcess) {
+          onProcessCreated(ptyProcess);
         }
 
         // Handle data from PTY

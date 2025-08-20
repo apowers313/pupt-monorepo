@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { getHomePath } from '../utils/platform.js';
 import fs from 'fs-extra';
-import { errors } from '../utils/errors.js';
+import { errors, createError, ErrorCategory } from '../utils/errors.js';
 import { migrateConfig } from './migration.js';
 import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
 import { z } from 'zod';
@@ -230,9 +230,17 @@ export class ConfigManager {
       const result = ConfigSchema.safeParse(migrated);
       if (!result.success) {
         const firstIssue = result.error.issues[0];
-        const message = firstIssue.message;
         
-        throw errors.invalidConfig('migration', 'successful migration', message);
+        throw createError({
+          message: `Configuration migration failed: ${firstIssue.message}`,
+          code: 'MIGRATION_FAILED',
+          category: ErrorCategory.CONFIG_ERROR,
+          suggestions: [
+            { text: 'Check your configuration file for invalid values' },
+            { text: 'Try removing the config file and running "pt init" to start fresh' }
+          ],
+          icon: '⚙️'
+        });
       }
 
       // Save migrated config back to disk

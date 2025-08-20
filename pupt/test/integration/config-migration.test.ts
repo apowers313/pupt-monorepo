@@ -153,7 +153,7 @@ describe('Config Migration Integration', () => {
       expect(config.autoRun).toBe(false);
     });
 
-    it('should preserve custom fields during migration', async () => {
+    it('should allow custom fields during migration with passthrough schema', async () => {
       const configWithCustomFields = {
         promptDirs: ['./.prompts'],
         codingTool: 'claude',
@@ -166,11 +166,14 @@ describe('Config Migration Integration', () => {
       
       await fs.writeJson('.pt-config.json', configWithCustomFields);
       
-      await ConfigManager.load();
+      // Should not throw - passthrough schema allows custom fields
+      const loaded = await ConfigManager.load();
+      expect(loaded.defaultCmd).toBe('claude'); // migrated from codingTool
       
+      // Check that custom fields are preserved in the file
       const savedConfig = await fs.readJson('.pt-config.json');
       expect(savedConfig.customField1).toBe('value1');
-      expect(savedConfig.customNested).toEqual({ field2: 'value2' });
+      expect(savedConfig.customNested.field2).toBe('value2');
     });
 
     it('should not migrate already-migrated configs', async () => {

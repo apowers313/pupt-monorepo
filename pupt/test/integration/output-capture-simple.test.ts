@@ -44,18 +44,21 @@ describe('OutputCaptureService - Simple Test', () => {
     
     console.log('Starting Claude test with prompt:', prompt);
     
-    // Kill claude after 8 seconds to prevent timeout
-    const killTimer = setTimeout(() => {
-      console.log('Killing any claude processes...');
-      require('child_process').exec('pkill -f claude');
-    }, 8000);
-    
-    const result = await service.captureCommand(
+    // Use the new method that returns a handle
+    const handle = service.captureCommandWithHandle(
       'claude',
       [],
       prompt,
       outputFile
     );
+    
+    // Kill claude after 8 seconds to prevent timeout
+    const killTimer = setTimeout(() => {
+      console.log('Killing the specific claude process...');
+      handle.kill();
+    }, 8000);
+    
+    const result = await handle.promise;
     
     clearTimeout(killTimer);
     

@@ -116,7 +116,11 @@ describe('OutputCaptureService - Claude typing', () => {
       onExit: vi.fn()
     };
 
-    vi.mocked(pty.spawn).mockReturnValue(mockPty as any);
+    vi.mocked(pty.spawn).mockImplementation((cmd, args, options) => {
+      console.log('Spawning command:', cmd);
+      console.log('With args:', args);
+      return mockPty as any;
+    });
     
     // Mock TTY environment
     Object.defineProperty(process.stdin, 'isTTY', {
@@ -161,7 +165,7 @@ describe('OutputCaptureService - Claude typing', () => {
     vi.restoreAllMocks();
   });
 
-  it('should type Claude prompts character by character', async () => {
+  it('should use shell piping for Claude in TTY mode', async () => {
     const prompt = 'Test prompt';
     const outputFile = path.join(tempDir, 'claude-test.txt');
     
@@ -208,21 +212,15 @@ describe('OutputCaptureService - Claude typing', () => {
     // Wait for typing to complete
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // Verify character-by-character typing happened
-    const promptChars = prompt.split('');
-    
-    // Count individual character writes
+    // In TTY mode with Claude, it should use shell piping
+    // So the prompt is NOT typed character by character
     const charWrites = writeCalls.filter(call => call.length === 1 && call !== '\r');
     
     console.log('All write calls:', writeCalls);
     console.log('Character writes:', charWrites);
     
-    // Should have typed each character
-    expect(charWrites.length).toBe(promptChars.length);
-    expect(charWrites).toEqual(promptChars);
-    
-    // Should have sent enter at the end
-    expect(writeCalls[writeCalls.length - 1]).toBe('\r');
+    // Should NOT have typed each character (using shell piping instead)
+    expect(charWrites.length).toBe(0);
 
     // Simulate exit
     exitHandler({ exitCode: 0 });

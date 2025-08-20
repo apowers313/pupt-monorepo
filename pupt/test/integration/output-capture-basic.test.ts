@@ -62,8 +62,8 @@ describe('Output Capture Basic Integration', () => {
     });
     
     // Create some test files
-    const oldFile = path.join(tempDir, 'old.txt');
-    const newFile = path.join(tempDir, 'new.txt');
+    const oldFile = path.join(tempDir, 'old-output.txt');
+    const newFile = path.join(tempDir, 'new-output.txt');
     
     await fs.writeFile(oldFile, 'old content');
     await fs.writeFile(newFile, 'new content');

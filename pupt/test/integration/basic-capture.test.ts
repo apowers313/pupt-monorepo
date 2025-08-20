@@ -35,6 +35,8 @@ describe('OutputCaptureService - Basic Prompt Sending', () => {
     
     const output = await fs.readFile(outputFile, 'utf-8');
     console.log('Output:', output);
-    expect(output.trim()).toBe('Got: test input');
+    // PTY echoes the input, so we should see both the input and the output
+    const lines = output.trim().split('\n').map(line => line.trim());
+    expect(lines).toContain('Got: test input');
   });
 });

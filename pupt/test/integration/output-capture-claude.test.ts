@@ -1,12 +1,24 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
+import { spawn } from 'child_process';
+import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('OutputCaptureService - Claude Integration', () => {
   let outputDir: string;
   let service: OutputCaptureService;
+  let claudeAvailable: boolean;
+  let cleanupMock: () => void;
+  
+  beforeAll(() => {
+    cleanupMock = setupClaudeMock();
+  });
+  
+  afterAll(() => {
+    cleanupMock();
+  });
 
   beforeEach(async () => {
     outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'output-capture-test-'));
@@ -14,6 +26,9 @@ describe('OutputCaptureService - Claude Integration', () => {
       outputDirectory: outputDir,
       maxOutputSize: 10 * 1024 * 1024
     });
+    
+    // With mock, claude is always available
+    claudeAvailable = true;
   });
 
   afterEach(async () => {
@@ -21,6 +36,11 @@ describe('OutputCaptureService - Claude Integration', () => {
   });
 
   it('should capture claude output with prompt injection', async () => {
+    if (!claudeAvailable) {
+      console.log('Claude not available, skipping test');
+      return;
+    }
+    
     const prompt = 'What is 5 + 5? Respond with just the number.';
     const outputFile = path.join(outputDir, 'claude-output.txt');
     

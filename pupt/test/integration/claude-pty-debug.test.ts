@@ -1,7 +1,17 @@
 import * as pty from 'node-pty';
-import { describe, it } from 'vitest';
+import { describe, it, beforeAll, afterAll } from 'vitest';
+import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('Claude PTY Debug', () => {
+  let cleanupMock: () => void;
+  
+  beforeAll(() => {
+    cleanupMock = setupClaudeMock();
+  });
+  
+  afterAll(() => {
+    cleanupMock();
+  });
   it('should show exact output from claude', async () => {
     await new Promise<void>((resolve) => {
       let dataCount = 0;

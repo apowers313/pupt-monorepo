@@ -59,7 +59,7 @@ export const ConfigSchema = z.object({
   codingTool: z.string().optional(),
   codingToolArgs: z.array(z.string()).optional(),
   codingToolOptions: z.record(z.string()).optional()
-}).strict();
+}).passthrough();
 
 // Partial config for updates
 export const PartialConfigSchema = ConfigSchema.partial();

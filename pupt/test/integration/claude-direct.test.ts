@@ -1,10 +1,20 @@
 import { spawn } from 'child_process';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
+import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('Claude Direct Input Test', () => {
+  let cleanupMock: () => void;
+  
+  beforeAll(() => {
+    cleanupMock = setupClaudeMock();
+  });
+  
+  afterAll(() => {
+    cleanupMock();
+  });
   it('should pass input to claude without PTY', async () => {
     const testPrompt = 'What is 2 + 2? Please respond with just the number.';
     const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-test-'));
