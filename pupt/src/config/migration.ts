@@ -63,6 +63,11 @@ export const migrations: ConfigMigration[] = [
       // Ensure required fields exist
       migrated.promptDirs = migrated.promptDirs ?? ['./.prompts'];
       
+      // Preserve outputCapture settings
+      if ('outputCapture' in config) {
+        migrated.outputCapture = config.outputCapture;
+      }
+      
       return migrated;
     }
   }

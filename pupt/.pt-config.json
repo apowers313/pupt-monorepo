@@ -17,5 +17,10 @@
   "autoReview": true,
   "autoRun": true,
   "gitPromptDir": ".git-prompts",
-  "handlebarsExtensions": []
+  "handlebarsExtensions": [],
+  "outputCapture": {
+    "enabled": true,
+    "directory": "./.pthistory",
+    "maxSizeMB": 10
+  }
 }

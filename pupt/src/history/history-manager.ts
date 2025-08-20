@@ -14,6 +14,11 @@ interface HistorySaveOptions {
   title?: string;
   summary?: string;
   timestamp?: Date;
+  // Output capture metadata (optional for backward compatibility)
+  outputFile?: string;
+  outputSize?: number;
+  executionTime?: number;
+  exitCode?: number | null;
 }
 
 
@@ -43,7 +48,7 @@ export class HistoryManager {
       const filename = `${dateStr}-${timeStr}-${random}.json`;
 
       // Create history entry
-      const entry: Omit<HistoryEntry, 'filename'> = {
+      const entry: Omit<HistoryEntry, 'filename'> & { execution?: Record<string, unknown> } = {
         timestamp,
         templatePath: options.templatePath,
         templateContent: options.templateContent,
@@ -52,6 +57,16 @@ export class HistoryManager {
         title: options.title,
         summary: options.summary
       };
+      
+      // Add execution metadata if provided (for output capture)
+      if (options.outputFile || options.executionTime || options.exitCode !== undefined) {
+        entry.execution = {
+          ...(options.outputFile && { output_file: options.outputFile }),
+          ...(options.outputSize !== undefined && { output_size: options.outputSize }),
+          ...(options.executionTime !== undefined && { duration_ms: options.executionTime }),
+          ...(options.exitCode !== undefined && { exit_code: options.exitCode })
+        };
+      }
 
       // Save to history
       const filePath = path.join(this.historyDir, filename);

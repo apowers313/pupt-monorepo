@@ -12,10 +12,18 @@ export interface Config {
   version?: string;
   helpers?: Record<string, HelperConfig>;
   logLevel?: string;
+  outputCapture?: OutputCaptureConfig;
   // Legacy fields for backward compatibility (will be migrated)
   codingTool?: string;
   codingToolArgs?: string[];
   codingToolOptions?: Record<string, string>;
+}
+
+export interface OutputCaptureConfig {
+  enabled: boolean;
+  directory?: string;
+  maxSizeMB?: number;
+  retentionDays?: number;
 }
 
 export interface HelperConfig {

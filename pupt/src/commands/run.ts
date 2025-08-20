@@ -11,6 +11,8 @@ import { logger } from '../utils/logger.js';
 import * as path from 'node:path';
 import { pathExists } from 'fs-extra';
 import { editorLauncher } from '../utils/editor.js';
+import { OutputCaptureService } from '../services/output-capture-service.js';
+import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
 
 export interface RunOptions {
@@ -67,6 +69,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   const configResult = await ConfigManager.loadWithPath();
   const config = configResult.config;
   const configDir = configResult.filepath ? path.dirname(configResult.filepath) : undefined;
+  
   
   // Parse arguments
   const { tool, toolArgs, extraArgs } = parseRunArgs(args);
@@ -192,13 +195,33 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   logger.log(chalk.blue(`\nRunning: ${finalTool} ${finalArgs.join(' ')}`));
   logger.log(chalk.dim('─'.repeat(60)));
   
+  const startTime = Date.now();
+  let outputFile: string | undefined;
+  let outputSize: number | undefined;
+  
   try {
-    exitCode = await executeTool(finalTool, finalArgs, promptResult);
+    // Check if output capture is enabled
+    if (config.outputCapture?.enabled && config.historyDir) {
+      const result = await executeToolWithCapture(finalTool, finalArgs, promptResult, config);
+      exitCode = result.exitCode;
+      outputFile = result.outputFile;
+      outputSize = result.outputSize;
+    } else {
+      exitCode = await executeTool(finalTool, finalArgs, promptResult);
+    }
   } finally {
+    const executionTime = Date.now() - startTime;
+    
     // Save to history regardless of exit code
     if (config.historyDir && templateInfo && promptResult.trim().length > 0) {
       const historyManager = new HistoryManager(config.historyDir);
-      await historyManager.savePrompt(templateInfo);
+      await historyManager.savePrompt({
+        ...templateInfo,
+        outputFile,
+        outputSize,
+        executionTime,
+        exitCode
+      });
     }
     
     // Handle post-run file reviews
@@ -211,6 +234,37 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   if (exitCode !== null && exitCode !== 0) {
     process.exit(exitCode);
   }
+}
+
+async function executeToolWithCapture(
+  tool: string, 
+  args: string[], 
+  prompt: string, 
+  config: Config
+): Promise<{ exitCode: number | null; outputFile?: string; outputSize?: number }> {
+  const outputCapture = new OutputCaptureService({
+    outputDirectory: config.outputCapture?.directory || config.historyDir!,
+    maxOutputSize: (config.outputCapture?.maxSizeMB || 10) * 1024 * 1024
+  });
+  
+  // Generate output filename - use same format as history files but with -output.txt suffix
+  const now = new Date();
+  const dateStr = DateFormats.YYYYMMDD(now);
+  const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
+  const randomSuffix = Math.random().toString(36).substring(2, 10);
+  const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.txt`;
+  const outputPath = path.join(
+    config.outputCapture?.directory || config.historyDir!,
+    outputFilename
+  );
+  
+  const result = await outputCapture.captureCommand(tool, args, prompt, outputPath);
+  
+  return {
+    exitCode: result.exitCode,
+    outputFile: outputPath,
+    outputSize: result.outputSize
+  };
 }
 
 async function executeTool(tool: string, args: string[], prompt: string): Promise<number | null> {

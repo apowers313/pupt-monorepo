@@ -31,6 +31,14 @@ export const HandlebarsExtensionConfigSchema = z.object({
   }
 );
 
+// Output capture configuration schema
+export const OutputCaptureConfigSchema = z.object({
+  enabled: z.boolean(),
+  directory: z.string().optional(),
+  maxSizeMB: z.number().optional(),
+  retentionDays: z.number().optional()
+});
+
 // Main config schema
 export const ConfigSchema = z.object({
   promptDirs: z.array(z.string()).min(1, 'At least one prompt directory is required'),
@@ -45,11 +53,13 @@ export const ConfigSchema = z.object({
   handlebarsExtensions: z.array(HandlebarsExtensionConfigSchema).optional(),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'Version must be in semver format (x.y.z)').optional(),
   helpers: z.record(HelperConfigSchema).optional(),
+  outputCapture: OutputCaptureConfigSchema.optional(),
+  logLevel: z.string().optional(),
   // Legacy fields (deprecated)
   codingTool: z.string().optional(),
   codingToolArgs: z.array(z.string()).optional(),
   codingToolOptions: z.record(z.string()).optional()
-});
+}).strict();
 
 // Partial config for updates
 export const PartialConfigSchema = ConfigSchema.partial();
