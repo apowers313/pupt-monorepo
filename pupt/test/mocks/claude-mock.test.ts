@@ -24,7 +24,8 @@ describe('Claude Mock', () => {
     const result = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolve) => {
       const child = spawn('claude', [], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env
+        env: process.env,
+        shell: process.platform === 'win32' // Use shell on Windows to find .cmd files
       });
 
       let stdout = '';
@@ -85,7 +86,8 @@ describe('Claude Mock', () => {
     const result = await new Promise<{ stdout: string; code: number | null }>((resolve) => {
       const child = spawn('claude', [], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: process.env
+        env: process.env,
+        shell: process.platform === 'win32' // Use shell on Windows to find .cmd files
       });
 
       let stdout = '';

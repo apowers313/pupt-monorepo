@@ -23,7 +23,8 @@ describe('Claude Direct Input Test', () => {
     
     await new Promise<void>((resolve) => {
       const claudeProcess = spawn('claude', [], {
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        shell: process.platform === 'win32' // Use shell on Windows to find .cmd files
       });
       
       const output: string[] = [];
