@@ -26,7 +26,7 @@ labels: []
 
 **Format & Structure**: 
 ```markdown
-## Error Analysis for: {{input "errorCondition"}}
+## Error Analysis for: {{errorCondition}}
 
 ### Complete Error Output
 ```
