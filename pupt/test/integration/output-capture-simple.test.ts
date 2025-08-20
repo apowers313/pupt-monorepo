@@ -5,6 +5,8 @@ import path from 'path';
 import os from 'os';
 
 describe('OutputCaptureService - Simple Test', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let outputDir: string;
   let service: OutputCaptureService;
 
@@ -20,7 +22,7 @@ describe('OutputCaptureService - Simple Test', () => {
     await fs.remove(outputDir);
   });
 
-  it('should capture echo output', async () => {
+  it.skipIf(skipOnWindowsCI)('should capture echo output', async () => {
     const prompt = 'Hello World';
     const outputFile = path.join(outputDir, 'echo-output.txt');
     
@@ -38,7 +40,7 @@ describe('OutputCaptureService - Simple Test', () => {
     expect(output).toContain('Hello World');
   });
 
-  it('should capture claude output and verify prompt was sent', async () => {
+  it.skipIf(skipOnWindowsCI)('should capture claude output and verify prompt was sent', async () => {
     const prompt = 'Say "test successful" and nothing else';
     const outputFile = path.join(outputDir, 'claude-output.txt');
     

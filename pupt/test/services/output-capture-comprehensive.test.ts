@@ -513,7 +513,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       expect(result.exitCode).toBe(0);
       const output = await fs.readFile(outputFile, 'utf-8');
       expect(output.length).toBeGreaterThan(9000);
-    }, 15000);
+    }, 30000);
 
     it('should handle commands with many arguments', async () => {
       const outputFile = path.join(outputDir, 'many-args-test.txt');

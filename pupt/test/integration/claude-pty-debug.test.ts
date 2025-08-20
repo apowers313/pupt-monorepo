@@ -3,6 +3,8 @@ import { describe, it, beforeAll, afterAll } from 'vitest';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('Claude PTY Debug', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let cleanupMock: () => void;
   
   beforeAll(() => {
@@ -12,7 +14,7 @@ describe('Claude PTY Debug', () => {
   afterAll(() => {
     cleanupMock();
   });
-  it('should show exact output from claude', async () => {
+  it.skipIf(skipOnWindowsCI)('should show exact output from claude', async () => {
     await new Promise<void>((resolve) => {
       let dataCount = 0;
       let allData = '';

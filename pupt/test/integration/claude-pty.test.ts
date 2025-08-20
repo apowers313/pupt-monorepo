@@ -7,6 +7,8 @@ import stripAnsi from 'strip-ansi';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('Claude PTY Input Test', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let cleanupMock: () => void;
   
   beforeAll(() => {
@@ -16,7 +18,7 @@ describe('Claude PTY Input Test', () => {
   afterAll(() => {
     cleanupMock();
   });
-  it('should pass input to claude through PTY', async () => {
+  it.skipIf(skipOnWindowsCI)('should pass input to claude through PTY', async () => {
     const testPrompt = 'What is 2+2';
     const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-pty-test-'));
     const outputFile = path.join(outputDir, 'output.txt');

@@ -7,6 +7,8 @@ import { spawn } from 'child_process';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('OutputCaptureService - Claude Integration', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let outputDir: string;
   let service: OutputCaptureService;
   let claudeAvailable: boolean;
@@ -35,7 +37,7 @@ describe('OutputCaptureService - Claude Integration', () => {
     await fs.remove(outputDir);
   });
 
-  it('should capture claude output with prompt injection', async () => {
+  it.skipIf(skipOnWindowsCI)('should capture claude output with prompt injection', async () => {
     if (!claudeAvailable) {
       console.log('Claude not available, skipping test');
       return;

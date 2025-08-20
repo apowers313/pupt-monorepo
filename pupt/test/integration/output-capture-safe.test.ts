@@ -5,6 +5,8 @@ import path from 'path';
 import os from 'os';
 
 describe('OutputCaptureService - Safe Integration Tests', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let outputDir: string;
   let service: OutputCaptureService;
 
@@ -20,7 +22,7 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     await fs.remove(outputDir);
   });
 
-  it('should capture echo output correctly', async () => {
+  it.skipIf(skipOnWindowsCI)('should capture echo output correctly', async () => {
     const prompt = 'Hello World';
     const outputFile = path.join(outputDir, 'echo-output.txt');
     
@@ -38,7 +40,7 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     expect(output).toContain('Hello World');
   });
 
-  it('should capture cat output with stdin', async () => {
+  it.skipIf(skipOnWindowsCI)('should capture cat output with stdin', async () => {
     const prompt = 'Test input for cat';
     const outputFile = path.join(outputDir, 'cat-output.txt');
     
@@ -55,7 +57,7 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     expect(output).toContain('Test input for cat');
   });
 
-  it('should respect size limits', async () => {
+  it.skipIf(skipOnWindowsCI)('should respect size limits', async () => {
     // Create a service with small size limit
     const smallService = new OutputCaptureService({
       outputDirectory: outputDir,

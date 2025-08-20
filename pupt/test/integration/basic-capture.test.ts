@@ -5,6 +5,8 @@ import path from 'path';
 import os from 'os';
 
 describe('OutputCaptureService - Basic Prompt Sending', () => {
+  // Skip on Windows CI due to missing PTY binaries
+  const skipOnWindowsCI = process.platform === 'win32' && process.env.CI;
   let outputDir: string;
   let service: OutputCaptureService;
 
@@ -20,7 +22,7 @@ describe('OutputCaptureService - Basic Prompt Sending', () => {
     await fs.remove(outputDir);
   });
 
-  it('should send prompt immediately to command stdin', async () => {
+  it.skipIf(skipOnWindowsCI)('should send prompt immediately to command stdin', async () => {
     const prompt = 'test input';
     const outputFile = path.join(outputDir, 'stdin-test.txt');
     

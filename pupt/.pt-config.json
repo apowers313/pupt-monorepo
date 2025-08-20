@@ -21,6 +21,6 @@
   "outputCapture": {
     "enabled": true,
     "directory": "./.pthistory",
-    "maxSizeMB": 10
+    "maxSizeMB": 50
   }
 }
