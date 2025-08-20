@@ -1,4 +1,4 @@
-import * as pty from 'node-pty';
+import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 import stripAnsi from 'strip-ansi';
 import fs from 'fs-extra';
 import path from 'path';

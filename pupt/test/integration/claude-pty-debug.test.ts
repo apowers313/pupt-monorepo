@@ -1,4 +1,4 @@
-import * as pty from 'node-pty';
+import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 import { describe, it, beforeAll, afterAll } from 'vitest';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 

@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
-import * as pty from 'node-pty';
+import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 
 // Mock node-pty for unit tests
-vi.mock('node-pty');
+vi.mock('@homebridge/node-pty-prebuilt-multiarch');
 
 describe('OutputCaptureService', () => {
   let tempDir: string;
