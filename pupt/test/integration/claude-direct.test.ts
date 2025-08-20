@@ -15,6 +15,7 @@ describe('Claude Direct Input Test', () => {
   afterAll(() => {
     cleanupMock();
   });
+  
   it('should pass input to claude without PTY', async () => {
     const testPrompt = 'What is 2 + 2? Please respond with just the number.';
     const outputDir = await fs.mkdtemp(path.join(os.tmpdir(), 'claude-test-'));

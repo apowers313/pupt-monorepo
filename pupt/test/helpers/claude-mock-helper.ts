@@ -16,7 +16,8 @@ const mockDir = join(__dirname, '../mocks');
  */
 export function setupClaudeMock(): () => void {
   const originalPath = process.env.PATH;
-  process.env.PATH = `${mockDir}:${process.env.PATH}`;
+  const pathSeparator = process.platform === 'win32' ? ';' : ':';
+  process.env.PATH = `${mockDir}${pathSeparator}${process.env.PATH}`;
   
   return () => {
     process.env.PATH = originalPath;
@@ -28,7 +29,8 @@ export function setupClaudeMock(): () => void {
  */
 export function isClaudeMockAvailable(): boolean {
   try {
-    const path = process.env.PATH?.split(':') || [];
+    const pathSeparator = process.platform === 'win32' ? ';' : ':';
+    const path = process.env.PATH?.split(pathSeparator) || [];
     return path.includes(mockDir);
   } catch {
     return false;
