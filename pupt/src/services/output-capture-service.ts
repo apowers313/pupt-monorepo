@@ -212,20 +212,35 @@ export class OutputCaptureService {
         // If we have a prompt and it's not Claude in TTY mode, send it
         // (Claude in TTY mode already has the prompt piped via shell)
         if (prompt && !(command === 'claude' && isTTY)) {
-          // For non-Claude commands or non-TTY mode, send immediately
-          ptyProcess.write(prompt);
-          if (!prompt.endsWith('\n')) {
-            ptyProcess.write('\n');
-          }
+          // Write prompt in chunks to avoid blocking on large inputs
+          const CHUNK_SIZE = 1024; // Safe chunk size for PTY buffers
+          let written = 0;
           
-          // Send EOF signal for commands that need it
-          if (command !== 'claude') {
-            setTimeout(() => {
-              if (ptyProcess) {
-                ptyProcess.write('\x04'); // EOT
+          const writeNextChunk = () => {
+            if (written < prompt.length && ptyProcess) {
+              const chunk = prompt.slice(written, written + CHUNK_SIZE);
+              ptyProcess.write(chunk);
+              written += chunk.length;
+              // Use setImmediate to allow PTY to process data
+              setImmediate(writeNextChunk);
+            } else if (ptyProcess) {
+              // After all data is written, send newline and EOF
+              if (!prompt.endsWith('\n')) {
+                ptyProcess.write('\n');
               }
-            }, 100);
-          }
+              
+              // Send EOF signal for commands that need it
+              if (command !== 'claude') {
+                setTimeout(() => {
+                  if (ptyProcess) {
+                    ptyProcess.write('\x04'); // EOT
+                  }
+                }, 50); // Reduced delay since we're already async
+              }
+            }
+          };
+          
+          writeNextChunk();
         }
 
         // Handle process exit
