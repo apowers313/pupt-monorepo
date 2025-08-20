@@ -15,7 +15,7 @@ title: Implement Phase
 - Verify the implementation matches the specification exactly
 
 **Format & Structure**: 
-1. First, summarize what Phase {{input "phase"}} requires
+1. First, summarize what Phase {{phase}} requires
 2. Implement features with appropriate tests
 3. Run all verification commands and fix any issues
 4. Provide a status report including:
