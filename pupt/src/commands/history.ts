@@ -29,7 +29,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
   }
 
   // Create history manager
-  const historyManager = new HistoryManager(config.historyDir);
+  const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
 
   // If --result is specified, show entry with its output
   if (options.result !== undefined) {

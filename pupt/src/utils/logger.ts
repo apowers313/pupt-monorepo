@@ -73,6 +73,19 @@ export class Logger {
     const sanitized = this.sanitize(message);
     process.stderr.write(sanitized + this.lineEnding);
   }
+
+  /**
+   * Logs a debug message (only in development/test environments)
+   */
+  debug(...args: unknown[]): void {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || process.env.DEBUG) {
+      const message = args.map(arg => 
+        typeof arg === 'string' ? arg : String(arg)
+      ).join(' ');
+      const sanitized = this.sanitize(`[DEBUG] ${message}`);
+      process.stderr.write(sanitized + this.lineEnding);
+    }
+  }
 }
 
 // Export singleton instance

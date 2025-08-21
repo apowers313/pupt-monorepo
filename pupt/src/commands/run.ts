@@ -12,8 +12,10 @@ import * as path from 'node:path';
 import { pathExists } from 'fs-extra';
 import { editorLauncher } from '../utils/editor.js';
 import { OutputCaptureService } from '../services/output-capture-service.js';
+import { AutoAnnotationService } from '../services/auto-annotation-service.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
+import type { EnhancedHistoryEntry } from '../types/history.js';
 import crypto from 'node:crypto';
 
 export interface RunOptions {
@@ -227,8 +229,8 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     
     // Save to history regardless of exit code
     if (config.historyDir && templateInfo && promptResult.trim().length > 0) {
-      const historyManager = new HistoryManager(config.historyDir);
-      await historyManager.savePrompt({
+      const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
+      const historyFilename = await historyManager.savePrompt({
         ...templateInfo,
         outputFile,
         outputSize,
@@ -240,6 +242,43 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
           randomSuffix
         }
       });
+
+      // Trigger auto-annotation if configured
+      if (config.autoAnnotate?.enabled && historyFilename) {
+        const promptManager = new PromptManager(config.promptDirs || []);
+        const autoAnnotationService = new AutoAnnotationService(config, promptManager, historyManager);
+        
+        // Extract prompt name from template path
+        const promptName = path.basename(templateInfo.templatePath, path.extname(templateInfo.templatePath));
+        
+        if (autoAnnotationService.shouldAutoAnnotate(promptName)) {
+          // Create enhanced history entry for auto-annotation
+          const enhancedEntry: EnhancedHistoryEntry = {
+            timestamp: startTimestamp.toISOString(),
+            templatePath: templateInfo.templatePath,
+            templateContent: templateInfo.templateContent,
+            variables: Object.fromEntries(templateInfo.variables),
+            finalPrompt: templateInfo.finalPrompt,
+            title: templateInfo.title,
+            summary: templateInfo.summary,
+            filename: historyFilename,
+            execution: {
+              start_time: startTimestamp.toISOString(),
+              end_time: new Date().toISOString(),
+              duration: `${executionTime}ms`,
+              exit_code: exitCode,
+              command: `${finalTool} ${finalArgs.join(' ')}`,
+              output_file: outputFile,
+              output_size: outputSize,
+            },
+          };
+
+          // Run auto-annotation asynchronously
+          autoAnnotationService.analyzeExecution(enhancedEntry).catch(error => {
+            logger.debug('Auto-annotation failed:', error);
+          });
+        }
+      }
     }
     
     // Handle post-run file reviews

@@ -13,6 +13,7 @@ export interface Config {
   helpers?: Record<string, HelperConfig>;
   logLevel?: string;
   outputCapture?: OutputCaptureConfig;
+  autoAnnotate?: AutoAnnotateConfig;
   // Legacy fields for backward compatibility (will be migrated)
   codingTool?: string;
   codingToolArgs?: string[];
@@ -24,6 +25,19 @@ export interface OutputCaptureConfig {
   directory?: string;
   maxSizeMB?: number;
   retentionDays?: number;
+}
+
+export interface AutoAnnotateConfig {
+  enabled: boolean;
+  triggers: string[];
+  analysisPrompt: string;
+  fallbackRules: FallbackRule[];
+}
+
+export interface FallbackRule {
+  pattern: string;
+  category: 'verification_gap' | 'incomplete_task' | 'ambiguous_instruction' | 'missing_constraint';
+  severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface HelperConfig {

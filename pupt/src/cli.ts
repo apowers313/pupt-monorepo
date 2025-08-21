@@ -18,6 +18,7 @@ import { runCommand } from './commands/run.js';
 import { annotateCommand } from './commands/annotate.js';
 import { installCommand } from './commands/install.js';
 import { helpCommand } from './commands/help.js';
+import { reviewCommand } from './commands/review.js';
 import fs from 'fs-extra';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
@@ -118,7 +119,7 @@ program
       
       // Save to history if configured and NOT autoRunning (autoRun saves its own history)
       if (config.historyDir && !willAutoRun) {
-        const historyManager = new HistoryManager(config.historyDir);
+        const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
         await historyManager.savePrompt({
           templatePath: selected.path,
           templateContent: selected.content,
@@ -329,6 +330,34 @@ Generated on {{date}} by {{username}}.
     
     logger.log(chalk.green(`Created example prompt: ${examplePath}`));
     logger.log(chalk.dim('\nRun "pt" to try it out!'));
+  });
+
+// Review command
+program
+  .command('review [prompt-name]')
+  .description('Review prompt usage patterns and generate improvement suggestions')
+  .option('-f, --format <format>', 'Output format (json|markdown)', 'markdown')
+  .option('-s, --since <time>', 'Time filter (e.g., 7d, 24h, 2w)', '30d')
+  .option('-o, --output <file>', 'Write output to file instead of stdout')
+  .addHelpText('after', `
+Examples:
+  pt review                      # Review all prompts from last 30 days
+  pt review api-client           # Review specific prompt
+  pt review -s 7d                # Review last 7 days
+  pt review -f json              # Output as JSON
+  pt review -o review.json       # Save to file
+`)
+  .action(async (promptName, options) => {
+    try {
+      await reviewCommand(promptName, {
+        format: options.format,
+        since: options.since,
+        output: options.output
+      });
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
   });
 
 // Help command

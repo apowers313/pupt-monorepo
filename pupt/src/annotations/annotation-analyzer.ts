@@ -7,6 +7,7 @@ import {
 
 interface RawAnnotation extends AnnotationMetadata {
   notes?: string;
+  annotationPath?: string;
 }
 
 export class AnnotationAnalyzer {
@@ -53,7 +54,8 @@ export class AnnotationAnalyzer {
         status: ann.status,
         tags: ann.tags || [],
         notes: ann.notes || '',
-        promptName: this.extractPromptName(ann.historyFile)
+        promptName: this.extractPromptName(ann.historyFile),
+        annotationPath: ann.annotationPath || ''
       };
 
       if (ann.structured_outcome) {
@@ -171,9 +173,10 @@ export class AnnotationAnalyzer {
     return detected;
   }
 
-  private extractPromptName(_historyFile: string): string {
+  private extractPromptName(historyFile: string): string {
     // Extract prompt name from history filename pattern
-    // For now, use a placeholder since we don't have the actual prompt name in the filename
-    return 'unknown';
+    // Format: history_YYYY-MM-DDTHH-MM-SSZ_promptname.json
+    const match = historyFile.match(/history_.*?_(.+)\.json$/);
+    return match ? match[1] : 'unknown';
   }
 }

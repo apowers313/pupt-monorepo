@@ -29,6 +29,14 @@ export interface ParsedAnnotation extends AnnotationMetadata {
   promptName: string;
   notes: string;
   auto_detected?: boolean;
+  annotationPath: string;
+  issues?: IssueIdentified[];
+  outcome?: StructuredOutcome;
+  environment?: {
+    git_branch?: string;
+    git_commit?: string;
+    working_directory?: string;
+  };
 }
 
 export interface AnnotationAnalysisSummary {

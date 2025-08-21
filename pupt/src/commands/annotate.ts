@@ -30,7 +30,7 @@ export async function annotateCommand(historyNumber?: number): Promise<void> {
     ]);
   }
 
-  const historyManager = new HistoryManager(config.historyDir);
+  const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
   
   let entry: HistoryEntry | null;
   

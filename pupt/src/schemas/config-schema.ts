@@ -39,6 +39,20 @@ export const OutputCaptureConfigSchema = z.object({
   retentionDays: z.number().optional()
 });
 
+// Auto-annotation configuration schema
+export const FallbackRuleSchema = z.object({
+  pattern: z.string(),
+  category: z.enum(['verification_gap', 'incomplete_task', 'ambiguous_instruction', 'missing_constraint']),
+  severity: z.enum(['low', 'medium', 'high', 'critical'])
+});
+
+export const AutoAnnotateConfigSchema = z.object({
+  enabled: z.boolean(),
+  triggers: z.array(z.string()),
+  analysisPrompt: z.string(),
+  fallbackRules: z.array(FallbackRuleSchema)
+});
+
 // Main config schema
 export const ConfigSchema = z.object({
   promptDirs: z.array(z.string()).min(1, 'At least one prompt directory is required'),
@@ -54,6 +68,7 @@ export const ConfigSchema = z.object({
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'Version must be in semver format (x.y.z)').optional(),
   helpers: z.record(HelperConfigSchema).optional(),
   outputCapture: OutputCaptureConfigSchema.optional(),
+  autoAnnotate: AutoAnnotateConfigSchema.optional(),
   logLevel: z.string().optional(),
   // Legacy fields (deprecated)
   codingTool: z.string().optional(),

@@ -1,7 +1,10 @@
 import fs from 'fs-extra';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { HistoryEntry } from '../types/history.js';
+import yaml from 'js-yaml';
+import { v4 as uuidv4 } from 'uuid';
+import { HistoryEntry, EnhancedHistoryEntry } from '../types/history.js';
+import { AnnotationMetadata } from '../types/annotations.js';
 import { sanitizeObject } from '../utils/security.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import { logger } from '../utils/logger.js';
@@ -29,7 +32,10 @@ interface HistorySaveOptions {
 
 
 export class HistoryManager {
-  constructor(private historyDir: string) {}
+  constructor(
+    private historyDir: string,
+    private annotationDir?: string
+  ) {}
 
   async savePrompt(options: HistorySaveOptions): Promise<string> {
     // Don't save empty prompts
@@ -185,5 +191,42 @@ export class HistoryManager {
   private maskSensitiveVariables(variables: Map<string, unknown>): Record<string, unknown> {
     const obj = Object.fromEntries(variables);
     return sanitizeObject(obj);
+  }
+
+  async saveAnnotation(
+    historyEntry: HistoryEntry | EnhancedHistoryEntry,
+    metadata: AnnotationMetadata
+  ): Promise<void> {
+    if (!this.annotationDir) {
+      logger.warn('Annotation directory not configured, skipping annotation save');
+      return;
+    }
+
+    await fs.ensureDir(this.annotationDir);
+
+    // Generate annotation content
+    const content = `---
+${yaml.dump(metadata)}---
+
+## Notes
+
+${metadata.auto_detected ? 'Auto-generated annotation' : ''}
+`;
+
+    // Create filename based on history entry
+    const historyBasename = path.basename(
+      historyEntry.filename || `${historyEntry.timestamp}.json`,
+      '.json'
+    );
+    const filename = `${historyBasename}-annotation-${uuidv4()}.md`;
+    const filepath = path.join(this.annotationDir, filename);
+
+    try {
+      await fs.writeFile(filepath, content);
+      logger.debug(`Auto-annotation saved to ${filepath}`);
+    } catch (error) {
+      logger.error(`Failed to save annotation: ${error}`);
+      throw error;
+    }
   }
 }

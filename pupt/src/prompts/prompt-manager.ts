@@ -96,6 +96,16 @@ export class PromptManager {
     });
   }
 
+  async findPrompt(name: string): Promise<Prompt | null> {
+    const prompts = await this.discoverPrompts();
+    // Match by filename without extension or by title
+    const nameWithoutExt = name.replace(/\.(md|markdown)$/i, '');
+    return prompts.find(p => 
+      p.filename.replace(/\.(md|markdown)$/i, '') === nameWithoutExt ||
+      p.title === name
+    ) || null;
+  }
+
   async loadPromptByPath(promptPath: string): Promise<Prompt> {
     // Find which prompt directory this path belongs to
     for (const dir of this.promptDirs) {
