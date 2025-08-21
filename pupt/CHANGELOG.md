@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/apowers313/prompt-tool/compare/v1.0.2...v1.1.0) (2025-08-20)
+
+
+### Features
+
+* add output logging ([e5f64ce](https://github.com/apowers313/prompt-tool/commit/e5f64ce547039e6684070d848b243ce84f6da18d))
+
 ## [1.0.2](https://github.com/apowers313/prompt-tool/compare/v1.0.1...v1.0.2) (2025-08-19)
 
 
