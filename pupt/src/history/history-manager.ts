@@ -19,6 +19,12 @@ interface HistorySaveOptions {
   outputSize?: number;
   executionTime?: number;
   exitCode?: number | null;
+  // Optional filename components for synchronized naming
+  filenameComponents?: {
+    dateStr: string;
+    timeStr: string;
+    randomSuffix: string;
+  };
 }
 
 
@@ -37,15 +43,26 @@ export class HistoryManager {
       const now = options.timestamp || new Date();
       const timestamp = DateFormats.UTC_DATETIME(now);
       
-      // Generate filename using local time: YYYYMMDD-HHMMSS-<random>.json
-      const dateStr = DateFormats.YYYYMMDD(now);
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
+      // Use provided filename components or generate new ones
+      let dateStr: string;
+      let timeStr: string;
+      let randomSuffix: string;
       
-      const timeStr = `${hours}${minutes}${seconds}`;
-      const random = crypto.randomBytes(4).toString('hex');
-      const filename = `${dateStr}-${timeStr}-${random}.json`;
+      if (options.filenameComponents) {
+        // Use provided components for synchronized naming
+        ({ dateStr, timeStr, randomSuffix } = options.filenameComponents);
+      } else {
+        // Generate filename using local time: YYYYMMDD-HHMMSS-<random>.json
+        dateStr = DateFormats.YYYYMMDD(now);
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        
+        timeStr = `${hours}${minutes}${seconds}`;
+        randomSuffix = crypto.randomBytes(4).toString('hex');
+      }
+      
+      const filename = `${dateStr}-${timeStr}-${randomSuffix}.json`;
 
       // Create history entry
       const entry: Omit<HistoryEntry, 'filename'> & { execution?: Record<string, unknown> } = {
@@ -61,7 +78,7 @@ export class HistoryManager {
       // Add execution metadata if provided (for output capture)
       if (options.outputFile || options.executionTime || options.exitCode !== undefined) {
         entry.execution = {
-          ...(options.outputFile && { output_file: options.outputFile }),
+          ...(options.outputFile && { output_file: path.relative(this.historyDir, options.outputFile) }),
           ...(options.outputSize !== undefined && { output_size: options.outputSize }),
           ...(options.executionTime !== undefined && { duration_ms: options.executionTime }),
           ...(options.exitCode !== undefined && { exit_code: options.exitCode })

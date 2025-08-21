@@ -14,6 +14,7 @@ import { editorLauncher } from '../utils/editor.js';
 import { OutputCaptureService } from '../services/output-capture-service.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
+import crypto from 'node:crypto';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -64,6 +65,14 @@ export function parseRunArgs(args: string[]): ParsedArgs {
 export async function runCommand(args: string[], options: RunOptions): Promise<void> {
   // Capture start timestamp for history
   const startTimestamp = new Date();
+  
+  // Generate filename components once for synchronized naming
+  const dateStr = DateFormats.YYYYMMDD(startTimestamp);
+  const hours = String(startTimestamp.getHours()).padStart(2, '0');
+  const minutes = String(startTimestamp.getMinutes()).padStart(2, '0');
+  const seconds = String(startTimestamp.getSeconds()).padStart(2, '0');
+  const timeStr = `${hours}${minutes}${seconds}`;
+  const randomSuffix = crypto.randomBytes(4).toString('hex');
   
   // Load configuration
   const configResult = await ConfigManager.loadWithPath();
@@ -202,7 +211,11 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   try {
     // Check if output capture is enabled
     if (config.outputCapture?.enabled && config.historyDir) {
-      const result = await executeToolWithCapture(finalTool, finalArgs, promptResult, config);
+      const result = await executeToolWithCapture(finalTool, finalArgs, promptResult, config, {
+        dateStr,
+        timeStr,
+        randomSuffix
+      });
       exitCode = result.exitCode;
       outputFile = result.outputFile;
       outputSize = result.outputSize;
@@ -220,7 +233,12 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
         outputFile,
         outputSize,
         executionTime,
-        exitCode
+        exitCode,
+        filenameComponents: {
+          dateStr,
+          timeStr,
+          randomSuffix
+        }
       });
     }
     
@@ -240,18 +258,16 @@ async function executeToolWithCapture(
   tool: string, 
   args: string[], 
   prompt: string, 
-  config: Config
+  config: Config,
+  filenameComponents: { dateStr: string; timeStr: string; randomSuffix: string }
 ): Promise<{ exitCode: number | null; outputFile?: string; outputSize?: number }> {
   const outputCapture = new OutputCaptureService({
     outputDirectory: config.outputCapture?.directory || config.historyDir!,
     maxOutputSize: (config.outputCapture?.maxSizeMB || 10) * 1024 * 1024
   });
   
-  // Generate output filename - use same format as history files but with -output.txt suffix
-  const now = new Date();
-  const dateStr = DateFormats.YYYYMMDD(now);
-  const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '');
-  const randomSuffix = Math.random().toString(36).substring(2, 10);
+  // Use provided filename components for synchronized naming
+  const { dateStr, timeStr, randomSuffix } = filenameComponents;
   const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.txt`;
   const outputPath = path.join(
     config.outputCapture?.directory || config.historyDir!,

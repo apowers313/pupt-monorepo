@@ -5,11 +5,14 @@ import { HistoryEntry } from '../types/history.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import Handlebars from 'handlebars';
+import path from 'node:path';
+import fs from 'fs-extra';
 
 interface HistoryOptions {
   limit?: number;
   all?: boolean;
   entry?: number;
+  result?: number;
 }
 
 export async function historyCommand(options: HistoryOptions): Promise<void> {
@@ -27,6 +30,60 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
 
   // Create history manager
   const historyManager = new HistoryManager(config.historyDir);
+
+  // If --result is specified, show entry with its output
+  if (options.result !== undefined) {
+    const entry = await historyManager.getHistoryEntry(options.result);
+    
+    if (!entry) {
+      logger.log(chalk.red(`History entry ${options.result} not found`));
+      const totalCount = await historyManager.getTotalCount();
+      if (totalCount > 0) {
+        logger.log(chalk.dim(`Available entries: 1-${totalCount}`));
+      }
+      return;
+    }
+
+    // Display full entry details
+    logger.log(chalk.bold(`\nHistory Entry #${options.result}:`));
+    logger.log(chalk.gray('─'.repeat(80)));
+    
+    logger.log(chalk.cyan('Timestamp:') + ` ${formatDate(entry.timestamp)}`);
+    logger.log(chalk.cyan('Title:') + ` ${entry.title || 'Untitled'}`);
+    logger.log(chalk.cyan('Template:') + ` ${entry.templatePath}`);
+    
+    if (Object.keys(entry.variables).length > 0) {
+      logger.log(chalk.cyan('\nVariables:'));
+      for (const [key, value] of Object.entries(entry.variables)) {
+        logger.log(`  ${chalk.green(key)}: ${JSON.stringify(value)}`);
+      }
+    }
+    
+    logger.log(chalk.cyan('\nFinal Prompt:'));
+    logger.log(chalk.gray('─'.repeat(80)));
+    logger.log(entry.finalPrompt);
+    logger.log(chalk.gray('─'.repeat(80)));
+    
+    // Check if output file exists and display it
+    if (entry.execution?.output_file) {
+      const outputPath = path.join(config.historyDir, entry.execution.output_file as string);
+      
+      try {
+        const outputContent = await fs.readFile(outputPath, 'utf-8');
+        logger.log(chalk.cyan('\nCommand Output:'));
+        logger.log(chalk.gray('─'.repeat(80)));
+        logger.log(outputContent);
+        logger.log(chalk.gray('─'.repeat(80)));
+      } catch {
+        logger.log(chalk.yellow('\nOutput file not found or inaccessible'));
+      }
+    } else {
+      logger.log(chalk.dim('\nNo output file associated with this entry'));
+    }
+    
+    logger.log(chalk.dim(`\nHistory file: ${entry.filename}`));
+    return;
+  }
 
   // If a specific entry is requested, show its full content
   if (options.entry !== undefined) {

@@ -7,6 +7,7 @@ export interface HistoryEntry {
   title?: string;
   summary?: string;
   filename: string;
+  execution?: Record<string, unknown>;
 }
 
 export interface EnhancedHistoryEntry extends HistoryEntry {

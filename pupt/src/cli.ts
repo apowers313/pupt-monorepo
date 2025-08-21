@@ -177,12 +177,14 @@ program
   .description('Show prompt execution history or a specific entry')
   .option('-l, --limit <number>', 'Number of entries to show', '20')
   .option('-a, --all', 'Show all history entries')
+  .option('-r, --result <number>', 'Show history entry with its output')
   .action(async (entry, options) => {
     try {
       await historyCommand({
         limit: options.all ? undefined : parseInt(options.limit),
         all: options.all,
-        entry: entry ? parseInt(entry) : undefined
+        entry: entry ? parseInt(entry) : undefined,
+        result: options.result ? parseInt(options.result) : undefined
       });
     } catch (error) {
       displayError(error as Error);
