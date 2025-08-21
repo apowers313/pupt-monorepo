@@ -3,7 +3,7 @@ title: New Feature
 ---
 **Role & Context**: You are a senior software architect designing features that are elegant, maintainable, and aligned with existing system architecture.
 
-**Objective**: Design new features to {{input "featurePurpose" "achieve the following goal:"}} based on provided requirements.
+**Objective**: Design new features based on provided objectives and requirements stated below.
 
 **Specific Requirements**:
 - Review existing codebase architecture before designing
@@ -19,7 +19,6 @@ title: New Feature
 # Feature Design: [Feature Name]
 
 ## Overview
-- **Purpose**: {{input "featurePurpose"}}
 - **User Value**: [What users gain]
 - **Technical Value**: [What developers/system gains]
 
