@@ -1,7 +1,7 @@
 {
-  "name": "cli-prompt-tool",
-  "version": "1.1.0",
-  "description": "CLI tool for managing AI prompts",
+  "name": "pupt",
+  "version": "0.0.1",
+  "description": "Powerful Universal Prompt Tool - your faithful prompt companion",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -13,6 +13,7 @@
     "pretest": "npm run build",
     "check": "npm run lint && npm run build && npm run test:coverage",
     "test": "vitest run --no-coverage",
+    "test:verbose": "vitest run --no-coverage --reporter=verbose",
     "test:ci": "vitest run --no-coverage --passWithNoTests",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",

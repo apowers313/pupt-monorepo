@@ -28,6 +28,28 @@ const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
+// Ensure terminal is restored on exit
+function ensureTerminalCleanup() {
+  try {
+    if (process.stdin.isTTY && process.stdin.setRawMode) {
+      process.stdin.setRawMode(false);
+    }
+  } catch {
+    // Ignore errors - terminal might already be in correct state
+  }
+}
+
+// Set up cleanup handlers
+process.on('exit', ensureTerminalCleanup);
+process.on('SIGINT', () => {
+  ensureTerminalCleanup();
+  process.exit(130); // Standard exit code for SIGINT
+});
+process.on('SIGTERM', () => {
+  ensureTerminalCleanup();
+  process.exit(143); // Standard exit code for SIGTERM
+});
+
 async function checkAndMigrateOldConfig(): Promise<void> {
   // Skip the check in test environment or non-TTY (non-interactive) mode
   if (process.env.NODE_ENV === 'test' || !process.stdin.isTTY) {

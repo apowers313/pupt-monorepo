@@ -70,14 +70,79 @@ export const migrations: ConfigMigration[] = [
       
       return migrated;
     }
+  },
+  {
+    version: '4.0.0',
+    migrate: (config) => {
+      const migrated = { ...config };
+      
+      // Update version
+      migrated.version = '4.0.0';
+      
+      // Add output capture defaults if not present
+      if (!migrated.outputCapture) {
+        migrated.outputCapture = {
+          enabled: false,
+          directory: '.pt-output',
+          maxSizeMB: 50,
+          retentionDays: 30
+        };
+      }
+      
+      // Add auto-annotation defaults if not present
+      if (!migrated.autoAnnotate) {
+        migrated.autoAnnotate = {
+          enabled: false,
+          triggers: ['claude', 'ai', 'assistant'],
+          analysisPrompt: 'analyze-execution',
+          fallbackRules: [
+            {
+              pattern: 'test.*fail|failing|failed',
+              category: 'verification_gap',
+              severity: 'high'
+            },
+            {
+              pattern: 'error:|exception:|Error:',
+              category: 'incomplete_task',
+              severity: 'medium'
+            },
+            {
+              pattern: 'stopped at|incomplete|unfinished',
+              category: 'incomplete_task',
+              severity: 'high'
+            }
+          ]
+        };
+      }
+      
+      // Preserve v3 defaults if not set
+      migrated.autoReview = migrated.autoReview ?? true;
+      migrated.autoRun = migrated.autoRun ?? false;
+      
+      return migrated;
+    }
   }
 ];
 
 export const migrateConfig = Object.assign(
   function(config: Record<string, unknown>): Config {
-    // Find and apply the latest migration
-    const latestMigration = migrations[migrations.length - 1];
-    return latestMigration.migrate(config) as unknown as Config;
+    // Apply migrations in sequence
+    let migrated = { ...config };
+    
+    // Start with the appropriate migration based on current version
+    const currentVersion = config.version as string | undefined;
+    
+    if (!currentVersion || currentVersion < '3.0.0') {
+      // Apply v3 migration first
+      migrated = migrations[0].migrate(migrated);
+    }
+    
+    if (!migrated.version || migrated.version < '4.0.0') {
+      // Apply v4 migration
+      migrated = migrations[1].migrate(migrated);
+    }
+    
+    return migrated as unknown as Config;
   },
   {
     needsMigration(config: Record<string, unknown>): boolean {
@@ -92,7 +157,7 @@ export const migrateConfig = Object.assign(
       }
       
       // Check if version is missing or old
-      if (!config.version || config.version !== '3.0.0') {
+      if (!config.version || config.version !== '4.0.0') {
         return true;
       }
       

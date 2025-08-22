@@ -344,6 +344,18 @@ export class ConfigManager {
       if (config.helpers) {
         merged.helpers = { ...merged.helpers, ...config.helpers };
       }
+
+      if (config.outputCapture) {
+        merged.outputCapture = config.outputCapture;
+      }
+
+      if (config.autoAnnotate) {
+        merged.autoAnnotate = config.autoAnnotate;
+      }
+
+      if (config.logLevel) {
+        merged.logLevel = config.logLevel;
+      }
     }
 
     // Remove duplicates from promptDirs
@@ -416,6 +428,14 @@ export class ConfigManager {
         }
         return ext;
       });
+    }
+
+    // Expand output capture directory
+    if (config.outputCapture && config.outputCapture.directory) {
+      expanded.outputCapture = {
+        ...config.outputCapture,
+        directory: this.expandPath(config.outputCapture.directory, configDir)
+      };
     }
 
     return expanded;

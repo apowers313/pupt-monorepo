@@ -57,5 +57,5 @@ export const DEFAULT_CONFIG: Partial<Config> = {
   autoRun: false,
   gitPromptDir: '.git-prompts',
   handlebarsExtensions: [],
-  version: '3.0.0'
+  version: '4.0.0'
 };

@@ -216,7 +216,7 @@ describe('Init Command', () => {
       expect(config.defaultCmdArgs).toBeUndefined();
       expect(config.defaultCmdOptions).toBeUndefined();
       expect(config.autoRun).toBe(false);
-      expect(config.version).toBe('3.0.0');
+      expect(config.version).toBe('4.0.0');
     });
 
     it('should prompt for tool selection when Claude is detected', async () => {

@@ -51,7 +51,7 @@ describe('Config Migration Integration', () => {
         'Continue with last session?': '--continue',
         'Enable web search?': '--web'
       });
-      expect(config.version).toBe('3.0.0');
+      expect(config.version).toBe('4.0.0');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
@@ -74,7 +74,7 @@ describe('Config Migration Integration', () => {
       expect(savedConfig.defaultCmd).toBe('claude');
       expect(savedConfig.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
       expect(savedConfig.defaultCmdOptions).toBeDefined();
-      expect(savedConfig.version).toBe('3.0.0');
+      expect(savedConfig.version).toBe('4.0.0');
       
       // Check that backup was created
       const backupPath = '.pt-config.json.backup';
@@ -103,7 +103,7 @@ describe('Config Migration Integration', () => {
       // Second load (should not re-migrate)
       config = await ConfigManager.load();
       expect(config.defaultCmd).toBe('gpt');
-      expect(config.version).toBe('3.0.0');
+      expect(config.version).toBe('4.0.0');
       
       // Verify only one backup exists
       const backupPath = '.pt-config.json.backup';
@@ -181,7 +181,7 @@ describe('Config Migration Integration', () => {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
-        version: '3.0.0'
+        version: '4.0.0'
       };
       
       await fs.writeJson('.pt-config.json', newConfig);
@@ -241,7 +241,7 @@ codingToolOptions:
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
       expect(config.handlebarsExtensions).toEqual([]);
-      expect(config.version).toBe('3.0.0');
+      expect(config.version).toBe('4.0.0');
     });
   });
 
@@ -262,6 +262,164 @@ codingToolOptions:
       // Old field should be migrated to new field
       expect(config.defaultCmd).toBe('oldtool');
       expect(config.codingTool).toBeUndefined();
+    });
+  });
+
+  describe('V3 to V4 Migration', () => {
+    it('should handle migration from v3 to v4 with output capture defaults', async () => {
+      const v3Config = {
+        promptDirs: ['./.prompts'],
+        defaultCmd: 'claude',
+        defaultCmdArgs: [],
+        version: '3.0.0',
+        autoReview: true,
+        autoRun: false,
+        gitPromptDir: '.git-prompts',
+        handlebarsExtensions: []
+      };
+      
+      await fs.writeJson('.pt-config.json', v3Config);
+      
+      const config = await ConfigManager.load();
+      
+      // Should update version to 4.0.0
+      expect(config.version).toBe('4.0.0');
+      
+      // Should have output capture defaults
+      expect(config.outputCapture).toEqual({
+        enabled: false,
+        directory: path.join(testDir, '.pt-output'),
+        maxSizeMB: 50,
+        retentionDays: 30
+      });
+      
+      // Should have auto-annotation defaults
+      expect(config.autoAnnotate).toEqual({
+        enabled: false,
+        triggers: ['claude', 'ai', 'assistant'],
+        analysisPrompt: 'analyze-execution',
+        fallbackRules: [
+          {
+            pattern: 'test.*fail|failing|failed',
+            category: 'verification_gap',
+            severity: 'high'
+          },
+          {
+            pattern: 'error:|exception:|Error:',
+            category: 'incomplete_task',
+            severity: 'medium'
+          },
+          {
+            pattern: 'stopped at|incomplete|unfinished',
+            category: 'incomplete_task',
+            severity: 'high'
+          }
+        ]
+      });
+      
+      // Existing fields should be preserved
+      expect(config.promptDirs).toContain(path.resolve('./.prompts'));
+      expect(config.defaultCmd).toBe('claude');
+      expect(config.autoReview).toBe(true);
+      expect(config.autoRun).toBe(false);
+    });
+
+    it('should preserve existing output capture settings during v4 migration', async () => {
+      const v3ConfigWithOutputCapture = {
+        promptDirs: ['./.prompts'],
+        defaultCmd: 'claude',
+        version: '3.0.0',
+        outputCapture: {
+          enabled: true,
+          directory: '~/my-output',
+          maxSizeMB: 100,
+          retentionDays: 7
+        }
+      };
+      
+      await fs.writeJson('.pt-config.json', v3ConfigWithOutputCapture);
+      
+      const config = await ConfigManager.load();
+      
+      expect(config.version).toBe('4.0.0');
+      
+      // Should preserve user's output capture settings
+      expect(config.outputCapture).toEqual({
+        enabled: true,
+        directory: path.resolve(path.join(os.homedir(), 'my-output')),
+        maxSizeMB: 100,
+        retentionDays: 7
+      });
+    });
+
+    it('should create backup when migrating from v3 to v4', async () => {
+      const v3Config = {
+        promptDirs: ['./.prompts'],
+        version: '3.0.0'
+      };
+      
+      await fs.writeJson('.pt-config.json', v3Config);
+      
+      await ConfigManager.load();
+      
+      // Check that backup was created
+      const backupPath = '.pt-config.json.backup';
+      expect(await fs.pathExists(backupPath)).toBe(true);
+      
+      const backup = await fs.readJson(backupPath);
+      expect(backup.version).toBe('3.0.0');
+    });
+
+    it('should not re-migrate v4 configs', async () => {
+      const v4Config = {
+        promptDirs: ['./.prompts'],
+        defaultCmd: 'claude',
+        version: '4.0.0',
+        outputCapture: {
+          enabled: true,
+          directory: './.pt-output'
+        },
+        autoAnnotate: {
+          enabled: true,
+          triggers: ['claude'],
+          analysisPrompt: 'analyze',
+          fallbackRules: []
+        }
+      };
+      
+      await fs.writeJson('.pt-config.json', v4Config);
+      
+      const config = await ConfigManager.load();
+      
+      // Should not create backup for already migrated config
+      expect(await fs.pathExists('.pt-config.json.backup')).toBe(false);
+      
+      // Config should remain unchanged
+      expect(config.version).toBe('4.0.0');
+      expect(config.outputCapture?.enabled).toBe(true);
+      expect(config.autoAnnotate?.enabled).toBe(true);
+    });
+
+    it('should handle partial v3 configs correctly', async () => {
+      const partialV3Config = {
+        promptDirs: ['./.prompts'],
+        version: '3.0.0'
+        // Missing many optional fields
+      };
+      
+      await fs.writeJson('.pt-config.json', partialV3Config);
+      
+      const config = await ConfigManager.load();
+      
+      expect(config.version).toBe('4.0.0');
+      expect(config.outputCapture).toBeDefined();
+      expect(config.autoAnnotate).toBeDefined();
+      
+      // V3 migration doesn't add defaultCmd if it's missing, only renames codingTool
+      // So defaultCmd will be undefined for partial configs
+      expect(config.defaultCmd).toBeUndefined();
+      expect(config.autoReview).toBe(true);
+      expect(config.autoRun).toBe(false);
     });
   });
 

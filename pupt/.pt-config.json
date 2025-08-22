@@ -4,7 +4,7 @@
   ],
   "historyDir": "./.pthistory",
   "annotationDir": "./.pthistory",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "defaultCmd": "claude",
   "defaultCmdArgs": [
     "--permission-mode",
@@ -22,5 +22,31 @@
     "enabled": true,
     "directory": "./.pthistory",
     "maxSizeMB": 50
+  },
+  "autoAnnotate": {
+    "enabled": false,
+    "triggers": [
+      "claude",
+      "ai",
+      "assistant"
+    ],
+    "analysisPrompt": "analyze-execution",
+    "fallbackRules": [
+      {
+        "pattern": "test.*fail|failing|failed",
+        "category": "verification_gap",
+        "severity": "high"
+      },
+      {
+        "pattern": "error:|exception:|Error:",
+        "category": "incomplete_task",
+        "severity": "medium"
+      },
+      {
+        "pattern": "stopped at|incomplete|unfinished",
+        "category": "incomplete_task",
+        "severity": "high"
+      }
+    ]
   }
 }

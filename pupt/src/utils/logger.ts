@@ -11,6 +11,22 @@ export class Logger {
   private constructor() {
     // Use platform-specific line endings
     this.lineEnding = os.platform() === 'win32' ? '\r\n' : '\n';
+    
+    // Handle EPIPE errors gracefully when output is piped
+    // Increase max listeners to avoid warnings in tests
+    process.stdout.setMaxListeners(process.stdout.getMaxListeners() + 1);
+    process.stderr.setMaxListeners(process.stderr.getMaxListeners() + 1);
+    
+    const handlePipeError = (error: NodeJS.ErrnoException) => {
+      if (error.code === 'EPIPE') {
+        // Silently ignore EPIPE errors - this is normal when piping to less/head/etc
+        // Don't exit, just stop writing
+        return;
+      }
+    };
+    
+    process.stdout.on('error', handlePipeError);
+    process.stderr.on('error', handlePipeError);
   }
 
   static getInstance(): Logger {
@@ -41,7 +57,17 @@ export class Logger {
       typeof arg === 'string' ? arg : String(arg)
     ).join(' ');
     const sanitized = this.sanitize(message);
-    process.stdout.write(sanitized + this.lineEnding);
+    try {
+      process.stdout.write(sanitized + this.lineEnding);
+    } catch (error) {
+      // Handle EPIPE errors gracefully when output is piped
+      if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+        // Silently ignore - this is normal when piping to less/head/etc
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   /**
@@ -52,7 +78,17 @@ export class Logger {
       typeof arg === 'string' ? arg : String(arg)
     ).join(' ');
     const sanitized = this.sanitize(message);
-    process.stderr.write(sanitized + this.lineEnding);
+    try {
+      process.stderr.write(sanitized + this.lineEnding);
+    } catch (error) {
+      // Handle EPIPE errors gracefully when output is piped
+      if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+        // Silently ignore - this is normal when piping to less/head/etc
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   /**
@@ -60,7 +96,17 @@ export class Logger {
    */
   write(message: string): void {
     const sanitized = this.sanitize(message);
-    process.stdout.write(sanitized);
+    try {
+      process.stdout.write(sanitized);
+    } catch (error) {
+      // Handle EPIPE errors gracefully when output is piped
+      if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+        // Silently ignore - this is normal when piping to less/head/etc
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   /**
@@ -71,7 +117,17 @@ export class Logger {
       typeof arg === 'string' ? arg : String(arg)
     ).join(' ');
     const sanitized = this.sanitize(message);
-    process.stderr.write(sanitized + this.lineEnding);
+    try {
+      process.stderr.write(sanitized + this.lineEnding);
+    } catch (error) {
+      // Handle EPIPE errors gracefully when output is piped
+      if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+        // Silently ignore - this is normal when piping to less/head/etc
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   /**
@@ -83,7 +139,17 @@ export class Logger {
         typeof arg === 'string' ? arg : String(arg)
       ).join(' ');
       const sanitized = this.sanitize(`[DEBUG] ${message}`);
-      process.stderr.write(sanitized + this.lineEnding);
+      try {
+        process.stderr.write(sanitized + this.lineEnding);
+      } catch (error) {
+        // Handle EPIPE errors gracefully when output is piped
+        if ((error as NodeJS.ErrnoException).code === 'EPIPE') {
+          // Exit gracefully when pipe is closed
+          process.exit(0);
+        }
+        // Re-throw other errors
+        throw error;
+      }
     }
   }
 }
