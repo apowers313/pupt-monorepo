@@ -1,3 +1,16 @@
+# [1.2.0](https://github.com/apowers313/prompt-tool/compare/v1.1.0...v1.2.0) (2025-08-22)
+
+
+### Bug Fixes
+
+* annotation cosmetic changes ([eb8c66f](https://github.com/apowers313/prompt-tool/commit/eb8c66fac876c88514d5f8fb756afd96c0d70858))
+* capture complete annotation data ([e6b6910](https://github.com/apowers313/prompt-tool/commit/e6b6910f673d1cac0e3395edf48632cfe842e76b))
+
+
+### Features
+
+* finish review command, minor fixes ([8602e1f](https://github.com/apowers313/prompt-tool/commit/8602e1f8188853587049d57d98077bdcbdfc13e7))
+
 # [1.1.0](https://github.com/apowers313/prompt-tool/compare/v1.0.2...v1.1.0) (2025-08-20)
 
 
