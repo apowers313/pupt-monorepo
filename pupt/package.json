@@ -20,7 +20,10 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
   },
   "keywords": [
     "cli",
@@ -71,9 +74,11 @@
     "semantic-release": "^24.2.7",
     "typescript": "^5.9.2",
     "vite": "^7.1.1",
+    "vitepress": "^1.6.4",
     "vitest": "3.1.4"
   },
   "dependencies": {
+    "@homebridge/node-pty-prebuilt-multiarch": "^0.11.14",
     "@inquirer/core": "^10.1.15",
     "@inquirer/prompts": "^7.8.1",
     "@inquirer/testing": "^2.1.49",
@@ -90,7 +95,6 @@
     "handlebars": "^4.7.8",
     "minimatch": "^10.0.3",
     "minisearch": "^7.1.2",
-    "@homebridge/node-pty-prebuilt-multiarch": "^0.11.14",
     "ora": "^8.2.0",
     "pino": "^9.9.0",
     "pino-pretty": "^13.1.1",
