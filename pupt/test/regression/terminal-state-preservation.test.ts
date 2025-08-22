@@ -53,12 +53,7 @@ describe('Terminal State Preservation Tests', () => {
     await fs.remove(tempDir);
   });
 
-  it('should not affect terminal when output is piped to less', async function() {
-    // Skip in CI or non-TTY environments
-    if (!process.stdin.isTTY || process.env.CI) {
-      this.skip();
-      return;
-    }
+  it.skipIf(!process.stdin.isTTY || process.env.CI)('should not affect terminal when output is piped to less', async () => {
 
     // Create a script that checks terminal state
     const testScript = `
@@ -135,7 +130,7 @@ fi
     const commands = [
       ['history'],
       ['history', '--limit', '5'],
-      ['history', '--entry', '1'],
+      ['history', '1'],
       ['history', '--result', '1'],
       ['help'],
       ['review']
@@ -187,7 +182,7 @@ fi
     );
 
     await new Promise<void>((resolve, reject) => {
-      const proc = spawn('sh', ['-c', `node "${CLI_PATH}" history --entry 2 | tail -10`], {
+      const proc = spawn('sh', ['-c', `node "${CLI_PATH}" history 2 | tail -10`], {
         cwd: tempDir,
         env: { ...process.env }
       });
