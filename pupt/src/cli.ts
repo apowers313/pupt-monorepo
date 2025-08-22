@@ -201,13 +201,15 @@ program
   .option('-l, --limit <number>', 'Number of entries to show', '20')
   .option('-a, --all', 'Show all history entries')
   .option('-r, --result <number>', 'Show history entry with its output')
+  .option('--annotations', 'Show annotations for the history entry')
   .action(async (entry, options) => {
     try {
       await historyCommand({
         limit: options.all ? undefined : parseInt(options.limit),
         all: options.all,
         entry: entry ? parseInt(entry) : undefined,
-        result: options.result ? parseInt(options.result) : undefined
+        result: options.result ? parseInt(options.result) : undefined,
+        annotations: options.annotations
       });
     } catch (error) {
       displayError(error as Error);
@@ -302,56 +304,6 @@ Examples:
       displayError(error as Error);
       process.exit(1);
     }
-  });
-
-// Add example command
-program
-  .command('example')
-  .description('Create an example prompt in the current directory')
-  .action(async () => {
-    const examplePath = './.prompts/example-api-client.md';
-    const exampleContent = `---
-title: API Client Generator
-labels: [api, typescript, client]
-variables:
-  - name: serviceName
-    type: input
-    message: "What is the name of your API service?"
-    default: "MyAPI"
-  - name: authType
-    type: select
-    message: "Choose authentication type:"
-    choices: ["none", "api-key", "oauth2", "basic"]
----
-
-# {{serviceName}} API Client
-
-Generate a TypeScript API client for {{serviceName}}.
-
-## Authentication
-Type: {{authType}}
-
-## Base Configuration
-\`\`\`typescript
-export class {{serviceName}}Client {
-  private baseUrl: string;
-  
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
-  }
-  
-  // Add methods here
-}
-\`\`\`
-
-Generated on {{date}} by {{username}}.
-`;
-    
-    await fs.ensureDir('./.prompts');
-    await fs.writeFile(examplePath, exampleContent);
-    
-    logger.log(chalk.green(`Created example prompt: ${examplePath}`));
-    logger.log(chalk.dim('\nRun "pt" to try it out!'));
   });
 
 // Review command

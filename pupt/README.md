@@ -106,9 +106,6 @@ Add notes to history entries. Features:
 - Write detailed notes in your editor
 - Multiple annotations per history entry
 
-### `pt example`
-Generate an example prompt file to help you get started.
-
 ### `pt install <source>`
 Install prompts from external sources. Currently supports:
 - Git repositories (GitHub, GitLab, etc.)

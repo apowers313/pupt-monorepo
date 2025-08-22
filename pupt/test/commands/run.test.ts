@@ -762,7 +762,8 @@ describe('Run Command', () => {
       
       const mockGetEntry = vi.fn().mockResolvedValue(mockHistoryEntry);
       vi.mocked(HistoryManager).mockImplementation(() => ({
-        getHistoryEntry: mockGetEntry
+        getHistoryEntry: mockGetEntry,
+        savePrompt: vi.fn().mockResolvedValue('test-filename.json')
       } as any));
       
       const mockSpawn = {
@@ -803,7 +804,8 @@ describe('Run Command', () => {
       };
       
       vi.mocked(HistoryManager).mockImplementation(() => ({
-        getHistoryEntry: vi.fn().mockResolvedValue(mockHistoryEntry)
+        getHistoryEntry: vi.fn().mockResolvedValue(mockHistoryEntry),
+        savePrompt: vi.fn().mockResolvedValue('test-filename.json')
       } as any));
       
       const mockSpawn = {

@@ -13,6 +13,7 @@ interface HistoryOptions {
   all?: boolean;
   entry?: number;
   result?: number;
+  annotations?: boolean;
 }
 
 export async function historyCommand(options: HistoryOptions): Promise<void> {
@@ -119,6 +120,28 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
     logger.log(chalk.gray('─'.repeat(80)));
     
     logger.log(chalk.dim(`\nHistory file: ${entry.filename}`));
+    
+    // Show annotations if requested
+    if (options.annotations) {
+      const annotations = await historyManager.getAnnotationsForHistoryEntry(entry);
+      
+      if (annotations.length > 0) {
+        logger.log(chalk.cyan('\nAnnotations:'));
+        logger.log(chalk.gray('─'.repeat(80)));
+        
+        annotations.forEach((annotation, index) => {
+          if (index > 0) {
+            logger.log(chalk.gray('\n' + '-'.repeat(40) + '\n'));
+          }
+          logger.log(annotation);
+        });
+        
+        logger.log(chalk.gray('─'.repeat(80)));
+      } else {
+        logger.log(chalk.dim('\nNo annotations found for this entry'));
+      }
+    }
+    
     return;
   }
 

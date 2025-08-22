@@ -28,6 +28,8 @@ interface HistorySaveOptions {
     timeStr: string;
     randomSuffix: string;
   };
+  // Reference to the original history file when rerunning
+  rerunFrom?: string;
 }
 
 
@@ -71,14 +73,15 @@ export class HistoryManager {
       const filename = `${dateStr}-${timeStr}-${randomSuffix}.json`;
 
       // Create history entry
-      const entry: Omit<HistoryEntry, 'filename'> & { execution?: Record<string, unknown> } = {
+      const entry: Omit<HistoryEntry, 'filename'> & { execution?: Record<string, unknown>; rerun?: string } = {
         timestamp,
         templatePath: options.templatePath,
         templateContent: options.templateContent,
         variables: this.maskSensitiveVariables(options.variables),
         finalPrompt: options.finalPrompt,
         title: options.title,
-        summary: options.summary
+        summary: options.summary,
+        ...(options.rerunFrom && { rerun: options.rerunFrom })
       };
       
       // Add execution metadata if provided (for output capture)
@@ -184,6 +187,39 @@ export class HistoryManager {
         logger.error(`Failed to get history entry ${index}: ${error}`);
       }
       return null;
+    }
+  }
+
+  async getAnnotationsForHistoryEntry(historyEntry: HistoryEntry): Promise<string[]> {
+    if (!this.annotationDir) {
+      return [];
+    }
+
+    try {
+      await fs.ensureDir(this.annotationDir);
+      const files = await fs.readdir(this.annotationDir);
+      
+      // Extract basename from history entry
+      const historyBasename = path.basename(historyEntry.filename, '.json');
+      
+      // Find annotation files that match this history entry
+      const annotationFiles = files.filter(file => 
+        file.startsWith(`${historyBasename}-annotation-`) && file.endsWith('.md')
+      );
+      
+      // Read and return the content of each annotation
+      const annotations: string[] = [];
+      for (const file of annotationFiles) {
+        const content = await fs.readFile(path.join(this.annotationDir, file), 'utf-8');
+        annotations.push(content);
+      }
+      
+      return annotations;
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'test') {
+        logger.error(`Failed to get annotations: ${error}`);
+      }
+      return [];
     }
   }
 

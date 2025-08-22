@@ -8,6 +8,7 @@ export interface HistoryEntry {
   summary?: string;
   filename: string;
   execution?: Record<string, unknown>;
+  rerun?: string;
 }
 
 export interface EnhancedHistoryEntry extends HistoryEntry {

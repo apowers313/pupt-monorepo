@@ -7,10 +7,51 @@ import simpleGit, { SimpleGit } from 'simple-git';
 import { execa } from 'execa';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 import { logger } from '../utils/logger.js';
+import { cosmiconfig } from 'cosmiconfig';
 
 async function saveConfig(config: Config): Promise<void> {
   const configPath = path.join(process.cwd(), '.pt-config.json');
   await fs2.writeJson(configPath, config, { spaces: 2 });
+}
+
+async function loadConfigFromDirectory(dir: string): Promise<string[] | undefined> {
+  // Look for config files only in the specific directory (no traversal)
+  const explorer = cosmiconfig('pt', {
+    searchPlaces: [
+      '.pt-config',
+      '.pt-config.json',
+      '.pt-config.yaml',
+      '.pt-config.yml',
+      '.pt-config.js',
+      '.pt-config.cjs',
+      'pt.config.js',
+    ],
+    stopDir: dir, // Don't search beyond this directory
+  });
+  
+  try {
+    const result = await explorer.load(path.join(dir, '.pt-config.json'));
+    if (!result) {
+      // Try other config file names
+      for (const configName of ['.pt-config.yaml', '.pt-config.yml', '.pt-config.js', '.pt-config.cjs', 'pt.config.js', '.pt-config']) {
+        const configPath = path.join(dir, configName);
+        try {
+          const result = await explorer.load(configPath);
+          if (result && result.config && result.config.promptDirs) {
+            return result.config.promptDirs;
+          }
+        } catch {
+          // Continue to next file
+        }
+      }
+    } else if (result.config && result.config.promptDirs) {
+      return result.config.promptDirs;
+    }
+  } catch {
+    // No config found
+  }
+  
+  return undefined;
 }
 
 export function validateGitUrl(url: string): void {
@@ -108,16 +149,45 @@ export async function installFromGit(url: string, git: SimpleGit = simpleGit()):
     await addToGitignore(config.gitPromptDir || '.git-prompts');
   }
   
-  // Update config with new prompt directory
-  const config = await ConfigManager.load();
-  const promptPath = path.join(installPath, 'prompts');
+  // Try to load the installed package's config to get its promptDirs
+  const installedPromptDirs = await loadConfigFromDirectory(installPath);
   
-  if (!config.promptDirs.includes(promptPath)) {
-    config.promptDirs.push(promptPath);
-    await saveConfig(config);
-    logger.log(`Successfully installed prompts to ${promptPath}`);
+  // Load our current config
+  const config = await ConfigManager.load();
+  
+  // Add the installed package's promptDirs to our config
+  let addedPaths: string[] = [];
+  if (installedPromptDirs && installedPromptDirs.length > 0) {
+    for (const promptDir of installedPromptDirs) {
+      // Make the path relative to the install location
+      const fullPath = path.isAbsolute(promptDir) 
+        ? promptDir 
+        : path.join(installPath, promptDir);
+      
+      if (!config.promptDirs.includes(fullPath)) {
+        config.promptDirs.push(fullPath);
+        addedPaths.push(fullPath);
+      }
+    }
+    
+    if (addedPaths.length > 0) {
+      await saveConfig(config);
+      logger.log(`Successfully installed prompts from ${url}`);
+      addedPaths.forEach(p => logger.log(`Added prompt directory: ${p}`));
+    } else {
+      logger.log(`Prompts from ${url} already configured`);
+    }
   } else {
-    logger.log(`Prompts already installed at ${promptPath}`);
+    // Fallback to default prompts directory if no promptDirs in config
+    const promptPath = path.join(installPath, 'prompts');
+    
+    if (!config.promptDirs.includes(promptPath)) {
+      config.promptDirs.push(promptPath);
+      await saveConfig(config);
+      logger.log(`Successfully installed prompts to ${promptPath}`);
+    } else {
+      logger.log(`Prompts already installed at ${promptPath}`);
+    }
   }
 }
 
@@ -196,34 +266,64 @@ export async function installFromNpm(packageName: string): Promise<void> {
     throw new Error(`Failed to install npm package: ${errorMessage}`);
   }
   
-  // Get installed package path and metadata
+  // Get installed package path
   const packagePath = path.join('node_modules', packageName);
-  let promptDir = 'prompts'; // Default prompt directory
   
-  try {
-    // Read package.json to check for promptDir field
-    const packageJsonPath = path.join(packagePath, 'package.json');
-    const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-    const packageJson = JSON.parse(packageJsonContent);
-    
-    if (packageJson.promptDir) {
-      promptDir = packageJson.promptDir;
-    }
-  } catch {
-    // If we can't read package.json, use default
-  }
+  // Try to load the installed package's config to get its promptDirs
+  const installedPromptDirs = await loadConfigFromDirectory(packagePath);
   
-  // Update config with new prompt directory
+  // Load our current config
   const config = await ConfigManager.load();
-  const fullPromptPath = path.join(packagePath, promptDir);
   
-  if (!config.promptDirs.includes(fullPromptPath)) {
-    config.promptDirs.push(fullPromptPath);
-    await saveConfig(config);
-    logger.log(`Successfully installed prompts from ${packageName}`);
-    logger.log(`Added prompt directory: ${fullPromptPath}`);
+  // Add the installed package's promptDirs to our config
+  let addedPaths: string[] = [];
+  if (installedPromptDirs && installedPromptDirs.length > 0) {
+    for (const promptDir of installedPromptDirs) {
+      // Make the path relative to the package location
+      const fullPath = path.isAbsolute(promptDir) 
+        ? promptDir 
+        : path.join(packagePath, promptDir);
+      
+      if (!config.promptDirs.includes(fullPath)) {
+        config.promptDirs.push(fullPath);
+        addedPaths.push(fullPath);
+      }
+    }
+    
+    if (addedPaths.length > 0) {
+      await saveConfig(config);
+      logger.log(`Successfully installed prompts from ${packageName}`);
+      addedPaths.forEach(p => logger.log(`Added prompt directory: ${p}`));
+    } else {
+      logger.log(`Prompts from ${packageName} already configured`);
+    }
   } else {
-    logger.log(`Prompts from ${packageName} already configured at ${fullPromptPath}`);
+    // Fallback to reading package.json or default prompts directory
+    let promptDir = 'prompts'; // Default prompt directory
+    
+    try {
+      // Read package.json to check for promptDir field
+      const packageJsonPath = path.join(packagePath, 'package.json');
+      const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
+      const packageJson = JSON.parse(packageJsonContent);
+      
+      if (packageJson.promptDir) {
+        promptDir = packageJson.promptDir;
+      }
+    } catch {
+      // If we can't read package.json, use default
+    }
+    
+    const fullPromptPath = path.join(packagePath, promptDir);
+    
+    if (!config.promptDirs.includes(fullPromptPath)) {
+      config.promptDirs.push(fullPromptPath);
+      await saveConfig(config);
+      logger.log(`Successfully installed prompts from ${packageName}`);
+      logger.log(`Added prompt directory: ${fullPromptPath}`);
+    } else {
+      logger.log(`Prompts from ${packageName} already configured at ${fullPromptPath}`);
+    }
   }
 }
 

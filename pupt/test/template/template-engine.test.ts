@@ -12,6 +12,14 @@ vi.mock('@inquirer/prompts', () => ({
   password: vi.fn(),
 }));
 
+vi.mock('../../src/prompts/input-types/file-search-prompt.js', () => ({
+  fileSearchPrompt: vi.fn(),
+}));
+
+vi.mock('../../src/prompts/input-types/review-file-prompt.js', () => ({
+  reviewFilePrompt: vi.fn(),
+}));
+
 describe('TemplateEngine', () => {
   let engine: TemplateEngine;
 
@@ -138,5 +146,255 @@ More examples: {{helper1}} and {{helper2 "arg"}}
 
     expect(result).toBe('Documentation: {{myHelper "readme.md"}} explains how to use prompt-tool');
     expect(inquirerPrompts.input).toHaveBeenCalledTimes(1); // Only called for the real helper
+  });
+
+  describe('deduplication of same variable inputs', () => {
+    it('should only prompt once for multiple input helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('test-value');
+
+      const template = `
+First: {{input "foo"}}
+Second: {{input "foo"}}
+Third: {{input "foo" "Custom message"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.input).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+First: test-value
+Second: test-value
+Third: test-value
+      `.trim());
+    });
+
+    it('should only prompt once for multiple select helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.select).mockResolvedValueOnce('option1');
+
+      const template = `
+Choice 1: {{select "choice" "Pick one"}}
+Choice 2: {{select "choice"}}
+Choice 3: {{select "choice" "Another message"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.select).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Choice 1: option1
+Choice 2: option1
+Choice 3: option1
+      `.trim());
+    });
+
+    it('should only prompt once for multiple password helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.password).mockResolvedValueOnce('secret123');
+
+      const template = `
+Password: {{password "apiKey"}}
+Confirm: {{password "apiKey" "Confirm API key"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.password).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Password: secret123
+Confirm: secret123
+      `.trim());
+    });
+
+    it('should only prompt once for multiple editor helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.editor).mockResolvedValueOnce('edited content');
+
+      const template = `
+Content: {{editor "content"}}
+Again: {{editor "content" "Edit again"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.editor).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Content: edited content
+Again: edited content
+      `.trim());
+    });
+
+    it('should only prompt once for multiple checkbox helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.checkbox).mockResolvedValueOnce(['opt1', 'opt2']);
+
+      const template = `
+Selected: {{multiselect "options"}}
+Again: {{multiselect "options" "Select again"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.checkbox).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Selected: opt1,opt2
+Again: opt1,opt2
+      `.trim());
+    });
+
+    it('should only prompt once for multiple confirm helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.confirm).mockResolvedValueOnce(true);
+
+      const template = `
+Proceed: {{confirm "proceed"}}
+Again: {{confirm "proceed" "Really proceed?"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.confirm).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Proceed: true
+Again: true
+      `.trim());
+    });
+
+    it('should handle different variable names independently', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('foo-value')
+        .mockResolvedValueOnce('bar-value');
+
+      const template = `
+Foo: {{input "foo"}}
+Bar: {{input "bar"}}
+Foo again: {{input "foo"}}
+Bar again: {{input "bar"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.input).toHaveBeenCalledTimes(2);
+      expect(result).toBe(`
+Foo: foo-value
+Bar: bar-value
+Foo again: foo-value
+Bar again: bar-value
+      `.trim());
+    });
+
+    it('should handle mixed helper types with same variable name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('test-value');
+
+      const template = `
+First as input: {{input "mixed"}}
+Second still input: {{input "mixed" "Different message"}}
+Third still input: {{input "mixed"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      // Should only call input once since all are input type with same name
+      expect(inquirerPrompts.input).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+First as input: test-value
+Second still input: test-value
+Third still input: test-value
+      `.trim());
+    });
+
+    it('should handle complex template with multiple deduplicated variables', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('MyProject')
+        .mockResolvedValueOnce('John Doe');
+      vi.mocked(inquirerPrompts.select).mockResolvedValueOnce('MIT');
+
+      const template = `
+# Project: {{input "projectName"}}
+
+Author: {{input "author"}}
+License: {{select "license" "Choose license"}}
+
+## {{input "projectName"}} Details
+
+Created by {{input "author"}} under {{select "license"}} license.
+
+Project path: /projects/{{input "projectName"}}/src
+Documentation: /projects/{{input "projectName"}}/docs
+Author email: {{input "author"}}@example.com
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(inquirerPrompts.input).toHaveBeenCalledTimes(2);
+      expect(inquirerPrompts.select).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+# Project: MyProject
+
+Author: John Doe
+License: MIT
+
+## MyProject Details
+
+Created by John Doe under MIT license.
+
+Project path: /projects/MyProject/src
+Documentation: /projects/MyProject/docs
+Author email: John Doe@example.com
+      `.trim());
+    });
+
+    it('should only prompt once for multiple file helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      const { fileSearchPrompt } = await import('../../src/prompts/input-types/file-search-prompt.js');
+      vi.mocked(fileSearchPrompt).mockResolvedValueOnce('/path/to/file.txt');
+
+      const template = `
+File: {{file "selectedFile"}}
+Same file: {{file "selectedFile" "Pick file again"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(fileSearchPrompt).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+File: /path/to/file.txt
+Same file: /path/to/file.txt
+      `.trim());
+    });
+
+    it('should only prompt once for multiple reviewFile helpers with same name', async () => {
+      vi.clearAllMocks();
+      engine = new TemplateEngine();
+      const { reviewFilePrompt } = await import('../../src/prompts/input-types/review-file-prompt.js');
+      vi.mocked(reviewFilePrompt).mockResolvedValueOnce('reviewed content');
+
+      const template = `
+Review: {{reviewFile "review"}}
+Again: {{reviewFile "review" "Review again"}}
+      `.trim();
+
+      const result = await engine.processTemplate(template, {});
+
+      expect(reviewFilePrompt).toHaveBeenCalledTimes(1);
+      expect(result).toBe(`
+Review: reviewed content
+Again: reviewed content
+      `.trim());
+    });
   });
 });

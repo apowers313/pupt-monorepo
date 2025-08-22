@@ -67,6 +67,11 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
         return cached;
       }
 
+      // Check if an operation is already queued for this variable
+      if (context.hasQueuedOperation(name)) {
+        return context.getQueuedPlaceholder(name);
+      }
+
       // Find variable definition
       const varDef = context.getVariableDefinition(name);
 
@@ -102,6 +107,9 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
 
       // Create async placeholder
       const placeholder = `__ASYNC_${type}_${name}__`;
+
+      // Register that we're queuing this operation
+      context.setQueuedOperation(name, placeholder);
 
       // Queue the async operation
       context.queueAsyncOperation(async () => {

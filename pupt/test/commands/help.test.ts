@@ -120,7 +120,7 @@ describe('help command', () => {
     });
 
     it('should work with all existing commands', async () => {
-      const commandNames = ['init', 'add', 'edit', 'run', 'history', 'annotate', 'install', 'example', 'help'];
+      const commandNames = ['init', 'add', 'edit', 'run', 'history', 'annotate', 'install', 'help'];
 
       for (const cmdName of commandNames) {
         // Clear mocks

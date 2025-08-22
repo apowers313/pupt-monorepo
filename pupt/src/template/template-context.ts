@@ -6,6 +6,7 @@ export class TemplateContext {
   private asyncOperations: Array<() => Promise<{ placeholder: string; value: unknown }>> = [];
   private variableDefinitions: VariableDefinition[] = [];
   private variableTypes = new Map<string, string>();
+  private queuedOperations = new Map<string, string>();
 
   constructor(variables?: VariableDefinition[]) {
     this.variableDefinitions = variables || [];
@@ -50,6 +51,18 @@ export class TemplateContext {
     this.asyncOperations.push(operation);
   }
 
+  hasQueuedOperation(name: string): boolean {
+    return this.queuedOperations.has(name);
+  }
+
+  getQueuedPlaceholder(name: string): string | undefined {
+    return this.queuedOperations.get(name);
+  }
+
+  setQueuedOperation(name: string, placeholder: string): void {
+    this.queuedOperations.set(name, placeholder);
+  }
+
   async processAsyncOperations(template: string): Promise<string> {
     let result = template;
 
@@ -63,6 +76,7 @@ export class TemplateContext {
 
     // Clear operations for next run
     this.asyncOperations = [];
+    this.queuedOperations.clear();
 
     return result;
   }

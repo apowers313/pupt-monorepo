@@ -111,6 +111,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     summary?: string;
     reviewFiles?: Array<{ name: string; value: unknown }>;
     timestamp?: Date;
+    rerunFrom?: string;
   } | undefined;
   let exitCode: number | null = null;
   
@@ -145,6 +146,19 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     logger.log(chalk.dim(`From: ${new Date(historyEntry.timestamp).toLocaleString()}\n`));
     
     promptResult = historyEntry.finalPrompt;
+    
+    // Set up templateInfo for saving to history with rerun reference
+    templateInfo = {
+      templatePath: historyEntry.templatePath,
+      templateContent: historyEntry.templateContent,
+      variables: new Map(Object.entries(historyEntry.variables)),
+      finalPrompt: historyEntry.finalPrompt,
+      title: historyEntry.title,
+      timestamp: startTimestamp,
+      summary: historyEntry.summary,
+      // Store the original history filename for rerun reference
+      rerunFrom: historyEntry.filename
+    };
   } else {
     // Normal flow - discover and process prompts
     const promptManager = new PromptManager(config.promptDirs);

@@ -48,16 +48,6 @@ Today is {{date}}.`;
     }
   });
   
-  it('should run pt example command', () => {
-    const output = execSync(`node ${cliPath} example`, {
-      cwd: testDir,
-      encoding: 'utf-8'
-    });
-    
-    expect(output).toContain('Created example prompt');
-    expect(fs.existsSync(path.join(testDir, '.prompts/example-api-client.md'))).toBe(true);
-  });
-  
   it('should display help', () => {
     const output = execSync(`node ${cliPath} --help`, {
       cwd: testDir,

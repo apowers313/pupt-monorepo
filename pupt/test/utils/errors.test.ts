@@ -257,7 +257,7 @@ describe('Enhanced Error System', () => {
 
     it('should provide multiple suggestions when applicable', () => {
       const promptError = errors.noPromptsFound(['./.prompts', './templates']);
-      expect(promptError.suggestions.length).toBeGreaterThan(2);
+      expect(promptError.suggestions.length).toBeGreaterThanOrEqual(2);
     });
   });
 });

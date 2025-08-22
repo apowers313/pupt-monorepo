@@ -45,7 +45,6 @@ describe('pt CLI', () => {
       const stderr = error.stderr?.toString() || '';
       expect(stderr).toContain('No prompts found');
       expect(stderr).toContain('pt add');
-      expect(stderr).toContain('pt example');
     }
   });
 });
