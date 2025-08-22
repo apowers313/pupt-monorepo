@@ -1,24 +1,36 @@
-# Prompt Tool (pt)
+  [![Build Status](https://github.com/apowers313/prompt-tool/workflows/CI/badge.svg)](https://github.com/apowers313/prompt-tool/actions)
+  [![npm version](https://badge.fury.io/js/pupt.svg)](https://www.npmjs.com/package/pupt)
+  [![Coverage Status](https://coveralls.io/repos/github/apowers313/prompt-tool/badge.svg?branch=master)](https://coveralls.io/github/apowers313/prompt-tool?branch=master)
 
-A powerful CLI tool for managing and using AI prompts with template support.
+# PUPT (Powerful Universal Prompt Tool)
+A powerful CLI tool for managing and using AI prompts with template support, designed to be your faithful prompt companion.
+
+<div align="center">
+  <img src="./assets/pupt.png" alt="PUPT Logo" width="200">
+  
+  # PUPT
+  **Your Faithful Prompt Companion**
+</div>
+
 
 ## Features
 
-- 🔍 **Interactive Search** - Quickly find prompts with fuzzy search
-- 📝 **Template Support** - Use Handlebars templates with user input
-- 📁 **Multi-directory Support** - Organize prompts across multiple directories
-- 🔧 **Cross-platform** - Works on Windows, macOS, and Linux
-- 📊 **History Tracking** - Keep track of generated prompts and re-run them
-- 🎯 **Variable Definitions** - Define variables with types and validation
-- 🚀 **External Tool Integration** - Run prompts with any command-line tool
 - ✏️ **Prompt Management** - Create, edit, and organize prompts easily
+- 📝 **Template Support** - Use Handlebars templates with user input
+- 🔍 **Interactive Search** - Quickly find prompts with fuzzy search
+- 🔧 **Cross-platform** - Works on Windows, macOS, and Linux
+- 🚀 **Tool Integration** - Run prompts with Claude Code, Amazon Q, or any command line tool
+- 📊 **History Tracking** - Keep track of generated prompts and re-run them
+- 📊 **Output Capture** - Capture and save command outputs (configurable)
 - 🏷️ **Annotations** - Add notes and tags to your prompt history
-- ⚡ **Enhanced Error Messages** - Helpful suggestions and clear guidance
+- 🤖 **Auto-annotation** - Automatically analyze and annotate prompt executions
+- 📋 **Review Command** - Analyze prompt usage patterns and generate improvement suggestions
+- 📦 **Install Prompts** - Install and share prompts from git or npm
 
 ## Installation
 
 ```bash
-npm install -g cli-prompt-tool
+npm install -g pupt
 ```
 
 ## Quick Start
@@ -50,6 +62,9 @@ Interactive prompt selection and generation. This is the default command that le
 - Fill in template variables interactively
 - View the generated result
 
+### `pt help [command]`
+Display detailed help information for a specific command.
+
 ### `pt init`
 Initialize configuration interactively. Sets up:
 - Prompt directories
@@ -71,30 +86,52 @@ Edit existing prompts in your configured editor. Features:
 - Fallback to common editors if not configured
 
 ### `pt run [tool] [args...]`
-Execute prompts with external tools. Examples:
+Execute prompts with external tools. Set `defaultRunCmd` in
+your config to automatically run your favorite tool.
+
+Examples:
 ```bash
 pt run                     # Use configured default tool
-pt run claude              # Send to Claude
-pt run code -              # Open in VS Code
-pt run cat                 # Output to terminal
-pt run -- --continue       # Pass args to configured tool
+pt run claude              # Send prompt to Claude
+pt run code -              # Open prompt in VS Code
 pt run -h 3                # Re-run history entry #3
 ```
 
-### `pt history [options]`
-View prompt execution history. Options:
-- `-l, --limit <number>` - Number of entries to show (default: 20)
-- `-a, --all` - Show all history entries
+### `pt history [entry] [options]`
+View prompt execution history or a specific entry.
 
 ### `pt annotate [history-number]`
 Add notes to history entries. Features:
 - Mark prompts as success/failure/partial
-- Add searchable tags
 - Write detailed notes in your editor
 - Multiple annotations per history entry
 
 ### `pt example`
 Generate an example prompt file to help you get started.
+
+### `pt install <source>`
+Install prompts from external sources. Currently supports:
+- Git repositories (GitHub, GitLab, etc.)
+- Future: npm packages
+
+Examples:
+```bash
+pt install https://github.com/user/prompts
+pt install git@github.com:user/prompts.git
+```
+
+### `pt review [prompt-name] [options]`
+Analyze prompt usage patterns and generate improvement suggestions.
+Best used with AI tools to use your history and annotations to
+improve the quality and performance of your prompts.
+
+Examples:
+```bash
+pt review                      # Review all prompts from last 30 days
+pt review api-client           # Review specific prompt
+pt review -s 7d                # Review last 7 days
+pt review -f json -o report.json # Save JSON report to file
+```
 
 ## Prompt Files
 
@@ -121,8 +158,69 @@ variables:
     default: "Default value"
 ---
 
-Your prompt content goes here with {{variableName}} substitution.
+Your prompt content goes here with {{input "thing"}} automatic user input.
 ```
+
+### Input Helpers
+
+These helpers collect information from users interactively:
+
+#### `{{input "name" "message"}}`
+- **Purpose**: Collect text input
+- **Parameters**: 
+  - `name`: Variable name to store the value
+  - `message` (optional): Prompt message
+- **Example**: `{{input "projectName" "What is your project name?"}}`
+
+#### `{{select "name" "message"}}`
+- **Purpose**: Single choice selection
+- **Parameters**: 
+  - `name`: Variable name
+  - `message` (optional): Prompt message
+- **Note**: Choices come from variable definition
+- **Example**: `{{select "language" "Choose a language:"}}`
+
+#### `{{multiselect "name" "message"}}`
+- **Purpose**: Multiple choice selection
+- **Parameters**: Same as select
+- **Returns**: Comma-separated values
+- **Example**: `{{multiselect "features" "Select features:"}}`
+
+#### `{{confirm "name" "message"}}`
+- **Purpose**: Yes/no question
+- **Parameters**: Same as input
+- **Returns**: `true` or `false`
+- **Example**: `{{confirm "useTypeScript" "Use TypeScript?"}}`
+
+#### `{{editor "name" "message"}}`
+- **Purpose**: Open text editor for multi-line input
+- **Parameters**: Same as input
+- **Example**: `{{editor "description" "Enter description:"}}`
+
+#### `{{password "name" "message"}}`
+- **Purpose**: Masked password input
+- **Parameters**: Same as input
+- **Note**: Values are masked in history
+- **Example**: `{{password "apiKey" "Enter API key:"}}`
+
+#### `{{file "name" "message"}}`
+- **Purpose**: Interactive file selection with tab completion
+- **Parameters**: Same as input
+- **Features**: 
+  - Tab completion for file paths
+  - Support for ~ home directory expansion
+  - Real-time file filtering
+- **Example**: `{{file "sourceFile" "Select file to process:"}}`
+
+#### `{{reviewFile "name" "message"}}`
+- **Purpose**: Select a file for automatic review after execution
+- **Parameters**: Same as file
+- **Features**:
+  - Same as file input
+  - File will be reviewed after command execution
+  - Useful for analyzing generated or modified files
+- **Example**: `{{reviewFile "outputFile" "Select file to review:"}}`
+
 
 ### Frontmatter Properties
 
@@ -139,15 +237,18 @@ The frontmatter section (between `---` markers) is optional and uses YAML format
 - **Example**: `labels: [api, documentation, typescript]`
 
 #### `variables` (array of objects)
-- **Purpose**: Define user inputs required by the template
+- **Purpose**: Optionally define user inputs required by the template
 - **Default**: Empty array
 - **Structure**: Each variable can have these properties:
   - `name` (required): Variable identifier used in template
-  - `type`: Input type (`input`, `select`, `multiselect`, `confirm`, `editor`, `password`)
+  - `type`: Input type (`input`, `select`, `multiselect`, `confirm`, `editor`, `password`, `file`, `reviewFile`)
   - `message`: Question to ask the user
   - `default`: Default value
   - `choices`: Array of options (for `select` and `multiselect` types)
   - `validate`: Regex pattern for validation (as string)
+  - `basePath`: Base directory for file selection (for `file` and `reviewFile` types)
+  - `filter`: File pattern filter (for `file` and `reviewFile` types)
+  - `autoReview`: Auto-review the selected file after execution (for `reviewFile` type)
 
 ### Complete Example Prompt File
 
@@ -257,48 +358,6 @@ These helpers provide system information and are evaluated when the prompt is ge
 - **Returns**: Current working directory path
 - **Example**: `Project path: {{cwd}}`
 
-### Input Helpers
-
-These helpers collect information from users interactively:
-
-#### `{{input "name" "message"}}`
-- **Purpose**: Collect text input
-- **Parameters**: 
-  - `name`: Variable name to store the value
-  - `message` (optional): Prompt message
-- **Example**: `{{input "projectName" "What is your project name?"}}`
-
-#### `{{select "name" "message"}}`
-- **Purpose**: Single choice selection
-- **Parameters**: 
-  - `name`: Variable name
-  - `message` (optional): Prompt message
-- **Note**: Choices come from variable definition
-- **Example**: `{{select "language" "Choose a language:"}}`
-
-#### `{{multiselect "name" "message"}}`
-- **Purpose**: Multiple choice selection
-- **Parameters**: Same as select
-- **Returns**: Comma-separated values
-- **Example**: `{{multiselect "features" "Select features:"}}`
-
-#### `{{confirm "name" "message"}}`
-- **Purpose**: Yes/no question
-- **Parameters**: Same as input
-- **Returns**: `true` or `false`
-- **Example**: `{{confirm "useTypeScript" "Use TypeScript?"}}`
-
-#### `{{editor "name" "message"}}`
-- **Purpose**: Open text editor for multi-line input
-- **Parameters**: Same as input
-- **Example**: `{{editor "description" "Enter description:"}}`
-
-#### `{{password "name" "message"}}`
-- **Purpose**: Masked password input
-- **Parameters**: Same as input
-- **Note**: Values are masked in history
-- **Example**: `{{password "apiKey" "Enter API key:"}}`
-
 ### Variable Substitution
 
 Once a variable is defined (either through frontmatter or input helpers), it can be referenced anywhere in the template:
@@ -329,13 +388,29 @@ Multiple config files are merged, with closer files taking precedence.
   "promptDirs": ["./.prompts", "~/my-prompts"],
   "historyDir": "~/.pt/history",
   "annotationDir": "~/.pt/history",
-  "codingTool": "claude",
-  "codingToolArgs": ["--model", "claude-3"],
-  "codingToolOptions": {
+  "defaultCmd": "claude",
+  "defaultCmdArgs": ["--model", "claude-3"],
+  "defaultCmdOptions": {
     "Continue with context?": "--continue",
     "Use verbose output?": "--verbose"
   },
-  "partials": {
+  "autoRun": false,
+  "autoReview": false,
+  "gitPromptDir": "~/.pt/git-prompts",
+  "outputCapture": {
+    "enabled": false,
+    "directory": "~/.pt/outputs",
+    "maxSizeMB": 10,
+    "retentionDays": 30
+  },
+  "autoAnnotate": {
+    "enabled": false,
+    "triggers": ["error", "warning"],
+    "analysisPrompt": "Analyze this execution...",
+    "fallbackRules": []
+  },
+  "handlebarsExtensions": [],
+  "helpers": {
     "header": {
       "type": "inline",
       "value": "Generated by {{username}} on {{date}}"
@@ -345,9 +420,12 @@ Multiple config files are merged, with closer files taking precedence.
       "path": "~/.pt/partials/footer.md"
     }
   },
-  "version": "2.0.0"
+  "logLevel": "info",
+  "version": "3.0.0"
 }
 ```
+
+Note: The `codingTool`, `codingToolArgs`, and `codingToolOptions` fields are deprecated. Use `defaultCmd`, `defaultCmdArgs`, and `defaultCmdOptions` instead. The old fields are still supported for backward compatibility.
 
 ### Configuration Fields
 
@@ -378,23 +456,23 @@ Multiple config files are merged, with closer files taking precedence.
   - Supports `~` for home directory
 - **Example**: `"~/.pt/history"`
 
-#### `codingTool` (string, optional)
-- **Purpose**: Default tool to use with `pt run`
+#### `defaultCmd` (string, optional)
+- **Purpose**: Default command to use with `pt run`
 - **Default**: `"claude"`
 - **Notes**: 
   - Can be any command-line tool that accepts stdin
   - Override with `pt run <tool>`
 - **Example**: `"claude"`, `"gpt"`, `"code -"`
 
-#### `codingToolArgs` (array of strings, optional)
-- **Purpose**: Default arguments for the coding tool
+#### `defaultCmdArgs` (array of strings, optional)
+- **Purpose**: Default arguments for the default command
 - **Default**: `[]`
 - **Notes**: 
   - Always passed to the tool
   - Additional args can be added with `pt run -- <args>`
 - **Example**: `["--model", "claude-3-opus"]`
 
-#### `codingToolOptions` (object, optional)
+#### `defaultCmdOptions` (object, optional)
 - **Purpose**: Interactive options to prompt for when running
 - **Default**: `{ "Continue with last context?": "--continue" }`
 - **Structure**: Object where keys are questions and values are arguments
@@ -410,7 +488,73 @@ Multiple config files are merged, with closer files taking precedence.
 }
 ```
 
-#### `partials` (object, optional)
+#### `autoRun` (boolean, optional)
+- **Purpose**: Automatically execute prompts with the default command after generation
+- **Default**: `false`
+- **Notes**: 
+  - Requires `defaultCmd` to be configured
+  - Saves execution history automatically
+- **Example**: `true`
+
+#### `autoReview` (boolean, optional)
+- **Purpose**: Automatically review files selected with `reviewFile` input type
+- **Default**: `false`
+- **Notes**: 
+  - Reviews happen after command execution
+  - Works with the review command functionality
+- **Example**: `true`
+
+#### `gitPromptDir` (string, optional)
+- **Purpose**: Directory to store prompts installed from git repositories
+- **Default**: None
+- **Notes**: 
+  - Used by `pt install` command
+  - Supports `~` for home directory
+- **Example**: `"~/.pt/git-prompts"`
+
+#### `outputCapture` (object, optional)
+- **Purpose**: Configure automatic output capture for command executions
+- **Default**: Disabled
+- **Structure**:
+  - `enabled`: Whether to capture outputs (boolean)
+  - `directory`: Where to save captured outputs (string)
+  - `maxSizeMB`: Maximum size per capture file in MB (number)
+  - `retentionDays`: How long to keep captures (number)
+- **Example**:
+```json
+{
+  "enabled": true,
+  "directory": "~/.pt/outputs",
+  "maxSizeMB": 10,
+  "retentionDays": 30
+}
+```
+
+#### `autoAnnotate` (object, optional)
+- **Purpose**: Configure automatic annotation of prompt executions
+- **Default**: Disabled
+- **Structure**:
+  - `enabled`: Whether to auto-annotate (boolean)
+  - `triggers`: Events that trigger annotation (array)
+  - `analysisPrompt`: Prompt for AI analysis (string)
+  - `fallbackRules`: Pattern-based rules (array)
+- **Example**:
+```json
+{
+  "enabled": true,
+  "triggers": ["error", "warning"],
+  "analysisPrompt": "Analyze this execution and identify issues",
+  "fallbackRules": []
+}
+```
+
+#### `handlebarsExtensions` (array, optional)
+- **Purpose**: Custom Handlebars template extensions
+- **Default**: `[]`
+- **Structure**: Array of extension configurations
+- **Notes**: Advanced feature for extending template functionality
+
+#### `helpers` (object, optional)
 - **Purpose**: Define reusable template fragments
 - **Default**: None
 - **Structure**: Object where keys are partial names and values define the partial:
@@ -434,6 +578,18 @@ Multiple config files are merged, with closer files taking precedence.
 }
 ```
 
+#### `logLevel` (string, optional)
+- **Purpose**: Set the logging verbosity level
+- **Default**: `"info"`
+- **Options**: `"trace"`, `"debug"`, `"info"`, `"warn"`, `"error"`, `"fatal"`
+- **Example**: `"debug"`
+
+#### `version` (string, optional)
+- **Purpose**: Configuration schema version for migration support
+- **Default**: Current version
+- **Format**: Semantic version (e.g., "3.0.0")  
+- **Notes**: Automatically updated during migrations
+
 ### Configuration Examples
 
 #### Minimal Configuration
@@ -453,19 +609,21 @@ Multiple config files are merged, with closer files taking precedence.
   ],
   "historyDir": "~/.pt/history",
   "annotationDir": "~/.pt/history",
-  "codingTool": "claude",
-  "codingToolArgs": ["--model", "claude-3-opus"],
-  "codingToolOptions": {
+  "defaultCmd": "claude",
+  "defaultCmdArgs": ["--model", "claude-3-opus"],
+  "defaultCmdOptions": {
     "Continue with context?": "--continue",
     "Use company guidelines?": "--guidelines=/shared/guidelines.md"
   },
-  "partials": {
+  "autoRun": true,
+  "gitPromptDir": "~/.pt/git-prompts",
+  "helpers": {
     "companyHeader": {
       "type": "inline",
       "value": "/* Company Confidential - {{date}} */"
     }
   },
-  "version": "2.0.0"
+  "version": "3.0.0"
 }
 ```
 
@@ -477,11 +635,17 @@ promptDirs:
   - ~/personal-prompts
 historyDir: ~/.pt/history
 annotationDir: ~/.pt/annotations
-codingTool: gpt
-codingToolArgs:
+defaultCmd: gpt
+defaultCmdArgs:
   - --temperature
   - "0.7"
-version: "2.0.0"
+autoReview: true
+outputCapture:
+  enabled: true
+  directory: ~/.pt/outputs
+  maxSizeMB: 5
+  retentionDays: 7
+version: "3.0.0"
 ```
 
 #### Minimal Configuration with History
@@ -489,7 +653,40 @@ version: "2.0.0"
 {
   "promptDirs": ["./.prompts"],
   "historyDir": "./.pthistory",
-  "version": "2.0.0"
+  "version": "3.0.0"
+}
+```
+
+#### Advanced Configuration with Auto-features
+```json
+{
+  "promptDirs": ["./.prompts", "~/shared-prompts"],
+  "historyDir": "~/.pt/history",
+  "annotationDir": "~/.pt/history",
+  "defaultCmd": "claude",
+  "defaultCmdArgs": ["--model", "claude-3-opus"],
+  "autoRun": true,
+  "autoReview": true,
+  "outputCapture": {
+    "enabled": true,
+    "directory": "~/.pt/outputs",
+    "maxSizeMB": 10,
+    "retentionDays": 30
+  },
+  "autoAnnotate": {
+    "enabled": true,
+    "triggers": ["error", "warning", "failure"],
+    "analysisPrompt": "Analyze this prompt execution and identify any issues or improvements",
+    "fallbackRules": [
+      {
+        "pattern": "error|failed|exception",
+        "category": "verification_gap",
+        "severity": "high"
+      }
+    ]
+  },
+  "logLevel": "debug",
+  "version": "3.0.0"
 }
 ```
 
@@ -499,18 +696,87 @@ version: "2.0.0"
 # Install dependencies
 npm install
 
+# Build the TypeScript project
+npm run build
+
+# Watch mode for development
+npm run dev
+
 # Run tests
 npm test
+
+# Run tests with verbose output
+npm run test:verbose
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI interface
+npm run test:ui
 
 # Run tests with coverage
 npm run test:coverage
 
-# Build
-npm run build
+# Run linter
+npm run lint
+
+# Format code with prettier
+npm run format
+
+# Run all checks (lint, build, test with coverage)
+npm run check
 
 # Run locally
 node dist/cli.js
 ```
+
+### Testing
+
+The project uses Vitest for testing with comprehensive test coverage including:
+- Unit tests for all components
+- Integration tests for end-to-end flows
+- E2E tests for CLI commands
+- Regression tests for bug fixes
+
+Run specific test files:
+```bash
+npm test test/commands/add.test.ts
+```
+
+Run tests matching a pattern:
+```bash
+npm test -- -t "pattern"
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### No prompts found
+- Ensure your `promptDirs` configuration points to directories containing `.md` files
+- Check that the directories exist and have proper permissions
+- Run `pt init` to set up the configuration
+
+#### Command not found after installation
+- Ensure npm's global bin directory is in your PATH
+- Try running with `npx pt` instead
+- Reinstall with `npm install -g pupt`
+
+#### File input not working properly
+- File paths support `~` expansion for home directory
+- Use Tab key for autocompletion
+- Ensure the base path exists
+
+#### History not being saved
+- Check that `historyDir` is configured
+- Ensure the directory has write permissions
+- Verify disk space is available
+
+## Repository
+
+- **GitHub**: [https://github.com/apowers313/prompt-tool](https://github.com/apowers313/prompt-tool)
+- **Issues**: [https://github.com/apowers313/prompt-tool/issues](https://github.com/apowers313/prompt-tool/issues)
+- **Author**: Adam Powers <apowers@ato.ms>
 
 ## License
 
