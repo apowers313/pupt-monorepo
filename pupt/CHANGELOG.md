@@ -1,3 +1,13 @@
+## [1.2.1](https://github.com/apowers313/pupt/compare/v1.2.0...v1.2.1) (2025-08-23)
+
+
+### Bug Fixes
+
+* claude init and auto annotation errors ([e062d50](https://github.com/apowers313/pupt/commit/e062d50f5955bd7584c4852d57b9dc7d2e5897f1))
+* history and annotation cosmetic fixes ([2485846](https://github.com/apowers313/pupt/commit/24858465f1ae93b36fdfa5652534f2e7dc9d571d))
+* prompt improvements, rename labels to tags, docs improvements ([d72fd8a](https://github.com/apowers313/pupt/commit/d72fd8a73b3ab51fc1f763db17d4fa97a34356fe))
+* repo name, uninitialized claude directory ([549da3c](https://github.com/apowers313/pupt/commit/549da3cdbe2a1f1620e95ef7ec20804d47aed2a2))
+
 # [1.2.0](https://github.com/apowers313/pupt/compare/v1.1.0...v1.2.0) (2025-08-22)
 
 
