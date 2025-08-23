@@ -94,24 +94,7 @@ export const migrations: ConfigMigration[] = [
         migrated.autoAnnotate = {
           enabled: false,
           triggers: ['claude', 'ai', 'assistant'],
-          analysisPrompt: 'analyze-execution',
-          fallbackRules: [
-            {
-              pattern: 'test.*fail|failing|failed',
-              category: 'verification_gap',
-              severity: 'high'
-            },
-            {
-              pattern: 'error:|exception:|Error:',
-              category: 'incomplete_task',
-              severity: 'medium'
-            },
-            {
-              pattern: 'stopped at|incomplete|unfinished',
-              category: 'incomplete_task',
-              severity: 'high'
-            }
-          ]
+          analysisPrompt: 'analyze-execution'
         };
       }
       

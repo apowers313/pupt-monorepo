@@ -2,7 +2,7 @@
 title: Ad Hoc (Long)
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250816
-labels: []
+tags: []
 ---
 
 **Role & Context**: You are a versatile expert assistant capable of handling complex, multi-part requests that require detailed analysis, planning, or implementation.

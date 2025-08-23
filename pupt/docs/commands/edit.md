@@ -128,14 +128,14 @@ export EDITOR="nano"
 ### Fuzzy Search
 - Partial word matching
 - Case-insensitive
-- Searches title, labels, and content
+- Searches title, tags, and content
 
 ### Search Examples
 ```bash
 # Find "review" prompts
 pt edit -s rev
 
-# Find by label
+# Find by tag
 pt edit -s "#typescript"
 
 # Complex search
@@ -180,9 +180,9 @@ done
 
 ### Updating Metadata
 ```bash
-# Update labels across prompts
-pt edit -s "old-label" --all
-# Then: Update labels in frontmatter
+# Update tags across prompts
+pt edit -s "old-tag" --all
+# Then: Update tags in frontmatter
 ```
 
 ### Refactoring Templates

@@ -33,7 +33,7 @@ describe('PromptManager', () => {
   it('should parse prompt with frontmatter', async () => {
     const promptContent = `---
 title: API Client Generator
-labels: [api, client, typescript]
+tags: [api, client, typescript]
 variables:
   - name: serviceName
     type: input
@@ -53,7 +53,7 @@ This is the prompt content.
     const prompt = prompts[0];
 
     expect(prompt.title).toBe('API Client Generator');
-    expect(prompt.labels).toEqual(['api', 'client', 'typescript']);
+    expect(prompt.tags).toEqual(['api', 'client', 'typescript']);
     expect(prompt.content).toContain('This is the prompt content');
     expect(prompt.variables).toHaveLength(1);
     expect(prompt.variables![0].name).toBe('serviceName');
@@ -63,7 +63,7 @@ This is the prompt content.
     const promptContent = `---
 title: Implementation Plan
 summary: Create a plan from {{file "design"}} and write it to {{reviewFile "plan"}}
-labels: [planning]
+tags: [planning]
 ---
 
 # Implementation Plan
@@ -80,7 +80,7 @@ Generate implementation plan...
 
     expect(prompt.title).toBe('Implementation Plan');
     expect(prompt.summary).toBe('Create a plan from {{file "design"}} and write it to {{reviewFile "plan"}}');
-    expect(prompt.labels).toEqual(['planning']);
+    expect(prompt.tags).toEqual(['planning']);
   });
 
   it('should handle prompts without frontmatter', async () => {
@@ -96,7 +96,7 @@ Just a simple prompt without frontmatter.`;
     const prompt = prompts[0];
 
     expect(prompt.title).toBe('simple'); // Filename without extension
-    expect(prompt.labels).toEqual([]);
+    expect(prompt.tags).toEqual([]);
     expect(prompt.content).toContain('Just a simple prompt');
   });
 

@@ -1,7 +1,6 @@
 import fs from 'fs-extra';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { HistoryEntry, EnhancedHistoryEntry } from '../types/history.js';
 import { AnnotationMetadata } from '../types/annotations.js';
@@ -202,9 +201,9 @@ export class HistoryManager {
       // Extract basename from history entry
       const historyBasename = path.basename(historyEntry.filename, '.json');
       
-      // Find annotation files that match this history entry
+      // Find annotation files that match this history entry (both .md and .json)
       const annotationFiles = files.filter(file => 
-        file.startsWith(`${historyBasename}-annotation-`) && file.endsWith('.md')
+        file.startsWith(`${historyBasename}-annotation-`) && (file.endsWith('.md') || file.endsWith('.json'))
       );
       
       // Read and return the content of each annotation
@@ -231,7 +230,8 @@ export class HistoryManager {
 
   async saveAnnotation(
     historyEntry: HistoryEntry | EnhancedHistoryEntry,
-    metadata: AnnotationMetadata
+    metadata: AnnotationMetadata,
+    notes?: string
   ): Promise<void> {
     if (!this.annotationDir) {
       logger.warn('Annotation directory not configured, skipping annotation save');
@@ -240,25 +240,22 @@ export class HistoryManager {
 
     await fs.ensureDir(this.annotationDir);
 
-    // Generate annotation content
-    const content = `---
-${yaml.dump(metadata)}---
-
-## Notes
-
-${metadata.auto_detected ? 'Auto-generated annotation' : ''}
-`;
+    // Create JSON content with all metadata and notes
+    const annotationData = {
+      ...metadata,
+      notes: notes || (metadata.auto_detected ? 'Auto-generated annotation' : '')
+    };
 
     // Create filename based on history entry
     const historyBasename = path.basename(
       historyEntry.filename || `${historyEntry.timestamp}.json`,
       '.json'
     );
-    const filename = `${historyBasename}-annotation-${uuidv4()}.md`;
+    const filename = `${historyBasename}-annotation-${uuidv4()}.json`;
     const filepath = path.join(this.annotationDir, filename);
 
     try {
-      await fs.writeFile(filepath, content);
+      await fs.writeJson(filepath, annotationData, { spaces: 2 });
       logger.debug(`Auto-annotation saved to ${filepath}`);
     } catch (error) {
       logger.error(`Failed to save annotation: ${error}`);

@@ -1,10 +1,10 @@
 import MiniSearch from 'minisearch';
 import { Prompt } from '../types/prompt.js';
 
-interface SearchablePrompt extends Omit<Prompt, 'labels'> {
+interface SearchablePrompt extends Omit<Prompt, 'tags'> {
   id: number;
-  labels: string;
-  originalLabels: string[];
+  tags: string;
+  originalTags: string[];
 }
 
 export class SearchEngine {
@@ -15,27 +15,27 @@ export class SearchEngine {
     this.prompts = prompts;
 
     this.miniSearch = new MiniSearch<SearchablePrompt>({
-      fields: ['title', 'labels', 'content'],
+      fields: ['title', 'tags', 'content'],
       storeFields: [
         'path',
         'relativePath',
         'filename',
         'title',
-        'labels',
+        'tags',
         'content',
         'frontmatter',
         'variables',
-        'originalLabels',
+        'originalTags',
       ],
     });
 
     if (prompts.length > 0) {
-      // Process prompts to ensure labels is searchable as a string
+      // Process prompts to ensure tags is searchable as a string
       const processedPrompts: SearchablePrompt[] = prompts.map((prompt, index) => ({
         ...prompt,
         id: index,
-        labels: prompt.labels.join(' '),
-        originalLabels: prompt.labels,
+        tags: prompt.tags.join(' '),
+        originalTags: prompt.tags,
       }));
 
       this.miniSearch.addAll(processedPrompts);
@@ -50,7 +50,7 @@ export class SearchEngine {
     const searchResults = this.miniSearch.search(query, {
       boost: {
         title: 3,
-        labels: 2,
+        tags: 2,
         content: 1,
       },
       fuzzy: 0.2,

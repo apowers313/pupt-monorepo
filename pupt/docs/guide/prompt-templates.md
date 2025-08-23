@@ -71,7 +71,7 @@ Frontmatter lets you add metadata and configure your prompts. It goes at the top
 ```markdown
 ---
 title: My Awesome Prompt
-labels: [development, automation]
+tags: [development, automation]
 ---
 
 Your prompt content here...
@@ -82,7 +82,7 @@ Your prompt content here...
 ```yaml
 ---
 title: Feature Request Template    # Display name
-labels: [feature, planning]       # Tags for searching
+tags: [feature, planning]       # Tags for searching
 summary: Create feature request for {{input "feature"}}  # Shows in history
 ---
 ```
@@ -188,7 +188,7 @@ Here's a practical example combining these features:
 ```markdown
 ---
 title: API Endpoint Generator
-labels: [api, backend]
+tags: [api, backend]
 variables:
   - name: method
     type: select

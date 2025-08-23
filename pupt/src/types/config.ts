@@ -29,15 +29,8 @@ export interface OutputCaptureConfig {
 
 export interface AutoAnnotateConfig {
   enabled: boolean;
-  triggers: string[];
+  triggers?: string[];
   analysisPrompt: string;
-  fallbackRules: FallbackRule[];
-}
-
-export interface FallbackRule {
-  pattern: string;
-  category: 'verification_gap' | 'incomplete_task' | 'ambiguous_instruction' | 'missing_constraint';
-  severity: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface HelperConfig {

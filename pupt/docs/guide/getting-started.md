@@ -53,7 +53,7 @@ pt add
 
 This will:
 1. Ask for a filename (e.g., `code-review.md`)
-2. Collect metadata (title, description, labels)
+2. Collect metadata (title, description, tags)
 3. Open your default editor to write the prompt content
 
 Here's a simple example prompt:
@@ -61,7 +61,7 @@ Here's a simple example prompt:
 ```markdown
 ---
 title: Code Review Assistant
-labels: [code, review, analysis]
+tags: [code, review, analysis]
 ---
 
 Please review the following code and provide feedback on:
@@ -112,7 +112,7 @@ Prompt files are Markdown files with optional YAML frontmatter. They live in you
 ```markdown
 ---
 title: My Prompt Template
-labels: [category, subcategory]
+tags: [category, subcategory]
 ---
 
 Your prompt content here with &#123;&#123;variables&#125;&#125; and &#123;&#123;input "helpers"&#125;&#125;.

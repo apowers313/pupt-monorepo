@@ -32,14 +32,7 @@ describe('Auto-Annotation Flow', () => {
       autoAnnotate: {
         enabled: true,
         triggers: ['test-runner'],
-        analysisPrompt: 'analyze-output',
-        fallbackRules: [
-          {
-            pattern: '\\d+ tests? failed',
-            category: 'verification_gap',
-            severity: 'high',
-          },
-        ],
+        analysisPrompt: 'analyze-output'
       },
     };
     await testEnv.writeConfig(config);
@@ -99,8 +92,7 @@ Return format:
       autoAnnotate: {
         enabled: true,
         triggers: ['build-task'],
-        analysisPrompt: 'check-output',
-        fallbackRules: [],
+        analysisPrompt: 'check-output'
       },
     };
     await testEnv.writeConfig(config);
@@ -146,14 +138,7 @@ Output content:
       autoAnnotate: {
         enabled: true,
         triggers: ['error-task'],
-        analysisPrompt: 'non-existent-prompt',
-        fallbackRules: [
-          {
-            pattern: 'error',
-            category: 'incomplete_task',
-            severity: 'high',
-          },
-        ],
+        analysisPrompt: 'non-existent-prompt'
       },
     };
     await testEnv.writeConfig(config);
@@ -169,9 +154,6 @@ echo "error: something went wrong"`;
     // Verify config was written correctly with non-existent analysis prompt
     const writtenConfig = await fs.readJson(testEnv.getPath('.pt-config.json'));
     expect(writtenConfig.autoAnnotate.analysisPrompt).toBe('non-existent-prompt');
-    expect(writtenConfig.autoAnnotate.fallbackRules).toHaveLength(1);
-    expect(writtenConfig.autoAnnotate.fallbackRules[0].pattern).toBe('error');
-    expect(writtenConfig.autoAnnotate.fallbackRules[0].category).toBe('incomplete_task');
     
     // Verify error task prompt was created
     const promptFiles = await fs.readdir(promptsDir);
@@ -192,8 +174,7 @@ echo "error: something went wrong"`;
       autoAnnotate: {
         enabled: true,
         triggers: ['specific-task'],
-        analysisPrompt: 'analyze',
-        fallbackRules: [],
+        analysisPrompt: 'analyze'
       },
     };
     await testEnv.writeConfig(config);
@@ -227,8 +208,7 @@ echo "This should not trigger auto-annotation"`;
       autoAnnotate: {
         enabled: false,
         triggers: ['any-task'],
-        analysisPrompt: 'analyze',
-        fallbackRules: [],
+        analysisPrompt: 'analyze'
       },
     };
     await testEnv.writeConfig(config);

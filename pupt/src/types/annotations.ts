@@ -23,6 +23,7 @@ export interface AnnotationMetadata {
   structured_outcome?: StructuredOutcome;
   issues_identified?: IssueIdentified[];
   auto_detected?: boolean;
+  notes?: string;
 }
 
 export interface ParsedAnnotation extends AnnotationMetadata {

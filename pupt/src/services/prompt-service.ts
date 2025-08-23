@@ -26,7 +26,7 @@ const PromptSchema = z.object({
   relativePath: z.string(),
   filename: z.string(),
   title: z.string(),
-  labels: z.array(z.string()),
+  tags: z.array(z.string()),
   content: z.string(),
   frontmatter: z.record(z.string(), z.any()),
   variables: z.array(VariableSchema).optional()
@@ -102,8 +102,8 @@ export class PromptService {
       // Extract title from frontmatter or filename
       const title = frontmatter.title || path.basename(filename, '.md');
 
-      // Extract labels
-      const labels = Array.isArray(frontmatter.labels) ? frontmatter.labels : [];
+      // Extract tags
+      const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
 
       // Extract variables
       const variables = this.parseVariables(frontmatter.variables);
@@ -113,7 +113,7 @@ export class PromptService {
         relativePath,
         filename,
         title,
-        labels,
+        tags,
         content: markdownContent.trim(),
         frontmatter,
         variables,
@@ -188,8 +188,8 @@ export class PromptService {
     const results = this.searchIndex.search(query, {
       fuzzy: 0.2,
       prefix: true,
-      boost: { title: 2, labels: 1.5 },
-      fields: ['title', 'labels', 'content']
+      boost: { title: 2, tags: 1.5 },
+      fields: ['title', 'tags', 'content']
     });
 
     return results.map(result => {
@@ -198,9 +198,9 @@ export class PromptService {
     });
   }
 
-  async getPromptsByLabel(label: string): Promise<Prompt[]> {
+  async getPromptsByTag(tag: string): Promise<Prompt[]> {
     const allPrompts = await this.discoverPrompts();
-    return allPrompts.filter(prompt => prompt.labels.includes(label));
+    return allPrompts.filter(prompt => prompt.tags.includes(tag));
   }
 
   private async discoverPromptsInDir(dir: string, baseDir?: string): Promise<Prompt[]> {
@@ -262,10 +262,10 @@ export class PromptService {
 
   private async buildSearchIndex(prompts: Prompt[]): Promise<void> {
     this.searchIndex = new MiniSearch({
-      fields: ['title', 'labels', 'content'],
-      storeFields: ['path', 'relativePath', 'filename', 'title', 'labels', 'content', 'frontmatter', 'variables'],
+      fields: ['title', 'tags', 'content'],
+      storeFields: ['path', 'relativePath', 'filename', 'title', 'tags', 'content', 'frontmatter', 'variables'],
       searchOptions: {
-        boost: { title: 2, labels: 1.5 },
+        boost: { title: 2, tags: 1.5 },
         fuzzy: 0.2
       },
       processTerm: (term) => term.toLowerCase()

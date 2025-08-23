@@ -21,7 +21,7 @@ describe('pt CLI E2E', () => {
     // Create test prompt
     const promptContent = `---
 title: Test Prompt
-labels: [test]
+tags: [test]
 ---
 Hello {{input "name" "Your name?"}}!
 Today is {{date}}.`;

@@ -31,7 +31,7 @@ describe('PromptService', () => {
         path.join(tempDir, 'category', 'nested.md'),
         `---
 title: Nested Prompt
-labels: [test, nested]
+tags: [test, nested]
 variables:
   - name: username
     type: input
@@ -56,7 +56,7 @@ Hello {{username}}!`
       const nested = prompts.find(p => p.filename === 'nested.md');
       
       expect(nested?.title).toBe('Nested Prompt');
-      expect(nested?.labels).toEqual(['test', 'nested']);
+      expect(nested?.tags).toEqual(['test', 'nested']);
       expect(nested?.variables).toHaveLength(1);
       expect(nested?.variables?.[0]).toEqual({
         name: 'username',
@@ -153,7 +153,7 @@ Write code in {{language}}.`
         relativePath: 'prompt.md',
         filename: 'prompt.md',
         title: 'Test',
-        labels: ['test'],
+        tags: ['test'],
         content: 'Test content',
         frontmatter: {},
         variables: []
@@ -169,7 +169,7 @@ Write code in {{language}}.`
         relativePath: 'prompt.md',
         filename: 'prompt.md',
         title: 'Test',
-        labels: ['test'],
+        tags: ['test'],
         content: 'Test content',
         frontmatter: {},
         variables: [
@@ -193,7 +193,7 @@ Write code in {{language}}.`
         path.join(tempDir, 'api-test.md'),
         `---
 title: API Test
-labels: [api, testing]
+tags: [api, testing]
 ---
 Test API endpoints`
       );
@@ -202,7 +202,7 @@ Test API endpoints`
         path.join(tempDir, 'unit-test.md'),
         `---
 title: Unit Test Generator
-labels: [testing, generator]
+tags: [testing, generator]
 ---
 Generate unit tests`
       );
@@ -211,7 +211,7 @@ Generate unit tests`
         path.join(tempDir, 'readme.md'),
         `---
 title: README Generator
-labels: [documentation]
+tags: [documentation]
 ---
 Generate README files`
       );
@@ -224,7 +224,7 @@ Generate README files`
       expect(results.map(r => r.title).sort()).toEqual(['API Test', 'Unit Test Generator']);
     });
 
-    it('should search prompts by label', async () => {
+    it('should search prompts by tag', async () => {
       const results = await service.searchPrompts('testing');
       
       expect(results).toHaveLength(2);
@@ -246,12 +246,12 @@ Generate README files`
     });
   });
 
-  describe('getPromptsByLabel', () => {
+  describe('getPromptsByTag', () => {
     beforeEach(async () => {
       await fs.writeFile(
         path.join(tempDir, 'prompt1.md'),
         `---
-labels: [api, v1]
+tags: [api, v1]
 ---
 Content 1`
       );
@@ -259,7 +259,7 @@ Content 1`
       await fs.writeFile(
         path.join(tempDir, 'prompt2.md'),
         `---
-labels: [api, v2]
+tags: [api, v2]
 ---
 Content 2`
       );
@@ -267,20 +267,20 @@ Content 2`
       await fs.writeFile(
         path.join(tempDir, 'prompt3.md'),
         `---
-labels: [testing]
+tags: [testing]
 ---
 Content 3`
       );
     });
 
-    it('should filter prompts by label', async () => {
-      const results = await service.getPromptsByLabel('api');
+    it('should filter prompts by tag', async () => {
+      const results = await service.getPromptsByTag('api');
       
       expect(results).toHaveLength(2);
     });
 
-    it('should return empty array for non-existent label', async () => {
-      const results = await service.getPromptsByLabel('nonexistent');
+    it('should return empty array for non-existent tag', async () => {
+      const results = await service.getPromptsByTag('nonexistent');
       
       expect(results).toHaveLength(0);
     });

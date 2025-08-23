@@ -82,7 +82,7 @@ describe('User Input Protection from Handlebars Processing', () => {
     // This recreates the exact scenario from the user's issue
     const promptContent = `---
 title: Improving the file helper
-labels: [improvement]
+tags: [improvement]
 ---
 
 I want to discuss improvements to the {{input "helper" "Which helper do you want to improve?"}} helper.
@@ -101,7 +101,7 @@ The current implementation needs these enhancements:
       title: 'Improving the file helper',
       path: path.join(promptsDir, 'improve-helper.md'),
       content: promptContent,
-      labels: ['improvement']
+      tags: ['improvement']
     });
     
     // User types "{{file}}" when asked which helper
@@ -179,7 +179,7 @@ Provide a template example: {{input "template" "Enter a Handlebars template:"}}
       title: 'Template Examples',
       path: path.join(promptsDir, 'template-example.md'),
       content: promptContent,
-      labels: []
+      tags: []
     });
     
     // User enters complex handlebars template

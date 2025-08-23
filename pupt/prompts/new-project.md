@@ -2,7 +2,7 @@
 title: New Project
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250815
-labels: []
+tags: []
 ---
 
 Create a design for a new project called {{input "projectName"}}. The project is written in {{input "programmingLanguage"}}. The purpose of the project is to: {{input "projectPurpose"}}. The requirements for the project are:

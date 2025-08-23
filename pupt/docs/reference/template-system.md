@@ -12,7 +12,7 @@ A prompt file consists of two main parts:
 ```markdown
 ---
 title: Example Prompt
-labels: [example, demo]
+tags: [example, demo]
 variables:
   - name: projectName
     type: input
@@ -32,7 +32,7 @@ Your template content here...
 - **Description**: Display name for the prompt
 - **Default**: Filename without extension
 
-### `labels`
+### `tags`
 - **Type**: `string[]`
 - **Description**: Tags for categorization and search
 - **Default**: `[]`
@@ -57,7 +57,7 @@ Your template content here...
 ```yaml
 ---
 title: Advanced Example
-labels: [advanced, complete]
+tags: [advanced, complete]
 variables:
   - name: componentName
     type: input
@@ -401,7 +401,7 @@ To output literal Handlebars syntax:
 ```markdown
 ---
 title: React Component Generator
-labels: [react, component, generator]
+tags: [react, component, generator]
 variables:
   - name: componentName
     type: input

@@ -3,7 +3,7 @@ export interface Prompt {
   relativePath: string; // Path relative to prompt directory
   filename: string; // Just the filename
   title: string; // From frontmatter or filename
-  labels: string[]; // From frontmatter
+  tags: string[]; // From frontmatter
   content: string; // Markdown content without frontmatter
   frontmatter: Record<string, unknown>; // Raw frontmatter data
   variables?: VariableDefinition[];

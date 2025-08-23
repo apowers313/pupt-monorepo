@@ -4,6 +4,7 @@ import { HistoryManager } from '../history/history-manager.js';
 import { HistoryEntry } from '../types/history.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
+import { IssueIdentified } from '../types/annotations.js';
 import Handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'fs-extra';
@@ -133,7 +134,43 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
           if (index > 0) {
             logger.log(chalk.gray('\n' + '-'.repeat(40) + '\n'));
           }
-          logger.log(annotation);
+          
+          // Try to parse as JSON first
+          try {
+            const jsonAnnotation = JSON.parse(annotation);
+            // Format JSON annotation nicely
+            logger.log(chalk.yellow(`Status: ${jsonAnnotation.status}`));
+            logger.log(chalk.gray(`Timestamp: ${formatDate(jsonAnnotation.timestamp)}`));
+            
+            if (jsonAnnotation.tags && jsonAnnotation.tags.length > 0) {
+              logger.log(chalk.gray(`Tags: ${jsonAnnotation.tags.join(', ')}`));
+            }
+            
+            if (jsonAnnotation.notes) {
+              logger.log(chalk.white('\nNotes:'));
+              logger.log(jsonAnnotation.notes);
+            }
+            
+            if (jsonAnnotation.issues_identified && jsonAnnotation.issues_identified.length > 0) {
+              logger.log(chalk.red('\nIssues Identified:'));
+              jsonAnnotation.issues_identified.forEach((issue: IssueIdentified) => {
+                logger.log(`  - ${chalk.red(`[${issue.severity}]`)} ${issue.category}: ${issue.description}`);
+              });
+            }
+            
+            if (jsonAnnotation.structured_outcome) {
+              logger.log(chalk.green('\nStructured Outcome:'));
+              const outcome = jsonAnnotation.structured_outcome;
+              logger.log(`  Tasks: ${outcome.tasks_completed}/${outcome.tasks_total}`);
+              if (outcome.tests_run > 0) {
+                logger.log(`  Tests: ${outcome.tests_passed}/${outcome.tests_run} passed`);
+              }
+              logger.log(`  Execution time: ${outcome.execution_time}`);
+            }
+          } catch {
+            // Fall back to displaying raw content (for legacy markdown annotations)
+            logger.log(annotation);
+          }
         });
         
         logger.log(chalk.gray('─'.repeat(80)));

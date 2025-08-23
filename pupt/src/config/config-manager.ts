@@ -9,6 +9,7 @@ import { migrateConfig } from './migration.js';
 import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
 import { z } from 'zod';
 import { logger } from '../utils/logger.js';
+import { migrateAnnotationsToJson } from '../utils/annotation-migration.js';
 
 export interface ConfigResult {
   config: Config;
@@ -113,8 +114,19 @@ export class ConfigManager {
     const configDir = path.dirname(result.filepath);
 
     // Expand paths relative to the config file directory
+    const expandedConfig = this.expandPaths(migrated, configDir);
+
+    // Migrate annotation files if needed
+    if (expandedConfig.annotationDir) {
+      try {
+        await migrateAnnotationsToJson(expandedConfig.annotationDir);
+      } catch (error) {
+        logger.warn(`Failed to migrate annotation files: ${error}`);
+      }
+    }
+
     return {
-      config: this.expandPaths(migrated, configDir),
+      config: expandedConfig,
       filepath: result.filepath,
       configDir: configDir
     };

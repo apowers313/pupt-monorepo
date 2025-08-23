@@ -219,22 +219,39 @@ export class ReviewDataBuilder {
 
     try {
       const files = await fs.readdir(this.config.annotationDir);
-      const annotationFiles = files.filter(f => f.endsWith('.md'));
+      const annotationFiles = files.filter(f => 
+        (f.endsWith('.md') && f.includes('annotation')) || 
+        (f.endsWith('.json') && f.includes('annotation'))
+      );
       
       const rawAnnotations: Array<AnnotationMetadata & { notes: string; annotationPath: string }> = [];
       
       for (const file of annotationFiles) {
-        const content = await fs.readFile(path.join(this.config.annotationDir, file), 'utf-8');
-        const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+        const filePath = path.join(this.config.annotationDir, file);
         
-        if (frontmatterMatch) {
-          const metadata = yaml.load(frontmatterMatch[1]) as AnnotationMetadata;
-          const notes = content.slice(frontmatterMatch[0].length).trim();
+        if (file.endsWith('.json')) {
+          // Handle JSON format
+          const data = await fs.readJson(filePath) as AnnotationMetadata & { notes?: string };
           rawAnnotations.push({
-            ...metadata,
-            notes,
-            annotationPath: path.join(this.config.annotationDir, file)
+            ...data,
+            notes: data.notes || '',
+            annotationPath: filePath
           });
+        } else {
+          // Handle legacy markdown format
+          const content = await fs.readFile(filePath, 'utf-8');
+          const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+          
+          if (frontmatterMatch) {
+            const metadata = yaml.load(frontmatterMatch[1]) as AnnotationMetadata;
+            const notes = content.slice(frontmatterMatch[0].length).trim()
+              .replace(/^## Notes\n\n/, ''); // Remove the "## Notes" header if present
+            rawAnnotations.push({
+              ...metadata,
+              notes,
+              annotationPath: filePath
+            });
+          }
         }
       }
       

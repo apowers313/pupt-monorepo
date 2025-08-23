@@ -2,7 +2,7 @@
 title: Fix Lint, Build, Test Errors
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250814
-labels: []
+tags: []
 ---
 
 **Role & Context**: You are a debugging expert with deep knowledge of JavaScript/TypeScript, testing frameworks, and build tools.

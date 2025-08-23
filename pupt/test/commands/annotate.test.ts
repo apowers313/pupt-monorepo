@@ -82,7 +82,7 @@ describe('annotateCommand', () => {
       (prompts.select as Mock).mockResolvedValue('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('Test notes');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand(1);
 
@@ -104,45 +104,42 @@ describe('annotateCommand', () => {
     });
 
     it('should create file with correct filename format', async () => {
-      const expectedFilename = '20240120-103000-abc123-annotation-test-uuid.md';
+      const expectedFilename = '20240120-103000-abc123-annotation-test-uuid.json';
       
       (prompts.select as Mock)
         .mockResolvedValueOnce(0) // history selection
         .mockResolvedValueOnce('success'); // status selection
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('Test notes');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      expect(fs.writeFile).toHaveBeenCalledWith(
+      expect(fs.writeJson).toHaveBeenCalledWith(
         path.join('./.pthistory', expectedFilename),
-        expect.any(String)
+        expect.any(Object),
+        { spaces: 2 }
       );
     });
 
-    it('should create valid YAML frontmatter', async () => {
+    it('should create valid JSON annotation', async () => {
       (prompts.select as Mock)
         .mockResolvedValueOnce(0)
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('tag1, tag2');
       (prompts.editor as Mock).mockResolvedValue('Test notes');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
 
-      expect(content).toContain('---');
-      expect(content).toContain('historyFile: 20240120-103000-abc123.json');
-      expect(content).toContain('timestamp:');
-      expect(content).toContain('status: success');
-      expect(content).toContain('tags:');
-      expect(content).toContain('  - tag1');
-      expect(content).toContain('  - tag2');
-      expect(content).toContain('## Notes');
-      expect(content).toContain('Test notes');
+      expect(content.historyFile).toBe('20240120-103000-abc123.json');
+      expect(content.timestamp).toBeDefined();
+      expect(content.status).toBe('success');
+      expect(content.tags).toEqual(['tag1', 'tag2']);
+      expect(content.notes).toBe('Test notes');
     });
 
     it('should link to correct history file', async () => {
@@ -151,14 +148,14 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
 
-      expect(content).toContain('historyFile: 20240120-103000-abc123.json');
+      expect(content.historyFile).toBe('20240120-103000-abc123.json');
     });
 
     it('should include timestamp', async () => {
@@ -170,14 +167,14 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
 
-      expect(content).toContain('timestamp: \'2024-01-20T15:30:00.000Z\'');
+      expect(content.timestamp).toBe('2024-01-20T15:30:00.000Z');
     });
 
     it('should allow multiple annotations per history entry', async () => {
@@ -186,7 +183,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('First annotation');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
       
@@ -205,13 +202,13 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('failure');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('Second annotation');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      const calls = (fs.writeFile as Mock).mock.calls;
+      const calls = (fs.writeJson as Mock).mock.calls;
       expect(calls).toHaveLength(1);
-      expect(calls[0][0]).toContain('20240120-103000-abc123-annotation-test-uuid-2.md');
+      expect(calls[0][0]).toContain('20240120-103000-abc123-annotation-test-uuid-2.json');
     });
   });
 
@@ -233,7 +230,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success'); // status selection
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
@@ -258,7 +255,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('partial');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
@@ -278,7 +275,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('bugfix, refactor, testing');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
@@ -286,11 +283,9 @@ describe('annotateCommand', () => {
         message: 'Tags (comma-separated, optional):'
       });
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
-      expect(content).toContain('- bugfix');
-      expect(content).toContain('- refactor');
-      expect(content).toContain('- testing');
+      expect(content.tags).toEqual(['bugfix', 'refactor', 'testing']);
     });
 
     it('should open editor for notes', async () => {
@@ -299,7 +294,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('Detailed notes about the prompt execution');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
@@ -307,9 +302,9 @@ describe('annotateCommand', () => {
         message: 'Add notes (press enter to open editor):'
       });
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
-      expect(content).toContain('Detailed notes about the prompt execution');
+      expect(content.notes).toBe('Detailed notes about the prompt execution');
     });
 
     it('should handle empty notes', async () => {
@@ -318,13 +313,13 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
-      const writeCall = (fs.writeFile as Mock).mock.calls[0];
+      const writeCall = (fs.writeJson as Mock).mock.calls[0];
       const content = writeCall[1];
-      expect(content).toContain('## Notes\n\n');
+      expect(content.notes).toBe('');
     });
 
     it('should show success message with annotation path', async () => {
@@ -333,12 +328,12 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockResolvedValue(undefined);
+      (fs.writeJson as Mock).mockResolvedValue(undefined);
 
       await annotateCommand();
 
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        `✅ Annotation saved to ${path.join('.pthistory', '20240120-103000-abc123-annotation-test-uuid.md')}`
+        `✅ Annotation saved to ${path.join('.pthistory', '20240120-103000-abc123-annotation-test-uuid.json')}`
       );
     });
   });
@@ -376,7 +371,7 @@ describe('annotateCommand', () => {
         .mockResolvedValueOnce('success');
       (prompts.input as Mock).mockResolvedValue('');
       (prompts.editor as Mock).mockResolvedValue('');
-      (fs.writeFile as Mock).mockRejectedValue(new Error('Permission denied'));
+      (fs.writeJson as Mock).mockRejectedValue(new Error('Permission denied'));
 
       await expect(annotateCommand()).rejects.toThrow('Permission denied');
     });

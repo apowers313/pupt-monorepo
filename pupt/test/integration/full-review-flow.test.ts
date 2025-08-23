@@ -11,7 +11,6 @@ import { AutoAnnotationService } from '../../src/services/auto-annotation-servic
 import { PromptManager } from '../../src/prompts/prompt-manager.js';
 import type { Config } from '../../src/types/index.js';
 import type { EnhancedHistoryEntry } from '../../src/types/history.js';
-import yaml from 'js-yaml';
 
 describe('Full Review Flow Integration', () => {
   let testDir: string;
@@ -48,13 +47,6 @@ describe('Full Review Flow Integration', () => {
           enabled: true,
           triggers: ['echo'],
           analysisPrompt: 'analyze-execution',
-          fallbackRules: [
-            {
-              pattern: 'ERROR',
-              category: 'incomplete_task',
-              severity: 'high'
-            }
-          ]
         }
       };
 
@@ -132,31 +124,34 @@ Completed with errors.`;
       const autoAnnotationService = new AutoAnnotationService(config, promptManager, historyManager);
       
       // Simulate auto-annotation with fallback rules
-      const annotationContent = `---
-historyFile: ${path.basename(historyFile)}
-timestamp: "${new Date().toISOString()}"
-status: failure
-tags: ["auto-annotation", "pattern-match"]
-structured_outcome:
-  tasks_completed: 0
-  tasks_total: 1
-  tests_run: 1
-  tests_passed: 0
-  tests_failed: 1
-  verification_passed: false
-  execution_time: "5s"
-issues_identified:
-  - category: incomplete_task
-    severity: high
-    description: "ERROR pattern detected in output"
-    evidence: "ERROR: Test failed!"
-auto_detected: true
----
+      const annotationData = {
+        historyFile: path.basename(historyFile),
+        timestamp: new Date().toISOString(),
+        status: 'failure' as const,
+        tags: ['auto-annotation', 'pattern-match'],
+        structured_outcome: {
+          tasks_completed: 0,
+          tasks_total: 1,
+          tests_run: 1,
+          tests_passed: 0,
+          tests_failed: 1,
+          verification_passed: false,
+          execution_time: '5s'
+        },
+        issues_identified: [
+          {
+            category: 'incomplete_task' as const,
+            severity: 'high' as const,
+            description: 'ERROR pattern detected in output',
+            evidence: 'ERROR: Test failed!'
+          }
+        ],
+        auto_detected: true,
+        notes: 'Auto-detected: ERROR pattern found in output'
+      };
 
-Auto-detected: ERROR pattern found in output`;
-
-      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.md`);
-      await fs.writeFile(annotationFile, annotationContent);
+      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+      await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
 
       // Step 3: Review data generation
       const reviewDataBuilder = new ReviewDataBuilder(config);
@@ -242,8 +237,7 @@ Auto-detected: ERROR pattern found in output`;
         autoAnnotate: {
           enabled: true,
           triggers: ['claude'],
-          analysisPrompt: 'analyze-execution',
-          fallbackRules: []
+          analysisPrompt: 'analyze-execution'
         }
       };
 
@@ -284,8 +278,7 @@ Output file: {{outputFile}}`;
         autoAnnotate: {
           enabled: false,
           triggers: [],
-          analysisPrompt: '',
-          fallbackRules: []
+          analysisPrompt: 'analyze-execution'
         }
       };
 
@@ -308,31 +301,34 @@ Output file: {{outputFile}}`;
         });
 
         // Create annotations showing verification gap pattern
-        const annotationContent = `---
-historyFile: ${path.basename(historyFile)}
-timestamp: "${new Date().toISOString()}"
-status: partial
-tags: []
-structured_outcome:
-  tasks_completed: 1
-  tasks_total: 1
-  tests_run: 0
-  tests_passed: 0
-  tests_failed: 0
-  verification_passed: false
-  execution_time: "5s"
-issues_identified:
-  - category: verification_gap
-    severity: high
-    description: "Tests were not run after implementation"
-    evidence: "Implementation claimed complete but no test execution found"
-auto_detected: false
----
+        const annotationData = {
+          historyFile: path.basename(historyFile),
+          timestamp: new Date().toISOString(),
+          status: 'partial' as const,
+          tags: [],
+          structured_outcome: {
+            tasks_completed: 1,
+            tasks_total: 1,
+            tests_run: 0,
+            tests_passed: 0,
+            tests_failed: 0,
+            verification_passed: false,
+            execution_time: '5s'
+          },
+          issues_identified: [
+            {
+              category: 'verification_gap' as const,
+              severity: 'high' as const,
+              description: 'Tests were not run after implementation',
+              evidence: 'Implementation claimed complete but no test execution found'
+            }
+          ],
+          auto_detected: false,
+          notes: 'Tests still failing after AI claimed success'
+        };
 
-Tests still failing after AI claimed success`;
-
-        const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.md`);
-        await fs.writeFile(annotationFile, annotationContent);
+        const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+        await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
       }
 
       // Generate review data
@@ -387,17 +383,16 @@ Test the CLI review command`;
       });
 
       // Create annotation
-      const annotationContent = `---
-historyFile: ${path.basename(historyFile)}
-timestamp: "${new Date().toISOString()}"
-status: success
-tags: ["test"]
----
+      const annotationData = {
+        historyFile: path.basename(historyFile),
+        timestamp: new Date().toISOString(),
+        status: 'success' as const,
+        tags: ['test'],
+        notes: 'Test completed successfully'
+      };
 
-Test completed successfully`;
-
-      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.md`);
-      await fs.writeFile(annotationFile, annotationContent);
+      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+      await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
 
       // Import and run the review command
       const { reviewCommand } = await import('../../src/commands/review.js');

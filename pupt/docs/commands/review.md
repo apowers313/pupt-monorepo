@@ -127,7 +127,7 @@ Low Success (<70%):
 
 2. Split "general-helper":
    - Create focused prompts for specific tasks
-   - Use labels for organization
+   - Use tags for organization
 
 3. Update outdated prompts:
    - "old-api-client": Uses deprecated patterns

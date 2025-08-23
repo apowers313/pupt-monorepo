@@ -28,13 +28,13 @@ export async function addCommand(): Promise<void> {
     }
   });
 
-  // Get labels
-  const labelsInput = await input({
-    message: 'Labels (comma-separated, optional):',
+  // Get tags
+  const tagsInput = await input({
+    message: 'Tags (comma-separated, optional):',
     default: ''
   });
   
-  const labels = labelsInput
+  const tags = tagsInput
     .split(',')
     .map(l => l.trim())
     .filter(l => l.length > 0);
@@ -63,7 +63,7 @@ export async function addCommand(): Promise<void> {
 title: ${title}
 author: ${author}
 creationDate: ${dateStr}
-labels: [${labels.join(', ')}]
+tags: [${tags.join(', ')}]
 ---
 
 {{!-- Add your prompt content here --}}

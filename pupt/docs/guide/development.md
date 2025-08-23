@@ -128,7 +128,6 @@ prompt-tool/
 
 2. **Configuration System** (`src/config/`)
    - `ConfigManager`: Loads and merges configurations
-   - `migration.ts`: Handles version migrations
    - Supports multiple file formats
 
 3. **Prompt Management** (`src/prompts/`)

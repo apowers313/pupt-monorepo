@@ -11,7 +11,7 @@ Generate consistent React components with customizable features.
 ```markdown
 ---
 title: React Component Generator
-labels: [react, component, frontend]
+tags: [react, component, frontend]
 variables:
   - name: componentName
     type: input
@@ -68,7 +68,7 @@ Generate type-safe API clients from specifications.
 ```markdown
 ---
 title: TypeScript API Client
-labels: [api, typescript, client]
+tags: [api, typescript, client]
 variables:
   - name: serviceName
     type: input
@@ -134,7 +134,7 @@ Create comprehensive README files for projects.
 ```markdown
 ---
 title: README Generator
-labels: [documentation, readme]
+tags: [documentation, readme]
 variables:
   - name: projectName
     type: input
@@ -210,7 +210,7 @@ Generate comprehensive API documentation.
 ```markdown
 ---
 title: API Documentation Generator
-labels: [api, documentation]
+tags: [api, documentation]
 variables:
   - name: apiName
     type: input
@@ -273,7 +273,7 @@ Comprehensive pull request analysis.
 ```markdown
 ---
 title: Pull Request Review
-labels: [review, pr, git]
+tags: [review, pr, git]
 variables:
   - name: prUrl
     type: input
@@ -344,7 +344,7 @@ Analyze code for refactoring opportunities.
 ```markdown
 ---
 title: Code Refactoring Analysis
-labels: [refactor, code-quality]
+tags: [refactor, code-quality]
 variables:
   - name: codeFile
     type: file
@@ -399,7 +399,7 @@ Generate comprehensive test cases.
 ```markdown
 ---
 title: Test Case Generator
-labels: [testing, qa]
+tags: [testing, qa]
 variables:
   - name: testTarget
     type: input
@@ -459,7 +459,7 @@ Generate CI/CD pipeline configurations.
 ```markdown
 ---
 title: CI/CD Pipeline Generator
-labels: [devops, ci, cd]
+tags: [devops, ci, cd]
 variables:
   - name: platform
     type: select
@@ -528,7 +528,7 @@ Generate Docker configurations.
 ```markdown
 ---
 title: Docker Setup Generator
-labels: [docker, devops, containerization]
+tags: [docker, devops, containerization]
 variables:
   - name: appType
     type: select
@@ -586,7 +586,7 @@ Automate development workflows with Git hooks.
 ```markdown
 ---
 title: Git Hooks Setup
-labels: [git, automation, hooks]
+tags: [git, automation, hooks]
 variables:
   - name: hooks
     type: multiselect

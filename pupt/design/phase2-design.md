@@ -59,7 +59,7 @@ This document outlines the design for six new features to enhance the prompt-too
    - Show selection list of directories
 3. Prompt for:
    - Title (required)
-   - Labels (optional, comma-separated)
+   - Tags (optional, comma-separated)
    - Initial content (optional, opens editor if not provided)
 4. Generate filename from title (kebab-case)
 5. Extract git author information
@@ -71,7 +71,7 @@ This document outlines the design for six new features to enhance the prompt-too
 title: <user input>
 author: <git user.name> <git user.email>
 creationDate: <YYYYMMDD>
-labels: [<user input>]
+tags: [<user input>]
 ---
 
 <content>

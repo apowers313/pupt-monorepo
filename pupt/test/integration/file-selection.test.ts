@@ -48,7 +48,7 @@ Selected file: {{file "sourceFile"}}
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -87,7 +87,7 @@ Files matching pattern:
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -121,7 +121,7 @@ Config file: {{file "configFile"}}
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -150,7 +150,7 @@ File to review: {{reviewFile "targetFile"}}
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -186,7 +186,7 @@ Component: {{file "componentFile"}}
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [

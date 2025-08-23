@@ -97,19 +97,7 @@ describe('Output Capture Configuration', () => {
         autoAnnotate: {
           enabled: true,
           triggers: ['claude', 'ai-assistant'],
-          analysisPrompt: 'analyze-execution',
-          fallbackRules: [
-            {
-              pattern: 'test.*fail',
-              category: 'verification_gap',
-              severity: 'high'
-            },
-            {
-              pattern: 'error:',
-              category: 'incomplete_task',
-              severity: 'medium'
-            }
-          ]
+          analysisPrompt: 'analyze-execution'
         }
       };
       
@@ -119,7 +107,6 @@ describe('Output Capture Configuration', () => {
         expect(result.data.autoAnnotate).toBeDefined();
         expect(result.data.autoAnnotate?.enabled).toBe(true);
         expect(result.data.autoAnnotate?.triggers).toEqual(['claude', 'ai-assistant']);
-        expect(result.data.autoAnnotate?.fallbackRules).toHaveLength(2);
       }
     });
 
@@ -130,38 +117,23 @@ describe('Output Capture Configuration', () => {
           autoAnnotate: {
             enabled: true,
             triggers: 'claude', // Should be array
-            analysisPrompt: 'analyze',
-            fallbackRules: []
+            analysisPrompt: 'analyze'
+          }
+        },
+        {
+          promptDirs: ['./prompts'],
+          autoAnnotate: {
+            enabled: 'yes', // Should be boolean
+            triggers: ['claude'],
+            analysisPrompt: 'analyze'
           }
         },
         {
           promptDirs: ['./prompts'],
           autoAnnotate: {
             enabled: true,
-            triggers: ['claude'],
-            analysisPrompt: 'analyze',
-            fallbackRules: [
-              {
-                pattern: 'test',
-                category: 'unknown', // Invalid category
-                severity: 'high'
-              }
-            ]
-          }
-        },
-        {
-          promptDirs: ['./prompts'],
-          autoAnnotate: {
-            enabled: true,
-            triggers: ['claude'],
-            analysisPrompt: 'analyze',
-            fallbackRules: [
-              {
-                pattern: 'test',
-                category: 'verification_gap',
-                severity: 'extreme' // Invalid severity
-              }
-            ]
+            triggers: ['claude']
+            // Missing required analysisPrompt
           }
         }
       ];

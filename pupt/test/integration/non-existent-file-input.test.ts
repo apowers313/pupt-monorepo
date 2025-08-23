@@ -47,7 +47,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -84,7 +84,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -123,7 +123,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -155,7 +155,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -190,7 +190,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Test Prompt',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [
@@ -221,7 +221,7 @@ describe('Non-existent File Input', () => {
       relativePath: 'prompt.md',
       filename: 'prompt.md',
       title: 'Implementation Plan',
-      labels: [],
+      tags: [],
       content: template,
       frontmatter: {},
       variables: [

@@ -40,17 +40,10 @@ export const OutputCaptureConfigSchema = z.object({
 });
 
 // Auto-annotation configuration schema
-export const FallbackRuleSchema = z.object({
-  pattern: z.string(),
-  category: z.enum(['verification_gap', 'incomplete_task', 'ambiguous_instruction', 'missing_constraint']),
-  severity: z.enum(['low', 'medium', 'high', 'critical'])
-});
-
 export const AutoAnnotateConfigSchema = z.object({
   enabled: z.boolean(),
-  triggers: z.array(z.string()),
-  analysisPrompt: z.string(),
-  fallbackRules: z.array(FallbackRuleSchema)
+  triggers: z.array(z.string()).optional(),
+  analysisPrompt: z.string()
 });
 
 // Main config schema

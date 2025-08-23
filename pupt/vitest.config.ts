@@ -20,7 +20,7 @@ export default defineConfig({
     },
     coverage: {
       reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: ['node_modules/', 'test/', 'dist/', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts', 'vitest.config.ts', 'eslint.config.js', 'src/cli.ts', 'src/index.ts'],
+      exclude: ['node_modules/', 'test/', 'dist/', '**/*.d.ts', '**/*.test.ts', '**/*.spec.ts', 'vitest.config.ts', 'eslint.config.js', 'src/cli.ts', 'src/index.ts', 'docs/'],
       thresholds: {
         statements: 80,
         branches: 80,

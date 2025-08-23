@@ -53,7 +53,6 @@ Here's a complete configuration example with all available options:
   },
   "autoAnnotate": {
     "enabled": false,
-    "triggers": ["error", "warning"],
     "analysisPrompt": "Analyze this execution and provide insights...",
     "fallbackRules": [
       {
@@ -170,7 +169,7 @@ Annotations include:
 - **Description**: Automatic annotation based on output patterns
 - **Properties**:
   - `enabled`: Enable auto-annotation
-  - `triggers`: Output patterns that trigger annotation
+  - `triggers`: (Optional) Array of prompt names that trigger annotation. If omitted or empty, all prompts will trigger auto-annotation when enabled
   - `analysisPrompt`: Prompt for AI analysis
   - `fallbackRules`: Pattern-based rules for status detection
 
@@ -211,7 +210,7 @@ Annotations include:
 
 #### `version`
 - **Type**: `string`
-- **Description**: Configuration schema version (for migrations)
+- **Description**: Configuration schema version
 
 ## Environment Variables
 
@@ -271,8 +270,8 @@ module.exports = {
   
   autoAnnotate: {
     enabled: true,
-    triggers: ['ERROR', 'FAILED', 'Exception'],
-    analysisPrompt: 'Analyze this error and suggest fixes'
+    triggers: ['claude', 'fix-errors'],
+    analysisPrompt: 'analyze-execution'
   }
 }
 ```
@@ -284,13 +283,5 @@ module.exports = {
 3. **Keep secrets secure**: Never commit API keys or passwords
 4. **Use relative paths**: Make configurations portable across machines
 5. **Document custom helpers**: Include comments explaining custom functionality
-
-## Migration from Older Versions
-
-If you're upgrading from an older version of PUPT:
-
-1. The `codingTool*` fields are deprecated, use `defaultCmd*` instead
-2. Old configurations are automatically migrated on first run
-3. Backup files are created during migration (`.pt-config.json.backup.*`)
 
 For more details on specific commands and options, see the [Commands Reference](/commands/).

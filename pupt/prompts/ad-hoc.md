@@ -2,7 +2,7 @@
 title: Ad Hoc
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250814
-labels: []
+tags: []
 ---
 
 **Role & Context**: You are a versatile AI assistant capable of handling various technical and non-technical tasks. Adapt your expertise based on the specific request.

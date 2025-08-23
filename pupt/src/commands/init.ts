@@ -31,6 +31,7 @@ export async function initCommand(): Promise<void> {
 
   let historyDir: string | undefined;
   let annotationDir: string | undefined;
+  let autoAnnotateConfig: { enabled: boolean; analysisPrompt?: string } | undefined;
 
   if (enableHistory) {
     historyDir = await input({
@@ -48,6 +49,35 @@ export async function initCommand(): Promise<void> {
         message: 'Where should annotations be stored?',
         default: './.pthistory'
       });
+
+      // Ask about auto-annotation
+      const enableAutoAnnotate = await confirm({
+        message: 'Enable automatic annotation after prompt execution?',
+        default: false
+      });
+
+      if (enableAutoAnnotate) {
+        const useDefaultPrompt = await confirm({
+          message: 'Use the default prompt template for auto-annotation?',
+          default: true
+        });
+
+        if (useDefaultPrompt) {
+          autoAnnotateConfig = {
+            enabled: true,
+            analysisPrompt: 'analyze-execution'
+          };
+        } else {
+          const customPrompt = await input({
+            message: 'Enter the name of your custom analysis prompt:',
+            default: 'analyze-execution'
+          });
+          autoAnnotateConfig = {
+            enabled: true,
+            analysisPrompt: customPrompt
+          };
+        }
+      }
     }
   }
 
@@ -62,6 +92,23 @@ export async function initCommand(): Promise<void> {
       ? path.join(process.env.HOME || '', dir.slice(2))
       : path.resolve(dir);
     await fs.ensureDir(resolvedDir);
+  }
+
+  // Copy default analyze-execution prompt if using default auto-annotation
+  if (autoAnnotateConfig?.enabled && autoAnnotateConfig.analysisPrompt === 'analyze-execution') {
+    const sourcePromptPath = path.join(path.dirname(new URL(import.meta.url).pathname), '../../prompts/analyze-execution.md');
+    const targetPromptPath = path.join(
+      promptDir.startsWith('~') 
+        ? path.join(process.env.HOME || '', promptDir.slice(2))
+        : path.resolve(promptDir),
+      'analyze-execution.md'
+    );
+    
+    // Only copy if the target doesn't already exist
+    if (!await fs.pathExists(targetPromptPath) && await fs.pathExists(sourcePromptPath)) {
+      await fs.copy(sourcePromptPath, targetPromptPath);
+      logger.log(chalk.gray('✓ Copied default auto-annotation prompt template'));
+    }
   }
 
   // Detect installed tools and prompt for default command
@@ -106,6 +153,7 @@ export async function initCommand(): Promise<void> {
     promptDirs: [promptDir],
     ...(historyDir && { historyDir }),
     ...(annotationDir && { annotationDir }),
+    ...(autoAnnotateConfig && { autoAnnotate: autoAnnotateConfig }),
     ...(defaultCmd && { defaultCmd }),
     ...(defaultCmdArgs && defaultCmdArgs.length > 0 && { defaultCmdArgs }),
     ...(defaultCmdOptions && Object.keys(defaultCmdOptions).length > 0 && { defaultCmdOptions }),

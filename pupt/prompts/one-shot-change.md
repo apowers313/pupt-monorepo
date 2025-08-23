@@ -2,7 +2,7 @@
 title: One Shot Change
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250820
-labels: []
+tags: []
 ---
 
 Make the following change to our project:

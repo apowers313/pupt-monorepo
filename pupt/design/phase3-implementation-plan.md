@@ -41,9 +41,9 @@ This implementation plan follows a test-driven design approach, organized into p
 #### Steps:
 1. Write unit tests for match context extraction
    - Test extracting context from title matches
-   - Test extracting context from label matches  
+   - Test extracting context from tag matches  
    - Test extracting context from content matches
-   - Test priority ordering (title > labels > content)
+   - Test priority ordering (title > tags > content)
    
 2. Write tests for context display formatting
    - Test truncation of long matches
@@ -404,7 +404,7 @@ describe('File Input Type', () => {
 // src/search/context.ts
 export interface SearchMatch {
   prompt: Prompt;
-  field: 'title' | 'labels' | 'content';
+  field: 'title' | 'tags' | 'content';
   matchText: string;
   matchIndex: number;
 }

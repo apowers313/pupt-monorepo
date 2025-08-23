@@ -362,6 +362,99 @@ describe('Init Command', () => {
     });
   });
 
+  describe('auto-annotation configuration', () => {
+    it('should not include autoAnnotate when annotations are disabled', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./.prompts')
+        .mockResolvedValueOnce('./.pthistory');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)  // Enable history
+        .mockResolvedValueOnce(false); // Disable annotations
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+      expect(config.autoAnnotate).toBeUndefined();
+    });
+
+    it('should enable auto-annotation with default prompt when selected', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./.prompts')
+        .mockResolvedValueOnce('./.pthistory')
+        .mockResolvedValueOnce('./.pthistory'); // annotation dir
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)  // Enable history
+        .mockResolvedValueOnce(true)  // Enable annotations
+        .mockResolvedValueOnce(true)  // Enable auto-annotation
+        .mockResolvedValueOnce(true); // Use default prompt
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+      expect(config.autoAnnotate).toEqual({
+        enabled: true,
+        analysisPrompt: 'analyze-execution'
+      });
+    });
+
+    it('should enable auto-annotation with custom prompt when specified', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./.prompts')
+        .mockResolvedValueOnce('./.pthistory')
+        .mockResolvedValueOnce('./.pthistory') // annotation dir
+        .mockResolvedValueOnce('my-custom-analyzer');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(true)   // Enable annotations
+        .mockResolvedValueOnce(true)   // Enable auto-annotation
+        .mockResolvedValueOnce(false); // Don't use default prompt
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+      expect(config.autoAnnotate).toEqual({
+        enabled: true,
+        analysisPrompt: 'my-custom-analyzer'
+      });
+    });
+
+    it('should copy default analyze-execution.md when using default prompt', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./prompts')
+        .mockResolvedValueOnce('./.pthistory')
+        .mockResolvedValueOnce('./.pthistory'); // annotation dir
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)  // Enable history
+        .mockResolvedValueOnce(true)  // Enable annotations
+        .mockResolvedValueOnce(true)  // Enable auto-annotation
+        .mockResolvedValueOnce(true); // Use default prompt
+
+      await initCommand();
+
+      // Check if the default prompt was copied
+      const expectedPromptPath = path.join(testDir, 'prompts', 'analyze-execution.md');
+      expect(await fs.pathExists(expectedPromptPath)).toBe(true);
+      
+      // Verify the content was copied correctly
+      const content = await fs.readFile(expectedPromptPath, 'utf-8');
+      expect(content).toContain('Analyze Prompt Execution');
+    });
+
+    it('should not ask about auto-annotation when annotations are disabled', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./.prompts')
+        .mockResolvedValueOnce('./.pthistory');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(false); // Disable annotations
+
+      await initCommand();
+
+      // Should only be called twice (history and annotations)
+      expect(vi.mocked(inquirerPrompts.confirm)).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('success messaging', () => {
     it('should log success message', async () => {
       const loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});

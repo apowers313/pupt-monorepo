@@ -355,7 +355,7 @@ describeOnPlatform('win32', 'Windows-specific path handling', () => {
 const searchOptions = {
   boost: {
     title: 3,      // Highest priority
-    labels: 2,     // Medium priority
+    tags: 2,     // Medium priority
     content: 1     // Base priority
   }
 };
@@ -524,7 +524,7 @@ Load Prompt File →
 ```markdown
 ---
 title: API Documentation Generator
-labels: [api, docs, typescript]
+tags: [api, docs, typescript]
 variables:
   - name: projectName
     type: input
@@ -591,7 +591,7 @@ partials:
 
 **Field Boosting Weights:**
 - Title (filename or frontmatter): 3x weight
-- Labels/Tags: 2x weight
+- Tags: 2x weight
 - Content: 1x weight
 
 **Search Modes:**

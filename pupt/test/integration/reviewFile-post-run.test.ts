@@ -131,7 +131,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       relativePath: path.replace(testDir + '/', ''),
       filename,
       title,
-      labels: [],
+      tags: [],
       content,
       frontmatter: { title, variables },
       variables

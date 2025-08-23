@@ -13,27 +13,27 @@ describe('SearchEngine', () => {
         relativePath: 'code-review.md',
         filename: 'code-review.md',
         title: 'Code Review Template',
-        labels: ['code', 'review'],
+        tags: ['code', 'review'],
         content: 'Template for conducting thorough code reviews',
-        frontmatter: { title: 'Code Review Template', labels: ['code', 'review'] },
+        frontmatter: { title: 'Code Review Template', tags: ['code', 'review'] },
       },
       {
         path: '/prompts/refactoring/extract-method.md',
         relativePath: 'refactoring/extract-method.md',
         filename: 'extract-method.md',
         title: 'Extract Method Refactoring',
-        labels: ['refactoring', 'code'],
+        tags: ['refactoring', 'code'],
         content: 'Guide for extracting methods from existing code',
-        frontmatter: { title: 'Extract Method Refactoring', labels: ['refactoring', 'code'] },
+        frontmatter: { title: 'Extract Method Refactoring', tags: ['refactoring', 'code'] },
       },
       {
         path: '/prompts/testing/unit-test.md',
         relativePath: 'testing/unit-test.md',
         filename: 'unit-test.md',
         title: 'Unit Test Generator',
-        labels: ['testing', 'unit'],
+        tags: ['testing', 'unit'],
         content: 'Generate comprehensive unit tests for your code',
-        frontmatter: { title: 'Unit Test Generator', labels: ['testing', 'unit'] },
+        frontmatter: { title: 'Unit Test Generator', tags: ['testing', 'unit'] },
       },
     ];
     searchEngine = new SearchEngine(prompts);
@@ -57,7 +57,7 @@ describe('SearchEngine', () => {
       expect(results[0].title).toBe('Code Review Template');
     });
 
-    it('should find prompts by label', () => {
+    it('should find prompts by tag', () => {
       const results = searchEngine.search('refactoring');
       expect(results).toHaveLength(1);
       expect(results[0].title).toBe('Extract Method Refactoring');
@@ -98,7 +98,7 @@ describe('SearchEngine', () => {
           relativePath: 'a.md',
           filename: 'a.md',
           title: 'Something else',
-          labels: [],
+          tags: [],
           content: 'This is about testing',
           frontmatter: {},
         },
@@ -107,7 +107,7 @@ describe('SearchEngine', () => {
           relativePath: 'b.md',
           filename: 'b.md',
           title: 'Testing Guide',
-          labels: [],
+          tags: [],
           content: 'Some other content',
           frontmatter: {},
         },
@@ -135,7 +135,7 @@ describe('SearchEngine', () => {
           relativePath: 'a.md',
           filename: 'a.md',
           title: 'Low priority',
-          labels: [],
+          tags: [],
           content: 'test test test', // Multiple occurrences in content
           frontmatter: {},
         },
@@ -144,7 +144,7 @@ describe('SearchEngine', () => {
           relativePath: 'b.md',
           filename: 'b.md',
           title: 'Medium priority',
-          labels: ['test'],
+          tags: ['test'],
           content: 'Something else',
           frontmatter: {},
         },
@@ -153,7 +153,7 @@ describe('SearchEngine', () => {
           relativePath: 'c.md',
           filename: 'c.md',
           title: 'Test priority',
-          labels: [],
+          tags: [],
           content: 'Something else',
           frontmatter: {},
         },
@@ -163,7 +163,7 @@ describe('SearchEngine', () => {
 
       // Title match (boost 3) should be first
       expect(results[0].title).toBe('Test priority');
-      // Label match (boost 2) should be second
+      // Tag match (boost 2) should be second
       expect(results[1].title).toBe('Medium priority');
       // Content match (boost 1) should be last
       expect(results[2].title).toBe('Low priority');

@@ -57,7 +57,7 @@ describe('Add Command', () => {
       
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
@@ -109,7 +109,7 @@ describe('Add Command', () => {
       
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
@@ -133,7 +133,7 @@ describe('Add Command', () => {
       
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false);
@@ -165,7 +165,7 @@ describe('Add Command', () => {
     it('should convert title to kebab-case', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('My Awesome Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(fs.pathExists).mockResolvedValue(false);
 
       await addCommand();
@@ -179,7 +179,7 @@ describe('Add Command', () => {
     it('should remove special characters', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Test@#$%^&*()Prompt!')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(fs.pathExists).mockResolvedValue(false);
 
       await addCommand();
@@ -193,7 +193,7 @@ describe('Add Command', () => {
     it('should handle unicode properly', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Café Münchën')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(fs.pathExists).mockResolvedValue(false);
 
       await addCommand();
@@ -207,7 +207,7 @@ describe('Add Command', () => {
     it('should prevent overwriting existing files', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Existing Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       // Ensure we have enough mock values for all potential calls
       vi.mocked(fs.pathExists)
         .mockResolvedValueOnce(true)  // existing-prompt.md exists
@@ -225,7 +225,7 @@ describe('Add Command', () => {
     it('should increment suffix for multiple duplicates', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('Popular Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       // Setup mock to return true for first 3 calls, then false
       let callCount = 0;
       vi.mocked(fs.pathExists).mockImplementation(async () => {
@@ -272,7 +272,7 @@ describe('Add Command', () => {
       expect(content).toContain('title: API Documentation');
       expect(content).toContain('author:'); // Generic check - git mock issues
       expect(content).toContain('creationDate:');
-      expect(content).toContain('labels: [api, docs, typescript]');
+      expect(content).toContain('tags: [api, docs, typescript]');
     });
 
     it('should format date as YYYYMMDD', async () => {
@@ -294,16 +294,16 @@ describe('Add Command', () => {
       }
     });
 
-    it('should handle empty labels', async () => {
+    it('should handle empty tags', async () => {
       vi.mocked(input)
-        .mockResolvedValueOnce('No Labels')
+        .mockResolvedValueOnce('No Tags')
         .mockResolvedValueOnce('');
 
       await addCommand();
 
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const content = writeCall[1] as string;
-      expect(content).toContain('labels: []');
+      expect(content).toContain('tags: []');
     });
 
     it('should create file in selected directory', async () => {
@@ -347,7 +347,7 @@ describe('Add Command', () => {
       });
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(fs.pathExists).mockResolvedValue(false);
       vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -389,7 +389,7 @@ describe('Add Command', () => {
       });
       vi.mocked(input)
         .mockResolvedValueOnce('Test Prompt')
-        .mockResolvedValueOnce(''); // labels
+        .mockResolvedValueOnce(''); // tags
       vi.mocked(select).mockResolvedValue('./.prompts');
       vi.mocked(confirm).mockResolvedValue(false);
       vi.mocked(fs.pathExists).mockResolvedValue(false); // File doesn't exist

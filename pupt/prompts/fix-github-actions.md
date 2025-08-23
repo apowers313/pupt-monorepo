@@ -2,7 +2,7 @@
 title: Fix GitHub Actions
 author: Adam Powers <apowers@ato.ms>
 creationDate: 20250816
-labels: []
+tags: []
 ---
 
 **Role & Context**: You are a DevOps engineer specializing in GitHub Actions, CI/CD pipelines, and cross-platform compatibility issues.

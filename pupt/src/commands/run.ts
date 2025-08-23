@@ -289,7 +289,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
 
           // Run auto-annotation asynchronously
           autoAnnotationService.analyzeExecution(enhancedEntry).catch(error => {
-            logger.debug('Auto-annotation failed:', error);
+            logger.warn('Auto-annotation failed: ' + (error instanceof Error ? error.message : String(error)));
           });
         }
       }

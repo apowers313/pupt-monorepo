@@ -3,10 +3,11 @@ import type { EnhancedHistoryEntry } from '../types/history.js';
 import type { AnnotationMetadata, IssueIdentified, StructuredOutcome } from '../types/annotations.js';
 import { PromptManager } from '../prompts/prompt-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
-import { TemplateEngine } from '../template/template-engine.js';
 import fs from 'fs-extra';
 import path from 'path';
 import { logger } from '../utils/logger.js';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 
 interface AnalysisResult {
   status: 'success' | 'partial' | 'failure';
@@ -30,6 +31,11 @@ export class AutoAnnotationService {
       return false;
     }
 
+    // If triggers array is missing or empty, run for all prompts
+    if (!this.config.autoAnnotate.triggers || this.config.autoAnnotate.triggers.length === 0) {
+      return true;
+    }
+
     return this.config.autoAnnotate.triggers.includes(promptName);
   }
 
@@ -37,6 +43,9 @@ export class AutoAnnotationService {
    * Analyze execution output and create annotation
    */
   async analyzeExecution(historyEntry: EnhancedHistoryEntry): Promise<void> {
+    // Store history entry for use in executeAnalysisPrompt
+    this.historyEntry = historyEntry;
+
     try {
       // Skip if no output file
       if (!historyEntry.execution?.output_file) {
@@ -45,28 +54,45 @@ export class AutoAnnotationService {
       }
 
       // Read the output file
-      const outputContent = await fs.readFile(historyEntry.execution.output_file, 'utf-8');
+      const fullOutputContent = await fs.readFile(historyEntry.execution.output_file, 'utf-8');
+      
+      // Truncate output to prevent OOM errors (max 100KB for analysis)
+      const MAX_OUTPUT_LENGTH = 100 * 1024; // 100KB
+      let outputContent = fullOutputContent;
+      if (fullOutputContent.length > MAX_OUTPUT_LENGTH) {
+        // Take first 50KB and last 50KB
+        const halfSize = MAX_OUTPUT_LENGTH / 2;
+        const firstPart = fullOutputContent.slice(0, halfSize);
+        const lastPart = fullOutputContent.slice(-halfSize);
+        outputContent = `${firstPart}\n\n[... truncated ${fullOutputContent.length - MAX_OUTPUT_LENGTH} characters ...]\n\n${lastPart}`;
+        logger.debug(`Truncated output from ${fullOutputContent.length} to ${outputContent.length} characters for analysis`);
+      }
 
       let analysisResult: AnalysisResult;
 
       try {
-        // Try AI analysis first
+        // Try AI analysis
         analysisResult = await this.runAIAnalysis(outputContent);
       } catch (error) {
-        logger.debug('AI analysis failed, falling back to pattern matching', error);
-        // Fall back to pattern matching
-        analysisResult = this.runPatternAnalysis(outputContent, historyEntry.execution.exit_code || 0);
+        logger.warn('Auto-annotation failed: ' + (error instanceof Error ? error.message : String(error)));
+        return;
       }
 
       // Create annotation
       const annotation = this.createAnnotation(historyEntry, analysisResult);
       
-      // Save annotation
-      await this.historyManager.saveAnnotation(historyEntry, annotation);
+      // Save annotation with notes
+      logger.debug(`Saving auto-annotation for history entry: ${historyEntry.filename}`);
+      logger.debug(`Annotation directory: ${this.config.annotationDir || this.config.historyDir}`);
       
-      logger.debug('Auto-annotation saved successfully');
+      await this.historyManager.saveAnnotation(historyEntry, annotation, analysisResult.notes);
+      
+      logger.log('Auto-annotation completed and saved successfully');
     } catch (error) {
       logger.error('Failed to auto-annotate execution', error);
+    } finally {
+      // Clear stored history entry
+      this.historyEntry = undefined;
     }
   }
 
@@ -95,48 +121,116 @@ export class AutoAnnotationService {
    * Execute the analysis prompt with the output content
    */
   private async executeAnalysisPrompt(prompt: { content: string }, outputContent: string): Promise<AnalysisResult> {
-    // Create a template engine instance
-    const templateEngine = new TemplateEngine(this.config);
+    // Read the original prompt from the history entry
+    const historyEntry = this.historyEntry;
+    const originalPrompt = historyEntry?.finalPrompt || '';
 
-    // Set up the context with the output
-    const _context = {
-      output: outputContent,
-      outputFile: 'auto-analysis-output',
-    };
-
-    // Process the template
-    const _processedPrompt = await templateEngine.processTemplate(prompt.content, { variables: [] });
-
-    // For testing purposes, return a mock result
-    // In real implementation, this would execute the prompt
-    if (outputContent.includes('tests failed')) {
-      return {
-        status: 'failure',
-        notes: 'Tests failed during execution',
-        issues_identified: [
-          {
-            category: 'verification_gap',
-            severity: 'high',
-            description: 'Tests failed',
-            evidence: outputContent.match(/\d+ tests? failed/)?.[0] || 'tests failed',
-          },
-        ],
-      };
+    // Truncate original prompt if too long
+    const MAX_PROMPT_LENGTH = 50 * 1024; // 50KB
+    let truncatedPrompt = originalPrompt;
+    if (originalPrompt.length > MAX_PROMPT_LENGTH) {
+      truncatedPrompt = originalPrompt.slice(0, MAX_PROMPT_LENGTH) + '\n\n[... prompt truncated ...]';
     }
 
-    return {
-      status: 'success',
-      notes: 'Execution completed successfully',
-      structured_outcome: {
-        tasks_completed: 1,
-        tasks_total: 1,
-        tests_run: 0,
-        tests_passed: 0,
-        tests_failed: 0,
-        verification_passed: true,
-        execution_time: '0s',
-      },
-    };
+    // Create a combined prompt with the analysis template
+    const analysisContext = `
+**Original Prompt**:
+${truncatedPrompt}
+
+**AI Output**:
+${outputContent}
+
+**Execution Metadata**:
+- Exit Code: ${historyEntry?.execution?.exit_code || 0}
+- Duration: ${historyEntry?.execution?.duration || 'unknown'}
+- Command: ${historyEntry?.execution?.command || 'unknown'}
+
+---
+
+${prompt.content}`;
+
+    // Log total size for debugging
+    logger.debug(`Total analysis context size: ${analysisContext.length} characters`);
+
+    // Determine which tool to use
+    const tool = await this.findAvailableTool();
+    if (!tool) {
+      throw new Error('No AI tool available for analysis');
+    }
+
+    try {
+      // Use spawn for true background execution
+      const { spawn } = await import('node:child_process');
+      
+      // For claude, use -p flag for non-interactive mode
+      const args: string[] = [];
+      if (tool === 'claude') {
+        args.push('-p'); // Print response and exit
+      }
+      
+      // Execute the tool in a truly detached process
+      const analysisProcess = spawn(tool, args, {
+        detached: true,
+        stdio: ['pipe', 'ignore', 'ignore'], // Only pipe stdin, ignore stdout and stderr
+        env: { ...process.env, CLAUDE_NO_CONTINUE: '1' } // Ensure new session
+      });
+      
+      // Send the prompt via stdin
+      analysisProcess.stdin.write(analysisContext);
+      analysisProcess.stdin.end();
+      
+      // Unref the process so Node.js can exit without waiting for it
+      analysisProcess.unref();
+      
+      // Don't wait for completion - let it run in the background
+      // The actual annotation will be created by the AI tool itself
+      return {
+        status: 'success' as const,
+        notes: 'Auto-annotation launched in background'
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private historyEntry?: EnhancedHistoryEntry;
+
+  /**
+   * Find an available AI tool
+   */
+  private async findAvailableTool(): Promise<string | null> {
+    const execFileAsync = promisify(execFile);
+    
+    // Check for configured default tool first
+    if (this.config.defaultCmd) {
+      try {
+        if (process.platform === 'win32') {
+          await execFileAsync('where', [this.config.defaultCmd]);
+        } else {
+          await execFileAsync('which', [this.config.defaultCmd]);
+        }
+        return this.config.defaultCmd;
+      } catch {
+        // Default tool not found, continue checking
+      }
+    }
+
+    // Check for common AI tools
+    const tools = ['claude', 'q', 'copilot'];
+    for (const tool of tools) {
+      try {
+        if (process.platform === 'win32') {
+          await execFileAsync('where', [tool]);
+        } else {
+          await execFileAsync('which', [tool]);
+        }
+        return tool;
+      } catch {
+        // Tool not found, continue checking
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -166,43 +260,6 @@ export class AutoAnnotationService {
     throw new Error('Invalid analysis result format');
   }
 
-  /**
-   * Run pattern-based analysis as fallback
-   */
-  private runPatternAnalysis(outputContent: string, exitCode: number): AnalysisResult {
-    const issues: IssueIdentified[] = [];
-    let status: 'success' | 'partial' | 'failure' = exitCode === 0 ? 'success' : 'failure';
-
-    // Check each fallback rule
-    if (this.config.autoAnnotate?.fallbackRules) {
-      for (const rule of this.config.autoAnnotate.fallbackRules) {
-        const regex = new RegExp(rule.pattern, 'gi');
-        const matches = outputContent.match(regex);
-        
-        if (matches) {
-          issues.push({
-            category: rule.category,
-            severity: rule.severity,
-            description: `Pattern detected: ${matches[0]}`,
-            evidence: matches[0],
-          });
-          
-          // Upgrade status based on severity
-          if (rule.severity === 'critical' || rule.severity === 'high') {
-            status = 'failure';
-          } else if (status === 'success') {
-            status = 'partial';
-          }
-        }
-      }
-    }
-
-    return {
-      status,
-      notes: `Auto-detected ${issues.length} issue(s) using pattern matching`,
-      issues_identified: issues,
-    };
-  }
 
   /**
    * Create annotation from analysis result
@@ -219,12 +276,8 @@ export class AutoAnnotationService {
       auto_detected: true,
     };
 
-    // Add notes if available
-    if (analysisResult.notes && !analysisResult.notes.includes('Auto-detected')) {
-      annotation.tags.push('ai-analysis');
-    } else {
-      annotation.tags.push('pattern-match');
-    }
+    // Add ai-analysis tag
+    annotation.tags.push('ai-analysis');
 
     // Add structured outcome if available
     if (analysisResult.structured_outcome) {

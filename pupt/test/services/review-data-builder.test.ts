@@ -76,14 +76,14 @@ describe('ReviewDataBuilder', () => {
       const mockAnnotations: ParsedAnnotation[] = [
         {
           historyFile: 'history_2025-08-16T10:00:00Z_test-prompt.json',
-          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_test-prompt.annotation.md'),
+          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_test-prompt.annotation.json'),
           timestamp: '2025-08-16T10:30:00Z',
           status: 'success',
           notes: 'Task completed successfully'
         },
         {
           historyFile: 'history_2025-08-16T11:00:00Z_test-prompt.json',
-          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T11:00:00Z_test-prompt.annotation.md'),
+          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T11:00:00Z_test-prompt.annotation.json'),
           timestamp: '2025-08-16T11:30:00Z',
           status: 'failure',
           notes: 'Tests still failing after implementation'
@@ -105,40 +105,38 @@ This is a test prompt.`;
       // Mock fs-extra for annotations
       vi.mocked(fs.readdir).mockImplementation((dir: any) => {
         if (dir === mockConfig.annotationDir || dir.includes('annotations')) {
-          return Promise.resolve(['history_2025-08-16T10-00-00Z_test-prompt.annotation.md', 'history_2025-08-16T11-00-00Z_test-prompt.annotation.md'] as any);
+          return Promise.resolve(['history_2025-08-16T10-00-00Z_test-prompt.annotation.json', 'history_2025-08-16T11-00-00Z_test-prompt.annotation.json'] as any);
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation((filepath: any) => {
-        if (filepath.includes('.annotation.md')) {
+      vi.mocked(fs.readJson).mockImplementation((filepath: any) => {
+        if (filepath.includes('.annotation.json')) {
           if (filepath.includes('10-00-00Z')) {
-            return Promise.resolve(`---
-historyFile: history_2025-08-16T10-00-00Z_test-prompt.json
-timestamp: "2025-08-16T10:30:00Z"
-status: success
-tags: []
----
-
-Task completed successfully`);
+            return Promise.resolve({
+              historyFile: 'history_2025-08-16T10-00-00Z_test-prompt.json',
+              timestamp: '2025-08-16T10:30:00Z',
+              status: 'success',
+              tags: [],
+              notes: 'Task completed successfully'
+            });
           } else {
-            return Promise.resolve(`---
-historyFile: history_2025-08-16T11-00-00Z_test-prompt.json
-timestamp: "2025-08-16T11:30:00Z"
-status: failure
-tags: []
----
-
-Tests still failing after implementation`);
+            return Promise.resolve({
+              historyFile: 'history_2025-08-16T11-00-00Z_test-prompt.json',
+              timestamp: '2025-08-16T11:30:00Z',
+              status: 'failure',
+              tags: [],
+              notes: 'Tests still failing after implementation'
+            });
           }
         }
-        return Promise.resolve('');
+        return Promise.resolve({});
       });
       mockPromptManager.discoverPrompts.mockResolvedValue([{
         filename: 'test-prompt.md',
         path: 'prompts/test-prompt.md',
         relativePath: 'test-prompt.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: mockPromptContent,
         frontmatter: {
           title: 'Test Prompt',
@@ -213,7 +211,7 @@ Tests still failing after implementation`);
       const mockAnnotations: ParsedAnnotation[] = [
         {
           historyFile: 'history_2025-08-16T10:00:00Z_test-prompt.json',
-          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_test-prompt.annotation.md'),
+          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_test-prompt.annotation.json'),
           timestamp: '2025-08-16T10:30:00Z',
           status: 'success',
           notes: 'All good'
@@ -228,29 +226,28 @@ Tests still failing after implementation`);
       // Mock fs-extra for annotations
       vi.mocked(fs.readdir).mockImplementation((dir: any) => {
         if (dir === mockConfig.annotationDir || dir.includes('annotations')) {
-          return Promise.resolve(['history_2025-08-16T10-00-00Z_test-prompt.annotation.md'] as any);
+          return Promise.resolve(['history_2025-08-16T10-00-00Z_test-prompt.annotation.json'] as any);
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation((filepath: any) => {
-        if (filepath.includes('.annotation.md')) {
-          return Promise.resolve(`---
-historyFile: history_2025-08-16T10-00-00Z_test-prompt.json
-timestamp: "2025-08-16T10:30:00Z"
-status: success
-tags: []
----
-
-All good`);
+      vi.mocked(fs.readJson).mockImplementation((filepath: any) => {
+        if (filepath.includes('.annotation.json')) {
+          return Promise.resolve({
+            historyFile: 'history_2025-08-16T10-00-00Z_test-prompt.json',
+            timestamp: '2025-08-16T10:30:00Z',
+            status: 'success',
+            tags: [],
+            notes: 'All good'
+          });
         }
-        return Promise.resolve('');
+        return Promise.resolve({});
       });
       mockPromptManager.discoverPrompts.mockResolvedValue([{
         filename: 'test-prompt.md',
         path: 'prompts/test-prompt.md',
         relativePath: 'test-prompt.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: '# Test',
         frontmatter: {}
       }]);
@@ -289,14 +286,14 @@ All good`);
       const mockAnnotations: ParsedAnnotation[] = [
         {
           historyFile: 'history_2025-08-16T10:00:00Z_prompt1.json',
-          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_prompt1.annotation.md'),
+          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T10:00:00Z_prompt1.annotation.json'),
           timestamp: '2025-08-16T10:30:00Z',
           status: 'partial',
           notes: 'Tests still failing after AI claimed success'
         },
         {
           historyFile: 'history_2025-08-16T11:00:00Z_prompt2.json',
-          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T11:00:00Z_prompt2.annotation.md'),
+          annotationPath: path.join(mockConfig.historyDir, 'history_2025-08-16T11:00:00Z_prompt2.annotation.json'),
           timestamp: '2025-08-16T11:30:00Z',
           status: 'partial',
           notes: 'Verification showed tests still failing'
@@ -311,33 +308,31 @@ All good`);
       // Mock fs-extra for annotations  
       vi.mocked(fs.readdir).mockImplementation((dir: any) => {
         if (dir === mockConfig.annotationDir || dir.includes('annotations')) {
-          return Promise.resolve(['history_2025-08-16T10-00-00Z_prompt1.annotation.md', 'history_2025-08-16T11-00-00Z_prompt2.annotation.md'] as any);
+          return Promise.resolve(['history_2025-08-16T10-00-00Z_prompt1.annotation.json', 'history_2025-08-16T11-00-00Z_prompt2.annotation.json'] as any);
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation((filepath: any) => {
-        if (filepath.includes('.annotation.md')) {
+      vi.mocked(fs.readJson).mockImplementation((filepath: any) => {
+        if (filepath.includes('.annotation.json')) {
           if (filepath.includes('prompt1')) {
-            return Promise.resolve(`---
-historyFile: history_2025-08-16T10:00:00Z_prompt1.json
-timestamp: "2025-08-16T10:30:00Z"
-status: partial
-tags: []
----
-
-Tests still failing after AI claimed success`);
+            return Promise.resolve({
+              historyFile: 'history_2025-08-16T10:00:00Z_prompt1.json',
+              timestamp: '2025-08-16T10:30:00Z',
+              status: 'partial',
+              tags: [],
+              notes: 'Tests still failing after AI claimed success'
+            });
           } else {
-            return Promise.resolve(`---
-historyFile: history_2025-08-16T11:00:00Z_prompt2.json
-timestamp: "2025-08-16T11:30:00Z"
-status: partial
-tags: []
----
-
-Verification showed tests still failing`);
+            return Promise.resolve({
+              historyFile: 'history_2025-08-16T11:00:00Z_prompt2.json',
+              timestamp: '2025-08-16T11:30:00Z',
+              status: 'partial',
+              tags: [],
+              notes: 'Verification showed tests still failing'
+            });
           }
         }
-        return Promise.resolve('');
+        return Promise.resolve({});
       });
       mockPromptManager.discoverPrompts.mockImplementation(async () => {
         // Return all prompts that might be requested
@@ -347,7 +342,7 @@ Verification showed tests still failing`);
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
           title: name,
-          labels: [],
+          tags: [],
           content: `# ${name}`,
           frontmatter: {}
         }));
@@ -402,7 +397,7 @@ Verification showed tests still failing`);
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
           title: name,
-          labels: [],
+          tags: [],
           content: `# ${name}`,
           frontmatter: {}
         }));
@@ -446,7 +441,7 @@ Verification showed tests still failing`);
         path: 'prompts/test.md',
         relativePath: 'test.md',
         title: 'Test',
-        labels: [],
+        tags: [],
         content: '# Test',
         frontmatter: {}
       }]);
@@ -536,7 +531,7 @@ Verification showed tests still failing`);
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
           title: name,
-          labels: [],
+          tags: [],
           content: `# ${name}`,
           frontmatter: {}
         }));

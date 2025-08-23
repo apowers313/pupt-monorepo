@@ -70,7 +70,7 @@ pt annotate 42
 - Context for future use
 
 ### Tags
-- Categorization labels
+- Categorization tags
 - Project identifiers
 - Environment markers
 - Custom taxonomy

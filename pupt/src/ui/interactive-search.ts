@@ -30,8 +30,8 @@ export class InteractiveSearch {
   }
 
   private formatPromptDisplay(prompt: Prompt): string {
-    const labels = prompt.labels.length > 0 ? chalk.dim(` [${prompt.labels.join(', ')}]`) : '';
+    const tags = prompt.tags.length > 0 ? chalk.dim(` [${prompt.tags.join(', ')}]`) : '';
 
-    return `${chalk.bold(prompt.title)}${labels}`;
+    return `${chalk.bold(prompt.title)}${tags}`;
   }
 }

@@ -329,10 +329,10 @@ const timestamp = now.toISOString(); // Includes timezone offset
 - Include line where match was found
 
 **Match Context Rules**:
-1. Show field that matched (title, labels, content)
+1. Show field that matched (title, tags, content)
 2. Show surrounding text (max 60 chars)
 3. If multiple matches, show most relevant
-4. Priority: title > labels > content
+4. Priority: title > tags > content
 
 ## Implementation Priority
 

@@ -43,7 +43,7 @@ describe('Full Integration Flow', () => {
 title: Test Prompt
 author: Test User
 creationDate: 20240120
-labels: [test]
+tags: [test]
 ---
 
 This is a test prompt with {{input "name" "What is your name?"}}`;
@@ -91,21 +91,16 @@ This is a test prompt with {{input "name" "What is your name?"}}`;
       expect(entry?.title).toBe('Test Prompt');
 
       // 8. Create annotation
-      const annotationContent = `---
-historyFile: ${filename}
-timestamp: ${new Date().toISOString()}
-status: success
-tags:
-  - test
-  - integration
----
+      const annotationData = {
+        historyFile: filename,
+        timestamp: new Date().toISOString(),
+        status: 'success',
+        tags: ['test', 'integration'],
+        notes: 'This test was successful.'
+      };
 
-## Notes
-
-This test was successful.`;
-
-      const annotationPath = path.join('./.pthistory', `${filename.replace('.json', '')}-annotation-test.md`);
-      await fs.writeFile(annotationPath, annotationContent);
+      const annotationPath = path.join('./.pthistory', `${filename.replace('.json', '')}-annotation-test.json`);
+      await fs.writeJson(annotationPath, annotationData, { spaces: 2 });
 
       // Verify annotation was created
       const annotationExists = await fs.pathExists(annotationPath);

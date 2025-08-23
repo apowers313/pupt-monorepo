@@ -16,7 +16,7 @@ describe('PatternDetector', () => {
     timestamp: '2025-08-16T10:00:00Z',
     issues: [],
     promptName: 'test-prompt',
-    annotationPath: '/test/annotation.md',
+    annotationPath: '/test/annotation.json',
     tags: [],
     ...overrides,
   });

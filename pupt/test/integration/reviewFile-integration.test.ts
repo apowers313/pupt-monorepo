@@ -43,7 +43,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: 'Select a file: {{reviewFile "sourceFile" "Select source file to review:"}}',
         frontmatter: {},
         variables: [
@@ -80,7 +80,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Multi File Prompt',
-        labels: [],
+        tags: [],
         content: 'Input: {{reviewFile "inputFile"}}\nOutput: {{reviewFile "outputFile"}}',
         frontmatter: {},
         variables: [
@@ -118,7 +118,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: 'File: {{reviewFile "sourceFile"}}',
         frontmatter: {},
         variables: []
@@ -143,7 +143,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: 'File: {{reviewFile "configFile"}}',
         frontmatter: {},
         variables: [
@@ -177,7 +177,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: 'First: {{reviewFile "myFile"}}\nSecond: {{reviewFile "myFile"}}',
         frontmatter: {},
         variables: []
@@ -203,7 +203,7 @@ describe('ReviewFile Integration Tests', () => {
         relativePath: 'test.md',
         filename: 'test.md',
         title: 'Test Prompt',
-        labels: [],
+        tags: [],
         content: 'File: {{reviewFile "sourceFile"}}',
         frontmatter: {},
         variables: []

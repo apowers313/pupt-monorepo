@@ -645,7 +645,7 @@ describe('PromptManager', () => {
   it('should parse prompt with frontmatter', async () => {
     const promptContent = `---
 title: API Client Generator
-labels: [api, client, typescript]
+tags: [api, client, typescript]
 variables:
   - name: serviceName
     type: input
@@ -665,7 +665,7 @@ This is the prompt content.
     const prompt = prompts[0];
     
     expect(prompt.title).toBe('API Client Generator');
-    expect(prompt.labels).toEqual(['api', 'client', 'typescript']);
+    expect(prompt.tags).toEqual(['api', 'client', 'typescript']);
     expect(prompt.content).toContain('This is the prompt content');
     expect(prompt.variables).toHaveLength(1);
     expect(prompt.variables[0].name).toBe('serviceName');
@@ -684,7 +684,7 @@ Just a simple prompt without frontmatter.`;
     const prompt = prompts[0];
     
     expect(prompt.title).toBe('simple'); // Filename without extension
-    expect(prompt.labels).toEqual([]);
+    expect(prompt.tags).toEqual([]);
     expect(prompt.content).toContain('Just a simple prompt');
   });
 
@@ -720,7 +720,7 @@ export interface Prompt {
   relativePath: string;   // Path relative to prompt directory
   filename: string;       // Just the filename
   title: string;          // From frontmatter or filename
-  labels: string[];       // From frontmatter
+  tags: string[];       // From frontmatter
   content: string;        // Markdown content without frontmatter
   frontmatter: any;       // Raw frontmatter data
   variables?: VariableDefinition[];
@@ -793,8 +793,8 @@ export class PromptManager {
     // Extract title from frontmatter or filename
     const title = frontmatter.title || path.basename(filename, '.md');
     
-    // Extract labels
-    const labels = Array.isArray(frontmatter.labels) ? frontmatter.labels : [];
+    // Extract tags
+    const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
     
     // Extract variables
     const variables = this.parseVariables(frontmatter.variables);
@@ -804,7 +804,7 @@ export class PromptManager {
       relativePath,
       filename,
       title,
-      labels,
+      tags,
       content: markdownContent.trim(),
       frontmatter,
       variables
@@ -862,7 +862,7 @@ describe('SearchEngine', () => {
         relativePath: 'api-client.md',
         filename: 'api-client.md',
         title: 'API Client Generator',
-        labels: ['api', 'client', 'typescript'],
+        tags: ['api', 'client', 'typescript'],
         content: 'Generate a TypeScript API client with authentication',
         frontmatter: {}
       },
@@ -871,7 +871,7 @@ describe('SearchEngine', () => {
         relativePath: 'react-component.md',
         filename: 'react-component.md',
         title: 'React Component',
-        labels: ['react', 'component', 'frontend'],
+        tags: ['react', 'component', 'frontend'],
         content: 'Create a new React component with hooks',
         frontmatter: {}
       },
@@ -880,7 +880,7 @@ describe('SearchEngine', () => {
         relativePath: 'database-schema.md',
         filename: 'database-schema.md',
         title: 'Database Schema',
-        labels: ['database', 'sql', 'schema'],
+        tags: ['database', 'sql', 'schema'],
         content: 'Design a database schema for your application',
         frontmatter: {}
       }
@@ -896,10 +896,10 @@ describe('SearchEngine', () => {
     expect(results[0].item.title).toBe('API Client Generator');
   });
 
-  it('should find prompts by labels', () => {
+  it('should find prompts by tags', () => {
     const results = engine.search('typescript');
     expect(results).toHaveLength(1);
-    expect(results[0].item.labels).toContain('typescript');
+    expect(results[0].item.tags).toContain('typescript');
   });
 
   it('should find prompts by content', () => {
@@ -955,12 +955,12 @@ export class SearchEngine {
 
   constructor() {
     this.index = new MiniSearch<Prompt>({
-      fields: ['title', 'labels', 'content'],
+      fields: ['title', 'tags', 'content'],
       storeFields: ['path'],
       searchOptions: {
         boost: {
           title: 3,
-          labels: 2,
+          tags: 2,
           content: 1
         },
         fuzzy: 0.2,
@@ -982,7 +982,7 @@ export class SearchEngine {
       return {
         id,
         title: prompt.title,
-        labels: prompt.labels.join(' '),
+        tags: prompt.tags.join(' '),
         content: prompt.content,
         path: prompt.path
       };
@@ -1038,7 +1038,7 @@ describe('InteractiveSearch', () => {
       relativePath: 'test1.md',
       filename: 'test1.md',
       title: 'Test Prompt 1',
-      labels: ['test'],
+      tags: ['test'],
       content: 'Content 1',
       frontmatter: {}
     },
@@ -1047,7 +1047,7 @@ describe('InteractiveSearch', () => {
       relativePath: 'test2.md',
       filename: 'test2.md',
       title: 'Test Prompt 2',
-      labels: ['test'],
+      tags: ['test'],
       content: 'Content 2',
       frontmatter: {}
     }
@@ -1131,11 +1131,11 @@ export class InteractiveSearch {
   }
 
   private formatPromptDisplay(prompt: Prompt): string {
-    const labels = prompt.labels.length > 0 
-      ? chalk.dim(` [${prompt.labels.join(', ')}]`)
+    const tags = prompt.tags.length > 0 
+      ? chalk.dim(` [${prompt.tags.join(', ')}]`)
       : '';
     
-    return `${chalk.bold(prompt.title)}${labels}`;
+    return `${chalk.bold(prompt.title)}${tags}`;
   }
 }
 ```
@@ -1677,7 +1677,7 @@ program
     const examplePath = './prompts/example-api-client.md';
     const exampleContent = `---
 title: API Client Generator
-labels: [api, typescript, client]
+tags: [api, typescript, client]
 variables:
   - name: serviceName
     type: input
@@ -1818,7 +1818,7 @@ describe('pt CLI E2E', () => {
     // Create test prompt
     const promptContent = `---
 title: Test Prompt
-labels: [test]
+tags: [test]
 ---
 Hello {{input "name" "Your name?"}}!
 Today is {{date}}.`;
@@ -1894,7 +1894,7 @@ mkdir -p ~/prompts
 cat > ~/prompts/hello.md << 'EOF'
 ---
 title: Hello World
-labels: [example, greeting]
+tags: [example, greeting]
 ---
 Hello {{input "name" "What is your name?"}}!
 

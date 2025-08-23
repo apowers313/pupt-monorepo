@@ -297,24 +297,7 @@ codingToolOptions:
       expect(config.autoAnnotate).toEqual({
         enabled: false,
         triggers: ['claude', 'ai', 'assistant'],
-        analysisPrompt: 'analyze-execution',
-        fallbackRules: [
-          {
-            pattern: 'test.*fail|failing|failed',
-            category: 'verification_gap',
-            severity: 'high'
-          },
-          {
-            pattern: 'error:|exception:|Error:',
-            category: 'incomplete_task',
-            severity: 'medium'
-          },
-          {
-            pattern: 'stopped at|incomplete|unfinished',
-            category: 'incomplete_task',
-            severity: 'high'
-          }
-        ]
+        analysisPrompt: 'analyze-execution'
       });
       
       // Existing fields should be preserved
@@ -382,8 +365,7 @@ codingToolOptions:
         autoAnnotate: {
           enabled: true,
           triggers: ['claude'],
-          analysisPrompt: 'analyze',
-          fallbackRules: []
+          analysisPrompt: 'analyze'
         }
       };
       

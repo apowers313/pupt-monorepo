@@ -53,8 +53,8 @@ export class PromptManager {
     // Extract title from frontmatter or filename
     const title = frontmatter.title || path.basename(filename, '.md');
 
-    // Extract labels
-    const labels = Array.isArray(frontmatter.labels) ? frontmatter.labels : [];
+    // Extract tags
+    const tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
 
     // Extract variables
     const variables = this.parseVariables(frontmatter.variables);
@@ -67,7 +67,7 @@ export class PromptManager {
       relativePath,
       filename,
       title,
-      labels,
+      tags,
       content: markdownContent.trim(),
       frontmatter,
       variables,

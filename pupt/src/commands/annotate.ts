@@ -1,7 +1,6 @@
 import { select, input, editor } from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'node:path';
-import yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigManager } from '../config/config-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
@@ -83,20 +82,18 @@ export async function annotateCommand(historyNumber?: number): Promise<void> {
     tags: tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : []
   };
 
-  const content = `---
-${yaml.dump(metadata)}---
-
-## Notes
-
-${notes}
-`;
+  // Create JSON annotation with all data
+  const annotationData = {
+    ...metadata,
+    notes
+  };
 
   const historyBasename = path.basename(entry.filename, '.json');
-  const filename = `${historyBasename}-annotation-${uuidv4()}.md`;
+  const filename = `${historyBasename}-annotation-${uuidv4()}.json`;
   const filepath = path.join(config.annotationDir, filename);
   
   try {
-    await fs.writeFile(filepath, content);
+    await fs.writeJson(filepath, annotationData, { spaces: 2 });
     logger.log(`✅ Annotation saved to ${filepath}`);
   } catch (error) {
     const err = error as NodeJS.ErrnoException;

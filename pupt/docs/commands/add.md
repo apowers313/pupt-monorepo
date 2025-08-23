@@ -24,7 +24,7 @@ The `add` command:
 |--------|-------|-------------|
 | `--dir <path>` | `-d` | Target directory for new prompt |
 | `--title <title>` | `-t` | Set prompt title |
-| `--labels <labels>` | `-l` | Comma-separated labels/tags |
+| `--tags <tags>` | `-t` | Comma-separated tags |
 | `--editor <editor>` | `-e` | Override default editor |
 | `--template <name>` | | Use specific prompt template |
 | `--no-edit` | | Skip opening editor |
@@ -44,7 +44,7 @@ The `add` command:
 ```
 ? Title: API Documentation Generator
 ? Description: Generate comprehensive API docs
-? Labels (comma-separated): api, documentation, openapi
+? Tags (comma-separated): api, documentation, openapi
 ? Author: (auto-detected from git)
 ```
 
@@ -78,7 +78,7 @@ pt add code-review.md
 # Complete prompt creation
 pt add api-client.md \
   --title "API Client Generator" \
-  --labels "api,typescript,client"
+  --tags "api,typescript,client"
 ```
 
 ### Quick Creation
@@ -106,7 +106,7 @@ pt add test.md --dir ~/team-prompts
 ---
 title: &lbrace;&lbrace;title&rbrace;&rbrace;
 description: &lbrace;&lbrace;description&rbrace;&rbrace;
-labels: [&lbrace;&lbrace;labels&rbrace;&rbrace;]
+tags: [&lbrace;&lbrace;tags&rbrace;&rbrace;]
 author: &lbrace;&lbrace;author&rbrace;&rbrace;
 created: &lbrace;&lbrace;date&rbrace;&rbrace;
 ---
@@ -139,7 +139,7 @@ Create custom templates in `~/.pt/templates/`:
 ```markdown
 ---
 title: &lbrace;&lbrace;title&rbrace;&rbrace;
-labels: [react, component]
+tags: [react, component]
 variables:
   - name: componentName
     type: input
@@ -159,7 +159,7 @@ variables:
 
 ### Optional Fields
 - `description`: Brief description
-- `labels`: Array of tags
+- `tags`: Array of tags
 - `author`: Prompt author
 - `created`: Creation date
 - `modified`: Last modified date
@@ -226,7 +226,7 @@ The add command validates:
 ```bash
 # Create multiple related prompts
 for type in create read update delete; do
-  pt add "api-${type}.md" --labels "api,crud"
+  pt add "api-${type}.md" --tags "api,crud"
 done
 ```
 
@@ -235,7 +235,7 @@ done
 # Add team metadata
 pt add feature.md \
   --title "Feature: User Authentication" \
-  --labels "feature,auth,team"
+  --tags "feature,auth,team"
 ```
 
 ### Template Development
@@ -280,7 +280,7 @@ mkdir -p ./prompts
 ## Best Practices
 
 1. **Descriptive Titles**: Use clear, searchable titles
-2. **Consistent Labels**: Establish team labeling conventions
+2. **Consistent Tags**: Establish team tagging conventions
 3. **Variable Documentation**: Comment complex variables
 4. **Version Control**: Commit prompts to git
 5. **Template Reuse**: Create templates for common patterns

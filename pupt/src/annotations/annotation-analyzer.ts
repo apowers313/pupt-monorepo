@@ -173,10 +173,10 @@ export class AnnotationAnalyzer {
     return detected;
   }
 
-  private extractPromptName(historyFile: string): string {
-    // Extract prompt name from history filename pattern
-    // Format: history_YYYY-MM-DDTHH-MM-SSZ_promptname.json
-    const match = historyFile.match(/history_.*?_(.+)\.json$/);
-    return match ? match[1] : 'unknown';
+  private extractPromptName(_historyFile: string): string {
+    // For the current filename format (YYYYMMDD-HHMMSS-randomhex.json),
+    // we can't extract the prompt name from the filename alone.
+    // This should be handled by the caller using the actual history entry data.
+    return 'unknown';
   }
 }

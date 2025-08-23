@@ -22,7 +22,7 @@ This is PUPT's primary interface for:
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--search <query>` | `-s` | Pre-filter prompts by search query |
-| `--tag <tag>` | `-t` | Filter prompts by specific tag/label |
+| `--tag <tag>` | `-t` | Filter prompts by specific tag |
 | `--debug` | `-d` | Enable debug output |
 | `--quiet` | `-q` | Suppress non-essential output |
 | `--help` | `-h` | Show help information |
@@ -36,7 +36,7 @@ This is PUPT's primary interface for:
 - **Ctrl+C**: Cancel selection
 
 ### Preview Mode
-- Shows prompt title, labels, and content preview
+- Shows prompt title, tags, and content preview
 - Displays required variables
 - Indicates template complexity
 
@@ -114,7 +114,7 @@ pt --quiet > output.txt
 
 ### Efficient Searching
 - Use partial words: "rev" finds "review", "reverse", etc.
-- Search works on titles, labels, and content
+- Search works on titles, tags, and content
 - Use tags for categorical filtering
 
 ### Keyboard Shortcuts

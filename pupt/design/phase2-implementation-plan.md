@@ -510,20 +510,20 @@ export async function addCommand(): Promise<void> {
     validate: (input) => input.length > 0 || 'Title is required'
   });
 
-  const labels = await input({
-    message: 'Labels (comma-separated, optional):'
+  const tags = await input({
+    message: 'Tags (comma-separated, optional):'
   });
 
   // Generate content
   const author = getGitAuthor();
   const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-  const labelArray = labels ? labels.split(',').map(l => l.trim()) : [];
+  const tagArray = tags ? tags.split(',').map(t => t.trim()) : [];
 
   const frontmatter = `---
 title: ${title}
 author: ${author}
 creationDate: ${date}
-labels: [${labelArray.join(', ')}]
+tags: [${tagArray.join(', ')}]
 ---
 
 `;

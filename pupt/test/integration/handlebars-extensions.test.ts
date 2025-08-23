@@ -36,7 +36,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'The message is: {{shout "hello world"}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -73,7 +73,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: '{{suffix (prefix "content")}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -100,7 +100,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'Main content{{> signature}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -143,7 +143,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'Hello {{capitalize "wORLD"}}!',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -183,7 +183,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: '5 + 3 = {{add 5 3}}, 5 * 3 = {{multiply 5 3}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -214,7 +214,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'Date: {{date}}, Wrapped: {{wrap "content"}}, User: {{username}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -248,7 +248,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: '{{timestampedMessage "System initialized"}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -275,7 +275,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'Hello world',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -298,7 +298,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: 'Hello world',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -327,7 +327,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: '{{formatCode "javascript" "console.log(\\"Hello\\");"}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
@@ -358,7 +358,7 @@ describe('Handlebars Extensions Integration', () => {
       const prompt: Prompt = {
         title: 'Test Prompt',
         content: '{{> section sectionTitle=(upper "overview") title="Main Title" description="This is a description"}}',
-        labels: [],
+        tags: [],
         variables: [],
         path: 'test.md'
       };
