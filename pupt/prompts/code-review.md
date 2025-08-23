@@ -21,9 +21,16 @@ tags: []
   - Copy-paste errors and duplicated logic
   - Missing edge case handling
   
-- Create file inventory first, then review systematically
+- Create file inventory first, categorizing files as:
+  - Production code (src/)
+  - Test code (test/, *.test.*, *.spec.*)
+  - Configuration (config files, build scripts)
+- Apply different standards based on file type:
+  - Production code: Strict type safety, no 'any' types
+  - Test code: 'any' types acceptable for mocks, relaxed standards
+  - Configuration: Focus on security and correctness
 - For each issue found:
-  - Verify it's a real issue (not test code, not intentional)
+  - Verify it's a real issue considering the file context
   - Assess actual impact on system
   - Provide specific fix with code example
 - Group similar issues for batch remediation
@@ -74,9 +81,12 @@ tags: []
 
 **Constraints**: 
 - Don't flag test utilities for production code issues
+- Test files have different standards: 'any' types, mocks, and test helpers are acceptable
 - Consider project conventions before suggesting changes
+- Check if the issue is actually problematic in its context
 - Focus on measurable improvements
 - Distinguish must-fix from nice-to-have
+- CRITICAL: Don't recommend unnecessary libraries - check if existing solutions work first
 
 **Success Criteria**: 
 - All significant issues caught and correctly prioritized

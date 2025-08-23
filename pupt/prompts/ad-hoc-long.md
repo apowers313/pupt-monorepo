@@ -12,6 +12,12 @@ tags: []
 **Specific Requirements**:
 - Read the entire request before beginning response
 - Identify all sub-tasks and requirements
+- Create a prioritized task list focusing on the MAIN objective
+- For debugging tasks:
+  - Stay focused on the specific issue reported
+  - Follow a systematic process without getting sidetracked
+  - Fix the reported issue FIRST before exploring related problems
+  - Verify the fix resolves the original issue
 - Organize response to address each part clearly
 - Use appropriate formatting and structure
 - Provide comprehensive solutions
@@ -20,7 +26,13 @@ tags: []
 - For multi-part questions: Address each part with clear sections
 - For analysis tasks: Use structured findings and recommendations
 - For implementation tasks: Provide step-by-step approach
-- For debugging: Use systematic investigation process
+- For debugging: 
+  1. State the specific issue to be fixed
+  2. Reproduce the issue exactly as described
+  3. Identify root cause through systematic investigation
+  4. Apply targeted fix for that specific issue
+  5. Verify the original issue is resolved
+  6. Only then address related issues if requested
 
 **Complex Request**:
 {{editor "prompt"}}

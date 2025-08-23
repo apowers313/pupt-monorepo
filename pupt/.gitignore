@@ -9,6 +9,7 @@ coverage/
 .idea/
 *.tgz
 .pt/
+*~
 
 
 # Prompt Tool

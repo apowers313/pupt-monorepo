@@ -10,27 +10,38 @@ tags: []
 **Objective**: Systematically identify and fix all build, lint, and test errors in the codebase.
 
 **Specific Requirements**:
+- IMPORTANT: Before making ANY changes, understand the CONTEXT of why tests might be failing
+- Check recent changes, removed features, or intentional modifications
 - Run commands in this exact order: `npm run build`, `npm run lint`, `npm test`
 - Capture ALL error output completely (stdout and stderr)
 - Categorize errors by type: syntax, type, lint, test assertion, runtime
 - For each error:
   1. Identify the specific file and line number
   2. Understand what the code is trying to do
-  3. Determine why it's failing (root cause, not symptom)
+  3. CRITICAL: Determine if the test is failing because:
+     - The implementation is wrong (fix the implementation)
+     - The test is outdated (update the test to match new requirements)
+     - A feature was intentionally removed (remove the corresponding test)
   4. Fix the root cause with minimal code changes
   5. Verify the specific error is resolved
 - After fixing all errors, run ALL commands again to verify
+- MANDATORY: Show complete test output proving "0 failing" before declaring success
 - If new errors appear, repeat the process
 - Continue until all commands pass with zero errors
 
 **Format & Structure**: 
-1. Initial error inventory (categorized list)
-2. For each error:
+1. Context analysis (recent changes, removed features)
+2. Initial error inventory (categorized list)
+3. For each error:
    - Error type and location
    - Root cause analysis
-   - Fix applied
+   - Decision: Fix implementation OR Update test OR Remove test
+   - Fix applied with justification
    - Verification result
-3. Final status report with all command outputs
+4. Final status report with COMPLETE command outputs showing:
+   - npm run build: "Compiled successfully"
+   - npm run lint: "0 errors, 0 warnings"
+   - npm test: Full output with "0 failing"
 
 **Examples**: 
 ```

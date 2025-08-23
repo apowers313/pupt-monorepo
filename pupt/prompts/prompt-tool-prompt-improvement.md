@@ -5,12 +5,13 @@ creationDate: 20250821
 tags: []
 ---
 
-**Role & Context**: You are an expert prompt engineer and performance analyst specializing in identifying failure patterns in AI-assisted development workflows. You have deep expertise in prompt design principles, failure analysis, and evidence-based optimization.
+**Role & Context**: You are an expert prompt engineer and performance analyst specializing in identifying failure patterns in AI-assisted development workflows. You have deep expertise in prompt design principles, failure analysis, and evidence-based optimization. You will actively modify prompt files to implement improvements.
 
-**Objective**: Use the `pt review` command to analyze comprehensive usage data for AI prompts to:
-1. Generate specific, actionable improvements that address documented failure patterns
-2. Identify opportunities for new reusable prompts based on repeated Ad Hoc usage patterns
-Your analysis must be grounded in actual usage evidence, not theoretical concerns.
+**Objective**: Use the `pt review` command to analyze comprehensive usage data for AI prompts and DIRECTLY UPDATE prompt files to:
+1. Fix documented failure patterns by modifying existing prompt files
+2. Create new prompt files for repeated Ad Hoc usage patterns
+3. Implement all improvements immediately (git handles version control)
+Your analysis must be grounded in actual usage evidence, and you MUST modify files, not just make recommendations.
 
 **Specific Requirements**:
 1. **Run the review command**: Execute `pt review --format json > {{input "reviewDataFile" default="review.json"}}` to generate comprehensive usage data
@@ -25,36 +26,40 @@ Your analysis must be grounded in actual usage evidence, not theoretical concern
    - Correlate failures with environmental factors
    - Extract specific evidence quotes from annotations
    - Calculate pattern impact (frequency × severity)
-   - **NEW**: Identify repeated Ad Hoc prompt content/themes
-   - **NEW**: Detect common prompt structures and workflows
-4. **Generate improvements**:
-   - Every recommendation must cite specific evidence
+   - Identify repeated Ad Hoc prompt content/themes
+   - Detect common prompt structures and workflows
+4. **DIRECTLY UPDATE existing prompt files**:
+   - Use the Edit tool to modify prompts with identified issues
+   - Every change must cite specific evidence from the review data
    - Address root causes, not symptoms
    - Preserve successful prompt elements
    - Add verification steps for documented gaps
    - Replace ambiguous terms with measurable criteria
-5. **Identify new prompt opportunities**:
-   - Analyze Ad Hoc prompt content for repeated patterns
-   - Group similar Ad Hoc prompts by task type or workflow
-   - Identify common templates that could be extracted
-   - Recommend new reusable prompts with clear use cases
+   - Confirm each edit is successful before proceeding
+5. **CREATE new prompt files**:
+   - Use the Write tool to create new prompts for repeated Ad Hoc patterns
+   - Each new prompt must address ≥3 similar Ad Hoc uses
+   - Include proper frontmatter (title, author, tags)
+   - Base templates on common patterns found in Ad Hoc usage
+   - Test that new prompts are discoverable with `pt list`
 
-**Format & Structure**: Create {{input "promptReviewFile" default="design/prompt-review-20250821.md"}} with:
+**Format & Structure**: Create {{input "promptReviewFile" default="design/prompt-review.md"}} documenting the changes made:
 
 ```markdown
-# Prompt Performance Analysis Report
+# Prompt Performance Analysis & Implementation Report
 *Generated: {{date}}*
 *Analysis Period: {{input "timeframe" default="30d"}}*
 
 ## Executive Summary
 - **Prompts Analyzed**: X prompts with Y total executions
+- **Prompts Modified**: X files updated
+- **New Prompts Created**: Y new prompt files
 - **Key Finding**: [Most significant pattern discovered]
-- **Priority Recommendation**: [Highest impact improvement]
-- **Overall Success Rate**: X% (trend: ↑/↓/→)
+- **Overall Success Rate**: X% → Y% (after improvements)
 
-## High-Impact Improvements
+## Implemented Improvements
 
-### 1. [Prompt Name] - [Pattern Type] (Priority: Critical/High/Medium)
+### 1. [Prompt Name] - [Pattern Type] (Priority: Critical/High/Medium) ✅
 **Evidence**: 
 - Pattern frequency: X occurrences across Y executions
 - Success rate impact: X% → Y% projected improvement
@@ -63,14 +68,22 @@ Your analysis must be grounded in actual usage evidence, not theoretical concern
 
 **Root Cause**: [Specific analysis of why this pattern occurs]
 
-**Current Prompt Issues**:
+**Changes Made**:
+- File: `prompts/[filename].md`
+- Action: Modified using Edit tool
+- Specific changes:
+  - Added: "[what was added]"
+  - Removed: "[what was removed]"
+  - Modified: "[what was changed]"
+
+**Before**:
 ```
-[Quote problematic sections of current prompt]
+[Quote problematic sections that were fixed]
 ```
 
-**Improved Prompt**:
+**After**:
 ```
-[Full rewritten prompt with specific improvements]
+[Show the updated sections]
 ```
 
 **Expected Impact**: 
@@ -78,22 +91,20 @@ Your analysis must be grounded in actual usage evidence, not theoretical concern
 - Reduced verification gaps: X → Y occurrences
 - Environmental resilience: [specific improvements]
 
-**Verification Strategy**:
-- Test with historical failure scenarios
-- Monitor for pattern recurrence after 10+ uses
-- Measure success rate improvement
+[Repeat for each implemented improvement]
 
-[Repeat for each significant improvement]
+## New Prompts Created
 
-## New Prompt Recommendations
-
-### 1. [Suggested Prompt Name] (Frequency: X Ad Hoc uses)
+### 1. [Prompt Name] (Addressed X Ad Hoc uses) ✅
 **Evidence of Need**:
 - Ad Hoc prompts with similar content: X occurrences
 - Common phrases: "[repeated text patterns]"
 - Typical use cases: [list specific scenarios]
 
-**Proposed Prompt Template**:
+**File Created**: `prompts/[filename].md`
+**Action**: Created using Write tool
+
+**Prompt Content**:
 ```markdown
 ---
 title: [Prompt Name]
@@ -101,15 +112,21 @@ author: [Author]
 tags: [relevant tags]
 ---
 
-[Full prompt template based on common Ad Hoc patterns]
+[Full prompt template that was created]
 ```
 
-**Expected Benefits**:
-- Standardize common workflow with X% of Ad Hoc uses
-- Reduce prompt creation time by Y minutes per use
-- Improve consistency across team members
+**Verification**:
+- ✅ File created successfully
+- ✅ Appears in `pt list` output
+- ✅ Template variables work correctly
+- ✅ Addresses the identified use cases
 
-[Repeat for each new prompt recommendation]
+**Expected Benefits**:
+- Standardizes common workflow covering X% of similar Ad Hoc uses
+- Reduces prompt creation time from Y minutes to Z seconds
+- Improves consistency across team members
+
+[Repeat for each new prompt created]
 
 ## Ad Hoc Usage Analysis
 | Pattern | Frequency | Example Content | Proposed Prompt |
@@ -181,10 +198,23 @@ Expected Impact: Reduce API testing prompt creation time from 5 minutes to 30 se
 - New prompt recommendations must show clear reuse potential
 
 **Success Criteria**:
-- Generated improvements address 80%+ of documented high-severity patterns
-- Recommendations include specific implementation guidance
-- Priority ranking enables focused improvement efforts
-- Evidence citations allow verification of analysis accuracy
-- New prompt recommendations identify 70%+ of repeated Ad Hoc patterns
-- Each new prompt recommendation includes complete template and use cases
-- Report format enables tracking improvement effectiveness over time
+- ✅ All high-severity patterns (≥3 occurrences) have corresponding file modifications
+- ✅ At least 80% of identified issues result in actual prompt file updates
+- ✅ All modifications are verified with successful Edit tool operations
+- ✅ New prompt files are created for 70%+ of repeated Ad Hoc patterns
+- ✅ Each created prompt is verified to work with `pt list` and `pt run`
+- ✅ Report documents all changes made with file paths and specific edits
+- ✅ Git status shows modified/new files ready for review and commit
+
+**Workflow Summary**:
+1. Run `pt review --format json > review.json`
+2. Read and analyze review.json
+3. For each identified issue with ≥3 occurrences:
+   - Read the prompt file
+   - Apply fixes using Edit tool
+   - Verify the edit succeeded
+4. For each Ad Hoc pattern with ≥3 similar uses:
+   - Create new prompt file using Write tool
+   - Verify it appears in `pt list`
+5. Generate report showing all changes made
+6. Run `git status` to confirm all modifications
