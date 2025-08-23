@@ -1,6 +1,7 @@
 import { input, confirm, select } from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
@@ -96,7 +97,9 @@ export async function initCommand(): Promise<void> {
 
   // Copy default analyze-execution prompt if using default auto-annotation
   if (autoAnnotateConfig?.enabled && autoAnnotateConfig.analysisPrompt === 'analyze-execution') {
-    const sourcePromptPath = path.join(path.dirname(new URL(import.meta.url).pathname), '../../prompts/analyze-execution.md');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const sourcePromptPath = path.join(__dirname, '../../prompts/analyze-execution.md');
     const targetPromptPath = path.join(
       promptDir.startsWith('~') 
         ? path.join(process.env.HOME || '', promptDir.slice(2))
