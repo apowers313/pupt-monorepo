@@ -1,6 +1,6 @@
 # Prompts
 
-This section describes all the prompts available in the prompt-tool project. Each prompt is designed for specific tasks in software development workflows.
+This section describes all the prompts available in the PUPT project. Each prompt is designed for specific tasks in software development workflows.
 
 ## General Purpose Prompts
 
@@ -120,7 +120,7 @@ This section describes all the prompts available in the prompt-tool project. Eac
 
 ## Prompt Management
 
-### Prompt Tool Prompt Improvement
+### PUPT Prompt Improvement
 **Purpose**: Analyzes prompt usage data using `pt review` to identify failure patterns and generate evidence-based improvements.
 
 **Inputs**:
@@ -154,4 +154,4 @@ The prompts use various input types:
 2. **Provide complete information**: Fill in all requested inputs thoroughly
 3. **Use `ad-hoc` for simple tasks**: Don't overcomplicate simple requests
 4. **Follow the workflow**: Design → Implementation Plan → Implementation Phases for new features
-5. **Review and iterate**: Use `code-review` after significant changes and `prompt-tool-prompt-improvement` to enhance prompts
+5. **Review and iterate**: Use `code-review` after significant changes and `pupt-prompt-improvement` to enhance prompts

@@ -27,7 +27,7 @@ export const fixtures = {
         './shared-prompts',
         '~/Documents/prompts'
       ],
-      historyDirectory: '~/.config/prompt-tool/history'
+      historyDirectory: '~/.config/pupt/history'
     } as Config
   },
   
@@ -154,7 +154,7 @@ No additional context provided.
     yamlConfig: `promptDirectory:
   - ./.prompts
   - ./templates
-historyDirectory: ~/.prompt-tool/history
+historyDirectory: ~/.pupt/history
 editor: code
 defaultModel: gpt-4
 apiKeys:
@@ -183,12 +183,12 @@ apiKeys:
   paths: {
     unix: {
       home: '/home/user',
-      config: '/home/user/.config/prompt-tool',
+      config: '/home/user/.config/pupt',
       prompts: '/home/user/prompts'
     },
     windows: {
       home: 'C:\\Users\\User',
-      config: 'C:\\Users\\User\\AppData\\Roaming\\prompt-tool',
+      config: 'C:\\Users\\User\\AppData\\Roaming\\pupt',
       prompts: 'C:\\Users\\User\\Documents\\prompts'
     }
   }

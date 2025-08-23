@@ -49,7 +49,7 @@ describe('Platform utilities', () => {
       const paths = getConfigPaths();
       expect(paths).toEqual([
         process.cwd(),
-        path.join('C:\\Users\\test\\AppData\\Roaming', 'prompt-tool'),
+        path.join('C:\\Users\\test\\AppData\\Roaming', 'pupt'),
       ]);
     });
 
@@ -65,8 +65,8 @@ describe('Platform utilities', () => {
       const paths = getConfigPaths();
       expect(paths).toEqual([
         process.cwd(),
-        path.join('/Users/test/Library/Application Support/prompt-tool'),
-        path.join('/Users/test/.config/prompt-tool'),
+        path.join('/Users/test/Library/Application Support/pupt'),
+        path.join('/Users/test/.config/pupt'),
       ]);
     });
 
@@ -81,7 +81,7 @@ describe('Platform utilities', () => {
       process.env.XDG_CONFIG_HOME = '/home/test/.config';
 
       const paths = getConfigPaths();
-      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/prompt-tool')]);
+      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/pupt')]);
     });
 
     it('should use home directory if XDG_CONFIG_HOME is not set on Linux', () => {
@@ -95,7 +95,7 @@ describe('Platform utilities', () => {
       delete process.env.XDG_CONFIG_HOME;
 
       const paths = getConfigPaths();
-      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/prompt-tool')]);
+      expect(paths).toEqual([process.cwd(), path.join('/home/test/.config/pupt')]);
     });
   });
 

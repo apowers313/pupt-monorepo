@@ -205,7 +205,7 @@ variables:
 If you're still experiencing issues:
 
 1. **Check existing issues**
-   - Visit [GitHub Issues](https://github.com/apowers313/prompt-tool/issues)
+   - Visit [GitHub Issues](https://github.com/apowers313/pupt/issues)
 
 2. **Create a new issue**
    - Include PUPT version: `pt --version`

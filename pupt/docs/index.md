@@ -14,7 +14,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: View on GitHub
-      link: https://github.com/apowers313/prompt-tool
+      link: https://github.com/apowers313/pupt
 
 features:
   - icon: ✏️

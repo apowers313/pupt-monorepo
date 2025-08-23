@@ -13,8 +13,8 @@ This guide covers how to contribute to PUPT development or build it from source.
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/apowers313/prompt-tool.git
-cd prompt-tool
+git clone https://github.com/apowers313/pupt.git
+cd pupt
 ```
 
 ### Install Dependencies
@@ -98,7 +98,7 @@ pt --version
 ## Project Structure
 
 ```
-prompt-tool/
+pupt/
 ├── src/                    # Source code
 │   ├── cli.ts             # CLI entry point
 │   ├── commands/          # Command implementations

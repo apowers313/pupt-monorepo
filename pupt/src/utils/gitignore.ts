@@ -38,11 +38,11 @@ export async function addToGitignore(entry: string): Promise<void> {
     return; // Entry already exists, nothing to do
   }
 
-  // Check if Prompt Tool section exists
-  const promptToolSectionIndex = lines.findIndex(line => line.trim() === '# Prompt Tool');
+  // Check if PUPT section exists
+  const promptToolSectionIndex = lines.findIndex(line => line.trim() === '# PUPT');
   
   if (promptToolSectionIndex !== -1) {
-    // Add to existing Prompt Tool section
+    // Add to existing PUPT section
     // Find the end of the section (next comment or end of file)
     let insertIndex = promptToolSectionIndex + 1;
     while (insertIndex < lines.length && 
@@ -54,7 +54,7 @@ export async function addToGitignore(entry: string): Promise<void> {
     // Insert the new entry
     lines.splice(insertIndex, 0, entry);
   } else {
-    // Add new Prompt Tool section
+    // Add new PUPT section
     // Ensure there's a newline before the section if file has content
     if (exists && gitignoreContent.trim() !== '') {
       if (!gitignoreContent.endsWith('\n')) {
@@ -68,7 +68,7 @@ export async function addToGitignore(entry: string): Promise<void> {
       }
     }
     
-    lines.push('# Prompt Tool');
+    lines.push('# PUPT');
     lines.push(entry);
   }
 

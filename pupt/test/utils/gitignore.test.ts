@@ -42,7 +42,7 @@ describe('Gitignore Utils', () => {
       const content = await fs.readFile(gitignorePath, 'utf-8');
       expect(content).toContain('node_modules/');
       expect(content).toContain('.env');
-      expect(content).toContain('\n# Prompt Tool\n.pthistory\n');
+      expect(content).toContain('\n# PUPT\n.pthistory\n');
     });
 
     it('should create .gitignore if it does not exist', async () => {
@@ -53,7 +53,7 @@ describe('Gitignore Utils', () => {
 
       expect(await fs.pathExists(gitignorePath)).toBe(true);
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toBe('# Prompt Tool\n.pthistory\n');
+      expect(content).toBe('# PUPT\n.pthistory\n');
     });
 
     it('should not duplicate existing entry', async () => {
@@ -86,7 +86,7 @@ describe('Gitignore Utils', () => {
       await addToGitignore('.git-prompts');
 
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      const commentMatches = content.match(/# Prompt Tool/g);
+      const commentMatches = content.match(/# PUPT/g);
       expect(commentMatches).toHaveLength(1);
     });
 
@@ -97,7 +97,7 @@ describe('Gitignore Utils', () => {
       await addToGitignore('.pthistory');
 
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toBe('node_modules/\n.env\n\n\n# Prompt Tool\n.pthistory\n');
+      expect(content).toBe('node_modules/\n.env\n\n\n# PUPT\n.pthistory\n');
     });
 
     it('should handle empty .gitignore', async () => {
@@ -107,7 +107,7 @@ describe('Gitignore Utils', () => {
       await addToGitignore('.pthistory');
 
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toBe('# Prompt Tool\n.pthistory\n');
+      expect(content).toBe('# PUPT\n.pthistory\n');
     });
 
     it('should handle patterns with slashes', async () => {
@@ -118,14 +118,14 @@ describe('Gitignore Utils', () => {
       expect(content).toContain('.git-prompts/');
     });
 
-    it('should preserve existing Prompt Tool section', async () => {
+    it('should preserve existing PUPT section', async () => {
       const gitignorePath = path.join(tempDir, '.gitignore');
-      await fs.writeFile(gitignorePath, 'node_modules/\n\n# Prompt Tool\n.pthistory\n');
+      await fs.writeFile(gitignorePath, 'node_modules/\n\n# PUPT\n.pthistory\n');
 
       await addToGitignore('.git-prompts');
 
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toBe('node_modules/\n\n# Prompt Tool\n.pthistory\n.git-prompts\n');
+      expect(content).toBe('node_modules/\n\n# PUPT\n.pthistory\n.git-prompts\n');
     });
   });
 

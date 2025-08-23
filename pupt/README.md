@@ -1,7 +1,7 @@
-[![Build Status](https://github.com/apowers313/prompt-tool/workflows/CI/badge.svg)](https://github.com/apowers313/prompt-tool/actions)
+[![Build Status](https://github.com/apowers313/pupt/workflows/CI/badge.svg)](https://github.com/apowers313/pupt/actions)
 [![npm version](https://badge.fury.io/js/pupt.svg)](https://www.npmjs.com/package/pupt)
-[![Documentation](https://img.shields.io/badge/docs-view-blue)](https://apowers313.github.io/prompt-tool/)
-[![Coverage Status](https://coveralls.io/repos/github/apowers313/prompt-tool/badge.svg?branch=master)](https://coveralls.io/github/apowers313/prompt-tool?branch=master)
+[![Documentation](https://img.shields.io/badge/docs-view-blue)](https://apowers313.github.io/pupt/)
+[![Coverage Status](https://coveralls.io/repos/github/apowers313/pupt/badge.svg?branch=master)](https://coveralls.io/github/apowers313/pupt?branch=master)
 
 # PUPT (Powerful Universal Prompt Tool)
 
@@ -48,21 +48,21 @@ pt
 
 For comprehensive documentation, tutorials, and examples, visit our documentation site:
 
-**📚 [View Full Documentation](https://apowers313.github.io/prompt-tool/)**
+**📚 [View Full Documentation](https://apowers313.github.io/pupt/)**
 
 The documentation includes:
-- **[Getting Started Guide](https://apowers313.github.io/prompt-tool/guide/getting-started)** - Installation and first steps
-- **[Prompt Templates](https://apowers313.github.io/prompt-tool/guide/prompt-templates)** - Learn how to create dynamic prompts
-- **[Command Reference](https://apowers313.github.io/prompt-tool/commands/)** - Detailed information on all commands
-- **[Configuration Guide](https://apowers313.github.io/prompt-tool/guide/configuration)** - Customize PUPT to your needs
-- **[Available Prompts](https://apowers313.github.io/prompt-tool/prompts)** - Browse built-in prompt templates
-- **[Troubleshooting](https://apowers313.github.io/prompt-tool/guide/troubleshooting)** - Solutions to common issues
-- **[Development Guide](https://apowers313.github.io/prompt-tool/guide/development)** - Contributing and building from source
+- **[Getting Started Guide](https://apowers313.github.io/pupt/guide/getting-started)** - Installation and first steps
+- **[Prompt Templates](https://apowers313.github.io/pupt/guide/prompt-templates)** - Learn how to create dynamic prompts
+- **[Command Reference](https://apowers313.github.io/pupt/commands/)** - Detailed information on all commands
+- **[Configuration Guide](https://apowers313.github.io/pupt/guide/configuration)** - Customize PUPT to your needs
+- **[Available Prompts](https://apowers313.github.io/pupt/prompts)** - Browse built-in prompt templates
+- **[Troubleshooting](https://apowers313.github.io/pupt/guide/troubleshooting)** - Solutions to common issues
+- **[Development Guide](https://apowers313.github.io/pupt/guide/development)** - Contributing and building from source
 
 ## Repository
 
-- **GitHub**: [https://github.com/apowers313/prompt-tool](https://github.com/apowers313/prompt-tool)
-- **Issues**: [https://github.com/apowers313/prompt-tool/issues](https://github.com/apowers313/prompt-tool/issues)
+- **GitHub**: [https://github.com/apowers313/pupt](https://github.com/apowers313/pupt)
+- **Issues**: [https://github.com/apowers313/pupt/issues](https://github.com/apowers313/pupt/issues)
 - **Author**: Adam Powers <apowers@ato.ms>
 
 ## License

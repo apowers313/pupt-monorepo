@@ -184,7 +184,7 @@ program
 // Add init command
 program
   .command('init')
-  .description('Initialize a new prompt tool configuration')
+  .description('Initialize a new PUPT configuration')
   .action(async () => {
     try {
       await initCommand();

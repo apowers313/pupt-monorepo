@@ -12,19 +12,19 @@ export function getConfigPaths(): string[] {
   switch (platform) {
     case 'win32':
       if (process.env.APPDATA) {
-        paths.push(path.join(process.env.APPDATA, 'prompt-tool'));
+        paths.push(path.join(process.env.APPDATA, 'pupt'));
       }
       break;
     case 'darwin':
       paths.push(
-        path.join(getHomePath(), 'Library', 'Application Support', 'prompt-tool'),
-        path.join(getHomePath(), '.config', 'prompt-tool')
+        path.join(getHomePath(), 'Library', 'Application Support', 'pupt'),
+        path.join(getHomePath(), '.config', 'pupt')
       );
       break;
     case 'linux':
     default:
       const configHome = process.env.XDG_CONFIG_HOME || path.join(getHomePath(), '.config');
-      paths.push(path.join(configHome, 'prompt-tool'));
+      paths.push(path.join(configHome, 'pupt'));
       break;
   }
 

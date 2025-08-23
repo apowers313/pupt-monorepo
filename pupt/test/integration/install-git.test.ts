@@ -110,7 +110,7 @@ describe('Git Installation - Integration Tests', () => {
       // Check .gitignore was updated
       const gitignoreContent = await fs.readFile('.gitignore', 'utf-8');
       expect(gitignoreContent).toContain('.git-prompts');
-      expect(gitignoreContent).toContain('# Prompt Tool');
+      expect(gitignoreContent).toContain('# PUPT');
       
       // Verify original content is preserved
       expect(gitignoreContent).toContain('node_modules/');

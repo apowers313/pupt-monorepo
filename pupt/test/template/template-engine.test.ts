@@ -140,11 +140,11 @@ More examples: {{helper1}} and {{helper2 "arg"}}
     // Reset mocks and engine
     vi.clearAllMocks();
     engine = new TemplateEngine();
-    vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('prompt-tool');
+    vi.mocked(inquirerPrompts.input).mockResolvedValueOnce('pupt');
 
     const result = await engine.processTemplate(template, {});
 
-    expect(result).toBe('Documentation: {{myHelper "readme.md"}} explains how to use prompt-tool');
+    expect(result).toBe('Documentation: {{myHelper "readme.md"}} explains how to use pupt');
     expect(inquirerPrompts.input).toHaveBeenCalledTimes(1); // Only called for the real helper
   });
 

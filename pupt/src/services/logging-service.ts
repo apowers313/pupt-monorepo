@@ -62,7 +62,7 @@ export function createLogger(config: Config): Logger {
       res: pino.stdSerializers.res
     },
     base: {
-      app: 'prompt-tool',
+      app: 'pupt',
       version: config.version || 'unknown'
     }
   });

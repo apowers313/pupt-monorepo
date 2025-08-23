@@ -339,8 +339,27 @@ async function executeToolWithCapture(
 async function executeTool(tool: string, args: string[], prompt: string): Promise<number | null> {
   return new Promise((resolve, reject) => {
     const child = spawn(tool, args, {
-      stdio: ['pipe', 'inherit', 'inherit']
+      stdio: ['pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
     });
+    
+    let stderrData = '';
+    let errorDetected = false;
+    
+    // Capture stderr for Claude-specific error detection
+    if (tool === 'claude' && child.stderr) {
+      child.stderr.on('data', (data) => {
+        const output = data.toString();
+        stderrData += output;
+        
+        // Still write to stderr so user sees the output
+        process.stderr.write(data);
+        
+        // Check for the raw mode error
+        if (output.includes('Raw mode is not supported') && output.includes('Ink')) {
+          errorDetected = true;
+        }
+      });
+    }
     
     child.on('error', (error: Error & { code?: string }) => {
       if (error.code === 'ENOENT') {
@@ -357,6 +376,18 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
     });
     
     child.on('close', (code) => {
+      // Handle Claude raw mode error specifically
+      if (tool === 'claude' && errorDetected) {
+        logger.error(chalk.red('\nError: Claude cannot run in interactive mode when launched from pt.'));
+        logger.log(chalk.yellow('\nThis typically happens when Claude needs to ask for directory trust permissions.'));
+        logger.log(chalk.blue('\nTo fix this:'));
+        logger.log(chalk.white('1. Run Claude directly in this directory: ') + chalk.cyan('claude'));
+        logger.log(chalk.white('2. When prompted, trust the directory'));
+        logger.log(chalk.white('3. Then run your pt command again\n'));
+        logger.log(chalk.dim('Alternatively, you can use: ') + chalk.cyan('pt run claude -- --permission-mode acceptEdits'));
+        reject(new Error('Claude requires interactive trust setup. Please see instructions above.'));
+        return;
+      }
       resolve(code);
     });
     

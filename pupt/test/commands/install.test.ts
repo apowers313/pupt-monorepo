@@ -228,7 +228,7 @@ describe('Install Command', () => {
       );
       expect(vi.mocked(fs2.writeFile)).toHaveBeenCalledWith(
         expect.stringContaining('.gitignore'),
-        expect.stringContaining('# Prompt Tool'),
+        expect.stringContaining('# PUPT'),
         'utf-8'
       );
     });

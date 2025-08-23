@@ -35,7 +35,7 @@ describe('help command', () => {
     mockCommands = [
       {
         name: () => 'init',
-        description: () => 'Initialize a new prompt tool configuration',
+        description: () => 'Initialize a new PUPT configuration',
         outputHelp: vi.fn()
       },
       {
@@ -171,7 +171,7 @@ describe('help command', () => {
       await expect(helpCommand('nonexistent')).rejects.toThrow('process.exit');
 
       expect(logger.log).toHaveBeenCalledWith('\nAvailable commands:');
-      expect(logger.log).toHaveBeenCalledWith('  init - Initialize a new prompt tool configuration');
+      expect(logger.log).toHaveBeenCalledWith('  init - Initialize a new PUPT configuration');
       expect(logger.log).toHaveBeenCalledWith('  add - Create a new prompt interactively');
       expect(logger.log).toHaveBeenCalledWith('  edit - Edit an existing prompt in your editor');
       expect(logger.log).toHaveBeenCalledWith('  run - Execute a prompt with an external tool');

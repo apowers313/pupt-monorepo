@@ -8,11 +8,11 @@ describe('pt init CLI', () => {
   it('should show init command in help', () => {
     const output = execSync(`node ${cliPath} --help`, { encoding: 'utf-8' });
     expect(output).toContain('init');
-    expect(output).toContain('Initialize a new prompt tool configuration');
+    expect(output).toContain('Initialize a new PUPT configuration');
   });
 
   it('should show init command help', () => {
     const output = execSync(`node ${cliPath} init --help`, { encoding: 'utf-8' });
-    expect(output).toContain('Initialize a new prompt tool configuration');
+    expect(output).toContain('Initialize a new PUPT configuration');
   });
 });

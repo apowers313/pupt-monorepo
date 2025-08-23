@@ -153,6 +153,6 @@ Now that you have PUPT installed and configured:
 
 - Run `pt help` for general help
 - Run `pt help <command>` for command-specific help
-- Visit our [GitHub repository](https://github.com/apowers313/prompt-tool) for issues and discussions
+- Visit our [GitHub repository](https://github.com/apowers313/pupt) for issues and discussions
 
 Welcome to the PUPT community! 🐾

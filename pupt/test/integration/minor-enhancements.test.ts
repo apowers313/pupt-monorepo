@@ -126,7 +126,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       
       // Check content
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toContain('# Prompt Tool');
+      expect(content).toContain('# PUPT');
       expect(content).toContain('.pt-config.json.backup');
       expect(content).toContain('.pthistory');
       expect(content).toContain('.git-prompts');
@@ -170,7 +170,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       expect(await fs.pathExists(gitignorePath)).toBe(true);
       
       const content = await fs.readFile(gitignorePath, 'utf-8');
-      expect(content).toContain('# Prompt Tool');
+      expect(content).toContain('# PUPT');
       expect(content).toContain('.git-prompts');
     });
 
@@ -196,7 +196,7 @@ describe('Minor Enhancements - Integration Tests', () => {
       expect(content).toContain('node_modules/');
       expect(content).toContain('*.log');
       expect(content).toContain('.env');
-      expect(content).toContain('# Prompt Tool');
+      expect(content).toContain('# PUPT');
       expect(content).toContain('.pthistory');
     });
 
