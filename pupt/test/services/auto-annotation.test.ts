@@ -105,7 +105,7 @@ describe('AutoAnnotationService', () => {
       expect(mockPromptManager.findPrompt).toHaveBeenCalledWith('analyze-output');
       expect(spawn).toHaveBeenCalledWith(
         'claude',
-        ['-p'],
+        ['-p', '--permission-mode', 'acceptEdits'],
         expect.objectContaining({
           detached: true,
           stdio: ['pipe', 'ignore', 'ignore'],

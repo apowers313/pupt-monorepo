@@ -162,10 +162,11 @@ ${prompt.content}`;
       // Use spawn for true background execution
       const { spawn } = await import('node:child_process');
       
-      // For claude, use -p flag for non-interactive mode
+      // For claude, use -p flag for non-interactive mode and permission mode to avoid trust prompts
       const args: string[] = [];
       if (tool === 'claude') {
         args.push('-p'); // Print response and exit
+        args.push('--permission-mode', 'acceptEdits'); // Bypass directory trust prompt
       }
       
       // Execute the tool in a truly detached process

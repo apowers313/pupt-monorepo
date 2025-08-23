@@ -3,6 +3,7 @@ import stripAnsi from 'strip-ansi';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
+import { logger } from '../utils/logger.js';
 
 export interface CaptureResult {
   exitCode: number | null;
@@ -305,15 +306,15 @@ export class OutputCaptureService {
           
           // If Claude had a raw mode error, provide helpful guidance
           if (claudeRawModeError) {
-            console.error('\n' + '─'.repeat(60));
-            console.error('\x1b[31mError: Claude cannot run in interactive mode when launched from pt.\x1b[0m');
-            console.error('\x1b[33m\nThis typically happens when Claude needs to ask for directory trust permissions.\x1b[0m');
-            console.error('\x1b[34m\nTo fix this:\x1b[0m');
-            console.error('\x1b[37m1. Run Claude directly in this directory: \x1b[36mclaude\x1b[0m');
-            console.error('\x1b[37m2. When prompted, trust the directory\x1b[0m');
-            console.error('\x1b[37m3. Then run your pt command again\n\x1b[0m');
-            console.error('\x1b[90mAlternatively, you can use: \x1b[36mpt run claude -- --permission-mode acceptEdits\x1b[0m');
-            console.error('─'.repeat(60) + '\n');
+            logger.error('\n' + '─'.repeat(60));
+            logger.error('\x1b[31mError: Claude cannot run in interactive mode when launched from pt.\x1b[0m');
+            logger.error('\x1b[33m\nThis typically happens when Claude needs to ask for directory trust permissions.\x1b[0m');
+            logger.error('\x1b[34m\nTo fix this:\x1b[0m');
+            logger.error('\x1b[37m1. Run Claude directly in this directory: \x1b[36mclaude\x1b[0m');
+            logger.error('\x1b[37m2. When prompted, trust the directory\x1b[0m');
+            logger.error('\x1b[37m3. Then run your pt command again\n\x1b[0m');
+            logger.error('\x1b[90mAlternatively, you can use: \x1b[36mpt run claude -- --permission-mode acceptEdits\x1b[0m');
+            logger.error('─'.repeat(60) + '\n');
           }
           
           resolve({

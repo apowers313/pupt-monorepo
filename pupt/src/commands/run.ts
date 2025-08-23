@@ -342,14 +342,14 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
       stdio: ['pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
     });
     
-    let stderrData = '';
+    let _stderrData = '';
     let errorDetected = false;
     
     // Capture stderr for Claude-specific error detection
     if (tool === 'claude' && child.stderr) {
       child.stderr.on('data', (data) => {
         const output = data.toString();
-        stderrData += output;
+        _stderrData += output;
         
         // Still write to stderr so user sees the output
         process.stderr.write(data);
