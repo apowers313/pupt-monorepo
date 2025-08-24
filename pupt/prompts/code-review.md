@@ -93,3 +93,5 @@ tags: []
 - Fixes are specific and implementable
 - Report enables systematic remediation
 - No false positives that waste developer time
+
+Write the report to {{reviewFile "outputFile"}}.
