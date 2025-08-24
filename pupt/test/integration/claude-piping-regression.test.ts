@@ -19,6 +19,12 @@ import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
  * 
  * These tests ensure this behavior doesn't regress.
  */
+
+// Helper to read JSON output as text
+async function readJsonOutputAsText(jsonFile: string): Promise<string> {
+  const chunks = await fs.readJson(jsonFile) as Array<{timestamp: string, direction: string, data: string}>;
+  return chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
+}
 describe('Claude Piping Regression Tests', () => {
   let outputDir: string;
   let service: OutputCaptureService;
@@ -58,7 +64,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-tty-no-paste.txt');
+      const outputFile = path.join(outputDir, 'claude-tty-no-paste.json');
       const prompt = 'What is 7 + 5? Reply with just the number, nothing else.';
       
       // Save original TTY state
@@ -92,7 +98,7 @@ describe('Claude Piping Regression Tests', () => {
         
         expect(result.exitCode).toBe(0);
         
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         
         // Critical assertions:
         // 1. Should NOT contain paste detection indicator
@@ -118,7 +124,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-temp-cleanup.txt');
+      const outputFile = path.join(outputDir, 'claude-temp-cleanup.json');
       const prompt = 'What is 3 + 3? Reply with just the number.';
       
       // Save original TTY state
@@ -178,7 +184,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-non-tty.txt');
+      const outputFile = path.join(outputDir, 'claude-non-tty.json');
       const prompt = 'What is 4 + 4? Reply with just the number.';
       
       // Save original TTY state
@@ -201,7 +207,7 @@ describe('Claude Piping Regression Tests', () => {
         expect(result.exitCode).toBe(0);
         
         // The output should contain the response
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         // Should contain the answer
         expect(output).toMatch(/8/);
         // When using PTY, the process always sees a TTY, so it will show the UI
@@ -217,7 +223,7 @@ describe('Claude Piping Regression Tests', () => {
 
   describe('Other Commands Behavior', () => {
     it('should use direct PTY write for non-Claude commands', async () => {
-      const outputFile = path.join(outputDir, 'cat-direct-write.txt');
+      const outputFile = path.join(outputDir, 'cat-direct-write.json');
       const prompt = 'This should be written directly to PTY';
       
       // Save original TTY state
@@ -242,7 +248,7 @@ describe('Claude Piping Regression Tests', () => {
         
         // Check if output file exists and has content
         if (await fs.pathExists(outputFile)) {
-          const output = await fs.readFile(outputFile, 'utf-8');
+          const output = await readJsonOutputAsText(outputFile);
           // If we got output, verify it contains our prompt
           if (output.length > 0) {
             expect(output).toContain('This should be written directly to PTY');
@@ -269,7 +275,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-with-args.txt');
+      const outputFile = path.join(outputDir, 'claude-with-args.json');
       const prompt = 'What is 6 + 6? Reply with just the number.';
       
       const originalStdinTTY = process.stdin.isTTY;
@@ -294,7 +300,7 @@ describe('Claude Piping Regression Tests', () => {
         
         expect(result.exitCode).toBe(0);
         
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
         expect(output).toMatch(/12/);
         
@@ -311,7 +317,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-empty-prompt.txt');
+      const outputFile = path.join(outputDir, 'claude-empty-prompt.json');
       
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
@@ -350,7 +356,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-special-chars.txt');
+      const outputFile = path.join(outputDir, 'claude-special-chars.json');
       const prompt = 'Echo exactly: "Test $PATH and `backticks` and \'quotes\'"';
       
       const originalStdinTTY = process.stdin.isTTY;
@@ -374,7 +380,7 @@ describe('Claude Piping Regression Tests', () => {
         
         expect(result.exitCode).toBe(0);
         
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
         // Should handle special characters correctly
         expect(output).toContain('$PATH');
@@ -396,7 +402,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-windows.txt');
+      const outputFile = path.join(outputDir, 'claude-windows.json');
       const prompt = 'What is 5 + 5? Reply with just the number.';
       
       const originalStdinTTY = process.stdin.isTTY;
@@ -420,7 +426,7 @@ describe('Claude Piping Regression Tests', () => {
         
         expect(result.exitCode).toBe(0);
         
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
         expect(output).toMatch(/10/);
         
@@ -437,7 +443,7 @@ describe('Claude Piping Regression Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-unix.txt');
+      const outputFile = path.join(outputDir, 'claude-unix.json');
       const prompt = 'What is 8 + 8? Reply with just the number.';
       
       const originalStdinTTY = process.stdin.isTTY;
@@ -461,7 +467,7 @@ describe('Claude Piping Regression Tests', () => {
         
         expect(result.exitCode).toBe(0);
         
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
         expect(output).toMatch(/16/);
         

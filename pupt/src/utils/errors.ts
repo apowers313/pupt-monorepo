@@ -285,5 +285,18 @@ export const errors = {
       { text: 'View all entries', command: 'pt history' }
     ],
     icon: '📋'
+  }),
+
+  // Prompt Errors
+  promptNotFound: (name: string) => createError({
+    message: `Prompt '${name}' not found`,
+    code: 'PROMPT_NOT_FOUND',
+    category: ErrorCategory.USER_ERROR,
+    suggestions: [
+      { text: 'List available prompts', command: 'pt' },
+      { text: 'Check prompt name or filename' },
+      { text: 'Create a new prompt', command: 'pt add' }
+    ],
+    icon: '🔍'
   })
 };

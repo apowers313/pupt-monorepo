@@ -16,6 +16,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import yaml from 'js-yaml';
 import { AnnotationAnalyzer } from '../annotations/annotation-analyzer.js';
+import type { EnhancedHistoryEntry } from '../types/history.js';
 
 export class ReviewDataBuilder {
   private historyManager: HistoryManager;
@@ -276,15 +277,65 @@ export class ReviewDataBuilder {
     // Get last used time
     const lastUsed = entries[entries.length - 1]?.timestamp || new Date().toISOString();
 
-    // TODO: Calculate average duration when execution data is available
-    const avgDuration = 'N/A';
+    // Calculate average duration from enhanced history entries
+    let avgDuration = 'N/A';
+    let avgActiveTime = 'N/A';
+    let avgUserInputs = 'N/A';
+    
+    const enhancedEntries = entries as EnhancedHistoryEntry[];
+    const durationsMs: number[] = [];
+    const activeTimesMs: number[] = [];
+    const userInputCounts: number[] = [];
+    
+    for (const entry of enhancedEntries) {
+      if (entry.execution) {
+        // Parse duration (format: "123ms" or "1h 2m 3s")
+        if (entry.execution.duration) {
+          const match = entry.execution.duration.match(/^(\d+)ms$/);
+          if (match) {
+            durationsMs.push(parseInt(match[1], 10));
+          }
+        }
+        
+        // Parse active time if available
+        if (entry.execution.active_time) {
+          const match = entry.execution.active_time.match(/^(\d+)ms$/);
+          if (match) {
+            activeTimesMs.push(parseInt(match[1], 10));
+          }
+        }
+        
+        // Track user input counts
+        if (entry.execution.user_input_count !== undefined) {
+          userInputCounts.push(entry.execution.user_input_count);
+        }
+      }
+    }
+    
+    // Calculate averages
+    if (durationsMs.length > 0) {
+      const avg = durationsMs.reduce((a, b) => a + b, 0) / durationsMs.length;
+      avgDuration = `${Math.round(avg)}ms`;
+    }
+    
+    if (activeTimesMs.length > 0) {
+      const avg = activeTimesMs.reduce((a, b) => a + b, 0) / activeTimesMs.length;
+      avgActiveTime = `${Math.round(avg)}ms`;
+    }
+    
+    if (userInputCounts.length > 0) {
+      const avg = userInputCounts.reduce((a, b) => a + b, 0) / userInputCounts.length;
+      avgUserInputs = avg.toFixed(1);
+    }
 
     return {
       total_runs: totalRuns,
       annotated_runs: annotatedRuns,
       success_rate: successRate,
       avg_duration: avgDuration,
-      last_used: lastUsed
+      last_used: lastUsed,
+      avg_active_time: avgActiveTime,
+      avg_user_inputs: avgUserInputs
     };
   }
 

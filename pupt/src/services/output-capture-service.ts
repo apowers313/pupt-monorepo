@@ -5,6 +5,70 @@ import path from 'path';
 import os from 'os';
 import { logger } from '../utils/logger.js';
 
+// Helper to get high-precision timestamp
+function getHighPrecisionTimestamp(): bigint {
+  // Use process.hrtime.bigint() for nanosecond precision on all platforms
+  return process.hrtime.bigint();
+}
+
+// Convert JSON output to plain text
+export function convertJsonToPlainText(jsonFile: string, textFile: string): Promise<void> {
+  return fs.readJson(jsonFile).then((chunks: OutputChunk[]) => {
+    const textContent = chunks
+      .filter(chunk => chunk.direction === 'output')
+      .map(chunk => chunk.data)
+      .join('');
+    return fs.writeFile(textFile, textContent);
+  });
+}
+
+// Extract user input lines from JSON output
+export function extractUserInputLines(jsonFile: string): Promise<string[]> {
+  return fs.readJson(jsonFile).then((chunks: OutputChunk[]) => {
+    return chunks
+      .filter(chunk => chunk.direction === 'input')
+      .map(chunk => chunk.data.trim())
+      .filter(line => line.length > 0);
+  });
+}
+
+// Calculate actual execution time excluding user input wait time
+export function calculateActiveExecutionTime(jsonFile: string, inputWaitThreshold = 100_000_000n): Promise<bigint> {
+  return fs.readJson(jsonFile).then((chunks: OutputChunk[]) => {
+    if (chunks.length === 0) return 0n;
+    
+    let totalActiveTime = 0n;
+    let lastOutputTime = BigInt(chunks[0].timestamp);
+    
+    for (let i = 1; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const chunkTime = BigInt(chunk.timestamp);
+      const timeDiff = chunkTime - lastOutputTime;
+      
+      // If this is output after input and the gap is large, it's likely user thinking time
+      if (chunk.direction === 'output' && chunks[i-1].direction === 'input' && timeDiff > inputWaitThreshold) {
+        // Don't count the wait time, just add a small amount for processing
+        totalActiveTime += inputWaitThreshold;
+      } else {
+        // Normal processing time
+        totalActiveTime += timeDiff;
+      }
+      
+      if (chunk.direction === 'output') {
+        lastOutputTime = chunkTime;
+      }
+    }
+    
+    return totalActiveTime;
+  });
+}
+
+export interface OutputChunk {
+  timestamp: string; // nanosecond precision timestamp as string (BigInt not JSON serializable)
+  direction: 'input' | 'output';
+  data: string;
+}
+
 export interface CaptureResult {
   exitCode: number | null;
   outputFile: string;
@@ -81,15 +145,17 @@ export class OutputCaptureService {
     const outputDir = path.dirname(outputPath);
     await fs.ensureDir(outputDir);
 
-    // Create write stream with size tracking
-    const writeStream = fs.createWriteStream(outputPath);
+    // Change extension from .txt to .json
+    const jsonOutputPath = outputPath.replace(/\.txt$/, '.json');
+    
+    // Create array to store chunks
+    const chunks: OutputChunk[] = [];
     let bytesWritten = 0;
     let truncated = false;
 
     // Create a wrapper to track bytes and enforce size limit
-    const limitedWrite = (data: string): void => {
+    const limitedWrite = (data: string, direction: 'input' | 'output'): void => {
       if (truncated) return;
-      if (!writeStream.writable) return; // Prevent writes after stream is closed
 
       const cleanData = stripAnsi(data);
       const dataSize = Buffer.byteLength(cleanData);
@@ -98,12 +164,24 @@ export class OutputCaptureService {
         // Write only what fits
         const remaining = this.options.maxOutputSize! - bytesWritten;
         const truncatedData = cleanData.substring(0, remaining);
-        writeStream.write(truncatedData);
-        writeStream.write('\n\n[OUTPUT TRUNCATED - SIZE LIMIT REACHED]');
+        chunks.push({
+          timestamp: getHighPrecisionTimestamp().toString(),
+          direction,
+          data: truncatedData
+        });
+        chunks.push({
+          timestamp: getHighPrecisionTimestamp().toString(),
+          direction: 'output',
+          data: '\n\n[OUTPUT TRUNCATED - SIZE LIMIT REACHED]'
+        });
         bytesWritten = this.options.maxOutputSize!;
         truncated = true;
       } else {
-        writeStream.write(cleanData);
+        chunks.push({
+          timestamp: getHighPrecisionTimestamp().toString(),
+          direction,
+          data: cleanData
+        });
         bytesWritten += dataSize;
       }
     };
@@ -143,10 +221,8 @@ export class OutputCaptureService {
         
         process.stdin.pause();
         
-        // End the write stream only if it's still writable
-        if (writeStream.writable) {
-          writeStream.end();
-        }
+        // Write chunks to JSON file
+        fs.writeJsonSync(jsonOutputPath, chunks, { spaces: 2 });
       };
 
       try {
@@ -201,7 +277,7 @@ export class OutputCaptureService {
           // Pass through to terminal (preserving colors)
           process.stdout.write(data);
           // Capture clean version
-          limitedWrite(data);
+          limitedWrite(data, 'output');
           
           // Check for Claude raw mode error
           if (command === 'claude' && data.includes('Raw mode is not supported') && data.includes('Ink')) {
@@ -219,7 +295,10 @@ export class OutputCaptureService {
           // Forward stdin to PTY
           stdinListener = (data: Buffer) => {
             if (ptyProcess) {
-              ptyProcess.write(data.toString('binary'));
+              const inputStr = data.toString('binary');
+              ptyProcess.write(inputStr);
+              // Capture user input
+              limitedWrite(inputStr, 'input');
             }
           };
           process.stdin.on('data', stdinListener);
@@ -304,8 +383,9 @@ export class OutputCaptureService {
         ptyProcess.onExit(({ exitCode }) => {
           cleanup();
           
-          // If Claude had a raw mode error, provide helpful guidance
-          if (claudeRawModeError) {
+          // If Claude had a raw mode error AND failed, provide helpful guidance
+          // Only show error if Claude actually failed (non-zero exit code)
+          if (claudeRawModeError && exitCode !== 0) {
             logger.error('\n' + '─'.repeat(60));
             logger.error('\x1b[31mError: Claude cannot run in interactive mode when launched from pt.\x1b[0m');
             logger.error('\x1b[33m\nThis typically happens when Claude needs to ask for directory trust permissions.\x1b[0m');
@@ -317,21 +397,29 @@ export class OutputCaptureService {
             logger.error('─'.repeat(60) + '\n');
           }
           
+          // Write final JSON file
+          fs.writeJsonSync(jsonOutputPath, chunks, { spaces: 2 });
+          
           resolve({
-            exitCode: claudeRawModeError ? 1 : exitCode,
-            outputFile: outputPath,
+            exitCode: (claudeRawModeError && exitCode !== 0) ? 1 : exitCode,
+            outputFile: jsonOutputPath,
             outputSize: bytesWritten,
             truncated,
-            error: claudeRawModeError ? 'Claude requires interactive trust setup. Please see instructions above.' : undefined
+            error: (claudeRawModeError && exitCode !== 0) ? 'Claude requires interactive trust setup. Please see instructions above.' : undefined
           });
         });
 
 
       } catch (error) {
         cleanup();
+        // Write any collected chunks before error
+        if (chunks.length > 0) {
+          fs.writeJsonSync(jsonOutputPath, chunks, { spaces: 2 });
+        }
+        
         resolve({
           exitCode: 1,
-          outputFile: outputPath,
+          outputFile: jsonOutputPath,
           outputSize: bytesWritten,
           error: error instanceof Error ? error.message : String(error)
         });
@@ -349,8 +437,8 @@ export class OutputCaptureService {
       const retentionMs = retentionDays * 24 * 60 * 60 * 1000;
 
       for (const file of files) {
-        // Only clean up output files, not history JSON files
-        if (!file.endsWith('-output.txt')) continue;
+        // Clean up both .txt and .json output files
+        if (!file.endsWith('-output.txt') && !file.endsWith('-output.json')) continue;
         
         const filePath = path.join(this.options.outputDirectory, file);
         const stats = await fs.stat(filePath);

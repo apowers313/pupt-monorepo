@@ -6,6 +6,12 @@ import os from 'os';
 import { spawn } from 'child_process';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
+// Helper to read JSON output as text
+async function readJsonOutputAsText(jsonFile: string): Promise<string> {
+  const chunks = await fs.readJson(jsonFile) as Array<{timestamp: string, direction: string, data: string}>;
+  return chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
+}
+
 describe('OutputCaptureService - Comprehensive Tests', () => {
   let outputDir: string;
   let service: OutputCaptureService;
@@ -36,7 +42,8 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
 
   describe('Basic PTY Output Capture', () => {
     it.skipIf(skipOnWindowsCI)('should capture output from a simple command with prompt', async () => {
-      const outputFile = path.join(outputDir, 'echo-test.txt');
+      const outputFile = path.join(outputDir, 'echo-test.json');
+      const jsonOutputFile = outputFile.replace(/\.txt$/, '.json');
       const prompt = 'test input';
       
       const result = await service.captureCommand(
@@ -47,15 +54,18 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      expect(result.outputFile).toBe(outputFile);
+      expect(result.outputFile).toBe(jsonOutputFile);
       expect(result.truncated).toBe(false);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      // Check JSON output
+      const chunks = await fs.readJson(jsonOutputFile) as Array<{timestamp: string, direction: string, data: string}>;
+      const output = chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
       expect(output).toContain('hello world');
+      
     });
 
     it.skipIf(skipOnWindowsCI)('should capture multi-line output correctly', async () => {
-      const outputFile = path.join(outputDir, 'multiline-test.txt');
+      const outputFile = path.join(outputDir, 'multiline-test.json');
       const script = process.platform === 'win32' 
         ? 'echo Line 1 && echo Line 2 && echo Line 3'
         : 'echo "Line 1"; echo "Line 2"; echo "Line 3"';
@@ -68,14 +78,14 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('Line 1');
       expect(output).toContain('Line 2');
       expect(output).toContain('Line 3');
     });
 
     it.skipIf(skipOnWindowsCI)('should strip ANSI codes from captured output', async () => {
-      const outputFile = path.join(outputDir, 'ansi-test.txt');
+      const outputFile = path.join(outputDir, 'ansi-test.json');
       // Use a command that outputs colored text
       const script = process.platform === 'win32'
         ? 'echo [31mRed Text[0m'
@@ -88,7 +98,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         outputFile
       );
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).not.toContain('\u001b[31m');
       expect(output).not.toContain('\u001b[0m');
       expect(output).toContain('Red Text');
@@ -97,7 +107,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
 
   describe('Pipe Input Handling', () => {
     it.skipIf(skipOnWindowsCI)('should send prompt to command via PTY write for non-Claude commands', async () => {
-      const outputFile = path.join(outputDir, 'cat-test.txt');
+      const outputFile = path.join(outputDir, 'cat-test.json');
       const prompt = 'This is test input';
       
       const result = await service.captureCommand(
@@ -108,7 +118,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('This is test input');
     });
 
@@ -124,14 +134,14 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('Line 1');
       expect(output).toContain('Line 2');
       expect(output).toContain('Line 3');
     });
 
     it.skipIf(skipOnWindowsCI)('should add newline if prompt does not end with one', async () => {
-      const outputFile = path.join(outputDir, 'newline-test.txt');
+      const outputFile = path.join(outputDir, 'newline-test.json');
       const prompt = 'No trailing newline';
       
       await service.captureCommand(
@@ -141,7 +151,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         outputFile
       );
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('No trailing newline');
       // Cat echoes the input, so we might see it twice
       const lines = output.split('\n').filter(line => line.trim());
@@ -153,7 +163,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
     it.skipIf(skipOnWindowsCI)('should use shell piping for Claude in TTY mode', async () => {
       // With mock, claude is always available
 
-      const outputFile = path.join(outputDir, 'claude-tty-test.txt');
+      const outputFile = path.join(outputDir, 'claude-tty-test.json');
       const prompt = 'What is 2+2? Reply with just the number.';
       
       // Save original TTY state
@@ -183,7 +193,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         
         // Check that temp file was created (by checking the command used)
         // The prompt should not appear as "pasted text"
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
         
         // When using shell piping, only the response is captured
@@ -198,7 +208,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
     }, 60000);
 
     it.skipIf(skipOnWindowsCI)('should use direct PTY write for Claude in non-TTY mode', async () => {
-      const outputFile = path.join(outputDir, 'claude-non-tty-test.txt');
+      const outputFile = path.join(outputDir, 'claude-non-tty-test.json');
       const prompt = 'test prompt';
       
       // Save original TTY state
@@ -236,7 +246,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'resize-test.txt');
+      const outputFile = path.join(outputDir, 'resize-test.json');
       let resizeEmitted = false;
       
       // Start a long-running command
@@ -265,7 +275,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'stdin-forward-test.txt');
+      const outputFile = path.join(outputDir, 'stdin-forward-test.json');
       
       // Use a command that echoes stdin
       const result = await service.captureCommand(
@@ -276,14 +286,14 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('initial input');
     });
   });
 
   describe('Error Handling', () => {
     it.skipIf(skipOnWindowsCI)('should handle command not found errors', async () => {
-      const outputFile = path.join(outputDir, 'error-test.txt');
+      const outputFile = path.join(outputDir, 'error-test.json');
       
       const result = await service.captureCommand(
         'nonexistentcommand12345',
@@ -299,7 +309,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
     });
 
     it.skipIf(skipOnWindowsCI)('should handle command that exits with error code', async () => {
-      const outputFile = path.join(outputDir, 'exit-error-test.txt');
+      const outputFile = path.join(outputDir, 'exit-error-test.json');
       
       const result = await service.captureCommand(
         process.platform === 'win32' ? 'cmd' : 'sh',
@@ -313,7 +323,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
 
     it.skipIf(skipOnWindowsCI)('should create output directory if it does not exist', async () => {
       const nestedDir = path.join(outputDir, 'nested', 'deep', 'dir');
-      const outputFile = path.join(nestedDir, 'test.txt');
+      const outputFile = path.join(nestedDir, 'test.json');
       
       const result = await service.captureCommand(
         'echo',
@@ -329,7 +339,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
 
   describe('Output Size Limits', () => {
     it.skipIf(skipOnWindowsCI)('should truncate output when size limit is exceeded', async () => {
-      const outputFile = path.join(outputDir, 'truncate-test.txt');
+      const outputFile = path.join(outputDir, 'truncate-test.json');
       
       // Create a service with small size limit
       const smallService = new OutputCaptureService({
@@ -350,13 +360,13 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       expect(result.truncated).toBe(true);
       expect(result.outputSize).toBe(100);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('[OUTPUT TRUNCATED - SIZE LIMIT REACHED]');
       expect(Buffer.byteLength(output)).toBeGreaterThanOrEqual(100);
     });
 
     it.skipIf(skipOnWindowsCI)('should handle exact size limit correctly', async () => {
-      const outputFile = path.join(outputDir, 'exact-limit-test.txt');
+      const outputFile = path.join(outputDir, 'exact-limit-test.json');
       const testString = 'X'.repeat(50); // 50 bytes
       
       const smallService = new OutputCaptureService({
@@ -383,7 +393,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'windows-path-test.txt');
+      const outputFile = path.join(outputDir, 'windows-path-test.json');
       
       const result = await service.captureCommand(
         'cmd',
@@ -393,7 +403,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toMatch(/[A-Z]:\\/); // Windows path pattern
     });
 
@@ -403,7 +413,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'unix-path-test.txt');
+      const outputFile = path.join(outputDir, 'unix-path-test.json');
       
       const result = await service.captureCommand(
         'pwd',
@@ -413,12 +423,12 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toMatch(/^\//); // Unix path pattern
     });
 
     it.skipIf(skipOnWindowsCI)('should use correct shell for platform', async () => {
-      const outputFile = path.join(outputDir, 'shell-test.txt');
+      const outputFile = path.join(outputDir, 'shell-test.json');
       const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
       const shellArgs = process.platform === 'win32' ? ['/c', 'echo test'] : ['-c', 'echo test'];
       
@@ -430,7 +440,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('test');
     });
   });
@@ -443,7 +453,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         return;
       }
 
-      const outputFile = path.join(outputDir, 'cleanup-test.txt');
+      const outputFile = path.join(outputDir, 'cleanup-test.json');
       const prompt = 'test cleanup';
       
       // Save original TTY state
@@ -488,7 +498,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
 
   describe('Edge Cases', () => {
     it.skipIf(skipOnWindowsCI)('should handle empty prompt', async () => {
-      const outputFile = path.join(outputDir, 'empty-prompt-test.txt');
+      const outputFile = path.join(outputDir, 'empty-prompt-test.json');
       
       const result = await service.captureCommand(
         'echo',
@@ -498,12 +508,12 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('test');
     });
 
     it.skipIf(skipOnWindowsCI)('should handle very long prompts', async () => {
-      const outputFile = path.join(outputDir, 'long-prompt-test.txt');
+      const outputFile = path.join(outputDir, 'long-prompt-test.json');
       // Reduce test size for CI environments to avoid timeouts
       const testSize = process.env.CI ? 5000 : 10000;
       const longPrompt = 'X'.repeat(testSize);
@@ -533,7 +543,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         console.log(`[DEBUG] Output size: ${result.outputSize}`);
         
         expect(result.exitCode).toBe(0);
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         console.log(`[DEBUG] Actual output length: ${output.length}`);
         
         expect(output.length).toBeGreaterThan(900);
@@ -553,7 +563,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         console.log(`[DEBUG] Truncated: ${result.truncated}`);
         
         expect(result.exitCode).toBe(0);
-        const output = await fs.readFile(outputFile, 'utf-8');
+        const output = await readJsonOutputAsText(outputFile);
         console.log(`[DEBUG] Actual output length: ${output.length}`);
         console.log(`[DEBUG] First 100 chars: ${output.substring(0, 100)}`);
         console.log(`[DEBUG] Last 100 chars: ${output.substring(output.length - 100)}`);
@@ -563,7 +573,7 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
     }, 30000); // Increased timeout for CI environments
 
     it.skipIf(skipOnWindowsCI)('should handle commands with many arguments', async () => {
-      const outputFile = path.join(outputDir, 'many-args-test.txt');
+      const outputFile = path.join(outputDir, 'many-args-test.json');
       const args = Array(50).fill('arg');
       
       const result = await service.captureCommand(
@@ -574,12 +584,12 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('arg');
     });
 
     it.skipIf(skipOnWindowsCI)('should handle special characters in prompts', async () => {
-      const outputFile = path.join(outputDir, 'special-chars-test.txt');
+      const outputFile = path.join(outputDir, 'special-chars-test.json');
       const specialPrompt = 'Test with "quotes" and \'apostrophes\' and $pecial ch@rs!';
       
       const result = await service.captureCommand(
@@ -590,14 +600,14 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readJsonOutputAsText(outputFile);
       expect(output).toContain('Test with "quotes"');
       expect(output).toContain("'apostrophes'");
       expect(output).toContain('$pecial ch@rs!');
     });
 
     it.skipIf(skipOnWindowsCI)('should handle binary output gracefully', async () => {
-      const outputFile = path.join(outputDir, 'binary-test.txt');
+      const outputFile = path.join(outputDir, 'binary-test.json');
       
       // Create a command that outputs binary data
       const script = process.platform === 'win32'
@@ -619,9 +629,9 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
   describe('Cleanup Method', () => {
     it('should clean up old output files', async () => {
       // Create some old output files
-      const oldFile1 = path.join(outputDir, 'old-1-output.txt');
-      const oldFile2 = path.join(outputDir, 'old-2-output.txt');
-      const newFile = path.join(outputDir, 'new-output.txt');
+      const oldFile1 = path.join(outputDir, 'old-1-output.json');
+      const oldFile2 = path.join(outputDir, 'old-2-output.json');
+      const newFile = path.join(outputDir, 'new-output.json');
       const jsonFile = path.join(outputDir, 'history.json');
       
       await fs.writeFile(oldFile1, 'old content');

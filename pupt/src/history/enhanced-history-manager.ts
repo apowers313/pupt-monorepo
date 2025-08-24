@@ -3,6 +3,7 @@ import { EnhancedHistoryEntry } from '../types/history.js';
 import { getGitInfo, formatDuration } from '../utils/git-info.js';
 import fs from 'fs-extra';
 import path from 'node:path';
+import { calculateActiveExecutionTime, extractUserInputLines } from '../services/output-capture-service.js';
 import crypto from 'node:crypto';
 import { sanitizeObject } from '../utils/security.js';
 import { DateFormats } from '../utils/date-formatter.js';
@@ -21,6 +22,7 @@ export interface EnhancedHistorySaveOptions {
   exitCode?: number | null;
   outputFile?: string;
   outputSize?: number;
+  executionTime?: number; // milliseconds from run.ts
 }
 
 export class EnhancedHistoryManager extends HistoryManager {
@@ -77,14 +79,41 @@ export class EnhancedHistoryManager extends HistoryManager {
       let execution: EnhancedHistoryEntry['execution'] | undefined;
       if (options.startTime) {
         const endTime = options.endTime || new Date();
+        let duration = formatDuration(options.startTime, endTime);
+        let activeTime: string | undefined;
+        let userInputCount: number | undefined;
+        
+        // If we have a JSON output file, calculate active execution time
+        if (options.outputFile && options.outputFile.endsWith('.json')) {
+          try {
+            const activeNanos = await calculateActiveExecutionTime(options.outputFile);
+            const activeMs = Number(activeNanos / 1_000_000n);
+            activeTime = `${activeMs}ms`;
+            
+            // Also get user input count
+            const userInputs = await extractUserInputLines(options.outputFile);
+            userInputCount = userInputs.length;
+          } catch {
+            // If calculation fails, just use the provided execution time
+            if (options.executionTime) {
+              activeTime = `${options.executionTime}ms`;
+            }
+          }
+        } else if (options.executionTime) {
+          // Use the execution time from run.ts if no JSON file
+          duration = `${options.executionTime}ms`;
+        }
+        
         execution = {
           start_time: options.startTime.toISOString(),
           end_time: endTime.toISOString(),
-          duration: formatDuration(options.startTime, endTime),
+          duration,
           exit_code: options.exitCode ?? null,
           command: options.command || 'unknown',
           ...(options.outputFile && { output_file: options.outputFile }),
-          ...(options.outputSize !== undefined && { output_size: options.outputSize })
+          ...(options.outputSize !== undefined && { output_size: options.outputSize }),
+          ...(activeTime && { active_time: activeTime }),
+          ...(userInputCount !== undefined && { user_input_count: userInputCount })
         };
       }
 

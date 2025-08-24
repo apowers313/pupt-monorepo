@@ -259,7 +259,9 @@ This is a test prompt.`;
         annotated_runs: 1,
         success_rate: 1.0,
         avg_duration: 'N/A',
-        last_used: '2025-08-16T10:00:00Z'
+        last_used: '2025-08-16T10:00:00Z',
+        avg_active_time: 'N/A',
+        avg_user_inputs: 'N/A'
       });
     });
 

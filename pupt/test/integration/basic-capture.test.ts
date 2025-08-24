@@ -24,7 +24,7 @@ describe('OutputCaptureService - Basic Prompt Sending', () => {
 
   it.skipIf(skipOnWindowsCI)('should send prompt immediately to command stdin', async () => {
     const prompt = 'test input';
-    const outputFile = path.join(outputDir, 'stdin-test.txt');
+    const outputFile = path.join(outputDir, 'stdin-test.json');
     
     const result = await service.captureCommand(
       'bash',
@@ -35,10 +35,14 @@ describe('OutputCaptureService - Basic Prompt Sending', () => {
     
     expect(result.exitCode).toBe(0);
     
-    const output = await fs.readFile(outputFile, 'utf-8');
-    console.log('Output:', output);
+    const jsonOutput = await fs.readJson(outputFile);
+    const textContent = jsonOutput
+      .filter((chunk: any) => chunk.direction === 'output')
+      .map((chunk: any) => chunk.data)
+      .join('');
+    console.log('Output:', textContent);
     // PTY echoes the input, so we should see both the input and the output
-    const lines = output.trim().split('\n').map(line => line.trim());
+    const lines = textContent.trim().split('\n').map(line => line.trim());
     expect(lines).toContain('Got: test input');
   });
 });

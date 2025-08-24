@@ -249,6 +249,8 @@ program
   .description('Execute a prompt with an external tool')
   .usage('[tool] [args...] [-- tool-specific-args]')
   .option('-h, --history <number>', 'Use prompt from history by number')
+  .option('-p, --prompt <name>', 'Use specified prompt by title or filename')
+  .option('--no-interactive', 'Use default values for all prompt inputs')
   .helpOption('--help', 'Display help for run command')
   .addHelpText('after', `
 Examples:
@@ -260,13 +262,17 @@ Examples:
   pt run npm test -- --coverage  # Complex command with args
   pt run -h 3                # Re-run prompt from history #3
   pt run -h 1 claude         # Send history #1 to claude
+  pt run -p api-client       # Run specific prompt by name
+  pt run -p api-client --no-interactive  # Run with defaults only
 `)
   .action(async (tool, args, options) => {
     try {
       // Combine tool and args into single array
       const allArgs = tool ? [tool, ...args] : args;
       await runCommand(allArgs, {
-        historyIndex: options.history ? parseInt(options.history) : undefined
+        historyIndex: options.history ? parseInt(options.history) : undefined,
+        promptName: options.prompt,
+        noInteractive: options.interactive === false
       });
     } catch (error) {
       displayError(error as Error);

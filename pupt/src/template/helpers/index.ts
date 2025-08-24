@@ -75,9 +75,22 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
       // Find variable definition
       const varDef = context.getVariableDefinition(name);
 
+      // Handle no-interactive mode
+      if (context.isNoInteractive()) {
+        if (varDef?.default !== undefined) {
+          // Use default value in no-interactive mode
+          context.set(name, varDef.default);
+          context.setType(name, type);
+          return String(varDef.default);
+        } else {
+          // No default value available
+          throw new Error(`No default value for '${name}' - cannot run in non-interactive mode`);
+        }
+      }
+
       // Build prompt config
       const promptConfig: Record<string, unknown> = {
-        message: message || varDef?.message || generateDefaultMessage(name, type),
+        message: message || varDef?.message || generateDefaultMessage(name, type, varDef?.default),
       };
 
       if (varDef) {
@@ -134,7 +147,7 @@ export function registerHelpers(handlebars: typeof Handlebars, context: Template
   createInputHelper('reviewFile', reviewFilePrompt);
 }
 
-function generateDefaultMessage(name: string, type: string): string {
+function generateDefaultMessage(name: string, type: string, defaultValue?: unknown): string {
   // Convert camelCase/snake_case to human readable
   const humanized = name
     .replace(/([A-Z])/g, ' $1')
@@ -155,6 +168,12 @@ function generateDefaultMessage(name: string, type: string): string {
       file: ':',
       reviewFile: ':',
     }[type] || ':';
+
+  // Add default value to the message if it exists
+  if (defaultValue !== undefined) {
+    const defaultStr = String(defaultValue);
+    return `${capitalized} (default is "${defaultStr}")${suffix}`;
+  }
 
   return `${capitalized}${suffix}`;
 }

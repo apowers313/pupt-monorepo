@@ -13,6 +13,8 @@ export interface UsageStatistics {
   success_rate: number;
   avg_duration: string;
   last_used: string;
+  avg_active_time?: string; // Average time excluding user input wait
+  avg_user_inputs?: string; // Average number of user inputs per run
 }
 
 export interface ExecutionOutcomes {
@@ -27,6 +29,8 @@ export interface CapturedOutput {
   exit_code: number;
   duration: string;
   output_size_bytes: number;
+  active_time?: string; // Time excluding user input wait
+  user_input_count?: number; // Number of user inputs during execution
   key_indicators?: {
     error_count: number;
     test_failures: number;

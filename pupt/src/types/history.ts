@@ -29,5 +29,7 @@ export interface EnhancedHistoryEntry extends HistoryEntry {
     command: string;
     output_file?: string;
     output_size?: number;
+    active_time?: string; // Time excluding user input wait
+    user_input_count?: number; // Number of user inputs during execution
   };
 }

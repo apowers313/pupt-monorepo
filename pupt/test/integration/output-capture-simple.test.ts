@@ -24,7 +24,7 @@ describe('OutputCaptureService - Simple Test', () => {
 
   it.skipIf(skipOnWindowsCI)('should capture echo output', async () => {
     const prompt = 'Hello World';
-    const outputFile = path.join(outputDir, 'echo-output.txt');
+    const outputFile = path.join(outputDir, 'echo-output.json');
     
     const result = await service.captureCommand(
       'echo',
@@ -35,14 +35,18 @@ describe('OutputCaptureService - Simple Test', () => {
     
     expect(result.exitCode).toBe(0);
     
-    const output = await fs.readFile(outputFile, 'utf-8');
-    console.log('Echo output:', output);
-    expect(output).toContain('Hello World');
+    const jsonOutput = await fs.readJson(outputFile);
+    console.log('Echo output:', jsonOutput);
+    const textContent = jsonOutput
+      .filter((chunk: any) => chunk.direction === 'output')
+      .map((chunk: any) => chunk.data)
+      .join('');
+    expect(textContent).toContain('Hello World');
   });
 
   it.skipIf(skipOnWindowsCI)('should capture claude output and verify prompt was sent', async () => {
     const prompt = 'Say "test successful" and nothing else';
-    const outputFile = path.join(outputDir, 'claude-output.txt');
+    const outputFile = path.join(outputDir, 'claude-output.json');
     
     console.log('Starting Claude test with prompt:', prompt);
     
@@ -66,11 +70,12 @@ describe('OutputCaptureService - Simple Test', () => {
     
     console.log('Result:', result);
     
-    const output = await fs.readFile(outputFile, 'utf-8');
-    console.log('Output length:', output.length);
+    const jsonOutput = await fs.readJson(outputFile);
+    console.log('Output chunks:', jsonOutput.length);
     
     // Check if our prompt appears in the captured output
-    const promptInOutput = output.includes(prompt);
+    const allContent = jsonOutput.map((chunk: any) => chunk.data).join('');
+    const promptInOutput = allContent.includes(prompt);
     console.log('Prompt found in output:', promptInOutput);
     expect(promptInOutput).toBe(true);
     

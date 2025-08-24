@@ -45,6 +45,7 @@ describe('OutputCaptureService - Claude Integration', () => {
     
     const prompt = 'What is 5 + 5? Respond with just the number.';
     const outputFile = path.join(outputDir, 'claude-output.txt');
+    const jsonOutputFile = outputFile.replace(/\.txt$/, '.json');
     
     console.log('Starting Claude capture test...');
     console.log('Output will be saved to:', outputFile);
@@ -60,13 +61,15 @@ describe('OutputCaptureService - Claude Integration', () => {
     
     // Check the result
     expect(result.exitCode).toBe(0);
-    expect(result.outputFile).toBe(outputFile);
+    expect(result.outputFile).toBe(jsonOutputFile);
     expect(result.truncated).toBeFalsy();
     
     // Read and check the output
-    const output = await fs.readFile(outputFile, 'utf-8');
+    const chunks = await fs.readJson(jsonOutputFile) as Array<{timestamp: string, direction: string, data: string}>;
+    const output = chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
     console.log('Captured output length:', output.length);
     console.log('Output preview:', output.substring(0, 500));
+    
     
     // Check if our prompt was captured
     const promptIndex = output.indexOf(prompt);

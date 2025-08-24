@@ -7,9 +7,11 @@ export class TemplateContext {
   private variableDefinitions: VariableDefinition[] = [];
   private variableTypes = new Map<string, string>();
   private queuedOperations = new Map<string, string>();
+  private noInteractive: boolean;
 
-  constructor(variables?: VariableDefinition[]) {
+  constructor(variables?: VariableDefinition[], noInteractive = false) {
     this.variableDefinitions = variables || [];
+    this.noInteractive = noInteractive;
   }
 
   get(name: string): unknown {
@@ -93,5 +95,9 @@ export class TemplateContext {
     }
 
     return masked;
+  }
+
+  isNoInteractive(): boolean {
+    return this.noInteractive;
   }
 }

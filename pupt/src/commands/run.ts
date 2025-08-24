@@ -33,6 +33,8 @@ export interface RunOptions {
     timestamp?: Date;
   };
   isAutoRun?: boolean;
+  promptName?: string;
+  noInteractive?: boolean;
 }
 
 interface ParsedArgs {
@@ -162,21 +164,34 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   } else {
     // Normal flow - discover and process prompts
     const promptManager = new PromptManager(config.promptDirs);
-    const prompts = await promptManager.discoverPrompts();
+    let selected;
     
-    if (prompts.length === 0) {
-      throw errors.noPromptsFound(config.promptDirs);
+    if (options.promptName) {
+      // Find specific prompt by name
+      const prompt = await promptManager.findPrompt(options.promptName);
+      if (!prompt) {
+        throw errors.promptNotFound(options.promptName);
+      }
+      selected = prompt;
+      logger.log(chalk.blue(`\nUsing prompt: ${selected.title}`));
+      logger.log(chalk.dim(`Location: ${selected.path}\n`));
+    } else {
+      // Interactive search
+      const prompts = await promptManager.discoverPrompts();
+      
+      if (prompts.length === 0) {
+        throw errors.noPromptsFound(config.promptDirs);
+      }
+      
+      const search = new InteractiveSearch();
+      selected = await search.selectPrompt(prompts);
+      
+      logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
+      logger.log(chalk.dim(`Location: ${selected.path}\n`));
     }
     
-    // Interactive search
-    const search = new InteractiveSearch();
-    const selected = await search.selectPrompt(prompts);
-    
-    logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
-    logger.log(chalk.dim(`Location: ${selected.path}\n`));
-    
     // Process template
-    const engine = new TemplateEngine(config, configDir);
+    const engine = new TemplateEngine(config, configDir, options.noInteractive);
     promptResult = await engine.processTemplate(selected.content, selected);
     
     // Store template info for history saving after successful execution
@@ -197,14 +212,19 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     // Prompt for each option
     const selectedOptions: string[] = [];
     
-    for (const [question, arg] of Object.entries(config.defaultCmdOptions || config.codingToolOptions || {})) {
-      const answer = await confirm({
-        message: question,
-        default: false
-      });
-      
-      if (answer) {
-        selectedOptions.push(arg);
+    if (options.noInteractive) {
+      // In no-interactive mode, don't add any optional flags
+      logger.log(chalk.dim('Skipping tool options in non-interactive mode'));
+    } else {
+      for (const [question, arg] of Object.entries(config.defaultCmdOptions || config.codingToolOptions || {})) {
+        const answer = await confirm({
+          message: question,
+          default: false
+        });
+        
+        if (answer) {
+          selectedOptions.push(arg);
+        }
       }
     }
     
@@ -297,7 +317,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     
     // Handle post-run file reviews
     if (templateInfo?.reviewFiles && templateInfo.reviewFiles.length > 0) {
-      await handlePostRunReviews(templateInfo.reviewFiles, config, options.isAutoRun);
+      await handlePostRunReviews(templateInfo.reviewFiles, config, options.isAutoRun || options.noInteractive);
     }
   }
   
@@ -321,7 +341,7 @@ async function executeToolWithCapture(
   
   // Use provided filename components for synchronized naming
   const { dateStr, timeStr, randomSuffix } = filenameComponents;
-  const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.txt`;
+  const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.json`;
   const outputPath = path.join(
     config.outputCapture?.directory || config.historyDir!,
     outputFilename
@@ -377,7 +397,8 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
     
     child.on('close', (code) => {
       // Handle Claude raw mode error specifically
-      if (tool === 'claude' && errorDetected) {
+      // Only show error if Claude actually failed (non-zero exit code)
+      if (tool === 'claude' && errorDetected && code !== 0) {
         logger.error(chalk.red('\nError: Claude cannot run in interactive mode when launched from pt.'));
         logger.log(chalk.yellow('\nThis typically happens when Claude needs to ask for directory trust permissions.'));
         logger.log(chalk.blue('\nTo fix this:'));

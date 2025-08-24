@@ -10,17 +10,19 @@ export class TemplateEngine {
   private context: TemplateContext;
   private config?: Config;
   private configDir?: string;
+  private noInteractive: boolean;
 
-  constructor(config?: Config, configDir?: string) {
+  constructor(config?: Config, configDir?: string, noInteractive = false) {
     this.handlebars = Handlebars.create();
     this.context = new TemplateContext();
     this.config = config;
     this.configDir = configDir;
+    this.noInteractive = noInteractive;
   }
 
   async processTemplate(template: string, prompt: Partial<Prompt>): Promise<string> {
     // Create new context with variable definitions
-    this.context = new TemplateContext(prompt.variables);
+    this.context = new TemplateContext(prompt.variables, this.noInteractive);
 
     // Create a special Handlebars instance that has access to the context
     this.handlebars = Handlebars.create();

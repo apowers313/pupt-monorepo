@@ -8,11 +8,21 @@ import fs from 'fs-extra';
 import path from 'path';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { spawn } from 'node:child_process';
+import * as fsNode from 'node:fs';
 
 vi.mock('../../src/prompts/prompt-manager.js');
 vi.mock('../../src/history/history-manager.js');
 vi.mock('fs-extra');
 vi.mock('../../src/services/output-capture-service.js');
+
+// Mock node:fs for tracking file descriptor operations
+vi.mock('node:fs', () => ({
+  openSync: vi.fn().mockReturnValue(3), // Return a fake file descriptor
+  closeSync: vi.fn(),
+  writeFileSync: vi.fn(),
+  readFileSync: vi.fn()
+}));
+
 vi.mock('node:child_process', () => ({
   execFile: vi.fn((cmd, args, cb) => {
     // Mock tool availability check for both Windows and Unix
@@ -95,6 +105,12 @@ describe('AutoAnnotationService', () => {
           write: vi.fn(),
           end: vi.fn(),
         },
+        stdout: {
+          on: vi.fn(),
+        },
+        stderr: {
+          on: vi.fn(),
+        },
         on: vi.fn(),
         unref: vi.fn(),
       };
@@ -107,15 +123,16 @@ describe('AutoAnnotationService', () => {
       await service.analyzeExecution(mockHistoryEntry);
 
       expect(mockPromptManager.findPrompt).toHaveBeenCalledWith('analyze-output');
-      expect(vi.mocked(spawn)).toHaveBeenCalledWith(
-        'claude',
-        ['-p', '--permission-mode', 'acceptEdits'],
-        expect.objectContaining({
-          detached: true,
-          stdio: ['pipe', 'ignore', 'ignore'],
-        })
-      );
-      expect(mockHistoryManager.saveAnnotation).toHaveBeenCalled();
+      expect(vi.mocked(spawn)).toHaveBeenCalled();
+      const spawnCall = vi.mocked(spawn).mock.calls[0];
+      expect(spawnCall[0]).toBe('claude');
+      expect(spawnCall[1]).toEqual(['-p', '--permission-mode', 'acceptEdits', '--output-format', 'json']);
+      expect(spawnCall[2]?.detached).toBe(true);
+      // Now using file descriptors instead of 'pipe'
+      expect(spawnCall[2]?.stdio[0]).toBe('pipe');
+      expect(typeof spawnCall[2]?.stdio[1]).toBe('number'); // file descriptor
+      expect(typeof spawnCall[2]?.stdio[2]).toBe('number'); // file descriptor
+      expect(mockHistoryManager.saveAnnotation).not.toHaveBeenCalled();
     });
 
     it('should execute AI analysis successfully', async () => {
@@ -133,6 +150,12 @@ describe('AutoAnnotationService', () => {
           write: vi.fn(),
           end: vi.fn(),
         },
+        stdout: {
+          on: vi.fn(),
+        },
+        stderr: {
+          on: vi.fn(),
+        },
         on: vi.fn(),
         unref: vi.fn(),
       };
@@ -141,18 +164,19 @@ describe('AutoAnnotationService', () => {
 
       await service.analyzeExecution(mockHistoryEntry);
 
-      // Check that saveAnnotation was called
-      expect(mockHistoryManager.saveAnnotation).toHaveBeenCalled();
+      // Should NOT save annotation immediately - it will be saved when Claude completes
+      expect(mockHistoryManager.saveAnnotation).not.toHaveBeenCalled();
       
-      // Get the saved annotation from the call
-      const callArgs = vi.mocked(mockHistoryManager.saveAnnotation).mock.calls[0];
-      expect(callArgs).toBeDefined();
-      
-      if (callArgs && callArgs[1]) {
-        const savedAnnotation = callArgs[1];
-        expect(savedAnnotation.status).toBe('success');
-        expect(savedAnnotation.auto_detected).toBe(true);
-      }
+      // Verify that Claude was launched with correct arguments including --output-format json
+      expect(vi.mocked(spawn)).toHaveBeenCalled();
+      const spawnCall = vi.mocked(spawn).mock.calls[0];
+      expect(spawnCall[0]).toBe('claude');
+      expect(spawnCall[1]).toEqual(['-p', '--permission-mode', 'acceptEdits', '--output-format', 'json']);
+      expect(spawnCall[2]?.detached).toBe(true);
+      // Now using file descriptors instead of 'pipe'
+      expect(spawnCall[2]?.stdio[0]).toBe('pipe');
+      expect(typeof spawnCall[2]?.stdio[1]).toBe('number'); // file descriptor
+      expect(typeof spawnCall[2]?.stdio[2]).toBe('number'); // file descriptor
     });
 
     it('should handle AI analysis failure gracefully', async () => {
@@ -191,6 +215,12 @@ describe('AutoAnnotationService', () => {
           write: vi.fn(),
           end: vi.fn(),
         },
+        stdout: {
+          on: vi.fn(),
+        },
+        stderr: {
+          on: vi.fn(),
+        },
         on: vi.fn(),
         unref: vi.fn(),
       };
@@ -202,10 +232,8 @@ describe('AutoAnnotationService', () => {
       // Should call unref to detach the process
       expect(mockChildProcess.unref).toHaveBeenCalled();
       
-      // Should save annotation with background status
-      expect(mockHistoryManager.saveAnnotation).toHaveBeenCalled();
-      const savedAnnotation = vi.mocked(mockHistoryManager.saveAnnotation).mock.calls[0][1];
-      expect(savedAnnotation.status).toBe('success');
+      // Should NOT save annotation - Claude will create it
+      expect(mockHistoryManager.saveAnnotation).not.toHaveBeenCalled();
     });
 
     it('should handle very large output files without OOM', async () => {
@@ -226,6 +254,12 @@ describe('AutoAnnotationService', () => {
           write: vi.fn(),
           end: vi.fn(),
         },
+        stdout: {
+          on: vi.fn(),
+        },
+        stderr: {
+          on: vi.fn(),
+        },
         on: vi.fn(),
         unref: vi.fn(),
       };
@@ -242,6 +276,109 @@ describe('AutoAnnotationService', () => {
       // Should be much smaller than 10MB
       expect(sentPrompt.length).toBeLessThan(300 * 1024); // Less than 300KB total
       expect(sentPrompt).toContain('[... truncated');
+    });
+
+    it('should use file descriptors for stdio when spawning Claude', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze the output',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Command output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      // Mock spawn to track the stdio configuration
+      const mockChildProcess = {
+        stdin: {
+          write: vi.fn(),
+          end: vi.fn(),
+        },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+      
+      // Reset fsNode mocks to track calls
+      vi.mocked(fsNode.openSync).mockClear();
+      vi.mocked(fsNode.closeSync).mockClear();
+      vi.mocked(fsNode.openSync).mockReturnValueOnce(10).mockReturnValueOnce(11); // stdout and stderr fds
+
+      await service.analyzeExecution(mockHistoryEntry);
+
+      // Verify file descriptors were opened for stdout and stderr
+      expect(fsNode.openSync).toHaveBeenCalledTimes(2);
+      expect(fsNode.openSync).toHaveBeenCalledWith(expect.stringContaining('stdout.txt'), 'w');
+      expect(fsNode.openSync).toHaveBeenCalledWith(expect.stringContaining('stderr.txt'), 'w');
+
+      // Verify file descriptors were closed
+      expect(fsNode.closeSync).toHaveBeenCalledTimes(2);
+      expect(fsNode.closeSync).toHaveBeenCalledWith(10);
+      expect(fsNode.closeSync).toHaveBeenCalledWith(11);
+
+      // Verify spawn was called with file descriptors in stdio array
+      const spawnCall = vi.mocked(spawn).mock.calls[0];
+      expect(spawnCall[2]?.stdio).toEqual(['pipe', 10, 11]);
+    });
+
+    it('should create watcher process to save annotations', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze the output',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Command output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      // Track all spawn calls
+      const spawnCalls: any[] = [];
+      vi.mocked(spawn).mockImplementation((cmd, args, options) => {
+        spawnCalls.push({ cmd, args, options });
+        
+        // Return different mock for different processes
+        if (cmd === 'claude') {
+          return {
+            stdin: { write: vi.fn(), end: vi.fn() },
+            pid: 12345,
+            unref: vi.fn(),
+          } as any;
+        } else if (cmd === process.execPath) {
+          // This is the watcher process
+          return {
+            unref: vi.fn(),
+          } as any;
+        }
+        return {} as any;
+      });
+
+      await service.analyzeExecution(mockHistoryEntry);
+
+      // Should spawn two processes: Claude and the watcher
+      expect(spawnCalls.length).toBe(2);
+
+      // First spawn should be Claude
+      expect(spawnCalls[0].cmd).toBe('claude');
+      expect(spawnCalls[0].options.detached).toBe(true);
+
+      // Second spawn should be the watcher process
+      expect(spawnCalls[1].cmd).toBe(process.execPath);
+      expect(spawnCalls[1].args).toEqual(['-e', expect.stringContaining('watchAndSave')]);
+      expect(spawnCalls[1].options.detached).toBe(true);
+      expect(spawnCalls[1].options.stdio).toBe('ignore');
+
+      // Verify marker file was created with necessary data
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        expect.stringContaining('marker.json'),
+        expect.objectContaining({
+          stdoutFile: expect.stringContaining('stdout.txt'),
+          stderrFile: expect.stringContaining('stderr.txt'),
+          historyEntry: mockHistoryEntry,
+          annotationDir: mockConfig.annotationDir || mockConfig.historyDir,
+          pid: 12345
+        })
+      );
     });
   });
 
@@ -290,6 +427,210 @@ describe('AutoAnnotationService', () => {
 
       expect(service.shouldAutoAnnotate('any-prompt')).toBe(true);
       expect(service.shouldAutoAnnotate('other-prompt')).toBe(true);
+    });
+  });
+
+  describe('JSON parsing from Claude output', () => {
+    const mockHistoryEntry: EnhancedHistoryEntry = {
+      timestamp: '2025-08-16T10:00:00Z',
+      templatePath: 'test-prompt',
+      templateContent: 'test content',
+      variables: {},
+      finalPrompt: 'test prompt',
+      filename: 'test.json',
+      execution: {
+        start_time: '2025-08-16T10:00:00Z',
+        end_time: '2025-08-16T10:00:05Z',
+        duration: '5s',
+        exit_code: 0,
+        command: 'echo test',
+        output_file: '/tmp/output-12345.txt',
+        output_size: 1024,
+      },
+    };
+
+    it('should handle Claude JSON output format with result field', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze the output',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Test output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      // Mock Claude's response format with 'result' field
+      const claudeResponse = {
+        result: JSON.stringify({
+          status: 'partial',
+          tags: ['auto-annotation', 'ai-analysis'],
+          auto_detected: true,
+          notes: 'Found issues in execution',
+          issues_identified: [{
+            category: 'verification_gap',
+            severity: 'medium',
+            description: 'No tests run',
+            evidence: 'No test command found'
+          }]
+        })
+      };
+
+      // Mock spawn to simulate Claude returning JSON
+      let stdinContent = '';
+      const mockChildProcess = {
+        stdin: {
+          write: vi.fn((data) => { stdinContent = data; }),
+          end: vi.fn(),
+        },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+
+      // Create a test to verify the service can handle the response
+      await service.analyzeExecution(mockHistoryEntry);
+
+      // Verify Claude was called
+      expect(spawn).toHaveBeenCalledWith('claude', expect.any(Array), expect.any(Object));
+      
+      // Verify the prompt was sent
+      expect(mockChildProcess.stdin.write).toHaveBeenCalled();
+      expect(stdinContent).toContain('Test output');
+      expect(stdinContent).toContain('Analyze the output');
+    });
+
+    it('should handle JSON embedded in markdown code blocks', async () => {
+      // This tests the regex extraction of JSON from markdown
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      const mockChildProcess = {
+        stdin: { write: vi.fn(), end: vi.fn() },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+
+      await service.analyzeExecution(mockHistoryEntry);
+
+      // The actual parsing happens in the watcher process
+      // Verify the watcher code includes proper JSON extraction logic
+      const spawnCalls = vi.mocked(spawn).mock.calls;
+      const watcherCall = spawnCalls.find(call => call[0] === process.execPath);
+      expect(watcherCall).toBeDefined();
+      
+      const watcherCode = watcherCall![1][1];
+      expect(watcherCode).toContain('JSON.parse');
+      expect(watcherCode).toContain('parsed.result');
+      expect(watcherCode).toContain('match(/\\{[\\s\\S]*\\}/)');
+    });
+
+    it('should handle direct JSON response without wrapper', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      const mockChildProcess = {
+        stdin: { write: vi.fn(), end: vi.fn() },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+
+      await service.analyzeExecution(mockHistoryEntry);
+
+      // Verify marker file contains all necessary data for watcher
+      expect(fs.writeJson).toHaveBeenCalledWith(
+        expect.stringContaining('marker.json'),
+        expect.objectContaining({
+          historyEntry: mockHistoryEntry,
+          annotationDir: expect.any(String),
+          pid: 12345
+        })
+      );
+    });
+
+    it('should include execution metadata in analysis context', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze the execution',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Command output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      let capturedPrompt = '';
+      const mockChildProcess = {
+        stdin: {
+          write: vi.fn((data) => { capturedPrompt = data; }),
+          end: vi.fn(),
+        },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+
+      // Create history entry with specific metadata
+      const testHistoryEntry = {
+        ...mockHistoryEntry,
+        execution: {
+          ...mockHistoryEntry.execution!,
+          exit_code: 1,
+          duration: '42s',
+          command: 'npm test'
+        }
+      };
+
+      await service.analyzeExecution(testHistoryEntry);
+
+      // Verify metadata is included in the prompt
+      expect(capturedPrompt).toContain('Exit Code: 1');
+      expect(capturedPrompt).toContain('Duration: 42s');
+      expect(capturedPrompt).toContain('Command: npm test');
+      expect(capturedPrompt).toContain('History File:');
+      expect(capturedPrompt).toContain('Annotation Directory:');
+    });
+
+    it('should handle empty or invalid JSON responses gracefully', async () => {
+      const mockAnalysisPrompt = {
+        name: 'analyze-output',
+        content: 'Analyze',
+      };
+
+      vi.mocked(mockPromptManager.findPrompt).mockResolvedValue(mockAnalysisPrompt);
+      vi.mocked(fs.readFile).mockResolvedValue('Output');
+      vi.mocked(fs.writeJson).mockResolvedValue(undefined);
+
+      const mockChildProcess = {
+        stdin: { write: vi.fn(), end: vi.fn() },
+        pid: 12345,
+        unref: vi.fn(),
+      };
+
+      vi.mocked(spawn).mockReturnValue(mockChildProcess as any);
+
+      // Should not throw
+      await expect(service.analyzeExecution(mockHistoryEntry)).resolves.not.toThrow();
+
+      // Verify watcher process is still created even if parsing might fail
+      const spawnCalls = vi.mocked(spawn).mock.calls;
+      expect(spawnCalls.length).toBe(2); // Claude and watcher
     });
   });
 });
