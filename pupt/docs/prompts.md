@@ -111,6 +111,20 @@ This section describes all the prompts available in the PUPT project. Each promp
 
 **Usage**: Automatically uses GitHub CLI to find and fix the latest workflow run failures. Considers cross-platform compatibility.
 
+## Version Control Prompts
+
+### Git Commit Comment
+**Purpose**: Generates properly formatted conventional commit messages by analyzing recent changes using pt history and git commands.
+
+**Inputs**:
+- `continueWithAnalysis` (select): Choose whether to analyze recent changes or skip
+- `commitType` (input): The conventional commit type (feat/fix/docs/etc.)
+- `commitMessage` (input): The commit subject line
+- `addBody` (input, optional): Whether to add a body to the commit
+- `commitBody` (editor, optional): Detailed explanation for the commit body
+
+**Usage**: Use when you need to create a well-formatted commit message that follows conventional commit standards. The prompt analyzes your recent work and changes to suggest appropriate commit messages, then outputs a ready-to-use git commit command.
+
 ## Documentation Prompts
 
 ### Update Documentation
