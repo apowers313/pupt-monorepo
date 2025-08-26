@@ -21,7 +21,7 @@
   "outputCapture": {
     "enabled": true,
     "directory": "./.pthistory",
-    "maxSizeMB": 50
+    "maxSizeMB": 150
   },
   "autoAnnotate": {
     "enabled": true,
