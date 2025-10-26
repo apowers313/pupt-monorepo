@@ -2,7 +2,6 @@ import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 import stripAnsi from 'strip-ansi';
 import fs from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import { logger } from '../utils/logger.js';
 
 // Helper to get high-precision timestamp
