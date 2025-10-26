@@ -84,6 +84,25 @@ vi.mock('node:child_process', async (importOriginal) => {
   };
 });
 
+// Mock node:fs for file descriptor operations
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  let fdCounter = 100; // Start from 100 to avoid conflicts with std descriptors
+  const mockFds = new Map<number, string>();
+
+  return {
+    ...actual,
+    openSync: vi.fn((filepath: string, flags: string) => {
+      const fd = fdCounter++;
+      mockFds.set(fd, filepath);
+      return fd;
+    }),
+    closeSync: vi.fn((fd: number) => {
+      mockFds.delete(fd);
+    })
+  };
+});
+
 // Track spawn calls
 let spawnCalls: Array<{ cmd: string; args?: string[]; options?: any }> = [];
 
