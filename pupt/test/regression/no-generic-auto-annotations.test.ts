@@ -308,26 +308,44 @@ Analyze`;
     // Run command
     await runCommand([], {});
 
-    // Wait for async operations (longer on Windows for file locks to release)
-    const waitTime = process.platform === 'win32' ? 500 : 300;
-    await new Promise(resolve => setTimeout(resolve, waitTime));
+    // Wait for async operations with retry logic for CI environments
+    // The auto-annotation service spawns processes asynchronously, so we need to wait
+    // for the log messages and spawn calls to be captured by our spies
+    const maxWaitTime = 5000; // 5 seconds max
+    const checkInterval = 100; // Check every 100ms
+    const startTime = Date.now();
 
-    // Check that auto-annotation was launched in background
-    // Find the specific log calls (filter out prompt display messages)
-    const logCalls = logSpy.mock.calls.map(call => call[0]);
-    const hasLaunchingMessage = logCalls.some(msg =>
-      typeof msg === 'string' && msg.includes('Launching auto-annotation analysis with')
-    );
-    const hasLaunchedMessage = logCalls.some(msg =>
-      typeof msg === 'string' && msg.includes('Auto-annotation analysis launched in background')
-    );
+    let hasLaunchingMessage = false;
+    let hasLaunchedMessage = false;
+    let claudeCall: { cmd: string; args?: string[]; options?: any } | undefined;
+
+    // Poll until we get the expected results or timeout
+    while (Date.now() - startTime < maxWaitTime) {
+      await new Promise(resolve => setTimeout(resolve, checkInterval));
+
+      // Check log messages
+      const logCalls = logSpy.mock.calls.map(call => call[0]);
+      hasLaunchingMessage = logCalls.some(msg =>
+        typeof msg === 'string' && msg.includes('Launching auto-annotation analysis with')
+      );
+      hasLaunchedMessage = logCalls.some(msg =>
+        typeof msg === 'string' && msg.includes('Auto-annotation analysis launched in background')
+      );
+
+      // Check spawn calls
+      claudeCall = spawnCalls.find(call => call.cmd === 'claude');
+
+      // If we have everything, break early
+      if (hasLaunchingMessage && hasLaunchedMessage && claudeCall) {
+        break;
+      }
+    }
 
     expect(hasLaunchingMessage).toBe(true);
     expect(hasLaunchedMessage).toBe(true);
-    
+
     // Verify spawn was called with claude
     expect(spawnCalls.length).toBeGreaterThan(0);
-    const claudeCall = spawnCalls.find(call => call.cmd === 'claude');
     expect(claudeCall).toBeDefined();
     expect(claudeCall?.args).toContain('-p');
     expect(claudeCall?.args).toContain('--permission-mode');
