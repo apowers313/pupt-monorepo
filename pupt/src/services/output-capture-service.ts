@@ -12,7 +12,7 @@ function getHighPrecisionTimestamp(): bigint {
 }
 
 // Convert JSON output to plain text
-export function convertJsonToPlainText(jsonFile: string, textFile: string): Promise<void> {
+function _convertJsonToPlainText(jsonFile: string, textFile: string): Promise<void> {
   return fs.readJson(jsonFile).then((chunks: OutputChunk[]) => {
     const textContent = chunks
       .filter(chunk => chunk.direction === 'output')
@@ -63,13 +63,13 @@ export function calculateActiveExecutionTime(jsonFile: string, inputWaitThreshol
   });
 }
 
-export interface OutputChunk {
+interface OutputChunk {
   timestamp: string; // nanosecond precision timestamp as string (BigInt not JSON serializable)
   direction: 'input' | 'output';
   data: string;
 }
 
-export interface CaptureResult {
+interface CaptureResult {
   exitCode: number | null;
   outputFile: string;
   outputSize: number;
@@ -77,12 +77,12 @@ export interface CaptureResult {
   error?: string;
 }
 
-export interface CaptureHandle {
+interface CaptureHandle {
   promise: Promise<CaptureResult>;
   kill: () => void;
 }
 
-export interface OutputCaptureOptions {
+interface OutputCaptureOptions {
   outputDirectory?: string;
   maxOutputSize?: number; // in bytes
 }
@@ -145,8 +145,10 @@ export class OutputCaptureService {
     const outputDir = path.dirname(outputPath);
     await fs.ensureDir(outputDir);
 
-    // Change extension from .txt to .json
-    const jsonOutputPath = outputPath.replace(/\.txt$/, '.json');
+    // Change extension from .txt to .json if needed
+    const jsonOutputPath = outputPath.endsWith('.json') 
+      ? outputPath 
+      : outputPath.replace(/\.txt$/, '.json');
     
     // Create array to store chunks
     const chunks: OutputChunk[] = [];
@@ -230,39 +232,14 @@ export class OutputCaptureService {
         const cols = process.stdout.columns || 80;
         const rows = process.stdout.rows || 30;
 
-        // For Claude with a prompt, use a shell to pipe the prompt to avoid paste detection
-        // This allows the prompt to run immediately while keeping PTY for interaction
-        if (command === 'claude' && prompt && isTTY) {
-          // Create a temporary file for the prompt
-          const tmpFile = path.join(os.tmpdir(), `pt-prompt-${Date.now()}.txt`);
-          fs.writeFileSync(tmpFile, prompt);
-          
-          // Spawn shell that pipes the prompt to Claude
-          const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
-          const shellArgs = process.platform === 'win32' 
-            ? ['/c', `type "${tmpFile}" | claude ${args.join(' ')}`]
-            : ['-c', `cat "${tmpFile}" | claude ${args.join(' ')}`];
-          
-          ptyProcess = pty.spawn(shell, shellArgs, {
-            name: 'xterm-256color',
-            cols,
-            rows,
-            cwd: process.cwd(),
-            env: process.env as Record<string, string>
-          });
-          
-          // Clean up temp file after a delay
-          setTimeout(() => fs.unlink(tmpFile).catch(() => {}), 1000);
-        } else {
-          // Normal PTY spawn for other commands
-          ptyProcess = pty.spawn(command, args, {
-            name: 'xterm-256color',
-            cols,
-            rows,
-            cwd: process.cwd(),
-            env: process.env as Record<string, string>
-          });
-        }
+        // Spawn PTY process - always spawn directly to preserve TTY
+        ptyProcess = pty.spawn(command, args, {
+          name: 'xterm-256color',
+          cols,
+          rows,
+          cwd: process.cwd(),
+          env: process.env as Record<string, string>
+        });
         
         // Notify callback if provided
         if (onProcessCreated && ptyProcess) {
@@ -312,9 +289,8 @@ export class OutputCaptureService {
           process.stdout.on('resize', resizeListener);
         }
         
-        // If we have a prompt and it's not Claude in TTY mode, send it
-        // (Claude in TTY mode already has the prompt piped via shell)
-        if (prompt && !(command === 'claude' && isTTY)) {
+        // If we have a prompt, write it to the process
+        if (prompt) {
           // Write prompt in chunks to avoid blocking on large inputs
           const CHUNK_SIZE = 1024; // Safe chunk size for PTY buffers
           let written = 0;
@@ -355,19 +331,17 @@ export class OutputCaptureService {
               if (!prompt.endsWith('\n')) {
                 ptyProcess.write('\n');
               }
-              
-              // Send EOF signal for commands that need it
-              if (command !== 'claude') {
-                setTimeout(() => {
-                  if (ptyProcess) {
-                    try {
-                      ptyProcess.write('\x04'); // EOT
-                    } catch {
-                      // EOF errors are non-critical
-                    }
+
+              // Send EOF signal to indicate end of input
+              setTimeout(() => {
+                if (ptyProcess) {
+                  try {
+                    ptyProcess.write('\x04'); // EOT
+                  } catch {
+                    // EOF errors are non-critical
                   }
-                }, 50); // Reduced delay since we're already async
-              }
+                }
+              }, 50); // Reduced delay since we're already async
             }
           };
           

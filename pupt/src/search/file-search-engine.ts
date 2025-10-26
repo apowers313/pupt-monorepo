@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import * as path from 'node:path';
 import os from 'node:os';
 
-export interface FileInfo {
+interface FileInfo {
   name: string;
   absolutePath: string;
   relativePath: string;
@@ -10,7 +10,7 @@ export interface FileInfo {
   modTime: Date;
 }
 
-export interface FileSearchResult {
+interface FileSearchResult {
   display: string;
   value: string;
   description?: string;

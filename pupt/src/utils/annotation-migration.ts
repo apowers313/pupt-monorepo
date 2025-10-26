@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import { logger } from './logger.js';
 import { AnnotationMetadata } from '../types/annotations.js';
 
-export interface AnnotationMigrationResult {
+interface AnnotationMigrationResult {
   migrated: number;
   skipped: number;
   failed: number;
@@ -14,7 +14,7 @@ export interface AnnotationMigrationResult {
 /**
  * Parse a markdown annotation file and extract all data
  */
-export async function parseMarkdownAnnotation(filePath: string): Promise<AnnotationMetadata> {
+async function parseMarkdownAnnotation(filePath: string): Promise<AnnotationMetadata> {
   const content = await fs.readFile(filePath, 'utf-8');
   
   // Extract YAML frontmatter
@@ -116,7 +116,7 @@ export async function migrateAnnotationsToJson(annotationDir: string): Promise<A
 /**
  * Check if annotation migration is needed
  */
-export async function needsAnnotationMigration(annotationDir: string): Promise<boolean> {
+async function _needsAnnotationMigration(annotationDir: string): Promise<boolean> {
   try {
     if (!await fs.pathExists(annotationDir)) {
       return false;

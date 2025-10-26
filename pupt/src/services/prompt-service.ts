@@ -32,11 +32,11 @@ const PromptSchema = z.object({
   variables: z.array(VariableSchema).optional()
 });
 
-export interface PromptServiceOptions {
+interface PromptServiceOptions {
   cacheTimeout?: number;
 }
 
-export interface PromptValidationResult {
+interface PromptValidationResult {
   success: boolean;
   errors?: string[];
 }

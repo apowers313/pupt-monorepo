@@ -1,13 +1,13 @@
 import simpleGit, { SimpleGit, StatusResult, LogResult } from 'simple-git';
 import { errors } from '../utils/errors.js';
 
-export interface CloneOptions {
+interface CloneOptions {
   depth?: number;
   branch?: string;
   singleBranch?: boolean;
 }
 
-export interface PullOptions {
+interface PullOptions {
   remote?: string;
   branch?: string;
 }

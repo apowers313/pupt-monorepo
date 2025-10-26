@@ -9,7 +9,7 @@ export enum LogLevel {
   DEBUG = 3
 }
 
-export interface UIOptions {
+interface UIOptions {
   logLevel?: LogLevel;
   useColor?: boolean;
   silent?: boolean;
@@ -91,4 +91,3 @@ export class ConsoleUI {
   }
 }
 
-export const ui = new ConsoleUI();

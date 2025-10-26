@@ -20,7 +20,7 @@ import {
 } from '../../utils/file-utils.js';
 import { Trie, completeFilePath } from '../../utils/trie.js';
 
-export interface FilePromptConfig {
+interface FilePromptConfig {
   message: string;
   basePath?: string;
   filter?: string;
@@ -193,4 +193,3 @@ export const filePrompt = createPrompt<string, FilePromptConfig>((config, done) 
   return display;
 });
 
-export default filePrompt;

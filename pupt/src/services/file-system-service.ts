@@ -5,7 +5,7 @@ import { glob } from 'glob';
 import { minimatch } from 'minimatch';
 import MiniSearch from 'minisearch';
 
-export interface FileInfo {
+interface FileInfo {
   name: string;
   path: string;
   relativePath: string;
@@ -14,17 +14,17 @@ export interface FileInfo {
   modified: Date;
 }
 
-export interface ListFilesOptions {
+interface ListFilesOptions {
   includeHidden?: boolean;
   pattern?: string;
 }
 
-export interface GlobOptions {
+interface GlobOptions {
   ignore?: string[];
   followSymlinks?: boolean;
 }
 
-export interface FileSystemServiceOptions {
+interface FileSystemServiceOptions {
   cacheTimeout?: number;
   excludePatterns?: string[];
 }

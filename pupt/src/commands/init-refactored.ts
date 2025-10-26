@@ -160,9 +160,10 @@ export async function initCommand(context?: CommandContext, options?: CommandOpt
     ...DEFAULT_CONFIG
   };
   
+  const ConsoleUI = (await import('../ui/console-ui.js')).ConsoleUI;
   const defaultContext = context || {
     config: defaultConfig,
-    ui: (await import('../ui/console-ui.js')).ui,
+    ui: new ConsoleUI(),
     logger: (await import('../services/logging-service.js')).createLogger(defaultConfig)
   };
   

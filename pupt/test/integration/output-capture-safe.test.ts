@@ -36,7 +36,9 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     expect(result.exitCode).toBe(0);
     expect(result.truncated).toBeFalsy();
     
-    const output = await fs.readFile(outputFile, 'utf-8');
+    const jsonFile = outputFile.replace(/\.txt$/, '.json');
+    const chunks = await fs.readJson(jsonFile) as Array<{direction: string, data: string}>;
+    const output = chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
     expect(output).toContain('Hello World');
   });
 
@@ -53,7 +55,9 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     
     expect(result.exitCode).toBe(0);
     
-    const output = await fs.readFile(outputFile, 'utf-8');
+    const jsonFile = outputFile.replace(/\.txt$/, '.json');
+    const chunks = await fs.readJson(jsonFile) as Array<{direction: string, data: string}>;
+    const output = chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
     expect(output).toContain('Test input for cat');
   });
 
@@ -78,7 +82,8 @@ describe('OutputCaptureService - Safe Integration Tests', () => {
     expect(result.truncated).toBe(true);
     expect(result.outputSize).toBe(100);
     
-    const jsonOutput = await fs.readJson(outputFile);
+    const jsonOutputFile = outputFile.replace(/\.txt$/, '.json');
+    const jsonOutput = await fs.readJson(jsonOutputFile);
     const textContent = jsonOutput
       .filter((chunk: any) => chunk.direction === 'output')
       .map((chunk: any) => chunk.data)

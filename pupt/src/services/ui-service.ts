@@ -10,13 +10,13 @@ export enum LogLevel {
   DEBUG = 3
 }
 
-export interface UIOptions {
+interface UIOptions {
   logLevel?: LogLevel;
   useColor?: boolean;
   silent?: boolean;
 }
 
-export interface ListOptions {
+interface ListOptions {
   numbered?: boolean;
   indent?: number;
 }
@@ -207,5 +207,5 @@ export class ConsoleUI {
   }
 }
 
-// Export a singleton instance for convenience
-export const ui = new ConsoleUI();
+// Singleton instance for convenience
+const _ui = new ConsoleUI();

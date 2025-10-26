@@ -7,9 +7,9 @@
   "version": "4.0.0",
   "defaultCmd": "claude",
   "defaultCmdArgs": [
+    "--verbose",
     "--permission-mode",
-    "acceptEdits",
-    "--verbose"
+    "acceptEdits"
   ],
   "defaultCmdOptions": {
     "Continue with last context?": "--continue"
@@ -24,7 +24,7 @@
     "maxSizeMB": 150
   },
   "autoAnnotate": {
-    "enabled": true,
+    "enabled": false,
     "analysisPrompt": "analyze-execution"
   }
 }

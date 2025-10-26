@@ -4,6 +4,13 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 
+// Helper to read JSON output as plain text
+async function readOutputAsText(outputFile: string): Promise<string> {
+  const jsonFile = outputFile.endsWith('.json') ? outputFile : outputFile.replace(/\.txt$/, '.json');
+  const chunks = await fs.readJson(jsonFile) as Array<{direction: string, data: string}>;
+  return chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
+}
+
 /**
  * Focused tests for the critical piping functionality.
  * These tests ensure that:
@@ -45,7 +52,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       expect(result.exitCode).toBe(0);
       expect(result.error).toBeUndefined();
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Hello from pipe test');
     });
 
@@ -62,7 +69,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Line 1');
       expect(output).toContain('Line 2');
       expect(output).toContain('Line 3');
@@ -81,7 +88,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('arg1 arg2 arg3');
     });
   });
@@ -103,7 +110,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Shell test working');
     });
 
@@ -123,7 +130,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('piped content');
     });
   });
@@ -209,9 +216,10 @@ describe('OutputCaptureService - Piping Tests', () => {
         // Add small delay to ensure file is fully written
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Check output
-        if (await fs.pathExists(outputFile)) {
-          const output = await fs.readFile(outputFile, 'utf-8');
+        // Check output (JSON file should be created even if .txt was requested)
+        const jsonFile = outputFile.replace(/\.txt$/, '.json');
+        if (await fs.pathExists(jsonFile)) {
+          const output = await readOutputAsText(outputFile);
           expect(output).toContain('Direct write test');
         } else {
           // If file doesn't exist, the test should fail
@@ -277,7 +285,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Red Text');
       expect(output).not.toContain('\x1b[31m');
       expect(output).not.toContain('\x1b[0m');
@@ -297,7 +305,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       expect(result.exitCode).toBe(0);
       expect(result.truncated).toBe(false);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output.length).toBeGreaterThan(900);
     });
 
@@ -319,7 +327,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.truncated).toBe(true);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       // The file might contain just the truncated content or the content + truncation message
       // depending on how much could be written before hitting the limit
       expect(output.length).toBeGreaterThanOrEqual(50);
@@ -345,7 +353,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Platform test');
     });
 
@@ -362,7 +370,7 @@ describe('OutputCaptureService - Piping Tests', () => {
       
       expect(result.exitCode).toBe(0);
       
-      const output = await fs.readFile(outputFile, 'utf-8');
+      const output = await readOutputAsText(outputFile);
       expect(output).toContain('Line 1');
       expect(output).toContain('Line 2');
       expect(output).toContain('Line 3');

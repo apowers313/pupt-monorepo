@@ -2,14 +2,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { minimatch } from 'minimatch';
 
-export interface FileInfo {
+interface FileInfo {
   name: string;
   path: string;
   isDirectory: boolean;
   mtime: Date;
 }
 
-export interface ListFilesOptions {
+interface ListFilesOptions {
   includeHidden?: boolean;
 }
 
@@ -90,7 +90,7 @@ export function listFilesWithCache(dirPath: string, options: ListFilesOptions = 
   return files;
 }
 
-export function clearFileCache(): void {
+function _clearFileCache(): void {
   fileCache.clear();
 }
 
@@ -102,7 +102,7 @@ export function resolveFilePath(input: string, basePath: string): string {
   return path.resolve(basePath, input);
 }
 
-export function getParentDirectory(filePath: string): string {
+function _getParentDirectory(filePath: string): string {
   return path.dirname(filePath);
 }
 

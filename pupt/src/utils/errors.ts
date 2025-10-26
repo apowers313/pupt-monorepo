@@ -17,7 +17,7 @@ export enum ErrorSeverity {
   FATAL = 'FATAL'
 }
 
-export interface ErrorSuggestion {
+interface ErrorSuggestion {
   text: string;
   command?: string;
 }
@@ -36,7 +36,7 @@ export class PromptToolError extends Error {
   }
 }
 
-export interface ErrorOptions {
+interface ErrorOptions {
   message: string;
   code: string;
   category?: ErrorCategory;

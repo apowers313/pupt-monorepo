@@ -1,4 +1,4 @@
-import fileSearchPrompt, { type FileSearchConfig } from './file-search-prompt.js';
+import { fileSearchPrompt, type FileSearchConfig } from './file-search-prompt.js';
 
 export async function reviewFilePrompt(config: FileSearchConfig): Promise<string> {
   // For now, reviewFile behaves exactly like file input
@@ -9,4 +9,3 @@ export async function reviewFilePrompt(config: FileSearchConfig): Promise<string
   return selectedFile;
 }
 
-export default reviewFilePrompt;

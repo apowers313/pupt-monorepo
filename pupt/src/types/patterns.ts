@@ -1,4 +1,4 @@
-export type PatternType = 
+type PatternType = 
   | 'verification_gap' 
   | 'incomplete_task' 
   | 'environment_specific' 

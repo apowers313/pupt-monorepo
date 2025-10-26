@@ -70,4 +70,3 @@ export async function fileSearchPrompt(config: FileSearchConfig): Promise<string
   });
 }
 
-export default fileSearchPrompt;

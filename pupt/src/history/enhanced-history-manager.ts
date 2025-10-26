@@ -8,7 +8,7 @@ import crypto from 'node:crypto';
 import { sanitizeObject } from '../utils/security.js';
 import { DateFormats } from '../utils/date-formatter.js';
 
-export interface EnhancedHistorySaveOptions {
+interface EnhancedHistorySaveOptions {
   templatePath: string;
   templateContent: string;
   variables: Map<string, unknown>;

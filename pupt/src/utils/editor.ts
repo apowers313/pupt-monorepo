@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 
 const execFileAsync = promisify(execFile);
 
-export interface EditorLauncher {
+interface EditorLauncher {
   findEditor(): Promise<string | null>;
   isEditorAvailable(editor: string): Promise<boolean>;
   openInEditor(editor: string, filepath: string): Promise<void>;

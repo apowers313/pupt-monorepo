@@ -23,7 +23,7 @@ export interface ExecutionOutcomes {
   failure: number;
 }
 
-export interface CapturedOutput {
+interface CapturedOutput {
   execution_id: string;
   output_file_path: string;
   exit_code: number;
@@ -40,7 +40,7 @@ export interface CapturedOutput {
   };
 }
 
-export interface DetectedPattern {
+interface DetectedPattern {
   pattern_type: 'verification_gap' | 'incomplete_task' | 'environment_specific' | 'ambiguous_objective';
   frequency: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -62,7 +62,7 @@ export interface PromptReviewData {
   detected_patterns: DetectedPattern[];
 }
 
-export interface CrossPromptPattern {
+interface CrossPromptPattern {
   pattern: string;
   affected_prompts: string[];
   total_occurrences: number;

@@ -12,11 +12,11 @@ export enum LogLevel {
   FATAL = 'fatal'
 }
 
-export interface LogContext {
+interface LogContext {
   [key: string]: unknown;
 }
 
-export interface TimeOperationOptions {
+interface TimeOperationOptions {
   slowThreshold?: number; // milliseconds
   context?: LogContext;
 }
@@ -216,7 +216,7 @@ export function createChildLogger(parentLogger: Logger, context: LogContext): Lo
 // Create a singleton logger instance
 let defaultLogger: Logger | null = null;
 
-export function getDefaultLogger(config?: Config): Logger {
+function getDefaultLogger(config?: Config): Logger {
   if (!defaultLogger) {
     defaultLogger = createLogger(config || {} as Config);
   }

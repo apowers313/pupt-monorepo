@@ -239,11 +239,11 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   // Execute tool with prompt
   logger.log(chalk.blue(`\nRunning: ${finalTool} ${finalArgs.join(' ')}`));
   logger.log(chalk.dim('─'.repeat(60)));
-  
+
   const startTime = Date.now();
   let outputFile: string | undefined;
   let outputSize: number | undefined;
-  
+
   try {
     // Check if output capture is enabled
     if (config.outputCapture?.enabled && config.historyDir) {
@@ -251,12 +251,12 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
         dateStr,
         timeStr,
         randomSuffix
-      });
+      }, tool === 'claude' || (tool === undefined && finalTool === 'claude'));
       exitCode = result.exitCode;
       outputFile = result.outputFile;
       outputSize = result.outputSize;
     } else {
-      exitCode = await executeTool(finalTool, finalArgs, promptResult);
+      exitCode = await executeTool(finalTool, finalArgs, promptResult, tool === 'claude' || (tool === undefined && finalTool === 'claude'));
     }
   } finally {
     const executionTime = Date.now() - startTime;
@@ -328,17 +328,18 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
 }
 
 async function executeToolWithCapture(
-  tool: string, 
-  args: string[], 
-  prompt: string, 
+  tool: string,
+  args: string[],
+  prompt: string,
   config: Config,
-  filenameComponents: { dateStr: string; timeStr: string; randomSuffix: string }
+  filenameComponents: { dateStr: string; timeStr: string; randomSuffix: string },
+  isClaudeCode: boolean = false
 ): Promise<{ exitCode: number | null; outputFile?: string; outputSize?: number }> {
   const outputCapture = new OutputCaptureService({
     outputDirectory: config.outputCapture?.directory || config.historyDir!,
     maxOutputSize: (config.outputCapture?.maxSizeMB || 10) * 1024 * 1024
   });
-  
+
   // Use provided filename components for synchronized naming
   const { dateStr, timeStr, randomSuffix } = filenameComponents;
   const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.json`;
@@ -346,9 +347,17 @@ async function executeToolWithCapture(
     config.outputCapture?.directory || config.historyDir!,
     outputFilename
   );
-  
-  const result = await outputCapture.captureCommand(tool, args, prompt, outputPath);
-  
+
+  // For Claude Code, pass prompt as argument; for others, use stdin
+  let finalArgs = args;
+  let finalPrompt = prompt;
+  if (isClaudeCode) {
+    finalArgs = [...args, prompt];
+    finalPrompt = ''; // Don't send via stdin
+  }
+
+  const result = await outputCapture.captureCommand(tool, finalArgs, finalPrompt, outputPath);
+
   return {
     exitCode: result.exitCode,
     outputFile: outputPath,
@@ -356,37 +365,45 @@ async function executeToolWithCapture(
   };
 }
 
-async function executeTool(tool: string, args: string[], prompt: string): Promise<number | null> {
+async function executeTool(tool: string, args: string[], prompt: string, isClaudeCode: boolean = false): Promise<number | null> {
+  // For Claude Code, pass prompt as argument; for others, use stdin
+  let finalArgs = args;
+  let finalPrompt = prompt;
+  if (isClaudeCode) {
+    finalArgs = [...args, prompt];
+    finalPrompt = ''; // Don't send via stdin
+  }
+
   return new Promise((resolve, reject) => {
-    const child = spawn(tool, args, {
+    const child = spawn(tool, finalArgs, {
       stdio: ['pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
     });
-    
+
     let _stderrData = '';
     let errorDetected = false;
-    
+
     // Capture stderr for Claude-specific error detection
     if (tool === 'claude' && child.stderr) {
       child.stderr.on('data', (data) => {
         const output = data.toString();
         _stderrData += output;
-        
+
         // Still write to stderr so user sees the output
         process.stderr.write(data);
-        
+
         // Check for the raw mode error
         if (output.includes('Raw mode is not supported') && output.includes('Ink')) {
           errorDetected = true;
         }
       });
     }
-    
+
     child.on('error', (error: Error & { code?: string }) => {
       if (error.code === 'ENOENT') {
         // Try to suggest similar tools
         const commonTools = ['claude', 'code', 'cat', 'less', 'vim'];
-        const suggestions = commonTools.filter(t => 
-          t.toLowerCase().includes(tool.toLowerCase()) || 
+        const suggestions = commonTools.filter(t =>
+          t.toLowerCase().includes(tool.toLowerCase()) ||
           tool.toLowerCase().includes(t.toLowerCase())
         );
         reject(errors.toolNotFound(tool, suggestions));
@@ -394,7 +411,7 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
         reject(error);
       }
     });
-    
+
     child.on('close', (code) => {
       // Handle Claude raw mode error specifically
       // Only show error if Claude actually failed (non-zero exit code)
@@ -411,29 +428,34 @@ async function executeTool(tool: string, args: string[], prompt: string): Promis
       }
       resolve(code);
     });
-    
-    // Write prompt to stdin
-    try {
-      if (child.stdin) {
-        // Only add error handler if stdin has on method (not mocked in tests)
-        if (typeof child.stdin.on === 'function') {
-          child.stdin.on('error', (error) => {
-            // Ignore EPIPE errors which happen when the tool closes stdin early
-            const errorCode = (error as NodeJS.ErrnoException).code;
-            if (errorCode !== 'EPIPE') {
-              logger.error(`stdin error: ${error}`);
-            }
-          });
+
+    // Write prompt to stdin (only if not Claude Code)
+    if (finalPrompt) {
+      try {
+        if (child.stdin) {
+          // Only add error handler if stdin has on method (not mocked in tests)
+          if (typeof child.stdin.on === 'function') {
+            child.stdin.on('error', (error) => {
+              // Ignore EPIPE errors which happen when the tool closes stdin early
+              const errorCode = (error as NodeJS.ErrnoException).code;
+              if (errorCode !== 'EPIPE') {
+                logger.error(`stdin error: ${error}`);
+              }
+            });
+          }
+          child.stdin.write(finalPrompt);
+          child.stdin.end();
         }
-        child.stdin.write(prompt);
-        child.stdin.end();
+      } catch (error) {
+        // Ignore EPIPE errors which happen when the tool closes stdin early
+        const errorCode = (error as NodeJS.ErrnoException).code;
+        if (errorCode !== 'EPIPE') {
+          reject(new Error(`Failed to write prompt to tool: ${error instanceof Error ? error.message : String(error)}`));
+        }
       }
-    } catch (error) {
-      // Ignore EPIPE errors which happen when the tool closes stdin early
-      const errorCode = (error as NodeJS.ErrnoException).code;
-      if (errorCode !== 'EPIPE') {
-        reject(new Error(`Failed to write prompt to tool: ${error instanceof Error ? error.message : String(error)}`));
-      }
+    } else if (child.stdin) {
+      // Close stdin even if we're not writing to it
+      child.stdin.end();
     }
   });
 }

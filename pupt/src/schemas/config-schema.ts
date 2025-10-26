@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 // Helper configurations
-export const HelperConfigSchema = z.object({
+const HelperConfigSchema = z.object({
   type: z.enum(['inline', 'file']),
   value: z.string().optional(),
   path: z.string().optional()
@@ -16,7 +16,7 @@ export const HelperConfigSchema = z.object({
   }
 );
 
-export const HandlebarsExtensionConfigSchema = z.object({
+const HandlebarsExtensionConfigSchema = z.object({
   type: z.enum(['inline', 'file']),
   value: z.string().optional(),
   path: z.string().optional()
@@ -40,7 +40,7 @@ export const OutputCaptureConfigSchema = z.object({
 });
 
 // Auto-annotation configuration schema
-export const AutoAnnotateConfigSchema = z.object({
+const AutoAnnotateConfigSchema = z.object({
   enabled: z.boolean(),
   triggers: z.array(z.string()).optional(),
   analysisPrompt: z.string()
@@ -70,11 +70,11 @@ export const ConfigSchema = z.object({
 }).passthrough();
 
 // Partial config for updates
-export const PartialConfigSchema = ConfigSchema.partial();
+const _PartialConfigSchema = ConfigSchema.partial();
 
 // Validated config type
-export type ValidatedConfig = z.infer<typeof ConfigSchema>;
-export type PartialValidatedConfig = z.infer<typeof PartialConfigSchema>;
+type _ValidatedConfig = z.infer<typeof ConfigSchema>;
+type _PartialValidatedConfig = z.infer<typeof _PartialConfigSchema>;
 
 // Migration schemas for different versions
 export const ConfigV1Schema = z.object({
@@ -107,4 +107,4 @@ export const ConfigFileSchema = z.union([
   ConfigSchema
 ]);
 
-export type ConfigFile = z.infer<typeof ConfigFileSchema>;
+type _ConfigFile = z.infer<typeof ConfigFileSchema>;

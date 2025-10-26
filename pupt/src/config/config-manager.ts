@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { logger } from '../utils/logger.js';
 import { migrateAnnotationsToJson } from '../utils/annotation-migration.js';
 
-export interface ConfigResult {
+interface ConfigResult {
   config: Config;
   filepath?: string;
   configDir?: string;

@@ -72,7 +72,7 @@ export function findCommonPrefix(strings: string[]): string {
   return prefix;
 }
 
-export interface CompletionResult {
+interface CompletionResult {
   completed: string;
   suggestions: string[];
 }

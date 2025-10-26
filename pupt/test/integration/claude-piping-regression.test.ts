@@ -7,16 +7,16 @@ import { spawn } from 'child_process';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 /**
- * Regression test suite specifically for Claude piping behavior.
- * 
- * Background: We discovered that when Claude is run with a PTY (pseudo-terminal),
- * it detects pasted input and shows "[Pasted text #X +Y lines]" instead of
- * executing the prompt immediately. This required the user to press Enter.
- * 
- * Solution: When running Claude in TTY mode with a prompt, we now spawn a shell
- * that pipes the prompt to Claude via a temporary file. This avoids paste
- * detection while maintaining PTY for terminal interaction.
- * 
+ * Regression test suite for Claude stdin handling behavior.
+ *
+ * Background: Claude CLI requires raw mode access to stdin for its Ink-based
+ * interactive UI. Earlier versions had paste detection issues, but newer versions
+ * (using Ink) are stricter about requiring a real TTY stdin.
+ *
+ * Solution: Claude is always spawned directly with PTY, ensuring stdin is a real
+ * TTY rather than a pipe. Prompts are written to the PTY after process creation,
+ * which allows Claude to maintain raw mode access while still receiving input.
+ *
  * These tests ensure this behavior doesn't regress.
  */
 
@@ -58,7 +58,7 @@ describe('Claude Piping Regression Tests', () => {
   });
 
   describe('TTY Mode Behavior', () => {
-    it.skipIf(skipOnWindowsCI)('should pipe prompt to Claude without paste detection in TTY mode', async () => {
+    it.skipIf(skipOnWindowsCI)('should write prompt to Claude with real TTY stdin in TTY mode', async () => {
       if (!claudeAvailable) {
         console.log('Claude not available, skipping test');
         return;
@@ -99,14 +99,14 @@ describe('Claude Piping Regression Tests', () => {
         expect(result.exitCode).toBe(0);
         
         const output = await readJsonOutputAsText(outputFile);
-        
+
         // Critical assertions:
         // 1. Should NOT contain paste detection indicator
         expect(output).not.toContain('[Pasted text');
-        
-        // 2. When using shell piping, the prompt is not echoed to output
+
+        // 2. With direct PTY write, Claude should process the prompt correctly
         // Just verify we got a response
-        
+
         // 3. Should contain the answer (Claude should execute immediately)
         expect(output).toMatch(/12/);
         
@@ -118,20 +118,20 @@ describe('Claude Piping Regression Tests', () => {
       }
     }, 30000);
 
-    it.skipIf(skipOnWindowsCI)('should create and clean up temp files for Claude in TTY mode', async () => {
+    it.skipIf(skipOnWindowsCI)('should NOT create temp files when running Claude in TTY mode', async () => {
       if (!claudeAvailable) {
         console.log('Claude not available, skipping test');
         return;
       }
 
-      const outputFile = path.join(outputDir, 'claude-temp-cleanup.json');
+      const outputFile = path.join(outputDir, 'claude-no-temp.json');
       const prompt = 'What is 3 + 3? Reply with just the number.';
-      
+
       // Save original TTY state
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
       const originalSetRawMode = process.stdin.setRawMode;
-      
+
       try {
         process.stdin.isTTY = true;
         process.stdout.isTTY = true;
@@ -139,36 +139,28 @@ describe('Claude Piping Regression Tests', () => {
         if (!process.stdin.setRawMode) {
           process.stdin.setRawMode = () => process.stdin;
         }
-        
+
         // Get temp files before
         const tempDir = os.tmpdir();
         const filesBefore = await fs.readdir(tempDir);
         const ptFilesBefore = filesBefore.filter(f => f.startsWith('pt-prompt-'));
-        
-        await service.captureCommand(
+
+        const result = await service.captureCommand(
           'claude',
           [],
           prompt,
           outputFile
         );
-        
-        // Immediately after, temp file should exist
-        const filesImmediately = await fs.readdir(tempDir);
-        const ptFilesImmediately = filesImmediately.filter(f => f.startsWith('pt-prompt-'));
-        
-        // Should have created at least one temp file
-        expect(ptFilesImmediately.length).toBeGreaterThanOrEqual(ptFilesBefore.length);
-        
-        // Wait for cleanup
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // After cleanup, temp files should be gone
+
+        expect(result.exitCode).toBe(0);
+
+        // Check that no new temp files were created
         const filesAfter = await fs.readdir(tempDir);
         const ptFilesAfter = filesAfter.filter(f => f.startsWith('pt-prompt-'));
-        
-        // Should have cleaned up (allowing for some race conditions)
-        expect(ptFilesAfter.length).toBeLessThanOrEqual(ptFilesBefore.length + 1);
-        
+
+        // Should NOT have created temp files (direct PTY write instead of shell piping)
+        expect(ptFilesAfter.length).toBe(ptFilesBefore.length);
+
       } finally {
         process.stdin.isTTY = originalStdinTTY;
         process.stdout.isTTY = originalStdoutTTY;
@@ -396,7 +388,7 @@ describe('Claude Piping Regression Tests', () => {
   });
 
   describe('Platform-specific Behavior', () => {
-    it.skipIf(skipOnWindowsCI)('should use correct shell command for Windows', async () => {
+    it.skipIf(skipOnWindowsCI)('should handle Claude correctly on Windows', async () => {
       if (process.platform !== 'win32' || !claudeAvailable) {
         // Skip test
         return;
@@ -437,7 +429,7 @@ describe('Claude Piping Regression Tests', () => {
       }
     }, 30000);
 
-    it('should use correct shell command for Unix', async () => {
+    it('should handle Claude correctly on Unix', async () => {
       if (process.platform === 'win32' || !claudeAvailable) {
         // Skip test
         return;

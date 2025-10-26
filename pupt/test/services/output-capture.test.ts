@@ -165,10 +165,10 @@ describe('OutputCaptureService - Claude typing', () => {
     vi.restoreAllMocks();
   });
 
-  it('should use shell piping for Claude in TTY mode', async () => {
+  it('should write prompt directly to Claude PTY in TTY mode', async () => {
     const prompt = 'Test prompt';
     const outputFile = path.join(tempDir, 'claude-test.txt');
-    
+
     // Track write calls
     const writeCalls: string[] = [];
     mockPty.write.mockImplementation((data: string) => {
@@ -212,15 +212,16 @@ describe('OutputCaptureService - Claude typing', () => {
     // Wait for typing to complete
     await new Promise(resolve => setTimeout(resolve, 2000));
 
-    // In TTY mode with Claude, it should use shell piping
-    // So the prompt is NOT typed character by character
-    const charWrites = writeCalls.filter(call => call.length === 1 && call !== '\r');
-    
+    // In TTY mode with Claude, prompt is written directly to PTY
+    // Should write the prompt (not character by character, but in chunks)
     console.log('All write calls:', writeCalls);
-    console.log('Character writes:', charWrites);
-    
-    // Should NOT have typed each character (using shell piping instead)
-    expect(charWrites.length).toBe(0);
+
+    // Should have written the prompt to PTY
+    expect(writeCalls.length).toBeGreaterThan(0);
+
+    // The full prompt should be in the writes somewhere
+    const allWrites = writeCalls.join('');
+    expect(allWrites).toContain(prompt);
 
     // Simulate exit
     exitHandler({ exitCode: 0 });

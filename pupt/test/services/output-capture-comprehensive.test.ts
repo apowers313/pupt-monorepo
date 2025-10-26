@@ -134,7 +134,8 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
       );
       
       expect(result.exitCode).toBe(0);
-      const output = await readJsonOutputAsText(outputFile);
+      const jsonOutputFile = outputFile.replace(/\.txt$/, '.json');
+      const output = await readJsonOutputAsText(jsonOutputFile);
       expect(output).toContain('Line 1');
       expect(output).toContain('Line 2');
       expect(output).toContain('Line 3');
@@ -160,17 +161,17 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
   });
 
   describe('Claude-specific Behavior', () => {
-    it.skipIf(skipOnWindowsCI)('should use shell piping for Claude in TTY mode', async () => {
+    it.skipIf(skipOnWindowsCI)('should write prompt directly to Claude PTY in TTY mode', async () => {
       // With mock, claude is always available
 
       const outputFile = path.join(outputDir, 'claude-tty-test.json');
       const prompt = 'What is 2+2? Reply with just the number.';
-      
+
       // Save original TTY state
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
       const originalSetRawMode = process.stdin.setRawMode;
-      
+
       try {
         // Simulate TTY mode
         process.stdin.isTTY = true;
@@ -179,26 +180,25 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
         if (!process.stdin.setRawMode) {
           process.stdin.setRawMode = () => process.stdin;
         }
-        
+
         const result = await service.captureCommand(
           'claude',
           [],
           prompt,
           outputFile
         );
-        
+
         // Claude might exit with non-zero if it needs interaction
-        // The important thing is it doesn't show paste detection
+        // The important thing is it receives a real TTY stdin
         expect(result.exitCode !== null).toBe(true);
-        
-        // Check that temp file was created (by checking the command used)
+
         // The prompt should not appear as "pasted text"
         const output = await readJsonOutputAsText(outputFile);
         expect(output).not.toContain('[Pasted text');
-        
-        // When using shell piping, only the response is captured
+
+        // With direct PTY write, Claude processes the prompt and responds
         expect(output).toContain('4');
-        
+
       } finally {
         // Restore TTY state
         process.stdin.isTTY = originalStdinTTY;
@@ -446,48 +446,45 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
   });
 
   describe('Temp File Cleanup', () => {
-    it.skipIf(skipOnWindowsCI)('should clean up temp files after Claude command', async () => {
-      // This test needs to mock Claude behavior
+    it.skipIf(skipOnWindowsCI)('should NOT create temp files when running Claude', async () => {
+      // This test verifies that we use direct PTY write instead of temp files
       if (process.platform === 'win32') {
         console.log('Skipping on Windows due to file locking');
         return;
       }
 
-      const outputFile = path.join(outputDir, 'cleanup-test.json');
+      const outputFile = path.join(outputDir, 'no-temp-test.json');
       const prompt = 'test cleanup';
-      
+
       // Save original TTY state
       const originalStdinTTY = process.stdin.isTTY;
       const originalStdoutTTY = process.stdout.isTTY;
-      
+
       try {
         // Simulate TTY mode
         process.stdin.isTTY = true;
         process.stdout.isTTY = true;
-        
+
         // Count temp files before
         const tempDir = os.tmpdir();
         const filesBefore = await fs.readdir(tempDir);
         const ptFilesBefore = filesBefore.filter(f => f.startsWith('pt-prompt-'));
-        
-        // Mock claude with a command that exits quickly
+
+        // Run echo as a proxy for Claude (since we're testing temp file behavior)
         await service.captureCommand(
           'echo',
           ['mocked claude output'],
           prompt,
           outputFile
         );
-        
-        // Wait for cleanup timeout
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Count temp files after
+
+        // Count temp files immediately after
         const filesAfter = await fs.readdir(tempDir);
         const ptFilesAfter = filesAfter.filter(f => f.startsWith('pt-prompt-'));
-        
-        // Should not accumulate temp files
-        expect(ptFilesAfter.length).toBeLessThanOrEqual(ptFilesBefore.length + 1);
-        
+
+        // Should NOT have created any temp files (using direct PTY write)
+        expect(ptFilesAfter.length).toBe(ptFilesBefore.length);
+
       } finally {
         // Restore TTY state
         process.stdin.isTTY = originalStdinTTY;

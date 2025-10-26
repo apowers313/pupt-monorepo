@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import { Config } from '../types/config.js';
 import { DateFormats } from '../utils/date-formatter.js';
 
-export interface ConfigMigration {
+interface ConfigMigration {
   version: string;
   migrate: (config: Record<string, unknown>) => Record<string, unknown>;
 }

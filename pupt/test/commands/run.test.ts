@@ -201,8 +201,8 @@ describe('Run Command', () => {
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await runCommand([], {});
-      
-      expect(spawn).toHaveBeenCalledWith('claude', ['--model', 'sonnet'], expect.any(Object));
+
+      expect(spawn).toHaveBeenCalledWith('claude', ['--model', 'sonnet', 'Hello'], expect.any(Object));
     });
 
     it('should override config tool with explicit tool', async () => {
@@ -679,8 +679,8 @@ describe('Run Command', () => {
         default: false
       });
       
-      // Should include --continue but not --web
-      expect(spawn).toHaveBeenCalledWith('claude', ['--model', 'sonnet', '--continue'], expect.any(Object));
+      // Should include --continue but not --web (and prompt as final argument)
+      expect(spawn).toHaveBeenCalledWith('claude', ['--model', 'sonnet', '--continue', 'Hello'], expect.any(Object));
     });
 
     it('should preserve argument order', async () => {
@@ -707,9 +707,9 @@ describe('Run Command', () => {
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
       
       await runCommand(['--', '--temperature', '0.7'], {});
-      
-      expect(spawn).toHaveBeenCalledWith('claude', 
-        ['--model', 'sonnet', '--continue', '--temperature', '0.7'], 
+
+      expect(spawn).toHaveBeenCalledWith('claude',
+        ['--model', 'sonnet', '--continue', '--temperature', '0.7', 'Hello'],
         expect.any(Object)
       );
     });

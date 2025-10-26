@@ -20,20 +20,20 @@ export interface Config {
   codingToolOptions?: Record<string, string>;
 }
 
-export interface OutputCaptureConfig {
+interface OutputCaptureConfig {
   enabled: boolean;
   directory?: string;
   maxSizeMB?: number;
   retentionDays?: number;
 }
 
-export interface AutoAnnotateConfig {
+interface AutoAnnotateConfig {
   enabled: boolean;
   triggers?: string[];
   analysisPrompt: string;
 }
 
-export interface HelperConfig {
+interface HelperConfig {
   type: 'inline' | 'file';
   value?: string;
   path?: string;

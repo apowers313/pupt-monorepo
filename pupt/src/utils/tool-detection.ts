@@ -1,6 +1,6 @@
 import { sync as commandExistsSync } from 'command-exists';
 
-export interface ToolConfig {
+interface ToolConfig {
   name: string;
   displayName: string;
   command: string;

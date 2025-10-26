@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import reviewFilePrompt from '../../src/prompts/input-types/review-file-prompt.js';
-import fileSearchPrompt from '../../src/prompts/input-types/file-search-prompt.js';
+import { reviewFilePrompt } from '../../src/prompts/input-types/review-file-prompt.js';
+import { fileSearchPrompt } from '../../src/prompts/input-types/file-search-prompt.js';
 
 vi.mock('../../src/prompts/input-types/file-search-prompt.js');
 

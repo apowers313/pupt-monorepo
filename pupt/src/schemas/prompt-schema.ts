@@ -120,10 +120,10 @@ export const AnnotationSchema = z.object({
 });
 
 // Type exports
-export type InputType = z.infer<typeof InputTypeSchema>;
-export type PromptInput = z.infer<typeof PromptInputSchema>;
-export type PromptMetadata = z.infer<typeof PromptMetadataSchema>;
-export type Prompt = z.infer<typeof PromptSchema>;
-export type HistoryEntry = z.infer<typeof HistoryEntrySchema>;
-export type Annotation = z.infer<typeof AnnotationSchema>;
-export type ModelConfig = z.infer<typeof ModelConfigSchema>;
+type _InputType = z.infer<typeof InputTypeSchema>;
+type _PromptInput = z.infer<typeof PromptInputSchema>;
+type _PromptMetadata = z.infer<typeof PromptMetadataSchema>;
+type _Prompt = z.infer<typeof PromptSchema>;
+type _HistoryEntry = z.infer<typeof HistoryEntrySchema>;
+type _Annotation = z.infer<typeof AnnotationSchema>;
+type _ModelConfig = z.infer<typeof ModelConfigSchema>;

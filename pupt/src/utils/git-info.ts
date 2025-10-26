@@ -3,7 +3,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-export interface GitInfo {
+interface GitInfo {
   branch?: string;
   commit?: string;
   isDirty?: boolean;
