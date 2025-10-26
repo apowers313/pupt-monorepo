@@ -65,15 +65,20 @@ vi.mock('node:child_process', async (importOriginal) => {
           on: vi.fn()
         },
         stdout: {
-          on: vi.fn()
+          on: vi.fn((event, callback) => {
+            if (event === 'data') {
+              // Simulate command output
+              setTimeout(() => callback('Command completed successfully\n'), 50);
+            }
+          })
         },
         stderr: {
           on: vi.fn()
         },
         on: vi.fn((event, callback) => {
           if (event === 'close') {
-            // Simulate Claude failure
-            setTimeout(() => callback(1), 100);
+            // Simulate successful execution (exit code 0) to allow output capture
+            setTimeout(() => callback(0), 100);
           }
         }),
         unref: vi.fn()
