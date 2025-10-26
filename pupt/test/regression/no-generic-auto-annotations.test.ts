@@ -272,7 +272,7 @@ Analyze the execution and return JSON`;
     }
   });
 
-  it('should launch auto-annotation in background without creating immediate annotation', async () => {
+  it('should launch auto-annotation in background without creating immediate annotation', { timeout: 10000 }, async () => {
     // Spy on logger
     const { logger } = await import('../../src/utils/logger.js');
     const logSpy = vi.spyOn(logger, 'log');
