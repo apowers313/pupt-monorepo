@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/apowers313/pupt/compare/v1.2.1...v1.3.0) (2025-10-26)
+
+
+### Bug Fixes
+
+* update to work with claude code v2, add knip delinting ([85f04e2](https://github.com/apowers313/pupt/commit/85f04e2afa9ec054837e41c4100458fb707008c9))
+
+
+### Features
+
+* **auto-annotation:** enhance service with improved path resolution and Claude integration ([4c04124](https://github.com/apowers313/pupt/commit/4c04124885bf2d84610b21e9a9d6f600354ec77f))
+
 ## [1.2.1](https://github.com/apowers313/pupt/compare/v1.2.0...v1.2.1) (2025-08-23)
 
 
