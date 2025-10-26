@@ -181,16 +181,23 @@ describe('Config Migration Integration', () => {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
-        version: '4.0.0'
+        version: '4.0.0',
+        outputCapture: {
+          enabled: false
+        },
+        autoAnnotate: {
+          enabled: false,
+          analysisPrompt: 'analyze-execution'
+        }
       };
-      
+
       await fs.writeJson('.pt-config.json', newConfig);
-      
+
       const config = await ConfigManager.load();
-      
+
       // Should not create backup for already migrated config
       expect(await fs.pathExists('.pt-config.json.backup')).toBe(false);
-      
+
       // Config should remain unchanged
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual(['--model', 'sonnet']);
@@ -388,20 +395,63 @@ codingToolOptions:
         version: '3.0.0'
         // Missing many optional fields
       };
-      
+
       await fs.writeJson('.pt-config.json', partialV3Config);
-      
+
       const config = await ConfigManager.load();
-      
+
       expect(config.version).toBe('4.0.0');
       expect(config.outputCapture).toBeDefined();
       expect(config.autoAnnotate).toBeDefined();
-      
+
       // V3 migration doesn't add defaultCmd if it's missing, only renames codingTool
       // So defaultCmd will be undefined for partial configs
       expect(config.defaultCmd).toBeUndefined();
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
+    });
+
+    it('should migrate v4.0.0 configs that are missing required v4 fields', async () => {
+      // Regression test: A config that claims to be v4.0.0 but is missing
+      // the outputCapture and autoAnnotate fields that were added in v4.0.0
+      // This can happen if a config was manually edited or created before
+      // those fields were added to the v4 migration
+      const incompleteV4Config = {
+        promptDirs: ['/home/user/.pt/prompts', 'node_modules/pupt/prompts'],
+        autoReview: true,
+        autoRun: true,
+        gitPromptDir: '/home/user/project/.git-prompts',
+        handlebarsExtensions: [],
+        version: '4.0.0'
+        // Missing outputCapture and autoAnnotate
+      };
+
+      await fs.writeJson('.pt-config.json', incompleteV4Config);
+
+      const config = await ConfigManager.load();
+
+      // Should still be v4.0.0
+      expect(config.version).toBe('4.0.0');
+
+      // Should add missing v4 fields with defaults
+      expect(config.outputCapture).toBeDefined();
+      expect(config.outputCapture).toEqual({
+        enabled: false,
+        directory: path.join(testDir, '.pt-output'),
+        maxSizeMB: 50,
+        retentionDays: 30
+      });
+
+      expect(config.autoAnnotate).toBeDefined();
+      expect(config.autoAnnotate).toEqual({
+        enabled: false,
+        triggers: ['claude', 'ai', 'assistant'],
+        analysisPrompt: 'analyze-execution'
+      });
+
+      // Existing fields should be preserved
+      expect(config.autoReview).toBe(true);
+      expect(config.autoRun).toBe(true);
     });
   });
 

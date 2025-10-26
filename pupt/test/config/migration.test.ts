@@ -118,7 +118,14 @@ describe('Config Migration', () => {
       const config = {
         version: '4.0.0',
         promptDirs: ['./.prompts'],
-        defaultCmd: 'claude'
+        defaultCmd: 'claude',
+        outputCapture: {
+          enabled: false
+        },
+        autoAnnotate: {
+          enabled: false,
+          analysisPrompt: 'analyze'
+        }
       };
 
       expect(migrateConfig.needsMigration(config)).toBe(false);

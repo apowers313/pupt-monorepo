@@ -111,20 +111,22 @@ export const migrateConfig = Object.assign(
   function(config: Record<string, unknown>): Config {
     // Apply migrations in sequence
     let migrated = { ...config };
-    
+
     // Start with the appropriate migration based on current version
     const currentVersion = config.version as string | undefined;
-    
+
     if (!currentVersion || currentVersion < '3.0.0') {
       // Apply v3 migration first
       migrated = migrations[0].migrate(migrated);
     }
-    
-    if (!migrated.version || migrated.version < '4.0.0') {
+
+    // Apply v4 migration if version is old OR if required v4 fields are missing
+    if (!migrated.version || migrated.version < '4.0.0' ||
+        (migrated.version === '4.0.0' && (!migrated.outputCapture || !migrated.autoAnnotate))) {
       // Apply v4 migration
       migrated = migrations[1].migrate(migrated);
     }
-    
+
     return migrated as unknown as Config;
   },
   {
@@ -133,17 +135,24 @@ export const migrateConfig = Object.assign(
       if ('promptDirectory' in config || 'historyDirectory' in config || 'annotationDirectory' in config) {
         return true;
       }
-      
+
       // Check if config has old field names
       if ('codingTool' in config || 'codingToolArgs' in config || 'codingToolOptions' in config) {
         return true;
       }
-      
+
       // Check if version is missing or old
       if (!config.version || config.version !== '4.0.0') {
         return true;
       }
-      
+
+      // Check if v4.0.0 config is missing required v4 fields
+      // This handles cases where a config was manually edited or created
+      // before these fields were added to the v4 migration
+      if (config.version === '4.0.0' && (!config.outputCapture || !config.autoAnnotate)) {
+        return true;
+      }
+
       return false;
     },
     
