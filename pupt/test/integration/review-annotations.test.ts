@@ -43,24 +43,28 @@ Execute the test: {{input}}`;
     
     await fs.writeFile(path.join('./.prompts', 'test-prompt.md'), promptContent);
 
-    // Create history entries
+    // Create history entries (use recent dates to pass the 30d filter)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+
     const historyEntries = [
       {
-        timestamp: new Date('2025-08-20T10:00:00Z').toISOString(),
+        timestamp: twoDaysAgo.toISOString(),
         templatePath: '.prompts/test-prompt.md',
         templateContent: promptContent,
         variables: { input: 'test1' },
         finalPrompt: 'Execute the test: test1',
-        filename: '20250820-100000-abcdef01.json',
+        filename: '20251023-100000-abcdef01.json',
         title: 'Test Prompt'
       },
       {
-        timestamp: new Date('2025-08-21T10:00:00Z').toISOString(),
+        timestamp: oneDayAgo.toISOString(),
         templatePath: '.prompts/test-prompt.md',
         templateContent: promptContent,
         variables: { input: 'test2' },
         finalPrompt: 'Execute the test: test2',
-        filename: '20250821-100000-abcdef02.json',
+        filename: '20251024-100000-abcdef02.json',
         title: 'Test Prompt'
       }
     ];
@@ -73,8 +77,8 @@ Execute the test: {{input}}`;
     // Create JSON annotations
     const annotations = [
       {
-        historyFile: '20250820-100000-abcdef01.json',
-        timestamp: new Date('2025-08-20T10:30:00Z').toISOString(),
+        historyFile: '20251023-100000-abcdef01.json',
+        timestamp: new Date(twoDaysAgo.getTime() + 30 * 60 * 1000).toISOString(),
         status: 'success',
         tags: ['test', 'automated'],
         notes: 'First test completed successfully',
@@ -89,8 +93,8 @@ Execute the test: {{input}}`;
         }
       },
       {
-        historyFile: '20250821-100000-abcdef02.json',
-        timestamp: new Date('2025-08-21T10:30:00Z').toISOString(),
+        historyFile: '20251024-100000-abcdef02.json',
+        timestamp: new Date(oneDayAgo.getTime() + 30 * 60 * 1000).toISOString(),
         status: 'partial',
         tags: ['test', 'automated'],
         notes: 'Second test partially completed',
@@ -107,13 +111,13 @@ Execute the test: {{input}}`;
 
     // Save annotations
     await fs.writeJson(
-      './.history/20250820-100000-abcdef01-annotation-123.json',
+      './.history/20251023-100000-abcdef01-annotation-123.json',
       annotations[0],
       { spaces: 2 }
     );
-    
+
     await fs.writeJson(
-      './.history/20250821-100000-abcdef02-annotation-456.json',
+      './.history/20251024-100000-abcdef02-annotation-456.json',
       annotations[1],
       { spaces: 2 }
     );
@@ -152,37 +156,40 @@ Execute the test: {{input}}`;
       annotationDir: './.history',
       version: '4.0.0'
     };
-    
+
     await fs.ensureDir('./.prompts');
     await fs.ensureDir('./.history');
 
     // Create a test prompt
     await fs.writeFile(path.join('./.prompts', 'test-prompt.md'), 'Test prompt');
 
-    // Create a history entry
+    // Create a history entry (recent date to pass 30d filter)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
     const historyEntry = {
-      timestamp: new Date('2025-08-20T10:00:00Z').toISOString(),
+      timestamp: oneDayAgo.toISOString(),
       templatePath: '.prompts/test-prompt.md',
       templateContent: 'Test prompt',
       variables: {},
       finalPrompt: 'Test prompt',
-      filename: '20250820-100000-abcdef03.json',
+      filename: '20251024-100000-abcdef03.json',
       title: 'Test Prompt'
     };
-    
+
     await fs.writeJson(path.join('./.history', historyEntry.filename), historyEntry);
 
     // Create an annotation
     const annotation = {
-      historyFile: '20250820-100000-abcdef03.json',
-      timestamp: new Date('2025-08-20T10:30:00Z').toISOString(),
+      historyFile: '20251024-100000-abcdef03.json',
+      timestamp: new Date(oneDayAgo.getTime() + 30 * 60 * 1000).toISOString(),
       status: 'success',
       tags: [],
       notes: 'Test annotation'
     };
-    
+
     await fs.writeJson(
-      './.history/20250820-100000-abcdef03-annotation-123.json',
+      './.history/20251024-100000-abcdef03-annotation-123.json',
       annotation,
       { spaces: 2 }
     );
@@ -211,37 +218,40 @@ Execute the test: {{input}}`;
       annotationDir: './.history',
       version: '4.0.0'
     };
-    
+
     await fs.ensureDir('./.prompts');
     await fs.ensureDir('./.history');
 
     // Create a test prompt
     await fs.writeFile(path.join('./.prompts', 'test-prompt.md'), 'Test prompt');
 
-    // Create a history entry
+    // Create a history entry (recent date to pass 30d filter)
+    const now = new Date();
+    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
     const historyEntry = {
-      timestamp: new Date('2025-08-20T10:00:00Z').toISOString(),
+      timestamp: oneDayAgo.toISOString(),
       templatePath: '.prompts/test-prompt.md',
       templateContent: 'Test prompt',
       variables: {},
       finalPrompt: 'Test prompt',
-      filename: '20250820-100000-abcdef03.json',
+      filename: '20251024-100000-abcdef03.json',
       title: 'Test Prompt'
     };
-    
+
     await fs.writeJson(path.join('./.history', historyEntry.filename), historyEntry);
 
     // Create a JSON annotation
     const jsonAnnotation = {
-      historyFile: '20250820-100000-abcdef03.json',
-      timestamp: new Date('2025-08-20T10:30:00Z').toISOString(),
+      historyFile: '20251024-100000-abcdef03.json',
+      timestamp: new Date(oneDayAgo.getTime() + 30 * 60 * 1000).toISOString(),
       status: 'success',
       tags: ['json'],
       notes: 'JSON annotation'
     };
-    
+
     await fs.writeJson(
-      './.history/20250820-100000-abcdef03-annotation-json.json',
+      './.history/20251024-100000-abcdef03-annotation-json.json',
       jsonAnnotation,
       { spaces: 2 }
     );

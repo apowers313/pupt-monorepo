@@ -13,7 +13,30 @@ export class TestEnvironment {
   
   async cleanup(): Promise<void> {
     if (this.tempDir) {
-      await fs.remove(this.tempDir);
+      // On Windows, file handles may not be released immediately
+      // Retry cleanup with exponential backoff
+      const maxRetries = 3;
+      const baseDelay = 100;
+
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          await fs.remove(this.tempDir);
+          return; // Success
+        } catch (error: unknown) {
+          const isLastAttempt = attempt === maxRetries - 1;
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          const isEBUSY = errorMessage.includes('EBUSY') || errorMessage.includes('EPERM');
+
+          if (!isEBUSY || isLastAttempt) {
+            // Not a locking issue, or we've exhausted retries - rethrow
+            throw error;
+          }
+
+          // Wait before retrying (exponential backoff)
+          const delay = baseDelay * Math.pow(2, attempt);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
     }
   }
   
