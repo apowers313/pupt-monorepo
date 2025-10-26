@@ -44,24 +44,25 @@ describe('OutputCaptureService - Comprehensive Tests', () => {
     it.skipIf(skipOnWindowsCI)('should capture output from a simple command with prompt', async () => {
       const outputFile = path.join(outputDir, 'echo-test.json');
       const jsonOutputFile = outputFile.replace(/\.txt$/, '.json');
-      const prompt = 'test input';
-      
+      // Use empty prompt for echo command since echo doesn't read stdin
+      const prompt = '';
+
       const result = await service.captureCommand(
         'echo',
         ['hello world'],
         prompt,
         outputFile
       );
-      
+
       expect(result.exitCode).toBe(0);
       expect(result.outputFile).toBe(jsonOutputFile);
       expect(result.truncated).toBe(false);
-      
+
       // Check JSON output
       const chunks = await fs.readJson(jsonOutputFile) as Array<{timestamp: string, direction: string, data: string}>;
       const output = chunks.filter(c => c.direction === 'output').map(c => c.data).join('');
       expect(output).toContain('hello world');
-      
+
     });
 
     it.skipIf(skipOnWindowsCI)('should capture multi-line output correctly', async () => {

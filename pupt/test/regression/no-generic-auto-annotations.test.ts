@@ -56,8 +56,9 @@ vi.mock('node:child_process', async (importOriginal) => {
     spawn: vi.fn().mockImplementation((cmd, args, options) => {
       // Track spawn calls for assertions
       spawnCalls.push({ cmd, args, options });
-      
+
       const mockProcess = {
+        pid: Math.floor(Math.random() * 100000),
         stdin: {
           write: vi.fn(),
           end: vi.fn(),
@@ -168,8 +169,9 @@ Analyze this execution`;
     // Run the command
     await runCommand([], {});
 
-    // Wait for any async operations
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait for any async operations (longer on Windows for file locks to release)
+    const waitTime = process.platform === 'win32' ? 500 : 300;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
 
     // Check that NO annotation files were created
     const annotationFiles = await fs.readdir(annotationDir);
@@ -232,8 +234,9 @@ Analyze the execution and return JSON`;
     // Run the command
     await runCommand([], {});
 
-    // Wait for async operations
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait for async operations (longer on Windows for file locks to release)
+    const waitTime = process.platform === 'win32' ? 500 : 300;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
 
     // Verify that NO annotations were created (since our implementation now throws)
     const annotationFiles = await fs.readdir(annotationDir);
@@ -305,16 +308,22 @@ Analyze`;
     // Run command
     await runCommand([], {});
 
-    // Wait for async operations
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Wait for async operations (longer on Windows for file locks to release)
+    const waitTime = process.platform === 'win32' ? 500 : 300;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
 
     // Check that auto-annotation was launched in background
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Launching auto-annotation analysis with')
+    // Find the specific log calls (filter out prompt display messages)
+    const logCalls = logSpy.mock.calls.map(call => call[0]);
+    const hasLaunchingMessage = logCalls.some(msg =>
+      typeof msg === 'string' && msg.includes('Launching auto-annotation analysis with')
     );
-    expect(logSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Auto-annotation analysis launched in background')
+    const hasLaunchedMessage = logCalls.some(msg =>
+      typeof msg === 'string' && msg.includes('Auto-annotation analysis launched in background')
     );
+
+    expect(hasLaunchingMessage).toBe(true);
+    expect(hasLaunchedMessage).toBe(true);
     
     // Verify spawn was called with claude
     expect(spawnCalls.length).toBeGreaterThan(0);
