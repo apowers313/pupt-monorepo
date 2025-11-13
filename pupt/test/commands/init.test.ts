@@ -363,7 +363,7 @@ describe('Init Command', () => {
   });
 
   describe('auto-annotation configuration', () => {
-    it('should not include autoAnnotate when annotations are disabled', async () => {
+    it('should have autoAnnotate disabled by default when annotations are disabled', async () => {
       vi.mocked(inquirerPrompts.input)
         .mockResolvedValueOnce('./.prompts')
         .mockResolvedValueOnce('./.pthistory');
@@ -374,7 +374,9 @@ describe('Init Command', () => {
       await initCommand();
 
       const config = await fs.readJson('.pt-config.json');
-      expect(config.autoAnnotate).toBeUndefined();
+      // autoAnnotate should be present (from DEFAULT_CONFIG) but disabled
+      expect(config.autoAnnotate).toBeDefined();
+      expect(config.autoAnnotate.enabled).toBe(false);
     });
 
     it('should enable auto-annotation with default prompt when selected', async () => {
@@ -471,6 +473,70 @@ describe('Init Command', () => {
       );
 
       loggerLogSpy.mockRestore();
+    });
+  });
+
+  describe('v4 config completeness', () => {
+    it('should create config with all required v4.0.0 fields', async () => {
+      // Regression test: pt init should create a complete v4.0.0 config
+      // that includes outputCapture and autoAnnotate fields to prevent
+      // PTY/TTY errors when running claude
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValue('./.prompts');
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValue(false); // No history
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+
+      // Should have version 4.0.0
+      expect(config.version).toBe('4.0.0');
+
+      // Should have outputCapture with defaults
+      expect(config.outputCapture).toBeDefined();
+      expect(config.outputCapture).toEqual({
+        enabled: false,
+        directory: '.pt-output',
+        maxSizeMB: 50,
+        retentionDays: 30
+      });
+
+      // Should have autoAnnotate with defaults
+      expect(config.autoAnnotate).toBeDefined();
+      expect(config.autoAnnotate).toEqual({
+        enabled: false,
+        triggers: ['claude', 'ai', 'assistant'],
+        analysisPrompt: 'analyze-execution'
+      });
+    });
+
+    it('should preserve user-selected autoAnnotate config', async () => {
+      // When user enables auto-annotation, their choice should override defaults
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValueOnce('./.prompts')
+        .mockResolvedValueOnce('./.pthistory')  // history dir
+        .mockResolvedValueOnce('./.pthistory'); // annotation dir
+
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(true)  // Enable history
+        .mockResolvedValueOnce(true)  // Enable annotations
+        .mockResolvedValueOnce(true)  // Enable auto-annotate
+        .mockResolvedValueOnce(true); // Use default prompt
+
+      await initCommand();
+
+      const config = await fs.readJson('.pt-config.json');
+
+      // User-selected auto-annotation should override default
+      expect(config.autoAnnotate).toEqual({
+        enabled: true,
+        analysisPrompt: 'analyze-execution'
+      });
+
+      // outputCapture should still have defaults
+      expect(config.outputCapture).toBeDefined();
+      expect(config.outputCapture.enabled).toBe(false);
     });
   });
 });

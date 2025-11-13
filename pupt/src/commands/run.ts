@@ -375,8 +375,10 @@ async function executeTool(tool: string, args: string[], prompt: string, isClaud
   }
 
   return new Promise((resolve, reject) => {
+    // When running Claude Code, inherit stdin so Ink can use the TTY
+    // For other tools, pipe stdin to send the prompt
     const child = spawn(tool, finalArgs, {
-      stdio: ['pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
+      stdio: [isClaudeCode ? 'inherit' : 'pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
     });
 
     let _stderrData = '';
