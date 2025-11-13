@@ -1,3 +1,11 @@
+## [1.3.1](https://github.com/apowers313/pupt/compare/v1.3.0...v1.3.1) (2025-11-13)
+
+
+### Bug Fixes
+
+* claude code 2.x parsing errors ([33a2b8c](https://github.com/apowers313/pupt/commit/33a2b8cdd10850a8245a63c4825b3ded73f2c6e3))
+* config file migration when outputCapture is missing ([56881ac](https://github.com/apowers313/pupt/commit/56881ac18a56b7e881e6e494182d0c3abf3c8088))
+
 # [1.3.0](https://github.com/apowers313/pupt/compare/v1.2.1...v1.3.0) (2025-10-26)
 
 
