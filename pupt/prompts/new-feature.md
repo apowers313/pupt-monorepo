@@ -13,7 +13,7 @@ title: New Feature
 - Identify potential challenges and mitigation strategies
 - Keep scope manageable and incrementally deliverable
 
-**Format & Structure**: Create design document with these sections:
+**Format & Structure**: Create design document with these sections and write it to {{reviewFile "outputFile"}}:
 
 ```markdown
 # Feature Design: [Feature Name]
