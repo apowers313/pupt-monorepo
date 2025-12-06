@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/apowers313/pupt/compare/v1.3.1...v1.3.2) (2025-12-06)
+
+
+### Bug Fixes
+
+* restore prompt inputs ([3aef0d6](https://github.com/apowers313/pupt/commit/3aef0d6eddacc8793fea1ab316317f152e6650a4))
+
 ## [1.3.1](https://github.com/apowers313/pupt/compare/v1.3.0...v1.3.1) (2025-11-13)
 
 
