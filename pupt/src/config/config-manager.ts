@@ -472,6 +472,10 @@ export class ConfigManager {
         });
       }
       filepath = filepath.replace(/\$\{projectRoot\}/g, projectRoot);
+      // Normalize path to ensure consistent separators across platforms
+      // (e.g., after replacing ${projectRoot} on Windows, forward slashes in the
+      // template may remain, creating mixed paths like C:\foo/.bar)
+      filepath = path.normalize(filepath);
     }
 
     if (filepath.startsWith('~/')) {
