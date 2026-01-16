@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/apowers313/pupt/compare/v1.3.2...v1.4.0) (2026-01-16)
+
+
+### Bug Fixes
+
+* semantic release ([5c4598f](https://github.com/apowers313/pupt/commit/5c4598fcaf0698d4751f3d9f00ca64d8087b78ad))
+* windows path error ([c3bb870](https://github.com/apowers313/pupt/commit/c3bb8707e85a2be2a4b1dbd0800e234235d0c3b7))
+
+
+### Features
+
+* **history:** add directory-based filtering with git worktree support ([12be809](https://github.com/apowers313/pupt/commit/12be80975d44d202a10fda066c79898cf4613ff6))
+
 ## [1.3.2](https://github.com/apowers313/pupt/compare/v1.3.1...v1.3.2) (2025-12-06)
 
 
