@@ -291,4 +291,298 @@ describe('HistoryManager', () => {
       expect(entry).toBeNull();
     });
   });
+
+  describe('listHistory with directory filtering', () => {
+    const mockEntriesWithEnv = [
+      {
+        timestamp: '2024-01-14T10:00:00.000Z',
+        templatePath: '/templates/test1.md',
+        finalPrompt: 'Test prompt 1',
+        title: 'Test 1',
+        templateContent: 'template',
+        variables: {},
+        environment: {
+          working_directory: '/home/user/project-a',
+          git_dir: '/home/user/project-a/.git',
+          os: 'linux'
+        }
+      },
+      {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test2.md',
+        finalPrompt: 'Test prompt 2',
+        title: 'Test 2',
+        templateContent: 'template',
+        variables: {},
+        environment: {
+          working_directory: '/home/user/project-b',
+          git_dir: '/home/user/project-b/.git',
+          os: 'linux'
+        }
+      },
+      {
+        timestamp: '2024-01-16T10:00:00.000Z',
+        templatePath: '/templates/test3.md',
+        finalPrompt: 'Test prompt 3',
+        title: 'Test 3',
+        templateContent: 'template',
+        variables: {},
+        environment: {
+          working_directory: '/home/user/project-a',
+          git_dir: '/home/user/project-a/.git',
+          os: 'linux'
+        }
+      }
+    ];
+
+    beforeEach(() => {
+      const mockFiles = [
+        '20240114-100000-abc12345.json',
+        '20240115-100000-def12345.json',
+        '20240116-100000-abcdef12.json'
+      ];
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockResolvedValue(mockFiles as any);
+
+      vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
+        const filename = path.basename(filePath as string);
+        if (filename === '20240114-100000-abc12345.json') {
+          return mockEntriesWithEnv[0];
+        } else if (filename === '20240115-100000-def12345.json') {
+          return mockEntriesWithEnv[1];
+        } else if (filename === '20240116-100000-abcdef12.json') {
+          return mockEntriesWithEnv[2];
+        }
+        throw new Error('File not found');
+      });
+    });
+
+    it('should filter entries by gitDir', async () => {
+      const entries = await manager.listHistory(undefined, {
+        gitDir: '/home/user/project-a/.git'
+      });
+
+      expect(entries).toHaveLength(2);
+      expect(entries[0].title).toBe('Test 1');
+      expect(entries[1].title).toBe('Test 3');
+    });
+
+    it('should filter entries by workingDir', async () => {
+      const entries = await manager.listHistory(undefined, {
+        workingDir: '/home/user/project-b'
+      });
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0].title).toBe('Test 2');
+    });
+
+    it('should return all entries when no filter is specified', async () => {
+      const entries = await manager.listHistory();
+
+      expect(entries).toHaveLength(3);
+    });
+
+    it('should apply limit after filtering', async () => {
+      const entries = await manager.listHistory(1, {
+        gitDir: '/home/user/project-a/.git'
+      });
+
+      expect(entries).toHaveLength(1);
+      expect(entries[0].title).toBe('Test 3'); // Most recent matching entry
+    });
+
+    it('should return empty array when filter matches nothing', async () => {
+      const entries = await manager.listHistory(undefined, {
+        gitDir: '/home/user/non-existent/.git'
+      });
+
+      expect(entries).toHaveLength(0);
+    });
+
+    it('should exclude entries without environment info when includeLegacy is false', async () => {
+      // Add an entry without environment
+      const entryWithoutEnv = {
+        timestamp: '2024-01-17T10:00:00.000Z',
+        templatePath: '/templates/test4.md',
+        finalPrompt: 'Test prompt 4',
+        title: 'Test 4',
+        templateContent: 'template',
+        variables: {}
+        // No environment field
+      };
+
+      const mockFilesWithNoEnv = [
+        '20240114-100000-abc12345.json',
+        '20240115-100000-def12345.json',
+        '20240116-100000-abcdef12.json',
+        '20240117-100000-aabbccdd.json'
+      ];
+
+      vi.mocked(fs.readdir).mockResolvedValue(mockFilesWithNoEnv as any);
+
+      vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
+        const filename = path.basename(filePath as string);
+        if (filename === '20240114-100000-abc12345.json') {
+          return mockEntriesWithEnv[0];
+        } else if (filename === '20240115-100000-def12345.json') {
+          return mockEntriesWithEnv[1];
+        } else if (filename === '20240116-100000-abcdef12.json') {
+          return mockEntriesWithEnv[2];
+        } else if (filename === '20240117-100000-aabbccdd.json') {
+          return entryWithoutEnv;
+        }
+        throw new Error('File not found');
+      });
+
+      const entries = await manager.listHistory(undefined, {
+        gitDir: '/home/user/project-a/.git',
+        includeLegacy: false
+      });
+
+      // Should only include entries with matching environment (excludes legacy)
+      expect(entries).toHaveLength(2);
+      expect(entries.every(e => e.title !== 'Test 4')).toBe(true);
+    });
+
+    it('should include entries without environment info when includeLegacy is true', async () => {
+      // Add an entry without environment
+      const entryWithoutEnv = {
+        timestamp: '2024-01-17T10:00:00.000Z',
+        templatePath: '/templates/test4.md',
+        finalPrompt: 'Test prompt 4',
+        title: 'Test 4',
+        templateContent: 'template',
+        variables: {}
+        // No environment field
+      };
+
+      const mockFilesWithNoEnv = [
+        '20240114-100000-abc12345.json',
+        '20240115-100000-def12345.json',
+        '20240116-100000-abcdef12.json',
+        '20240117-100000-aabbccdd.json'
+      ];
+
+      vi.mocked(fs.readdir).mockResolvedValue(mockFilesWithNoEnv as any);
+
+      vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
+        const filename = path.basename(filePath as string);
+        if (filename === '20240114-100000-abc12345.json') {
+          return mockEntriesWithEnv[0];
+        } else if (filename === '20240115-100000-def12345.json') {
+          return mockEntriesWithEnv[1];
+        } else if (filename === '20240116-100000-abcdef12.json') {
+          return mockEntriesWithEnv[2];
+        } else if (filename === '20240117-100000-aabbccdd.json') {
+          return entryWithoutEnv;
+        }
+        throw new Error('File not found');
+      });
+
+      const entries = await manager.listHistory(undefined, {
+        gitDir: '/home/user/project-a/.git',
+        includeLegacy: true
+      });
+
+      // Should include legacy entry + 2 matching entries = 3 total
+      expect(entries).toHaveLength(3);
+      expect(entries.map(e => e.title)).toContain('Test 4');
+      expect(entries.map(e => e.title)).toContain('Test 1');
+      expect(entries.map(e => e.title)).toContain('Test 3');
+    });
+  });
+
+  describe('getTotalCount with directory filtering', () => {
+    beforeEach(() => {
+      const mockFiles = [
+        '20240114-100000-abc12345.json',
+        '20240115-100000-def12345.json',
+        '20240116-100000-abcdef12.json'
+      ];
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockResolvedValue(mockFiles as any);
+
+      const mockEntriesWithEnv = [
+        {
+          timestamp: '2024-01-14T10:00:00.000Z',
+          templatePath: '/templates/test1.md',
+          finalPrompt: 'Test prompt 1',
+          title: 'Test 1',
+          templateContent: 'template',
+          variables: {},
+          environment: {
+            working_directory: '/home/user/project-a',
+            git_dir: '/home/user/project-a/.git',
+            os: 'linux'
+          }
+        },
+        {
+          timestamp: '2024-01-15T10:00:00.000Z',
+          templatePath: '/templates/test2.md',
+          finalPrompt: 'Test prompt 2',
+          title: 'Test 2',
+          templateContent: 'template',
+          variables: {},
+          environment: {
+            working_directory: '/home/user/project-b',
+            git_dir: '/home/user/project-b/.git',
+            os: 'linux'
+          }
+        },
+        {
+          timestamp: '2024-01-16T10:00:00.000Z',
+          templatePath: '/templates/test3.md',
+          finalPrompt: 'Test prompt 3',
+          title: 'Test 3',
+          templateContent: 'template',
+          variables: {},
+          environment: {
+            working_directory: '/home/user/project-a',
+            git_dir: '/home/user/project-a/.git',
+            os: 'linux'
+          }
+        }
+      ];
+
+      vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
+        const filename = path.basename(filePath as string);
+        if (filename === '20240114-100000-abc12345.json') {
+          return mockEntriesWithEnv[0];
+        } else if (filename === '20240115-100000-def12345.json') {
+          return mockEntriesWithEnv[1];
+        } else if (filename === '20240116-100000-abcdef12.json') {
+          return mockEntriesWithEnv[2];
+        }
+        throw new Error('File not found');
+      });
+    });
+
+    it('should count all entries when no filter is specified', async () => {
+      const count = await manager.getTotalCount();
+      expect(count).toBe(3);
+    });
+
+    it('should count filtered entries by gitDir', async () => {
+      const count = await manager.getTotalCount({
+        gitDir: '/home/user/project-a/.git'
+      });
+      expect(count).toBe(2);
+    });
+
+    it('should count filtered entries by workingDir', async () => {
+      const count = await manager.getTotalCount({
+        workingDir: '/home/user/project-b'
+      });
+      expect(count).toBe(1);
+    });
+
+    it('should return 0 when filter matches nothing', async () => {
+      const count = await manager.getTotalCount({
+        gitDir: '/home/user/non-existent/.git'
+      });
+      expect(count).toBe(0);
+    });
+  });
 });

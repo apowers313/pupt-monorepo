@@ -298,5 +298,17 @@ export const errors = {
       { text: 'Create a new prompt', command: 'pt add' }
     ],
     icon: '🔍'
+  }),
+
+  commandNotFound: (command: string, suggestions: string[] = [], availableCommands: string[] = []) => createError({
+    message: `Unknown command: '${command}'`,
+    code: 'COMMAND_NOT_FOUND',
+    category: ErrorCategory.USER_ERROR,
+    suggestions: [
+      ...suggestions.map(s => ({ text: `Did you mean '${s}'?`, command: `pt ${s}` })),
+      ...(availableCommands.length > 0 ? [{ text: `Available commands: ${availableCommands.join(', ')}` }] : []),
+      { text: 'Show help', command: 'pt help' }
+    ],
+    icon: '❓'
   })
 };

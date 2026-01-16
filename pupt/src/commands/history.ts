@@ -8,6 +8,7 @@ import { IssueIdentified } from '../types/annotations.js';
 import Handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'fs-extra';
+import { getGitInfo } from '../utils/git-info.js';
 
 interface HistoryOptions {
   limit?: number;
@@ -15,6 +16,8 @@ interface HistoryOptions {
   entry?: number;
   result?: number;
   annotations?: boolean;
+  dir?: string;
+  allDir?: boolean;
 }
 
 export async function historyCommand(options: HistoryOptions): Promise<void> {
@@ -192,24 +195,57 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
     limit = 20; // Default limit
   }
 
+  // Build directory filter options
+  let filterOptions: { gitDir?: string; workingDir?: string; includeLegacy?: boolean } | undefined;
+  let filterDescription: string | undefined;
+
+  if (!options.allDir) {
+    if (options.dir) {
+      // User specified a specific directory - don't include legacy entries
+      filterOptions = { gitDir: options.dir, workingDir: options.dir, includeLegacy: false };
+      filterDescription = options.dir;
+    } else {
+      // Default: filter by current git directory or working directory
+      // Include legacy entries (those without git_dir) for backwards compatibility
+      const gitInfo = await getGitInfo();
+      if (gitInfo.gitDir) {
+        filterOptions = { gitDir: gitInfo.gitDir, includeLegacy: true };
+        filterDescription = gitInfo.gitDir;
+      } else {
+        filterOptions = { workingDir: process.cwd(), includeLegacy: true };
+        filterDescription = process.cwd();
+      }
+    }
+  }
+
   // Get total count of entries for proper numbering
-  const totalCount = await historyManager.getTotalCount();
-  
+  const totalCount = await historyManager.getTotalCount(filterOptions);
+
   // Get history entries
-  const entries = await historyManager.listHistory(limit);
+  const entries = await historyManager.listHistory(limit, filterOptions);
 
   // Handle empty history
   if (entries.length === 0) {
-    logger.log(chalk.yellow('📋 No history found'));
-    logger.log(chalk.dim('\nRun some prompts to build your history:'));
-    logger.log(chalk.dim('  • pt                  - Interactive prompt selection'));
-    logger.log(chalk.dim('  • pt run <tool>       - Run with specific tool'));
-    logger.log(chalk.dim('  • pt run              - Run with default tool'));
+    if (filterOptions) {
+      logger.log(chalk.yellow('📋 No history found for this directory'));
+      logger.log(chalk.dim(`\nFiltering by: ${filterDescription}`));
+      logger.log(chalk.dim('\nUse --all-dir to show history from all directories'));
+    } else {
+      logger.log(chalk.yellow('📋 No history found'));
+      logger.log(chalk.dim('\nRun some prompts to build your history:'));
+      logger.log(chalk.dim('  • pt                  - Interactive prompt selection'));
+      logger.log(chalk.dim('  • pt run <tool>       - Run with specific tool'));
+      logger.log(chalk.dim('  • pt run              - Run with default tool'));
+    }
     return;
   }
 
   // Display header
-  logger.log(chalk.bold('\nPrompt History:'));
+  if (filterOptions) {
+    logger.log(chalk.bold('\nPrompt History:') + chalk.dim(` (filtered by: ${filterDescription})`));
+  } else {
+    logger.log(chalk.bold('\nPrompt History:') + chalk.dim(' (all directories)'));
+  }
   logger.log(chalk.gray('─'.repeat(80)));
 
   // Calculate starting number based on total count and entries shown

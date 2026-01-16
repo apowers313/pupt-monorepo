@@ -14,6 +14,7 @@ export interface HistoryEntry {
 export interface EnhancedHistoryEntry extends HistoryEntry {
   environment?: {
     working_directory: string;
+    git_dir?: string;
     git_commit?: string;
     git_branch?: string;
     git_dirty?: boolean;

@@ -473,7 +473,7 @@ describe('Install Command', () => {
         
         await installFromNpm('@my-org/prompt-pack');
         
-        expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '@my-org/prompt-pack'], {
+        expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', '@my-org/prompt-pack'], {
           stdio: 'inherit'
         });
       });

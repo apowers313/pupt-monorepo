@@ -10,6 +10,7 @@ import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
 import { z } from 'zod';
 import { logger } from '../utils/logger.js';
 import { migrateAnnotationsToJson } from '../utils/annotation-migration.js';
+import { findProjectRoot } from '../utils/project-root.js';
 
 interface ConfigResult {
   config: Config;
@@ -454,20 +455,39 @@ export class ConfigManager {
   }
 
   private static expandPath(filepath: string, configDir?: string): string {
+    // Handle ${projectRoot} variable substitution
+    if (filepath.includes('${projectRoot}')) {
+      const searchDir = configDir || process.cwd();
+      const projectRoot = findProjectRoot(searchDir);
+      if (!projectRoot) {
+        throw createError({
+          message: `Cannot resolve \${projectRoot}: no project marker found searching upward from ${searchDir}`,
+          code: 'PROJECT_ROOT_NOT_FOUND',
+          category: ErrorCategory.CONFIG_ERROR,
+          suggestions: [
+            { text: 'Ensure you are in a project directory with a recognized project file (package.json, .git, Cargo.toml, etc.)' },
+            { text: 'Use an absolute path or relative path instead of ${projectRoot}' }
+          ],
+          icon: '📁'
+        });
+      }
+      filepath = filepath.replace(/\$\{projectRoot\}/g, projectRoot);
+    }
+
     if (filepath.startsWith('~/')) {
       return path.join(getHomePath(), filepath.slice(2));
     }
-    
+
     // If the path is already absolute, return it as is
     if (path.isAbsolute(filepath)) {
       return filepath;
     }
-    
+
     // If we have a config directory, resolve relative paths from there
     if (configDir) {
       return path.resolve(configDir, filepath);
     }
-    
+
     // Otherwise resolve from current working directory
     return path.resolve(filepath);
   }

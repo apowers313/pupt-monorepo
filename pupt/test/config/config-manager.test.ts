@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ConfigManager } from '@/config/config-manager';
+import { clearProjectRootCache } from '@/utils/project-root';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
@@ -15,6 +16,8 @@ describe('ConfigManager', () => {
     // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
     testDir = fs.realpathSync(tempDir);
     process.chdir(testDir);
+    // Clear project root cache between tests
+    clearProjectRootCache();
   });
 
   afterEach(async () => {
@@ -296,6 +299,147 @@ version: "2.0.0"
       expect(config.promptDirs).toContain(path.join(os.homedir(), 'user-prompts'));
       // Relative path with .. resolved from config dir
       expect(config.historyDir).toBe(path.resolve(testDir, '../shared/.pthistory'));
+    });
+  });
+
+  describe('${projectRoot} variable expansion', () => {
+    it('should expand ${projectRoot} in historyDir', async () => {
+      // Create package.json as project marker
+      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: ['./prompts'],
+        historyDir: '${projectRoot}/.pthistory',
+        version: '4.0.0'
+      });
+
+      const config = await ConfigManager.load();
+
+      expect(config.historyDir).toBe(path.join(testDir, '.pthistory'));
+    });
+
+    it('should expand ${projectRoot} in promptDirs', async () => {
+      // Create package.json as project marker
+      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: ['${projectRoot}/.prompts', '${projectRoot}/shared/prompts'],
+        version: '4.0.0'
+      });
+
+      const config = await ConfigManager.load();
+
+      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
+      expect(config.promptDirs).toContain(path.join(testDir, 'shared/prompts'));
+    });
+
+    it('should expand ${projectRoot} in outputCapture.directory', async () => {
+      // Create package.json as project marker
+      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: ['./prompts'],
+        outputCapture: {
+          enabled: true,
+          directory: '${projectRoot}/.pt-output'
+        },
+        version: '4.0.0'
+      });
+
+      const config = await ConfigManager.load();
+
+      expect(config.outputCapture?.directory).toBe(path.join(testDir, '.pt-output'));
+    });
+
+    it('should expand ${projectRoot} when searching from subdirectory', async () => {
+      // Create package.json as project marker at root
+      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+
+      // Create config at root
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: ['${projectRoot}/.prompts'],
+        historyDir: '${projectRoot}/.pthistory',
+        version: '4.0.0'
+      });
+
+      // Create subdirectory
+      const subDir = path.join(testDir, 'src', 'components');
+      await fs.ensureDir(subDir);
+      process.chdir(subDir);
+
+      const config = await ConfigManager.load();
+
+      // Should resolve to the project root (where package.json is)
+      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
+      expect(config.historyDir).toBe(path.join(testDir, '.pthistory'));
+    });
+
+    it('should find project root with .git directory', async () => {
+      // Create .git directory as project marker
+      await fs.ensureDir(path.join(testDir, '.git'));
+
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: ['${projectRoot}/.prompts'],
+        version: '4.0.0'
+      });
+
+      const config = await ConfigManager.load();
+
+      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
+    });
+
+    it('should throw error when ${projectRoot} cannot be resolved', async () => {
+      // Create a temp directory with no project markers
+      const noProjectDir = path.join(os.tmpdir(), 'no-project-' + Date.now());
+      await fs.ensureDir(noProjectDir);
+      const resolvedNoProjectDir = fs.realpathSync(noProjectDir);
+
+      try {
+        // Create config with ${projectRoot} but no project marker
+        await fs.writeJson(path.join(resolvedNoProjectDir, '.pt-config.json'), {
+          promptDirs: ['${projectRoot}/.prompts'],
+          version: '4.0.0'
+        });
+
+        process.chdir(resolvedNoProjectDir);
+
+        await expect(ConfigManager.load()).rejects.toThrow(/Cannot resolve \$\{projectRoot\}/);
+      } finally {
+        process.chdir(testDir);
+        await fs.remove(noProjectDir);
+      }
+    });
+
+    it('should work with git worktree pointing to main repo', async () => {
+      // Create main repo structure
+      const mainRepo = path.join(testDir, 'main-repo');
+      await fs.ensureDir(path.join(mainRepo, '.git', 'worktrees', 'feature'));
+
+      // Create linked worktree directory
+      const worktreeDir = path.join(testDir, 'worktree-feature');
+      await fs.ensureDir(worktreeDir);
+
+      // Create .git file pointing to main repo's worktree dir
+      const gitdirPath = path.join(mainRepo, '.git', 'worktrees', 'feature');
+      await fs.writeFile(
+        path.join(worktreeDir, '.git'),
+        `gitdir: ${gitdirPath}`
+      );
+
+      // Create config in worktree
+      await fs.writeJson(path.join(worktreeDir, '.pt-config.json'), {
+        promptDirs: ['${projectRoot}/.prompts'],
+        historyDir: '${projectRoot}/.pthistory',
+        version: '4.0.0'
+      });
+
+      process.chdir(worktreeDir);
+
+      const config = await ConfigManager.load();
+
+      // Should resolve to main repo, not worktree
+      expect(config.promptDirs).toContain(path.join(mainRepo, '.prompts'));
+      expect(config.historyDir).toBe(path.join(mainRepo, '.pthistory'));
     });
   });
 });

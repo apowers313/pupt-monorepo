@@ -3,11 +3,13 @@ import { historyCommand } from '../../src/commands/history.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { logger } from '../../src/utils/logger.js';
+import * as gitInfo from '../../src/utils/git-info.js';
 import chalk from 'chalk';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/history/history-manager.js');
 vi.mock('../../src/utils/logger.js');
+vi.mock('../../src/utils/git-info.js');
 
 describe('History Command', () => {
   let loggerSpy: any;
@@ -15,6 +17,8 @@ describe('History Command', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     loggerSpy = vi.mocked(logger.log).mockImplementation(() => {});
+    // Mock git info to prevent default filtering from affecting tests
+    vi.mocked(gitInfo.getGitInfo).mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -59,13 +63,14 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([]),
         getTotalCount: vi.fn().mockResolvedValue(0)
       } as any));
 
-      await historyCommand({});
+      // Use allDir to show generic message (no directory filtering)
+      await historyCommand({ allDir: true });
 
       expect(loggerSpy).toHaveBeenCalledWith(
         chalk.yellow('📋 No history found')
@@ -106,16 +111,19 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue(mockEntries),
         getTotalCount: vi.fn().mockResolvedValue(mockEntries.length)
       } as any));
 
-      await historyCommand({});
+      // Use allDir to avoid filtering behavior affecting test
+      await historyCommand({ allDir: true });
 
-      // Check header
-      expect(loggerSpy).toHaveBeenCalledWith(chalk.bold('\nPrompt History:'));
+      // Check header (includes "all directories" note when using --all-dir)
+      expect(loggerSpy).toHaveBeenCalledWith(
+        chalk.bold('\nPrompt History:') + chalk.dim(' (all directories)')
+      );
       expect(loggerSpy).toHaveBeenCalledWith(chalk.gray('─'.repeat(80)));
 
       // Check first entry formatting (now the oldest)
@@ -143,13 +151,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([mockEntries[2]]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Check that one of the calls contains the variable display
       const calls = loggerSpy.mock.calls.map(call => call[0]);
@@ -172,13 +180,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entryWithoutTitle]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining('Untitled')
@@ -202,13 +210,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entryWithSummary]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should show processed summary with variable substitution
       expect(loggerSpy).toHaveBeenCalledWith(
@@ -230,13 +238,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entryWithVariables]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should show variables
       const calls = loggerSpy.mock.calls.map(call => call[0]);
@@ -260,13 +268,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([emptyEntry]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should not crash and should show the title
       expect(loggerSpy).toHaveBeenCalledWith(
@@ -281,7 +289,7 @@ describe('History Command', () => {
         finalPrompt: 'Process request',
         title: 'Multi-line Input',
         templateContent: 'template',
-        variables: { 
+        variables: {
           prompt: 'First line\n\nSecond line\n\nThird line with lots of text',
           config: 'value1\nvalue2\nvalue3'
         }
@@ -291,13 +299,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entryWithNewlines]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should normalize newlines to spaces
       const calls = loggerSpy.mock.calls.map(call => call[0]);
@@ -321,7 +329,7 @@ describe('History Command', () => {
         finalPrompt: 'Process',
         title: 'Long Variable',
         templateContent: 'template',
-        variables: { 
+        variables: {
           prompt: longString
         }
       };
@@ -330,13 +338,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([longEntry]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       const calls = loggerSpy.mock.calls.map(call => call[0]);
       
@@ -363,7 +371,7 @@ describe('History Command', () => {
         finalPrompt: 'Process',
         title: 'Mixed Variables',
         templateContent: 'template',
-        variables: { 
+        variables: {
           prompt: '/home/user/docs/review.md',  // Not a file variable name
           designFile: '/home/user/projects/design.md',  // Is a file variable name
           outputPath: 'C:\\Users\\name\\output.txt'  // Is a path variable name
@@ -374,13 +382,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entry]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       const calls = loggerSpy.mock.calls.map(call => call[0]);
       const summaryLine = calls.find(call => call.includes('prompt: "') || call.includes('designFile: "'));
@@ -402,7 +410,7 @@ describe('History Command', () => {
         finalPrompt: 'Process',
         title: 'Quotes Test',
         templateContent: 'template',
-        variables: { 
+        variables: {
           prompt: 'The user said "hello world" and then continued',
           config: 'Use "double quotes" for strings'
         }
@@ -412,13 +420,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entry]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       const calls = loggerSpy.mock.calls.map(call => call[0]);
       
@@ -437,7 +445,7 @@ describe('History Command', () => {
         finalPrompt: 'Process the design document',
         title: 'File Processing',
         templateContent: 'template',
-        variables: { 
+        variables: {
           designFile: '/home/user/projects/my-app/docs/design.md',
           outputFile: 'C:\\Users\\name\\Documents\\output.pdf'
         }
@@ -447,13 +455,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue([entryWithFilePaths]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should show only filenames, not full paths
       const calls = loggerSpy.mock.calls.map(call => call[0]);
@@ -477,16 +485,17 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       const mockListHistory = vi.fn().mockResolvedValue([]);
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: mockListHistory,
         getTotalCount: vi.fn().mockResolvedValue(0)
       } as any));
 
-      await historyCommand({});
+      // Use allDir to test limit without directory filtering
+      await historyCommand({ allDir: true });
 
-      expect(mockListHistory).toHaveBeenCalledWith(20);
+      expect(mockListHistory).toHaveBeenCalledWith(20, undefined);
     });
 
     it('should respect --limit flag', async () => {
@@ -494,16 +503,17 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       const mockListHistory = vi.fn().mockResolvedValue([]);
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: mockListHistory,
         getTotalCount: vi.fn().mockResolvedValue(0)
       } as any));
 
-      await historyCommand({ limit: 50 });
+      // Use allDir to test limit without directory filtering
+      await historyCommand({ limit: 50, allDir: true });
 
-      expect(mockListHistory).toHaveBeenCalledWith(50);
+      expect(mockListHistory).toHaveBeenCalledWith(50, undefined);
     });
 
     it('should show all entries with --all flag', async () => {
@@ -511,16 +521,17 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       const mockListHistory = vi.fn().mockResolvedValue([]);
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: mockListHistory,
         getTotalCount: vi.fn().mockResolvedValue(0)
       } as any));
 
-      await historyCommand({ all: true });
+      // Use allDir to test --all without directory filtering
+      await historyCommand({ all: true, allDir: true });
 
-      expect(mockListHistory).toHaveBeenCalledWith(undefined);
+      expect(mockListHistory).toHaveBeenCalledWith(undefined, undefined);
     });
   });
 
@@ -667,13 +678,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue(entries),
         getTotalCount: vi.fn().mockResolvedValue(entries.length)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Should format as YYYY-MM-DD HH:MM in local time
       const date = new Date('2024-01-15T10:30:00.000Z');
@@ -697,13 +708,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue(entries),
         getTotalCount: vi.fn().mockResolvedValue(entries.length)
       } as any));
 
-      await historyCommand({});
+      await historyCommand({ allDir: true });
 
       // Check numbers are sequential
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('1.'));
@@ -726,13 +737,13 @@ describe('History Command', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory'
       } as any);
-      
+
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockResolvedValue(lastThreeEntries),
         getTotalCount: vi.fn().mockResolvedValue(10)
       } as any));
 
-      await historyCommand({ limit: 3 });
+      await historyCommand({ limit: 3, allDir: true });
 
       // Should show numbers 8, 9, 10 (not 1, 2, 3)
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('8.'));

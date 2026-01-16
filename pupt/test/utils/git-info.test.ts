@@ -11,9 +11,9 @@ describe('Git Info Utilities', () => {
   });
 
   describe('getGitInfo', () => {
-    it('should return git branch, commit, and clean status', async () => {
+    it('should return git branch, commit, clean status, and git directory', async () => {
       const mockExecAsync = vi.mocked(promisify(exec));
-      
+
       mockExecAsync.mockImplementation(async (cmd: string) => {
         if (cmd === 'git rev-parse --abbrev-ref HEAD') {
           return { stdout: 'main\n', stderr: '' };
@@ -24,6 +24,9 @@ describe('Git Info Utilities', () => {
         if (cmd === 'git status --porcelain') {
           return { stdout: '', stderr: '' };
         }
+        if (cmd === 'git rev-parse --absolute-git-dir') {
+          return { stdout: '/home/user/project/.git\n', stderr: '' };
+        }
         throw new Error('Unknown command');
       });
 
@@ -32,11 +35,12 @@ describe('Git Info Utilities', () => {
       expect(info.branch).toBe('main');
       expect(info.commit).toBe('abc123def456');
       expect(info.isDirty).toBe(false);
+      expect(info.gitDir).toBe('/home/user/project/.git');
     });
 
     it('should detect dirty git status', async () => {
       const mockExecAsync = vi.mocked(promisify(exec));
-      
+
       mockExecAsync.mockImplementation(async (cmd: string) => {
         if (cmd === 'git rev-parse --abbrev-ref HEAD') {
           return { stdout: 'feature/test\n', stderr: '' };
@@ -46,6 +50,9 @@ describe('Git Info Utilities', () => {
         }
         if (cmd === 'git status --porcelain') {
           return { stdout: 'M src/file.ts\nA new-file.js\n', stderr: '' };
+        }
+        if (cmd === 'git rev-parse --absolute-git-dir') {
+          return { stdout: '/home/user/project/.git\n', stderr: '' };
         }
         throw new Error('Unknown command');
       });
@@ -66,6 +73,7 @@ describe('Git Info Utilities', () => {
       expect(info.branch).toBeUndefined();
       expect(info.commit).toBeUndefined();
       expect(info.isDirty).toBeUndefined();
+      expect(info.gitDir).toBeUndefined();
     });
   });
 

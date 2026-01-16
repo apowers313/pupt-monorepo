@@ -103,25 +103,22 @@ export class HistoryManager {
     }
   }
 
-  async listHistory(limit?: number): Promise<HistoryEntry[]> {
+  async listHistory(limit?: number, filterOptions?: { gitDir?: string; workingDir?: string; includeLegacy?: boolean }): Promise<HistoryEntry[]> {
     try {
       await fs.ensureDir(this.historyDir);
       const files = await fs.readdir(this.historyDir);
-      
+
       // Filter for JSON files with expected format
-      const historyFiles = files.filter(f => 
+      const historyFiles = files.filter(f =>
         f.match(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/)
       );
 
       // Sort by date (oldest first)
       historyFiles.sort();
 
-      // Apply limit if specified (get most recent entries)
-      const filesToLoad = limit ? historyFiles.slice(-limit) : historyFiles;
-
-      // Load entries
-      const entries: HistoryEntry[] = [];
-      for (const filename of filesToLoad) {
+      // Load entries (we need to load all to filter)
+      let entries: HistoryEntry[] = [];
+      for (const filename of historyFiles) {
         try {
           const filePath = path.join(this.historyDir, filename);
           const entry = await fs.readJson(filePath) as Omit<HistoryEntry, 'filename'>;
@@ -134,7 +131,40 @@ export class HistoryManager {
         }
       }
 
-      return entries;
+      // Apply directory filtering if specified
+      if (filterOptions?.gitDir || filterOptions?.workingDir) {
+        entries = entries.filter(entry => {
+          const enhancedEntry = entry as EnhancedHistoryEntry;
+          const env = enhancedEntry.environment;
+
+          // Backwards compatibility: entries without environment info or without git_dir
+          // are treated as belonging to the current directory when includeLegacy is true
+          if (!env || !env.git_dir) {
+            return filterOptions.includeLegacy === true;
+          }
+
+          // If gitDir filter is specified, match against git_dir
+          if (filterOptions.gitDir) {
+            if (env.git_dir === filterOptions.gitDir) {
+              return true;
+            }
+          }
+
+          // If workingDir filter is specified, match against working_directory
+          if (filterOptions.workingDir) {
+            if (env.working_directory === filterOptions.workingDir) {
+              return true;
+            }
+          }
+
+          return false;
+        });
+      }
+
+      // Apply limit if specified (get most recent entries)
+      const limitedEntries = limit ? entries.slice(-limit) : entries;
+
+      return limitedEntries;
     } catch (error) {
       if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
         return [];
@@ -143,16 +173,22 @@ export class HistoryManager {
     }
   }
 
-  async getTotalCount(): Promise<number> {
+  async getTotalCount(filterOptions?: { gitDir?: string; workingDir?: string; includeLegacy?: boolean }): Promise<number> {
     try {
+      // If filtering is requested, we need to load and count matching entries
+      if (filterOptions?.gitDir || filterOptions?.workingDir) {
+        const entries = await this.listHistory(undefined, filterOptions);
+        return entries.length;
+      }
+
       await fs.ensureDir(this.historyDir);
       const files = await fs.readdir(this.historyDir);
-      
+
       // Count JSON files with expected format
-      const historyFiles = files.filter(f => 
+      const historyFiles = files.filter(f =>
         f.match(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/)
       );
-      
+
       return historyFiles.length;
     } catch (error) {
       if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {

@@ -22,27 +22,54 @@ The `history` command:
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--limit <n>` | `-l` | Number of entries to show (default: 10) |
-| `--search <query>` | `-s` | Search history entries |
-| `--days <n>` | `-d` | Show entries from last n days |
-| `--format <type>` | `-f` | Output format: table, json, yaml, csv |
-| `--prompt <name>` | `-p` | Filter by prompt name |
-| `--status <code>` | | Filter by exit status |
-| `--clear` | | Clear all history |
+| `--limit <n>` | `-l` | Number of entries to show (default: 20) |
+| `--all` | `-a` | Show all history entries |
+| `--result <n>` | `-r` | Show history entry with its output |
+| `--annotations` | | Show annotations for the history entry |
+| `--dir <path>` | `-d` | Filter history by directory (git dir or working dir) |
+| `--all-dir` | | Show history from all directories (disable default filtering) |
 | `--help` | `-h` | Show help information |
+
+## Directory Filtering
+
+By default, `pt history` filters entries to show only those from the current git repository (or working directory if not in a git repo). This is useful when working with git worktrees or multiple projects that share the same history directory.
+
+### Default Behavior
+```bash
+# Shows history filtered by current git directory (or cwd if not in git repo)
+pt history
+```
+
+### Filter by Specific Directory
+```bash
+# Filter by a specific git directory path
+pt history -d /home/user/project/.git
+
+# Filter by a specific working directory
+pt history -d /home/user/project
+```
+
+### Show All Directories
+```bash
+# Show history from all directories (no filtering)
+pt history --all-dir
+```
 
 ## Usage Modes
 
 ### List Recent History
 ```bash
-# Show last 10 entries (default)
+# Show last 20 entries (default, filtered by current directory)
 pt history
 
 # Show more entries
-pt history -l 20
+pt history -l 50
 
-# Show all entries
-pt history -l 0
+# Show all entries from current directory
+pt history -a
+
+# Show all entries from all directories
+pt history -a --all-dir
 ```
 
 ### View Specific Entry

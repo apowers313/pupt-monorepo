@@ -83,25 +83,26 @@ describe('PTY and Output Capture Usage Regression Tests', () => {
 
   it('should NOT use PTY for history command', async () => {
     const { ptyUsageDetected, restore } = mockPtyModule();
-    
+
     try {
       await new Promise<void>((resolve, reject) => {
-        const proc = spawn('node', [CLI_PATH, 'history'], {
+        // Use --all-dir to disable directory filtering for this test
+        const proc = spawn('node', [CLI_PATH, 'history', '--all-dir'], {
           cwd: tempDir,
           env: { ...process.env, NODE_ENV: 'test' }
         });
-        
+
         let output = '';
         proc.stdout.on('data', (data) => { output += data.toString(); });
         proc.stderr.on('data', (data) => { output += data.toString(); });
-        
+
         proc.on('close', (code) => {
           expect(code).toBe(0);
           expect(output).toContain('Prompt History');
           expect(ptyUsageDetected.used).toBe(false);
           resolve();
         });
-        
+
         proc.on('error', reject);
       });
     } finally {

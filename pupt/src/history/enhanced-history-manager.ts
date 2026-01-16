@@ -69,6 +69,7 @@ export class EnhancedHistoryManager extends HistoryManager {
         working_directory: process.cwd(),
         node_version: process.version,
         os: process.platform,
+        ...(gitInfo.gitDir && { git_dir: gitInfo.gitDir }),
         ...(gitInfo.branch && { git_branch: gitInfo.branch }),
         ...(gitInfo.commit && { git_commit: gitInfo.commit }),
         ...(gitInfo.isDirty !== undefined && { git_dirty: gitInfo.isDirty }),

@@ -257,8 +257,8 @@ export async function installFromNpm(packageName: string): Promise<void> {
   logger.log(`Installing npm package ${packageName}...`);
   
   try {
-    // Install the package using execa
-    await execa('npm', ['install', packageName], {
+    // Install the package as a dev dependency using execa
+    await execa('npm', ['install', '--save-dev', packageName], {
       stdio: 'inherit' // Show npm output to user
     });
   } catch (error: unknown) {

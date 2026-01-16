@@ -79,10 +79,11 @@ pt run <prompt-name> --output result.txt
 pt run                           # Interactive search
 pt run test                      # Search for prompts containing "test"
 
-# View execution history
-pt history                       # Show recent executions
+# View execution history (filtered by current git directory by default)
+pt history                       # Show recent executions for current directory
 pt history --limit 20           # Show last 20 executions
-pt history --days 7             # Show executions from last 7 days
+pt history --all-dir            # Show executions from all directories
+pt history -d /path/to/.git     # Filter by specific git directory
 pt history --prompt <name>      # Filter by prompt name
 
 # View history with annotations

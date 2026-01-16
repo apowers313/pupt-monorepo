@@ -7,9 +7,11 @@ title: Implementation Plan
 
 **Specific Requirements**:
 - Analyze the design document completely before planning
-- Break implementation into logical phases (3-7 phases typically)
+- Break implementation into logical phases
+- The first phase should be a MVP and subsiquent phases should add incremental features
+  - For example, if the feature is a new HTML page, the first phase should implement the HTML page and then add features to it in future phases
 - Each phase must:
-  - Deliver user-verifiable functionality
+  - Deliver functionality in a way that the user can verify that the functionality works, beyond just running tests
   - Include specific test scenarios (unit and integration)
   - Build on previous phases without breaking them
   - Take roughly equal effort (1-3 days each)

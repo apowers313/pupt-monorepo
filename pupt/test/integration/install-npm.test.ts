@@ -106,7 +106,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('my-prompts');
       
       // Verify npm install was called
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', 'my-prompts'], {
+      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', 'my-prompts'], {
         stdio: 'inherit'
       });
       
@@ -146,7 +146,7 @@ describe('NPM Installation Integration Tests', () => {
       await installCommand('@myorg/prompts');
       
       // Verify npm install was called
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '@myorg/prompts'], {
+      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', '@myorg/prompts'], {
         stdio: 'inherit'
       });
       
@@ -258,7 +258,7 @@ describe('NPM Installation Integration Tests', () => {
       await fs.ensureDir(path.join(packageDir, 'prompts'));
       
       await installCommand('npm-package');
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', 'npm-package'], expect.any(Object));
+      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', 'npm-package'], expect.any(Object));
       
       // Reset mocks
       mockExeca.mockClear();

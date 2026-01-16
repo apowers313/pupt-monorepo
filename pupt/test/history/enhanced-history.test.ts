@@ -34,9 +34,10 @@ describe('Enhanced History', () => {
     const mockGitInfo = {
       branch: 'feature/test',
       commit: 'abc123def',
-      isDirty: false
+      isDirty: false,
+      gitDir: '/home/user/project/.git'
     };
-    
+
     vi.mocked(execAsync).mockImplementation(async (cmd: string) => {
       if (cmd === 'git rev-parse --abbrev-ref HEAD') {
         return { stdout: mockGitInfo.branch + '\n', stderr: '' };
@@ -46,6 +47,9 @@ describe('Enhanced History', () => {
       }
       if (cmd === 'git status --porcelain') {
         return { stdout: '', stderr: '' };
+      }
+      if (cmd === 'git rev-parse --absolute-git-dir') {
+        return { stdout: mockGitInfo.gitDir + '\n', stderr: '' };
       }
       throw new Error('Unknown command');
     });
@@ -64,6 +68,7 @@ describe('Enhanced History', () => {
 
     expect(historyEntry.environment).toBeDefined();
     expect(historyEntry.environment.working_directory).toBe(process.cwd());
+    expect(historyEntry.environment.git_dir).toBe(mockGitInfo.gitDir);
     expect(historyEntry.environment.git_branch).toBe(mockGitInfo.branch);
     expect(historyEntry.environment.git_commit).toBe(mockGitInfo.commit);
     expect(historyEntry.environment.git_dirty).toBe(false);
@@ -95,13 +100,14 @@ describe('Enhanced History', () => {
     expect(historyEntry.execution.duration).toBe('30s');
   });
 
-  it('should store git branch and commit info', async () => {
+  it('should store git branch, commit, and git_dir info', async () => {
     const mockGitInfo = {
       branch: 'main',
       commit: '123456789abcdef',
-      isDirty: true
+      isDirty: true,
+      gitDir: '/home/user/project/.git'
     };
-    
+
     vi.mocked(execAsync).mockImplementation(async (cmd: string) => {
       if (cmd === 'git rev-parse --abbrev-ref HEAD') {
         return { stdout: mockGitInfo.branch + '\n', stderr: '' };
@@ -111,6 +117,9 @@ describe('Enhanced History', () => {
       }
       if (cmd === 'git status --porcelain') {
         return { stdout: 'M src/file.ts\n', stderr: '' };
+      }
+      if (cmd === 'git rev-parse --absolute-git-dir') {
+        return { stdout: mockGitInfo.gitDir + '\n', stderr: '' };
       }
       throw new Error('Unknown command');
     });
@@ -128,6 +137,7 @@ describe('Enhanced History', () => {
     expect(historyEntry.environment.git_branch).toBe(mockGitInfo.branch);
     expect(historyEntry.environment.git_commit).toBe(mockGitInfo.commit);
     expect(historyEntry.environment.git_dirty).toBe(true);
+    expect(historyEntry.environment.git_dir).toBe(mockGitInfo.gitDir);
   });
 
   it('should handle missing git info gracefully', async () => {
@@ -148,6 +158,7 @@ describe('Enhanced History', () => {
     expect(historyEntry.environment.git_branch).toBeUndefined();
     expect(historyEntry.environment.git_commit).toBeUndefined();
     expect(historyEntry.environment.git_dirty).toBeUndefined();
+    expect(historyEntry.environment.git_dir).toBeUndefined();
     // But other environment data should still be captured
     expect(historyEntry.environment.working_directory).toBe(process.cwd());
     expect(historyEntry.environment.node_version).toBe(process.version);

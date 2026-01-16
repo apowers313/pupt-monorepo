@@ -47,4 +47,106 @@ describe('pt CLI', () => {
       expect(stderr).toContain('pt add');
     }
   });
+
+  describe('unknown command handling', () => {
+    it('should show user-friendly error for unknown commands', () => {
+      try {
+        execSync(`node ${cliPath} unknowncommand`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for unknown command');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain("Unknown command: 'unknowncommand'");
+        expect(stderr).toContain('Available commands:');
+        expect(stderr).toContain('pt help');
+      }
+    });
+
+    it('should suggest similar commands for typos', () => {
+      try {
+        execSync(`node ${cliPath} histroy`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for typo');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain("Unknown command: 'histroy'");
+        expect(stderr).toContain("Did you mean 'history'?");
+        expect(stderr).toContain('pt history');
+      }
+    });
+
+    it('should suggest "init" for "inti" typo', () => {
+      try {
+        execSync(`node ${cliPath} inti`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for typo');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain("Unknown command: 'inti'");
+        expect(stderr).toContain("Did you mean 'init'?");
+      }
+    });
+
+    it('should suggest "annotate" for "anotate" typo', () => {
+      try {
+        execSync(`node ${cliPath} anotate`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for typo');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain("Unknown command: 'anotate'");
+        expect(stderr).toContain("Did you mean 'annotate'?");
+      }
+    });
+
+    it('should not suggest commands for completely unrelated input', () => {
+      try {
+        execSync(`node ${cliPath} xyz123456`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for unknown command');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain("Unknown command: 'xyz123456'");
+        expect(stderr).not.toContain("Did you mean");
+        expect(stderr).toContain('Available commands:');
+      }
+    });
+
+    it('should list all available commands in suggestion', () => {
+      try {
+        execSync(`node ${cliPath} foobar`, {
+          stdio: 'pipe',
+          cwd: tempDir,
+          env: { ...process.env, HOME: tempDir }
+        });
+        expect.fail('Expected CLI to throw error for unknown command');
+      } catch (error: any) {
+        const stderr = error.stderr?.toString() || '';
+        expect(stderr).toContain('init');
+        expect(stderr).toContain('history');
+        expect(stderr).toContain('add');
+        expect(stderr).toContain('edit');
+        expect(stderr).toContain('run');
+        expect(stderr).toContain('annotate');
+        expect(stderr).toContain('install');
+        expect(stderr).toContain('review');
+        expect(stderr).toContain('help');
+      }
+    });
+  });
 });

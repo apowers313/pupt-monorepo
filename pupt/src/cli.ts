@@ -28,6 +28,46 @@ const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
+// List of valid commands for suggestions
+const VALID_COMMANDS = ['init', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'review', 'help'];
+
+// Calculate Levenshtein distance between two strings
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          matrix[i][j - 1] + 1,     // insertion
+          matrix[i - 1][j] + 1      // deletion
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+// Find similar commands based on Levenshtein distance
+function findSimilarCommands(input: string, maxDistance: number = 3): string[] {
+  return VALID_COMMANDS
+    .map(cmd => ({ cmd, distance: levenshteinDistance(input.toLowerCase(), cmd.toLowerCase()) }))
+    .filter(({ distance }) => distance <= maxDistance)
+    .sort((a, b) => a.distance - b.distance)
+    .map(({ cmd }) => cmd);
+}
+
 // Ensure terminal is restored on exit
 function ensureTerminalCleanup() {
   try {
@@ -95,7 +135,18 @@ program
   .name('pt')
   .description('CLI tool for managing AI prompts')
   .version(packageJson.version)
-  .action(async () => {
+  .argument('[command]', 'command to run')
+  .allowUnknownOption(true)
+  .action(async (command) => {
+    // If a command-like argument is provided, it's likely a typo
+    if (command && VALID_COMMANDS.length > 0) {
+      // Check if it looks like a command (not a flag)
+      if (!command.startsWith('-')) {
+        const similarCommands = findSimilarCommands(command);
+        displayError(errors.commandNotFound(command, similarCommands, VALID_COMMANDS));
+        process.exit(1);
+      }
+    }
     try {
       // Load configuration
       const configResult = await ConfigManager.loadWithPath();
@@ -202,6 +253,8 @@ program
   .option('-a, --all', 'Show all history entries')
   .option('-r, --result <number>', 'Show history entry with its output')
   .option('--annotations', 'Show annotations for the history entry')
+  .option('-d, --dir <path>', 'Filter history by directory (git dir or working dir)')
+  .option('--all-dir', 'Show history from all directories (disable default filtering)')
   .action(async (entry, options) => {
     try {
       await historyCommand({
@@ -209,7 +262,9 @@ program
         all: options.all,
         entry: entry ? parseInt(entry) : undefined,
         result: options.result ? parseInt(options.result) : undefined,
-        annotations: options.annotations
+        annotations: options.annotations,
+        dir: options.dir,
+        allDir: options.allDir
       });
     } catch (error) {
       displayError(error as Error);
@@ -352,5 +407,13 @@ program
       process.exit(1);
     }
   });
+
+// Handle unknown commands
+program.on('command:*', (operands) => {
+  const unknownCommand = operands[0];
+  const similarCommands = findSimilarCommands(unknownCommand);
+  displayError(errors.commandNotFound(unknownCommand, similarCommands, VALID_COMMANDS));
+  process.exit(1);
+});
 
 program.parse();

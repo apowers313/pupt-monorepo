@@ -7,6 +7,7 @@ interface GitInfo {
   branch?: string;
   commit?: string;
   isDirty?: boolean;
+  gitDir?: string;
 }
 
 export async function getGitInfo(): Promise<GitInfo> {
@@ -24,6 +25,10 @@ export async function getGitInfo(): Promise<GitInfo> {
     // Check if working directory is dirty
     const statusResult = await execAsync('git status --porcelain');
     info.isDirty = statusResult.stdout.trim().length > 0;
+
+    // Get the git directory (important for worktrees)
+    const gitDirResult = await execAsync('git rev-parse --absolute-git-dir');
+    info.gitDir = gitDirResult.stdout.trim();
   } catch {
     // Not a git repository or git not available
     // Return partial info - don't throw

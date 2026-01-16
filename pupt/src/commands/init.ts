@@ -175,7 +175,9 @@ export async function initCommand(): Promise<void> {
     
     // Add history directory if it's a local directory
     if (historyDir && !path.isAbsolute(historyDir) && !historyDir.startsWith('~')) {
-      entriesToIgnore.push(historyDir);
+      // Remove leading ./ for cleaner gitignore entries
+      const normalizedHistoryDir = historyDir.replace(/^\.\//, '');
+      entriesToIgnore.push(normalizedHistoryDir);
     }
     
     // Add git prompts directory
