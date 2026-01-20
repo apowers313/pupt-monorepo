@@ -115,7 +115,7 @@ describe('NPM Installation Integration Tests', () => {
       expect(config.promptDirs).toContain(path.join('node_modules', 'my-prompts', 'templates'));
       
       // Verify console output
-      expect(loggerLogSpy).toHaveBeenCalledWith('Installing npm package my-prompts...');
+      expect(loggerLogSpy).toHaveBeenCalledWith('Installing my-prompts using npm...');
       expect(loggerLogSpy).toHaveBeenCalledWith('Successfully installed prompts from my-prompts');
     });
 
@@ -172,12 +172,12 @@ describe('NPM Installation Integration Tests', () => {
         name: 'test-project',
         version: '1.0.0'
       });
-      
+
       // Mock failed npm install
       mockExeca.mockRejectedValue(new Error('npm ERR! 404 Not Found'));
-      
+
       await expect(installCommand('non-existent-package')).rejects.toThrow(
-        'Failed to install npm package'
+        'Failed to install package with npm'
       );
     });
 

@@ -244,26 +244,65 @@ export async function isNpmProject(): Promise<boolean> {
   }
 }
 
+// Package manager types and detection
+export type PackageManager = 'npm' | 'pnpm' | 'yarn';
+
+export interface PackageManagerConfig {
+  command: string;
+  installArgs: string[];
+}
+
+const PACKAGE_MANAGER_CONFIGS: Record<PackageManager, PackageManagerConfig> = {
+  pnpm: { command: 'pnpm', installArgs: ['add', '-D'] },
+  yarn: { command: 'yarn', installArgs: ['add', '-D'] },
+  npm: { command: 'npm', installArgs: ['install', '--save-dev'] },
+};
+
+// Detect package manager by checking for lock files
+export async function detectPackageManager(): Promise<PackageManager> {
+  // Check in order of specificity
+  try {
+    await fs.access('pnpm-lock.yaml');
+    return 'pnpm';
+  } catch {
+    // Not pnpm
+  }
+
+  try {
+    await fs.access('yarn.lock');
+    return 'yarn';
+  } catch {
+    // Not yarn
+  }
+
+  // Default to npm (works with package-lock.json or no lock file)
+  return 'npm';
+}
+
 // Install from NPM
 export async function installFromNpm(packageName: string): Promise<void> {
   // Validate package name
   validateNpmPackage(packageName);
-  
+
   // Check if we're in an npm project
   if (!await isNpmProject()) {
     throw new Error('NPM package installation requires a package.json file. Run "npm init" first.');
   }
 
-  logger.log(`Installing npm package ${packageName}...`);
-  
+  // Detect the appropriate package manager
+  const packageManager = await detectPackageManager();
+  const pmConfig = PACKAGE_MANAGER_CONFIGS[packageManager];
+
+  logger.log(`Installing ${packageName} using ${packageManager}...`);
+
   try {
-    // Install the package as a dev dependency using execa
-    await execa('npm', ['install', '--save-dev', packageName], {
-      stdio: 'inherit' // Show npm output to user
+    // Install the package as a dev dependency using the detected package manager
+    await execa(pmConfig.command, [...pmConfig.installArgs, packageName], {
+      stdio: 'inherit' // Show output to user
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to install npm package: ${errorMessage}`);
+    throw new Error(`Failed to install package with ${packageManager}: ${errorMessage}`);
   }
   
   // Get installed package path

@@ -203,7 +203,7 @@ describe('Git Installation - Integration Tests', () => {
       await expect(installCommand('ftp://example.com/repo')).rejects.toThrow('Invalid installation source');
       
       // This one will try npm install and fail
-      await expect(installCommand('not-a-url')).rejects.toThrow('Failed to install npm package');
+      await expect(installCommand('not-a-url')).rejects.toThrow('Failed to install package with npm');
     });
 
     it('should handle custom gitPromptDir from config', { timeout: 10000 }, async () => {

@@ -19,7 +19,7 @@ vi.mock('execa', () => ({
 }));
 
 // Now import after mocking
-import { validateGitUrl, extractRepoName, installFromGit } from '../../src/commands/install.js';
+import { validateGitUrl, extractRepoName, installFromGit, detectPackageManager, type PackageManager } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import simpleGit from 'simple-git';
 
@@ -419,21 +419,80 @@ describe('Install Command', () => {
     });
   });
 
+  describe('Package Manager Detection', () => {
+    describe('detectPackageManager', () => {
+      it('should detect pnpm when pnpm-lock.yaml exists', async () => {
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'pnpm-lock.yaml') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+
+        const result = await detectPackageManager();
+        expect(result).toBe('pnpm');
+      });
+
+      it('should detect yarn when yarn.lock exists', async () => {
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'yarn.lock') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+
+        const result = await detectPackageManager();
+        expect(result).toBe('yarn');
+      });
+
+      it('should default to npm when package-lock.json exists', async () => {
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'package-lock.json') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+
+        const result = await detectPackageManager();
+        expect(result).toBe('npm');
+      });
+
+      it('should default to npm when no lock file exists', async () => {
+        vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
+
+        const result = await detectPackageManager();
+        expect(result).toBe('npm');
+      });
+
+      it('should prefer pnpm over yarn when both lock files exist', async () => {
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'pnpm-lock.yaml' || filePath === 'yarn.lock') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+
+        const result = await detectPackageManager();
+        expect(result).toBe('pnpm');
+      });
+    });
+  });
+
   describe('NPM Operations', () => {
     let mockExeca: any;
-    
+
     beforeEach(async () => {
       // Import execa mock
       const execaMock = await import('execa');
       mockExeca = execaMock.execa as any;
-      
+
       // Setup default mocks
       vi.mocked(mockExeca).mockResolvedValue({
         stdout: '',
         stderr: '',
         exitCode: 0
       } as any);
-      
+
       vi.mocked(fs.access).mockResolvedValue(undefined);
       vi.mocked(fs.readFile).mockResolvedValue('{}');
     });
@@ -465,15 +524,59 @@ describe('Install Command', () => {
         } as any);
       });
 
-      it('should install npm package using execa', async () => {
+      it('should install npm package using npm when no lock file exists', async () => {
         const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined); // npm project exists
+
+        // Mock: package.json exists, but no lock files
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'package.json') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
         vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-        
+
         await installFromNpm('@my-org/prompt-pack');
-        
+
         expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', '@my-org/prompt-pack'], {
+          stdio: 'inherit'
+        });
+      });
+
+      it('should install package using pnpm when pnpm-lock.yaml exists', async () => {
+        const { installFromNpm } = await import('../../src/commands/install.js');
+
+        // Mock: package.json and pnpm-lock.yaml exist
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'package.json' || filePath === 'pnpm-lock.yaml') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
+
+        await installFromNpm('@my-org/prompt-pack');
+
+        expect(mockExeca).toHaveBeenCalledWith('pnpm', ['add', '-D', '@my-org/prompt-pack'], {
+          stdio: 'inherit'
+        });
+      });
+
+      it('should install package using yarn when yarn.lock exists', async () => {
+        const { installFromNpm } = await import('../../src/commands/install.js');
+
+        // Mock: package.json and yarn.lock exist
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'package.json' || filePath === 'yarn.lock') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
+
+        await installFromNpm('@my-org/prompt-pack');
+
+        expect(mockExeca).toHaveBeenCalledWith('yarn', ['add', '-D', '@my-org/prompt-pack'], {
           stdio: 'inherit'
         });
       });
@@ -582,12 +685,18 @@ describe('Install Command', () => {
 
       it('should handle npm install errors', async () => {
         const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
+
+        // Mock: package.json exists, but no lock files
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          if (filePath === 'package.json') {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
         mockExeca.mockRejectedValue(new Error('npm ERR! 404 Not Found'));
-        
+
         await expect(installFromNpm('non-existent-package')).rejects.toThrow(
-          'Failed to install npm package'
+          'Failed to install package with npm'
         );
       });
 
