@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/apowers313/pupt/compare/v1.4.0...v1.4.1) (2026-01-20)
+
+
+### Bug Fixes
+
+* fix 'pt install' to work with different package managers ([1683ebc](https://github.com/apowers313/pupt/commit/1683ebc799510143490bbb813de74aa18cb48846))
+
 # [1.4.0](https://github.com/apowers313/pupt/compare/v1.3.2...v1.4.0) (2026-01-16)
 
 
