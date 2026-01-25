@@ -27,6 +27,7 @@
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:ci": "vitest run --no-coverage --passWithNoTests",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src test",
     "lint:fix": "eslint src test --fix",
@@ -34,8 +35,15 @@
     "prepare": "husky",
     "release": "semantic-release"
   },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
   "devDependencies": {
     "@commitlint/cli": "^19.7.1",
+    "commitizen": "^4.3.1",
+    "cz-conventional-changelog": "^3.3.0",
     "@commitlint/config-conventional": "^19.7.1",
     "@eslint/js": "^9.19.0",
     "@stylistic/eslint-plugin": "^2.13.0",
