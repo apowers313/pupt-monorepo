@@ -3116,6 +3116,304 @@ npm install @babel/core @babel/preset-typescript @babel/plugin-transform-react-j
 
 ---
 
+## Phase 10: Documentation
+
+### Goal
+Set up VitePress documentation site with GitHub Pages deployment, matching the pupt project's documentation structure.
+
+### Files to Create/Modify
+
+- `docs/.vitepress/config.js`:
+  ```javascript
+  import { defineConfig } from 'vitepress'
+
+  export default defineConfig({
+    title: 'pupt-lib',
+    description: 'TypeScript library for creating AI prompts using JSX syntax',
+    base: '/pupt-lib/',
+
+    head: [
+      ['link', { rel: 'icon', href: '/pupt-lib/favicon.ico' }]
+    ],
+
+    themeConfig: {
+      nav: [
+        { text: 'Home', link: '/' },
+        { text: 'Guide', link: '/guide/getting-started' },
+        { text: 'Components', link: '/components/' },
+        { text: 'Modules', link: '/modules/' },
+        { text: 'API', link: '/api/' },
+        { text: 'Examples', link: '/examples/' }
+      ],
+
+      sidebar: [
+        {
+          text: 'Guide',
+          items: [
+            { text: 'Getting Started', link: '/guide/getting-started' },
+            { text: 'JSX Basics', link: '/guide/jsx-basics' },
+            { text: 'Creating Components', link: '/guide/creating-components' },
+            { text: 'User Inputs', link: '/guide/user-inputs' },
+            { text: 'Simple Prompts', link: '/guide/simple-prompts' },
+            { text: 'Configuration', link: '/guide/configuration' }
+          ]
+        },
+        {
+          text: 'Components',
+          items: [
+            { text: 'Overview', link: '/components/' },
+            { text: 'Structural', link: '/components/structural' },
+            { text: 'Conditional', link: '/components/conditional' },
+            { text: 'Input', link: '/components/input' },
+            { text: 'Data', link: '/components/data' },
+            { text: 'Post-Execution', link: '/components/post-execution' }
+          ]
+        },
+        {
+          text: 'Modules',
+          items: [
+            { text: 'Overview', link: '/modules/' },
+            { text: 'Using Libraries', link: '/modules/using-libraries' },
+            { text: 'Creating Libraries', link: '/modules/creating-libraries' },
+            { text: 'Scoping', link: '/modules/scoping' }
+          ]
+        },
+        {
+          text: 'Search & Discovery',
+          items: [
+            { text: 'Search', link: '/search/' }
+          ]
+        },
+        {
+          text: 'API Reference',
+          items: [
+            { text: 'Overview', link: '/api/' },
+            { text: 'render()', link: '/api/render' },
+            { text: 'Pupt Class', link: '/api/pupt-class' },
+            { text: 'Environment', link: '/api/environment' },
+            { text: 'Types', link: '/api/types' }
+          ]
+        },
+        {
+          text: 'Examples',
+          items: [
+            { text: 'Basic Prompts', link: '/examples/' },
+            { text: 'Advanced Patterns', link: '/examples/advanced' },
+            { text: 'Workflows', link: '/examples/workflows' }
+          ]
+        }
+      ],
+
+      socialLinks: [
+        { icon: 'github', link: 'https://github.com/apowers313/pupt-lib' }
+      ],
+
+      footer: {
+        message: 'Released under the MIT License.',
+        copyright: 'Copyright © 2024-present'
+      },
+
+      search: {
+        provider: 'local'
+      }
+    }
+  })
+  ```
+
+- `docs/index.md`:
+  ```markdown
+  ---
+  layout: home
+
+  hero:
+    name: pupt-lib
+    text: JSX for AI Prompts
+    tagline: TypeScript library for creating structured AI prompts using JSX syntax
+    actions:
+      - theme: brand
+        text: Get Started
+        link: /guide/getting-started
+      - theme: alt
+        text: View on GitHub
+        link: https://github.com/apowers313/pupt-lib
+
+  features:
+    - title: JSX Syntax
+      details: Write prompts using familiar JSX syntax with full TypeScript support
+    - title: Composable Components
+      details: Build reusable prompt components that can be composed together
+    - title: Type-Safe Inputs
+      details: Define and validate user inputs with Zod schemas
+    - title: Extensible
+      details: Create custom components and share prompt libraries
+  ---
+  ```
+
+- `docs/guide/getting-started.md`:
+  ```markdown
+  # Getting Started
+
+  ## Installation
+
+  \`\`\`bash
+  npm install pupt-lib
+  \`\`\`
+
+  ## Basic Usage
+
+  \`\`\`tsx
+  import { render, Section, Text } from 'pupt-lib';
+
+  const MyPrompt = () => (
+    <Section name="instructions">
+      <Text>You are a helpful assistant.</Text>
+    </Section>
+  );
+
+  const result = render(<MyPrompt />);
+  console.log(result.text);
+  \`\`\`
+
+  ## TypeScript Configuration
+
+  Add to your `tsconfig.json`:
+
+  \`\`\`json
+  {
+    "compilerOptions": {
+      "jsx": "react-jsx",
+      "jsxImportSource": "pupt-lib"
+    }
+  }
+  \`\`\`
+  ```
+
+- `docs/guide/jsx-basics.md`: JSX syntax and element creation (from design/docs/04-jsx-runtime.md)
+- `docs/guide/creating-components.md`: Custom component development (from design/docs/05-components.md)
+- `docs/guide/user-inputs.md`: Input system and validation (from design/docs/06-user-input.md)
+- `docs/guide/configuration.md`: Library configuration options (from design/docs/12-configuration.md)
+- `docs/guide/simple-prompts.md`: .prompt file format for non-technical users (from design/docs/09-simple-prompt-format.md)
+
+- `docs/components/index.md`: Component overview and resolution
+- `docs/components/structural.md`: Section, Text, Fragment, Role, Task, Context
+- `docs/components/conditional.md`: If (Excel formula syntax), Switch, For
+- `docs/components/input.md`: Ask.Text, Ask.Number, Ask.Select, Ask.Confirm, etc.
+- `docs/components/data.md`: Data, Examples, Reference
+- `docs/components/post-execution.md`: PostExecution, ReviewFile, OpenUrl, RunCommand
+
+- `docs/api/index.md`: API overview (from design/docs/07-api.md)
+- `docs/api/render.md`: render() and renderAsync() functions
+- `docs/api/pupt-class.md`: Pupt class for prompt discovery and module loading
+- `docs/api/types.md`: TypeScript type definitions
+- `docs/api/environment.md`: Environment context and LLM configuration
+
+- `docs/modules/index.md`: Third-party library usage (from design/docs/08-module-loading.md)
+- `docs/modules/using-libraries.md`: How to use third-party prompt libraries
+- `docs/modules/creating-libraries.md`: Module author workflow (from design/docs/10-workflows.md)
+- `docs/modules/scoping.md`: Namespace conflicts and Scope component
+
+- `docs/search/index.md`: Fuzzy search and tag-based discovery (from design/docs/11-search.md)
+
+- `docs/examples/index.md`: Basic example prompts
+- `docs/examples/advanced.md`: Advanced patterns and recipes
+- `docs/examples/workflows.md`: End-to-end prompt author workflow
+
+- `docs/public/favicon.ico`: Site favicon
+
+- Update `package.json` scripts:
+  ```json
+  {
+    "scripts": {
+      "docs:dev": "vitepress dev docs",
+      "docs:build": "vitepress build docs",
+      "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
+    }
+  }
+  ```
+
+- Update `.github/workflows/ci.yml` to add docs jobs:
+  ```yaml
+  # Documentation build job
+  docs-build:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      - name: Build documentation
+        run: npm run docs:build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/.vitepress/dist
+
+  # Documentation deployment job
+  docs-deploy:
+    name: Deploy Documentation
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: [lint, test, coverage, docs-build]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+  ```
+
+  Update permissions:
+  ```yaml
+  permissions:
+    contents: read
+    pages: write
+    id-token: write
+  ```
+
+  Update release job to depend on docs-deploy:
+  ```yaml
+  release:
+    needs: [lint, test, coverage, docs-deploy]
+  ```
+
+### Dependencies
+
+**External**: vitepress
+
+**Internal**: All previous phases (documentation references implemented features)
+
+### Verification
+
+1. Run: `npm run docs:dev`
+   - Expected: VitePress dev server starts, docs viewable at localhost
+
+2. Run: `npm run docs:build`
+   - Expected: Static site generated in `docs/.vitepress/dist/`
+
+3. Run: `npm run docs:preview`
+   - Expected: Preview server shows built documentation
+
+4. Verify all internal links work and code examples are accurate
+
+---
+
 ## Common Utilities Needed
 
 | Utility | Purpose | Used In |
@@ -3170,4 +3468,5 @@ npm install @babel/core @babel/preset-typescript @babel/plugin-transform-react-j
 | 7. Transformation | 2-3 days | Runtime .tsx compilation |
 | 8. Module Loading | 3 days | Third-party libraries |
 | 9. Search + API | 2-3 days | Full public API |
-| **Total** | **20-25 days** | **Complete library** |
+| 10. Documentation | 2-3 days | VitePress docs + GitHub Pages |
+| **Total** | **22-28 days** | **Complete library with docs** |
