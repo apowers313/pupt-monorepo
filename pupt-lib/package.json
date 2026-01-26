@@ -4,6 +4,14 @@
   "description": "TypeScript library for creating AI prompts using JSX syntax",
   "license": "MIT",
   "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apowers313/pupt-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/apowers313/pupt-lib/issues"
+  },
+  "homepage": "https://github.com/apowers313/pupt-lib#readme",
   "type": "module",
   "exports": {
     ".": {
