@@ -1,7 +1,7 @@
 {
   "promptDirs": [
     "${projectRoot}/.prompts",
-    "node_modules/pupt/prompts"
+    "${projectRoot}/node_modules/pupt/prompts"
   ],
   "historyDir": "${projectRoot}/.pthistory",
   "defaultCmd": "claude",

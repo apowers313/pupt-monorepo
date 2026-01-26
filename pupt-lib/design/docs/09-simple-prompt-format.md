@@ -4,161 +4,209 @@
 
 ---
 
-For non-technical users, pupt-lib supports a simple `.prompt` file format that requires no build step.
+## Overview
 
-## File Format
+`.prompt` files are **identical to `.tsx` files** in syntax and capabilities. They use standard JSX syntax, support full JavaScript expressions, and have access to all pupt-lib features.
 
-Simple prompts are XML-like files with no JavaScript:
+The only difference is **when** they are transformed:
+- `.tsx` files are transformed at **build time** (requires build tooling)
+- `.prompt` files are transformed at **runtime** (no build step needed)
 
-```xml
-<!-- greeting.prompt -->
-<Prompt name="greeting" description="A friendly greeting">
-  Say hello to the user
+This makes `.prompt` files ideal for:
+- Quick iteration without rebuilding
+- Sharing with users who don't have build tooling set up
+- Rapid prototyping
+
+## Non-Technical User Friendliness
+
+pupt-lib is designed so that **non-technical users can write effective prompts without learning JavaScript**. This is achieved through intuitive component design, not by limiting the syntax.
+
+### Inline Input Components
+
+The `<Ask.*>` components render their collected values inline, making prompts read naturally:
+
+```tsx
+// greeting.prompt
+<Prompt name="greeting">
+  <Task>
+    Say hello to <Ask.Text name="userName" label="What's your name?" />
+    and help them with <Ask.Text name="topic" label="What do you need help with?" />.
+  </Task>
 </Prompt>
 ```
 
-### With Dependencies
+This reads naturally: "Say hello to [user's name] and help them with [their topic]."
 
-```xml
-<!-- support.prompt -->
+During input collection, the user is asked:
+1. "What's your name?"
+2. "What do you need help with?"
+
+During rendering, the collected values are inserted inline.
+
+### Reusing Input Values
+
+When the same `name` appears multiple times, the value is collected once and reused:
+
+```tsx
+<Prompt name="personalized">
+  <Role>You are helping <Ask.Text name="userName" label="User's name" />.</Role>
+  <Task>
+    <Ask.Text name="userName" />, here's what I can do for you...
+  </Task>
+</Prompt>
+```
+
+The user is only asked for `userName` once. Both instances render the same collected value.
+
+### Excel Formula Conditionals
+
+For conditional logic, use the `<If>` component with Excel formula syntax:
+
+```tsx
+<Prompt name="support">
+  <Ask.Select name="userType" label="User type">
+    <Option value="admin" label="Administrator">admin user</Option>
+    <Option value="regular" label="Regular User">regular user</Option>
+  </Ask.Select>
+
+  <If when='=userType="admin"'>
+    <Context>This user has administrative privileges.</Context>
+  </If>
+
+  <Task>Help the <Ask.Select name="userType" /> with their request.</Task>
+</Prompt>
+```
+
+Supported Excel functions:
+- Logical: `AND`, `OR`, `NOT`
+- Comparison: `=`, `<>`, `>`, `<`, `>=`, `<=`
+- Text: `LEN`, `ISBLANK`
+
+### Select Options
+
+For `<Ask.Select>` and `<Ask.MultiSelect>`, the `<Option>` component has:
+- `value` attribute: The internal value stored when selected
+- `label` attribute: What the user sees during input collection
+- Children (text): What gets rendered inline in the prompt
+
+```tsx
+<Ask.Select name="priority" label="Priority level">
+  <Option value="high" label="High (urgent, needs immediate attention)">high priority</Option>
+  <Option value="medium" label="Medium (important but not urgent)">medium priority</Option>
+  <Option value="low" label="Low (when you have time)">low priority</Option>
+</Ask.Select>
+```
+
+- User sees: "High (urgent, needs immediate attention)", etc.
+- Prompt renders: "high priority", "medium priority", or "low priority"
+
+---
+
+## Loading Dependencies
+
+Use `<Uses>` to declare module dependencies:
+
+```tsx
+// support.prompt
 <Uses src="@acme/components" />
 
-<Prompt name="support" description="Customer support response" tags="support, customer-service">
+<Prompt name="support" description="Customer support response">
   <AcmeHeader title="Support Request" />
 
-  <Ask.Text name="issue" label="What's the customer's issue?" />
-
   <Role>You are a helpful support agent</Role>
-  <Task>Help the customer with: {inputs.issue}</Task>
+  <Task>
+    Help the customer with: <Ask.Text name="issue" label="What's the issue?" />
+  </Task>
 </Prompt>
 ```
 
-### Multiple Prompts in One File
+### Source Formats
 
-```xml
-<!-- customer-prompts.prompt -->
-<Uses src="@acme/components" />
-
-<Prompt name="support-ticket" tags="support">
-  <AcmeHeader />
-  <Role>Support agent</Role>
-  <Task>Help with the ticket</Task>
-</Prompt>
-
-<Prompt name="bug-report" tags="engineering">
-  <AcmeHeader />
-  <Role>Bug triage specialist</Role>
-  <Task>Analyze the bug report</Task>
-</Prompt>
-```
+| Format | Example |
+|--------|---------|
+| npm package | `<Uses src="@acme/components" />` |
+| npm with version | `<Uses src="@acme/components@1.0.0" />` |
+| URL | `<Uses src="https://cdn.example.com/components.js" />` |
+| GitHub | `<Uses src="github:acme/components#v1.0.0" />` |
+| Local (CLI only) | `<Uses src="./my-components/" />` |
 
 ---
 
-## Runtime Parsing
+## Full JavaScript Access
 
-`.prompt` files are parsed at runtime - no Babel/TypeScript build step required:
+Since `.prompt` files are just `.tsx` files, technical users have full access to JavaScript:
 
-```typescript
-// Internal: how .prompt files are processed
-async function loadPromptFile(filePath: string): Promise<ParsedPromptFile> {
-  const content = await fs.readFile(filePath, 'utf-8');
+```tsx
+// advanced.prompt
+<Prompt name="code-review">
+  <Ask.Select name="files" label="Files to review" multiple>
+    {repoFiles.map(file => (
+      <Option key={file.path} value={file.path} label={file.name}>
+        {file.path}
+      </Option>
+    ))}
+  </Ask.Select>
 
-  // Parse XML-like syntax
-  const ast = parsePromptSyntax(content);
+  <Task>
+    Review the following files:
+    {selectedFiles.map(f => <Code key={f} file={f} />)}
+  </Task>
 
-  // Extract Uses declarations and load dependencies
-  const uses = ast.filter(n => n.type === 'Uses');
-  for (const use of uses) {
-    await moduleLoader.load(use.props.src);
-  }
-
-  // Extract and return prompts
-  const prompts = ast.filter(n => n.type === 'Prompt');
-  return { uses, prompts, filePath };
-}
-```
-
----
-
-## Variable Interpolation
-
-Simple prompts support basic variable interpolation for inputs:
-
-```xml
-<Prompt name="greeting">
-  <Ask.Text name="userName" label="What's your name?" />
-  Hello, {inputs.userName}! Welcome to our service.
+  {config.strictMode && (
+    <Constraint type="must">Follow all linting rules strictly</Constraint>
+  )}
 </Prompt>
 ```
-
-For advanced logic (loops, conditionals, async data), use the `.tsx` format instead.
 
 ---
 
 ## Comparison: .prompt vs .tsx
 
-| Feature | `.prompt` | `.tsx` |
-|---------|-----------|--------|
-| Build step required | No | Yes (Babel/TypeScript) |
-| JavaScript/TypeScript | No | Yes |
-| Variable interpolation | Basic `{inputs.name}` | Full JS expressions |
-| Loops | No | `{items.map(...)}` |
-| Complex conditionals | Excel formulas only | Full JavaScript |
-| Type checking | No | Yes (TypeScript) |
-| Target audience | Non-technical users | Developers |
-| File extension | `.prompt` | `.tsx` |
-
----
-
-## When to Use .prompt Files
-
-**Use `.prompt` when:**
-- Non-technical users will edit the prompts
-- Prompts are simple with minimal logic
-- Quick iteration without build step is important
-- Sharing prompts with non-developers
-
-**Use `.tsx` when:**
-- Complex logic is needed (loops, async data)
-- Type safety is important
-- Building reusable component libraries
-- Integration with existing TypeScript projects
+| Aspect | `.prompt` | `.tsx` |
+|--------|-----------|--------|
+| Syntax | JSX (identical) | JSX (identical) |
+| JavaScript | Full support | Full support |
+| Transform timing | Runtime | Build time |
+| Build tooling required | No | Yes |
+| IDE TypeScript support | Limited | Full |
+| Best for | Quick iteration, sharing | Production, type safety |
 
 ---
 
 ## Example: Complete .prompt File
 
-```xml
-<!-- code-review.prompt -->
-<Uses src="@company/code-components" />
+```tsx
+// code-review.prompt
+<Uses src="@company/components" />
 
 <Prompt
   name="code-review"
   description="Review code for quality and security"
-  tags="code, review, security"
+  tags={["code", "review", "security"]}
 >
   <CompanyHeader title="Code Review Request" />
 
   <Ask.Select name="reviewType" label="Type of review">
-    <Option value="security">Security Review</Option>
-    <Option value="quality">Code Quality</Option>
-    <Option value="performance">Performance Review</Option>
+    <Option value="security" label="Security Review">security</Option>
+    <Option value="quality" label="Code Quality Review">code quality</Option>
+    <Option value="performance" label="Performance Review">performance</Option>
   </Ask.Select>
 
   <Ask.Editor name="code" label="Paste your code" language="auto" required />
 
   <Role>
-    You are a senior software engineer specializing in {inputs.reviewType} reviews.
+    You are a senior software engineer specializing in
+    <Ask.Select name="reviewType" /> reviews.
   </Role>
 
   <Context>
-    The developer has submitted code for a {inputs.reviewType} review.
+    The developer has submitted code for a <Ask.Select name="reviewType" /> review.
   </Context>
 
   <Task>
     Review the following code and provide detailed feedback:
 
-    {inputs.code}
+    <Code><Ask.Editor name="code" /></Code>
   </Task>
 
   <If when='=reviewType="security"'>

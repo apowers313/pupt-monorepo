@@ -1,0 +1,51 @@
+import { Component } from '../../component';
+import type { PuptNode, RenderContext, InputRequirement } from '../../types';
+import { attachRequirement } from './utils';
+
+export interface SecretProps {
+  name: string;
+  label: string;
+  description?: string;
+  required?: boolean;
+  default?: string;
+  validator?: string;
+  children?: PuptNode;
+}
+
+export class Secret extends Component<SecretProps> {
+  render(props: SecretProps, context: RenderContext): PuptNode {
+    const {
+      name,
+      label,
+      description = label,
+      required = false,
+      default: defaultValue,
+    } = props;
+
+    const value = context.inputs.get(name);
+
+    const requirement: InputRequirement = {
+      name,
+      label,
+      description,
+      type: 'secret',
+      required,
+      default: defaultValue,
+      masked: true,
+    };
+
+    attachRequirement(context, requirement);
+
+    // Note: In real usage, you may want to mask or omit the value
+    // For now, we render it (the consuming application should handle masking in logs)
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return String(defaultValue);
+    }
+
+    return `{${name}}`;
+  }
+}

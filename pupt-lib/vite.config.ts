@@ -14,7 +14,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['zod', 'minisearch', 'os', 'crypto'],
+      external: ['zod', 'minisearch', 'os', 'crypto', 'fs', 'fs/promises', 'path', '@babel/standalone'],
       output: {
         preserveModules: false,
         entryFileNames: '[name].js',

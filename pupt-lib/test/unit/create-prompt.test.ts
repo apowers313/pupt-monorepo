@@ -1,0 +1,273 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { createPrompt, createPromptFromSource } from '../../src/create-prompt';
+import { writeFileSync, mkdirSync, rmSync } from 'fs';
+import { join } from 'path';
+
+describe('createPromptFromSource', () => {
+  it('should create element from TSX source', async () => {
+    const source = `
+      export default (
+        <Prompt name="test">
+          <Role>Assistant</Role>
+          <Task>Help user</Task>
+        </Prompt>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('Prompt');
+    expect(element.props.name).toBe('test');
+  });
+
+  it('should handle simple JSX without imports', async () => {
+    const source = `
+      export default <div>Hello World</div>;
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('div');
+    expect(element.children).toContain('Hello World');
+  });
+
+  it('should handle JSX with props', async () => {
+    const source = `
+      export default <Section title="Test" priority={1}>Content</Section>;
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('Section');
+    expect(element.props.title).toBe('Test');
+    expect(element.props.priority).toBe(1);
+  });
+
+  it('should handle nested JSX elements', async () => {
+    const source = `
+      export default (
+        <Prompt name="nested">
+          <Role>Assistant</Role>
+          <Task>Do task</Task>
+        </Prompt>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('Prompt');
+    expect(element.children.length).toBe(2);
+  });
+
+  it('should handle TypeScript syntax', async () => {
+    const source = `
+      interface Props { name: string }
+      const config: Props = { name: 'typed-test' };
+
+      export default (
+        <Prompt name={config.name}>
+          <Task>Test</Task>
+        </Prompt>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'typed.tsx');
+
+    expect(element.props.name).toBe('typed-test');
+  });
+
+  it('should handle fragments', async () => {
+    const source = `
+      export default (
+        <>
+          <Role>Assistant</Role>
+          <Task>Help</Task>
+        </>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    // Fragment returns children array
+    expect(element.children.length).toBe(2);
+  });
+
+  it('should handle control flow components', async () => {
+    const source = `
+      export default (
+        <Prompt name="conditional">
+          <If when={true}>
+            <Task>Visible task</Task>
+          </If>
+        </Prompt>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('Prompt');
+    expect(element.children.length).toBe(1);
+    expect(element.children[0].type).toBe('If');
+  });
+
+  it('should handle data components', async () => {
+    const source = `
+      export default (
+        <Prompt name="with-code">
+          <Code language="typescript">const x = 1;</Code>
+        </Prompt>
+      );
+    `;
+
+    const element = await createPromptFromSource(source, 'test.tsx');
+
+    expect(element.type).toBe('Prompt');
+    expect(element.children[0].type).toBe('Code');
+  });
+
+  it('should auto-wrap raw JSX without export default', async () => {
+    const source = `
+      <Prompt name="auto-wrapped">
+        <Task>This is auto-wrapped</Task>
+      </Prompt>
+    `;
+
+    const element = await createPromptFromSource(source, 'test.prompt');
+
+    expect(element.type).toBe('Prompt');
+    expect(element.props.name).toBe('auto-wrapped');
+  });
+
+  it('should auto-wrap simple raw JSX', async () => {
+    const source = '<Task>Just a task</Task>';
+
+    const element = await createPromptFromSource(source, 'test.prompt');
+
+    expect(element.type).toBe('Task');
+  });
+
+  it('should throw helpful error for undefined component (Ask.FooBar)', async () => {
+    const source = `
+      <Prompt>
+        <Ask.FooBar name="features" label="Features" />
+      </Prompt>
+    `;
+
+    await expect(createPromptFromSource(source, 'test.prompt')).rejects.toThrow(
+      /element type is undefined.*component that doesn't exist/i,
+    );
+  });
+
+  it('should throw helpful error for typos in component names', async () => {
+    const source = `
+      <Prompt>
+        <Ask.Selec name="color" label="Color" />
+      </Prompt>
+    `;
+
+    await expect(createPromptFromSource(source, 'test.prompt')).rejects.toThrow(
+      /element type is undefined/i,
+    );
+  });
+});
+
+describe('createPrompt', () => {
+  const tmpDir = join(__dirname, '../../tmp/create-prompt-test');
+
+  beforeAll(() => {
+    mkdirSync(tmpDir, { recursive: true });
+  });
+
+  afterAll(() => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it('should load and transform .tsx file', async () => {
+    const filePath = join(tmpDir, 'prompt.tsx');
+    writeFileSync(filePath, `
+      export default (
+        <Prompt name="tsx-test">
+          <Task>Do something</Task>
+        </Prompt>
+      );
+    `);
+
+    const element = await createPrompt(filePath);
+
+    expect(element.props.name).toBe('tsx-test');
+  });
+
+  it('should handle file with TypeScript types', async () => {
+    const filePath = join(tmpDir, 'typed-prompt.tsx');
+    writeFileSync(filePath, `
+      interface PromptProps {
+        name: string;
+      }
+
+      const props: PromptProps = { name: "typed-test" };
+
+      export default (
+        <Prompt name={props.name}>
+          <Task>Test</Task>
+        </Prompt>
+      );
+    `);
+
+    const element = await createPrompt(filePath);
+
+    expect(element.props.name).toBe('typed-test');
+  });
+
+  it('should handle file with inline function components', async () => {
+    const filePath = join(tmpDir, 'func-prompt.tsx');
+    writeFileSync(filePath, `
+      // Function component defined inline and used immediately
+      const MySection = ({ title, children }: { title: string; children: any }) => (
+        <Section title={title}>{children}</Section>
+      );
+
+      export default (
+        <Prompt name="func-test">
+          <MySection title="Test">Content</MySection>
+        </Prompt>
+      );
+    `);
+
+    const element = await createPrompt(filePath);
+
+    expect(element.props.name).toBe('func-test');
+  });
+
+  it('should load and transform .prompt file (same as .tsx)', async () => {
+    // .prompt files use the EXACT same Babel parser as .tsx
+    const filePath = join(tmpDir, 'greeting.prompt');
+    writeFileSync(filePath, `
+      export default (
+        <Prompt name="prompt-test">
+          <Role>Assistant</Role>
+          <Task>Help user</Task>
+        </Prompt>
+      );
+    `);
+
+    const element = await createPrompt(filePath);
+
+    expect(element.props.name).toBe('prompt-test');
+  });
+
+  it('should throw error for non-existent file', async () => {
+    await expect(createPrompt('/non/existent/file.tsx')).rejects.toThrow();
+  });
+
+  it('should auto-wrap raw JSX .prompt file without export default', async () => {
+    const filePath = join(tmpDir, 'raw.prompt');
+    writeFileSync(filePath, `<Prompt name="raw-test">
+  <Task>Raw JSX content</Task>
+</Prompt>`);
+
+    const element = await createPrompt(filePath);
+
+    expect(element.type).toBe('Prompt');
+    expect(element.props.name).toBe('raw-test');
+  });
+});

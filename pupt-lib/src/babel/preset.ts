@@ -1,8 +1,30 @@
-// Babel preset for pupt-lib
-// This will be implemented in Phase 7
+import type { ConfigAPI, TransformOptions } from '@babel/core';
 
-export default function puptBabelPreset(): { plugins: unknown[] } {
+export interface PuptBabelPresetOptions {
+  typescript?: boolean;
+  development?: boolean;
+}
+
+export function puptBabelPreset(
+  api: ConfigAPI,
+  options: PuptBabelPresetOptions = {},
+): TransformOptions {
+  const { typescript = true, development = false } = options;
+
+  api.cache.using(() => JSON.stringify(options));
+
   return {
-    plugins: [],
+    presets: [
+      typescript && ['@babel/preset-typescript', { isTSX: true, allExtensions: true }],
+    ].filter(Boolean) as TransformOptions['presets'],
+    plugins: [
+      ['@babel/plugin-transform-react-jsx', {
+        runtime: 'automatic',
+        importSource: 'pupt-lib',
+        development,
+      }],
+    ],
   };
 }
+
+export default puptBabelPreset;

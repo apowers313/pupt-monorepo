@@ -214,13 +214,24 @@ Components that generate dynamic values. These values are also available in `con
 <Timestamp />
 // Output: 1705942800
 
-// DateTime: Current date and time
+// DateTime: Current date and time (full ISO format)
 <DateTime />
 // Output: 2024-01-22T15:30:00.000Z
 
 // DateTime with format
 <DateTime format="YYYY-MM-DD" />
 // Output: 2024-01-22
+
+<DateTime format="HH:mm:ss" />
+// Output: 15:30:00
+
+// Date: Current date only (shorthand for DateTime format="YYYY-MM-DD")
+<Date />
+// Output: 2024-01-22
+
+// Time: Current time only (shorthand for DateTime format="HH:mm:ss")
+<Time />
+// Output: 15:30:00
 
 // Hostname: Current machine name
 <Hostname />
@@ -362,7 +373,7 @@ Actions to perform after the prompt is executed by the LLM.
 
 ```tsx
 <PostExecution>
-  <ReviewFile path="./output/generated-code.ts" />
+  <ReviewFile file="./output/generated-code.ts" />
   <OpenUrl url="https://docs.example.com/api" />
   <RunCommand command="npm test" />
 </PostExecution>
@@ -372,7 +383,7 @@ Actions to perform after the prompt is executed by the LLM.
 
 ```tsx
 // ReviewFile: Open a file for review
-<ReviewFile path="./output/generated-code.ts" editor="vscode" />
+<ReviewFile file="./output/generated-code.ts" editor="vscode" />
 
 // OpenUrl: Open a URL in browser
 <OpenUrl url="https://docs.example.com/api" />
@@ -409,48 +420,116 @@ for (const action of result.postExecution) {
 
 See [User Input](06-user-input.md) for detailed documentation.
 
+### Inline Rendering Behavior
+
+All `Ask.*` components serve two purposes:
+
+1. **Input Collection Phase**: Register an input requirement (name, type, validation rules)
+2. **Render Phase**: Return the collected value as inline text
+
+This allows prompts to read naturally:
+
+```tsx
+<Task>
+  Help <Ask.Text name="userName" label="What's your name?" /> with their project.
+</Task>
+```
+
+During input collection, the user is asked "What's your name?". During rendering, if they answered "Alice", the prompt becomes: "Help Alice with their project."
+
+### Same Name = Same Value
+
+When the same `name` appears multiple times, the input is collected **once** and all instances render the same value:
+
+```tsx
+<Role>You are assisting <Ask.Text name="userName" label="User's name" />.</Role>
+<Task>
+  <Ask.Text name="userName" />, here's what I can help with...
+</Task>
+```
+
+The user is only asked for `userName` once. Both `<Ask.Text name="userName" />` instances render the same collected value.
+
 ### Quick Reference
 
 ```tsx
-// Text input
+// Text input - renders the entered text
 <Ask.Text name="projectName" label="Project name" required />
 
-// Multi-line editor
+// Multi-line editor - renders the entered text
 <Ask.Editor name="description" label="Describe your project" language="markdown" />
 
-// Single selection
+// Single selection - renders the selected option's text content
 <Ask.Select name="framework" label="Framework">
-  <Option value="react">React</Option>
-  <Option value="vue">Vue</Option>
+  <Option value="react" label="React (recommended)">React</Option>
+  <Option value="vue" label="Vue.js">Vue</Option>
 </Ask.Select>
 
-// Multiple selection
+// Multiple selection - renders comma-separated option texts
 <Ask.MultiSelect name="features" label="Features to include">
-  <Option value="auth">Authentication</Option>
-  <Option value="api">API Routes</Option>
+  <Option value="auth" label="User Authentication">authentication</Option>
+  <Option value="api" label="REST API">API routes</Option>
 </Ask.MultiSelect>
 
-// Yes/No confirmation
+// Yes/No confirmation - renders "yes" or "no" (or custom text)
 <Ask.Confirm name="proceed" label="Continue with setup?" default={true} />
 
-// File selection with validation
+// Binary choice with custom labels (distinct from Confirm)
+<Ask.Choice
+  name="approach"
+  label="Which approach should we take?"
+  options={[
+    { value: "refactor", label: "Refactor existing code" },
+    { value: "rewrite", label: "Rewrite from scratch" }
+  ]}
+/>
+
+// Numeric rating scale with optional labels
+<Ask.Rating name="priority" label="How urgent is this?" min={1} max={5}>
+  <Label value="1">Low</Label>
+  <Label value="3">Medium</Label>
+  <Label value="5">Critical</Label>
+</Ask.Rating>
+
+// File selection - renders the file path
 <Ask.File name="config" label="Config file" mustExist />
 
-// Directory selection
+// Directory selection - renders the directory path
 <Ask.Path name="output" label="Output directory" mustBeDirectory />
 
-// Number input
+// Number input - renders the number as text
 <Ask.Number name="port" label="Port number" min={1024} max={65535} default={3000} />
 
-// Date input
+// Date input - renders the date
 <Ask.Date name="deadline" label="Project deadline" />
 
-// Secret/password input
+// Secret/password input - renders the value (use carefully!)
 <Ask.Secret name="apiKey" label="API Key" validator="valid-api-key" />
 
-// File with automatic post-execution review
+// File with automatic post-execution review - renders the file path
 <Ask.ReviewFile name="outputFile" label="Generated file path" />
 ```
+
+### Option Component
+
+For `<Ask.Select>` and `<Ask.MultiSelect>`, the `<Option>` component has:
+
+| Attribute | Purpose |
+|-----------|---------|
+| `value` | Internal value stored when selected |
+| `label` | What the user sees during input collection |
+| Children (text) | What gets rendered inline in the prompt |
+
+```tsx
+<Ask.Select name="priority" label="Priority level">
+  <Option value="high" label="High (urgent, needs immediate attention)">high priority</Option>
+  <Option value="medium" label="Medium (important but not urgent)">medium priority</Option>
+  <Option value="low" label="Low (when you have time)">low priority</Option>
+</Ask.Select>
+```
+
+- **User sees**: "High (urgent, needs immediate attention)", "Medium...", "Low..."
+- **Prompt renders**: "high priority", "medium priority", or "low priority"
 
 ### Child Elements vs JS Attributes
 
@@ -459,16 +538,78 @@ Both syntaxes are supported:
 ```tsx
 // Child elements - simple, no JavaScript knowledge needed
 <Ask.Select name="framework" label="Which framework?">
-  <Option value="react">React</Option>
-  <Option value="vue">Vue</Option>
+  <Option value="react" label="React">React</Option>
+  <Option value="vue" label="Vue">Vue</Option>
 </Ask.Select>
 
 // JS attributes - for dynamic data
 <Ask.Select
   name="framework"
-  options={frameworks.map(f => ({ value: f.id, label: f.name }))}
+  options={frameworks.map(f => ({ value: f.id, label: f.displayName, text: f.name }))}
 />
 ```
+
+### Ask.Choice Component
+
+`Ask.Choice` provides a binary choice with custom labels, distinct from `Ask.Confirm` which is limited to yes/no:
+
+```tsx
+<Ask.Choice
+  name="approach"
+  label="Which approach should we take?"
+  options={[
+    { value: "refactor", label: "Refactor existing code" },
+    { value: "rewrite", label: "Rewrite from scratch" }
+  ]}
+/>
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `name` | `string` | Unique identifier for this input |
+| `label` | `string` | Question shown to the user |
+| `options` | `Array<{value, label}>` | Exactly two options to choose from |
+| `default` | `string` | Optional default value |
+
+**Use `Ask.Choice` when:** You need a binary choice with descriptive custom labels.
+**Use `Ask.Confirm` when:** You need a simple yes/no answer.
+
+### Ask.Rating Component
+
+`Ask.Rating` provides a numeric scale input with optional labels for specific values:
+
+**Simple syntax (child elements):**
+
+```tsx
+<Ask.Rating name="priority" label="How urgent is this issue?" min={1} max={5}>
+  <Label value="1">Low</Label>
+  <Label value="3">Medium</Label>
+  <Label value="5">Critical</Label>
+</Ask.Rating>
+```
+
+**Advanced syntax (JS attributes):**
+
+```tsx
+<Ask.Rating
+  name="priority"
+  label="How urgent is this issue?"
+  min={1}
+  max={5}
+  labels={{ 1: "Low", 3: "Medium", 5: "Critical" }}
+/>
+```
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `name` | `string` | Unique identifier for this input |
+| `label` | `string` | Question shown to the user |
+| `min` | `number` | Minimum value (default: 1) |
+| `max` | `number` | Maximum value (default: 5) |
+| `labels` | `Record<number, string>` | Optional labels for specific values |
+| `default` | `number` | Optional default value |
+
+The `<Label>` child element maps a numeric value to a descriptive label shown in the UI.
 
 ---
 

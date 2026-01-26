@@ -37,6 +37,68 @@ All user input components are namespaced under `Ask.*`:
 
 ---
 
+## Option Child Elements
+
+`Ask.Select` and `Ask.MultiSelect` support two syntaxes for defining options:
+
+### Child Element Syntax (Simple)
+
+For non-technical users, use `<Option>` children:
+
+```tsx
+<Ask.Select name="framework" label="Which framework?">
+  <Option value="react" label="React (recommended)">React</Option>
+  <Option value="vue" label="Vue.js">Vue</Option>
+  <Option value="angular" label="Angular">Angular</Option>
+</Ask.Select>
+```
+
+### Option Props
+
+| Attribute | Purpose | Required |
+|-----------|---------|----------|
+| `value` | Internal value stored when selected | Yes |
+| `label` | What the user sees during input collection (defaults to children text) | No |
+| Children | Text rendered inline in the prompt (defaults to value) | No |
+
+Example with all attributes:
+
+```tsx
+<Option value="high" label="High (urgent, needs immediate attention)">high priority</Option>
+```
+
+- **Internal value**: `"high"` (stored in `inputs.get("name")`)
+- **User sees**: "High (urgent, needs immediate attention)"
+- **Prompt renders**: "high priority"
+
+### JS Attribute Syntax (Dynamic)
+
+For dynamic data or power users, use the `options` prop:
+
+```tsx
+<Ask.Select
+  name="framework"
+  options={frameworks.map(f => ({
+    value: f.id,
+    label: f.displayName,
+    text: f.name
+  }))}
+/>
+```
+
+### Combining Both
+
+When both `options` prop and `<Option>` children are provided, they are merged (children first):
+
+```tsx
+<Ask.Select name="choice" options={dynamicOptions}>
+  <Option value="custom">Custom Option</Option>
+  {/* dynamicOptions are appended after */}
+</Ask.Select>
+```
+
+---
+
 ## Input Requirement Interface
 
 When inputs are collected, each `Ask.*` component produces an `InputRequirement`:
@@ -63,7 +125,11 @@ export interface InputRequirement {
   default?: unknown;
 
   /** Options for select/multiselect */
-  options?: Array<{ value: string; label: string }>;
+  options?: Array<{
+    value: string;
+    label: string;
+    text?: string;  // Rendered text (defaults to label if not specified)
+  }>;
 
   /** Validation rules */
   validation?: {
@@ -87,6 +153,87 @@ export interface InputRequirement {
   section?: string;
 }
 ```
+
+### Tree Position Fields
+
+The `path`, `depth`, and `section` fields help UIs organize and group inputs:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `path` | `string[]` | Array of parent component names from root to this input |
+| `depth` | `number` | Nesting level (0 = top-level, 1 = inside one container, etc.) |
+| `section` | `string?` | Name of the containing `<Section>` component, if any |
+
+**Example tree traversal:**
+
+```tsx
+<Prompt>                           // path: [], depth: 0
+  <Section name="user-info">       // path: ["Prompt"], depth: 1
+    <Ask.Text name="name" />       // path: ["Prompt", "user-info"], depth: 2, section: "user-info"
+    <If when={showEmail}>          // path: ["Prompt", "user-info"], depth: 2
+      <Ask.Text name="email" />    // path: ["Prompt", "user-info", "Conditional"], depth: 3, section: "user-info"
+    </If>
+  </Section>
+  <Ask.Text name="notes" />        // path: ["Prompt"], depth: 1, section: undefined
+</Prompt>
+```
+
+**UI usage:** UIs can use these fields to:
+- Group inputs by section (e.g., show "User Info" header before related inputs)
+- Show breadcrumbs for nested inputs
+- Indent or visually nest deeply-nested inputs
+
+---
+
+## Condition Input Access
+
+When using `<If>` or other conditional components with collected inputs, you access input values using natural property syntax:
+
+```tsx
+// Natural property access - recommended
+<If when={inputs.userType === "admin"}>
+  <Ask.Text name="adminCode" label="Admin code" />
+</If>
+
+// Complex conditions work too
+<If when={inputs.items?.length > 5 && inputs.userType === "admin"}>
+  <Ask.Text name="specialCode" label="Special code" />
+</If>
+```
+
+### How It Works
+
+Internally, collected inputs are stored in a `Map<string, unknown>`. To enable natural property access (`inputs.userType` instead of `inputs.get("userType")`), the inputs are wrapped in a Proxy:
+
+```typescript
+function createInputsProxy(values: Map<string, unknown>): Record<string, unknown> {
+  return new Proxy({} as Record<string, unknown>, {
+    get(_, prop: string) {
+      return values.get(prop);
+    },
+    has(_, prop: string) {
+      return values.has(prop);
+    },
+    ownKeys() {
+      return Array.from(values.keys());
+    },
+  });
+}
+```
+
+### Why Proxy?
+
+| Approach | Issue |
+|----------|-------|
+| Raw Map | `inputs.userType` returns `undefined` (Map has no `.userType` property) |
+| `.get()` syntax | Verbose: `inputs.get("userType")` is easy to forget |
+| Proxy wrapper | Natural syntax that translates to Map lookups internally |
+
+Benefits:
+- Natural syntax users expect (`inputs.userType`)
+- No silent failures from undefined property access
+- TypeScript can type the proxy appropriately
+- Backwards compatible with `.get()` if preferred
 
 ---
 
@@ -320,6 +467,29 @@ const iterator = createInputIterator({
   nonInteractive: true,
 });
 ```
+
+### onMissingDefault Strategy
+
+When an input has no default and no pre-supplied value in non-interactive mode, you can control the behavior:
+
+```typescript
+// Default: throw error if required input has no default
+const iterator = createInputIterator({
+  nonInteractive: true,
+  onMissingDefault: "error",  // Default behavior
+});
+
+// Skip inputs without defaults (use with caution)
+const iterator = createInputIterator({
+  nonInteractive: true,
+  onMissingDefault: "skip",  // Skip inputs that can't be auto-filled
+});
+```
+
+| Strategy | Behavior |
+|----------|----------|
+| `"error"` | Throw an error if a required input has no default (default) |
+| `"skip"` | Skip inputs without defaults, leaving them undefined |
 
 ### Pre-Supplied Values
 

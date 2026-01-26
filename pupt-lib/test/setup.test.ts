@@ -59,7 +59,13 @@ describe('JSX Dev Runtime', () => {
 describe('Babel Preset', () => {
   it('should export default preset function', () => {
     expect(typeof puptBabelPreset).toBe('function');
-    const preset = puptBabelPreset();
+    // Create a mock Babel API object with cache method
+    const mockApi = {
+      cache: {
+        using: () => {},
+      },
+    };
+    const preset = puptBabelPreset(mockApi as Parameters<typeof puptBabelPreset>[0]);
     expect(preset).toHaveProperty('plugins');
     expect(Array.isArray(preset.plugins)).toBe(true);
   });

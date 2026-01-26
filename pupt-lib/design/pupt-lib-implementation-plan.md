@@ -1223,7 +1223,25 @@ npm install zod minisearch
       expect(result.text).not.toContain('{username}');
     });
 
-    it('should generate InputRequirement', () => {
+    it('should render same value for duplicate names', () => {
+      // Same name used twice - value collected once, rendered in both places
+      const element = jsx('div', {
+        children: [
+          jsx(Ask.Text, { name: 'userName', label: 'Name' }),
+          ' says hello to ',
+          jsx(Ask.Text, { name: 'userName' }), // No label - just renders value
+        ],
+      });
+
+      const result = render(element, {
+        inputs: { userName: 'Alice' },
+      });
+
+      // Both instances render the same value
+      expect(result.text).toBe('Alice says hello to Alice');
+    });
+
+    it('should generate InputRequirement only once per name', () => {
       // This is tested via InputIterator
     });
   });
@@ -1237,13 +1255,14 @@ npm install zod minisearch
   import { Ask, Option } from '../../../../src/components/ask';
 
   describe('Ask.Select', () => {
-    it('should render selected value', () => {
+    it('should render Option children text (not value)', () => {
+      // Option: value = internal, label = user sees, children = prompt text
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
         children: [
-          jsx(Option, { value: 'react', children: 'React' }),
-          jsx(Option, { value: 'vue', children: 'Vue' }),
+          jsx(Option, { value: 'react', label: 'React (recommended)', children: 'React' }),
+          jsx(Option, { value: 'vue', label: 'Vue.js', children: 'Vue' }),
         ],
       });
 
@@ -1251,16 +1270,17 @@ npm install zod minisearch
         inputs: { framework: 'react' },
       });
 
-      expect(result.text).toContain('react');
+      // Renders Option's children text, not the value
+      expect(result.text).toBe('React');
     });
 
-    it('should accept options as prop', () => {
+    it('should accept options as prop with text field', () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
         options: [
-          { value: 'react', label: 'React' },
-          { value: 'vue', label: 'Vue' },
+          { value: 'react', label: 'React (recommended)', text: 'React' },
+          { value: 'vue', label: 'Vue.js', text: 'Vue' },
         ],
       });
 
@@ -1268,7 +1288,33 @@ npm install zod minisearch
         inputs: { framework: 'vue' },
       });
 
-      expect(result.text).toContain('vue');
+      // Renders the 'text' field from selected option
+      expect(result.text).toBe('Vue');
+    });
+
+    it('should render same value for duplicate names', () => {
+      const element = jsx('div', {
+        children: [
+          'Using ',
+          jsx(Ask.Select, {
+            name: 'framework',
+            label: 'Framework',
+            children: [
+              jsx(Option, { value: 'react', label: 'React', children: 'React' }),
+              jsx(Option, { value: 'vue', label: 'Vue', children: 'Vue' }),
+            ],
+          }),
+          ' because ',
+          jsx(Ask.Select, { name: 'framework' }), // Reuse - no options needed
+          ' is great',
+        ],
+      });
+
+      const result = render(element, {
+        inputs: { framework: 'react' },
+      });
+
+      expect(result.text).toBe('Using React because React is great');
     });
   });
   ```
@@ -1360,6 +1406,38 @@ npm install zod minisearch
       const values = iterator.getValues();
       expect(values.get('name')).toBe('Alice');
       expect(values.get('age')).toBe(30);
+    });
+
+    it('should deduplicate inputs with same name', async () => {
+      // Same name appears twice - should only ask once
+      const element = jsx(Fragment, {
+        children: [
+          jsx(Ask.Text, { name: 'userName', label: 'Your name' }),
+          jsx('span', { children: 'Hello, ' }),
+          jsx(Ask.Text, { name: 'userName' }), // Duplicate - should not ask again
+          jsx(Ask.Text, { name: 'email', label: 'Email' }),
+        ],
+      });
+
+      const iterator = createInputIterator(element);
+      iterator.start();
+
+      // First: userName
+      expect(iterator.current()?.name).toBe('userName');
+      await iterator.submit('Alice');
+      iterator.advance();
+
+      // Second: email (userName duplicate skipped)
+      expect(iterator.current()?.name).toBe('email');
+      await iterator.submit('alice@example.com');
+      iterator.advance();
+
+      // Done - only 2 questions, not 3
+      expect(iterator.isDone()).toBe(true);
+
+      const values = iterator.getValues();
+      expect(values.get('userName')).toBe('Alice');
+      expect(values.get('email')).toBe('alice@example.com');
     });
   });
   ```
@@ -1464,9 +1542,28 @@ npm install zod minisearch
 - `Option.ts`: For Select/MultiSelect children
 - `index.ts`: Export Ask namespace
 
-Each Ask component:
-1. Renders placeholder or value
-2. Generates InputRequirement for iterator
+**Ask Component Behavior:**
+
+Each Ask component has two responsibilities:
+
+1. **Input Collection Phase**: Register an InputRequirement (only once per unique `name`)
+2. **Render Phase**: Return the collected value as inline text
+
+**Key behaviors:**
+- **Same name = same value**: When multiple Ask components share a `name`, the input is collected once. All instances render the same value.
+- **Placeholder when missing**: If no input value exists, render `{name}` as placeholder.
+- **First occurrence defines the question**: The first Ask component with a given `name` provides the `label`, validation rules, options, etc. Subsequent occurrences with the same `name` just render the value.
+
+**Option Component:**
+- `value`: Internal value stored when selected
+- `label`: What the user sees during input collection
+- `children`: What gets rendered inline in the prompt
+
+```tsx
+<Option value="high" label="High (urgent)">high priority</Option>
+// User sees: "High (urgent)"
+// Prompt renders: "high priority"
+```
 
 - `src/services/input-iterator.ts`:
   ```typescript
@@ -1595,15 +1692,15 @@ npm install hyperformula  # Excel formula parser
    ```typescript
    import { createInputIterator } from '../src/services/input-iterator';
    import { jsx, Fragment } from '../src/jsx-runtime';
-   import { Ask } from '../src/components/ask';
+   import { Ask, Option } from '../src/components/ask';
    import { If } from '../src/components/control/If';
    import '../src/components';
 
    const element = (
      <Fragment>
        <Ask.Select name="userType" label="User type">
-         <Option value="user">Regular User</Option>
-         <Option value="admin">Administrator</Option>
+         <Option value="user" label="Regular User">regular user</Option>
+         <Option value="admin" label="Administrator">admin</Option>
        </Ask.Select>
        <If when='=userType="admin"'>
          <Ask.Text name="adminCode" label="Admin code" />
@@ -1807,7 +1904,7 @@ npm install hyperformula  # Excel formula parser
     it('should collect post-execution actions', () => {
       const element = jsx(PostExecution, {
         children: [
-          jsx(ReviewFile, { path: './output.ts' }),
+          jsx(ReviewFile, { file: './output.ts' }),
           jsx(OpenUrl, { url: 'https://docs.example.com' }),
         ],
       });
@@ -1817,7 +1914,7 @@ npm install hyperformula  # Excel formula parser
       expect(result.postExecution).toHaveLength(2);
       expect(result.postExecution[0]).toEqual({
         type: 'reviewFile',
-        path: './output.ts',
+        file: './output.ts',
       });
       expect(result.postExecution[1]).toEqual({
         type: 'openUrl',
@@ -1829,7 +1926,7 @@ npm install hyperformula  # Excel formula parser
   describe('ReviewFile', () => {
     it('should add reviewFile action', () => {
       const element = jsx(ReviewFile, {
-        path: './generated.ts',
+        file: './generated.ts',
         editor: 'vscode',
       });
 
@@ -1837,7 +1934,7 @@ npm install hyperformula  # Excel formula parser
 
       expect(result.postExecution[0]).toEqual({
         type: 'reviewFile',
-        path: './generated.ts',
+        file: './generated.ts',
         editor: 'vscode',
       });
     });
@@ -1934,7 +2031,7 @@ These components add to `context.postExecution[]` during render.
        </Steps>
 
        <PostExecution>
-         <ReviewFile path="./output.ts" />
+         <ReviewFile file="./output.ts" />
        </PostExecution>
      </Prompt>
    );
@@ -2047,40 +2144,6 @@ These components add to `context.postExecution[]` during render.
   });
   ```
 
-- `test/unit/services/prompt-parser.test.ts`:
-  ```typescript
-  import { describe, it, expect } from 'vitest';
-  import { parsePromptSyntax, loadPromptFile } from '../../../src/services/prompt-parser';
-
-  describe('parsePromptSyntax', () => {
-    it('should parse simple prompt file', () => {
-      const source = `
-        <Prompt name="greeting">
-          <Role>You are a friendly assistant.</Role>
-          <Task>Greet the user.</Task>
-        </Prompt>
-      `;
-
-      const element = parsePromptSyntax(source);
-
-      expect(element.type).toBe('Prompt');
-      expect(element.props.name).toBe('greeting');
-    });
-
-    it('should interpolate variables', () => {
-      const source = `
-        <Prompt name="hello">
-          <Task>Say hello to {inputs.name}.</Task>
-        </Prompt>
-      `;
-
-      const element = parsePromptSyntax(source);
-      // Variable placeholders preserved for render-time substitution
-      expect(element).toBeDefined();
-    });
-  });
-  ```
-
 - `test/unit/create-prompt.test.ts`:
   ```typescript
   import { describe, it, expect } from 'vitest';
@@ -2091,8 +2154,6 @@ These components add to `context.postExecution[]` during render.
   describe('createPromptFromSource', () => {
     it('should create element from TSX source', async () => {
       const source = `
-        import { Prompt, Role, Task } from 'pupt-lib';
-
         export default (
           <Prompt name="test">
             <Role>Assistant</Role>
@@ -2103,8 +2164,41 @@ These components add to `context.postExecution[]` during render.
 
       const element = await createPromptFromSource(source, 'test.tsx');
 
-      expect(element.type).toBeDefined();
+      expect(element.type).toBe('Prompt');
       expect(element.props.name).toBe('test');
+    });
+
+    it('should handle simple JSX without wrapper', async () => {
+      const source = `
+        export default (
+          <Prompt name="greeting">
+            <Role>You are a friendly assistant.</Role>
+            <Task>Greet the user.</Task>
+          </Prompt>
+        );
+      `;
+
+      const element = await createPromptFromSource(source, 'greeting.prompt');
+
+      expect(element.type).toBe('Prompt');
+      expect(element.props.name).toBe('greeting');
+    });
+
+    it('should handle TypeScript syntax', async () => {
+      const source = `
+        interface Props { name: string }
+        const config: Props = { name: 'typed-test' };
+
+        export default (
+          <Prompt name={config.name}>
+            <Task>Test</Task>
+          </Prompt>
+        );
+      `;
+
+      const element = await createPromptFromSource(source, 'typed.tsx');
+
+      expect(element.props.name).toBe('typed-test');
     });
   });
 
@@ -2119,11 +2213,11 @@ These components add to `context.postExecution[]` during render.
       rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it('should load and transform TSX file', async () => {
+    it('should load and transform .tsx file', async () => {
       const filePath = join(tmpDir, 'prompt.tsx');
       writeFileSync(filePath, `
         export default (
-          <Prompt name="file-test">
+          <Prompt name="tsx-test">
             <Task>Do something</Task>
           </Prompt>
         );
@@ -2131,7 +2225,24 @@ These components add to `context.postExecution[]` during render.
 
       const element = await createPrompt(filePath);
 
-      expect(element.props.name).toBe('file-test');
+      expect(element.props.name).toBe('tsx-test');
+    });
+
+    it('should load and transform .prompt file (same as .tsx)', async () => {
+      // .prompt files use the EXACT same Babel parser as .tsx
+      const filePath = join(tmpDir, 'greeting.prompt');
+      writeFileSync(filePath, `
+        export default (
+          <Prompt name="prompt-test">
+            <Role>Assistant</Role>
+            <Task>Help user</Task>
+          </Prompt>
+        );
+      `);
+
+      const element = await createPrompt(filePath);
+
+      expect(element.props.name).toBe('prompt-test');
     });
   });
   ```
@@ -2200,7 +2311,6 @@ These components add to `context.postExecution[]` during render.
   }
   ```
 
-- `src/services/prompt-parser.ts`: Simple XML-like parser for .prompt files
 - `src/create-prompt.ts`:
   ```typescript
   import { Transformer } from './services/transformer';

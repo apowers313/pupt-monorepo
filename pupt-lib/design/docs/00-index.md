@@ -69,6 +69,7 @@ A TypeScript library that enables programmatic, composable, OOP-empowered AI pro
 |---|----------|-------------|
 | 13 | [Implementation](13-implementation.md) | Priority order, testing strategy, tooling |
 | 14 | [Future Work](14-future-work.md) | Planned features, resolved design issues |
+| 99 | [Design Gaps](99-design-gaps.md) | Gaps between original design and current docs |
 
 ---
 

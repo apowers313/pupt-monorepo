@@ -14,6 +14,7 @@ concurrency:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   # Lint job runs separately
@@ -38,11 +39,41 @@ jobs:
       - name: Run linter
         run: npm run lint
 
-  # Test jobs run in parallel, each doing their own build
-  test:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  # Build job - runs once, shares artifacts
+  build:
+    name: Build
+    runs-on: ubuntu-latest
     needs: lint
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # Node.js tests - run on multiple OS
+  test-node:
+    name: Test Node (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -62,17 +93,20 @@ jobs:
         env:
           HUSKY: 0
 
-      - name: Build project
-        run: npm run build
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
-      - name: Run unit tests
-        run: npm run test:ci
+      - name: Run Node.js tests
+        run: npm run test:ci:node
 
-  # Separate coverage job that only runs on Ubuntu
-  coverage:
-    name: Coverage
+  # Browser tests - run on Ubuntu only (Playwright)
+  test-browser:
+    name: Test Browser
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,8 +122,70 @@ jobs:
         env:
           HUSKY: 0
 
-      - name: Build project
-        run: npm run build
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright deps (if cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run browser tests
+        run: npm run test:ci:browser
+
+  # Coverage job - runs after all tests pass
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [build, test-node, test-browser]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+        env:
+          HUSKY: 0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Install Playwright deps (if cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: Run tests with coverage
         run: npm run test:coverage
@@ -102,7 +198,7 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [lint, test, coverage]
+    needs: [lint, build, test-node, test-browser, coverage]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
     permissions:
       contents: write

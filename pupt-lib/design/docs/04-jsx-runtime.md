@@ -264,6 +264,16 @@ class SmartFormat extends Component {
 
 ## LLM-Specific Optimization Guidelines
 
+Components use the `env.output.format` setting to adjust their output based on the target LLM:
+
+| LLM | Recommended Format | Notes |
+|-----|-------------------|-------|
+| `claude` | `xml` | Trained with XML tags, better section parsing |
+| `gpt` | `markdown` | Strong markdown understanding, good with headers |
+| `gemini` | `markdown` | Prefers structured markdown |
+| `llama` | `plain` | Simpler formatting often works better |
+| `generic` | `xml` | Safe default with clear structure |
+
 ### Claude (Anthropic)
 
 Claude models were trained with XML tags. pupt-lib outputs XML-delimited sections by default:
