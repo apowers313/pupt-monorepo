@@ -1,11 +1,14 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext } from '../../types';
 
-interface StepsProps {
-  children: PuptNode;
-}
+export const stepsSchema = z.object({}).passthrough();
+
+type StepsProps = z.infer<typeof stepsSchema> & { children: PuptNode };
 
 export class Steps extends Component<StepsProps> {
+  static schema = stepsSchema;
+
   render({ children }: StepsProps, _context: RenderContext): PuptNode {
     const childArray = Array.isArray(children) ? children : [children];
 

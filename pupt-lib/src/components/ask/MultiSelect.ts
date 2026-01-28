@@ -1,6 +1,7 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
 export interface MultiSelectOption {
   value: string;
@@ -8,20 +9,23 @@ export interface MultiSelectOption {
   text?: string;
 }
 
-export interface MultiSelectProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string[];
-  options?: MultiSelectOption[];
-  min?: number;
-  max?: number;
-  children?: PuptNode;
-}
+export const multiSelectOptionSchema = z.object({
+  value: z.string(),
+  label: z.string().optional(),
+}).passthrough();
+
+export const askMultiSelectSchema = askBaseSchema.extend({
+  default: z.array(z.string()).optional(),
+  options: z.array(multiSelectOptionSchema).optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+}).passthrough();
+
+export type MultiSelectProps = z.infer<typeof askMultiSelectSchema> & { children?: PuptNode };
 
 // Named AskMultiSelect for consistent Ask component naming
 export class AskMultiSelect extends Component<MultiSelectProps> {
+  static schema = askMultiSelectSchema;
   render(props: MultiSelectProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -41,8 +45,8 @@ export class AskMultiSelect extends Component<MultiSelectProps> {
     // Merge: children first, then prop options
     const allOptions = [...childOptions, ...propOptions].map((opt) => ({
       value: opt.value,
-      label: opt.label,
-      text: opt.text ?? opt.label,
+      label: opt.label ?? opt.value,
+      text: (opt.text ?? opt.label ?? opt.value) as string,
     }));
 
     const value = context.inputs.get(name) as string[] | undefined;

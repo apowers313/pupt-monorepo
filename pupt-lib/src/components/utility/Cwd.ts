@@ -1,10 +1,14 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface CwdProps {}
+export const cwdSchema = z.object({}).passthrough();
+
+type CwdProps = z.infer<typeof cwdSchema>;
 
 export class Cwd extends Component<CwdProps> {
+  static schema = cwdSchema;
+
   render(_props: CwdProps, _context: RenderContext): PuptNode {
     return process.cwd();
   }

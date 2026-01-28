@@ -1,12 +1,17 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, ReviewFileAction } from '../../types';
 
-interface ReviewFileProps {
-  file: string;
-  editor?: string;
-}
+export const reviewFileSchema = z.object({
+  file: z.string(),
+  editor: z.string().optional(),
+}).passthrough();
+
+type ReviewFileProps = z.infer<typeof reviewFileSchema>;
 
 export class ReviewFile extends Component<ReviewFileProps> {
+  static schema = reviewFileSchema;
+
   render({ file, editor }: ReviewFileProps, context: RenderContext): PuptNode {
     const action: ReviewFileAction = {
       type: 'reviewFile',

@@ -1,20 +1,19 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface NumberProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: number;
-  min?: number;
-  max?: number;
-  children?: PuptNode;
-}
+export const askNumberSchema = askBaseSchema.extend({
+  default: z.number().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+}).passthrough();
+
+export type NumberProps = z.infer<typeof askNumberSchema> & { children?: PuptNode };
 
 // Named AskNumber to avoid collision with JavaScript's Number global
 export class AskNumber extends Component<NumberProps> {
+  static schema = askNumberSchema;
   render(props: NumberProps, context: RenderContext): PuptNode {
     const {
       name,

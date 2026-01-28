@@ -2,7 +2,7 @@
 
 import type { ComponentRegistry } from '../services/component-registry';
 import type { Scope } from '../services/scope';
-import type { PostExecutionAction } from './render';
+import type { PostExecutionAction, RenderError } from './render';
 
 // Browser-safe detection
 const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
@@ -67,6 +67,7 @@ export interface RenderContext {
   scope: Scope | null;
   registry: ComponentRegistry;
   postExecution: PostExecutionAction[];
+  errors: RenderError[];
 }
 
 /**

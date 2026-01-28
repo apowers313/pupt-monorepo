@@ -1,12 +1,16 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-interface TaskProps {
-  delimiter?: 'xml' | 'markdown' | 'none';
-  children: PuptNode;
-}
+export const taskSchema = z.object({
+  delimiter: z.enum(['xml', 'markdown', 'none']).optional(),
+}).passthrough();
+
+type TaskProps = z.infer<typeof taskSchema> & { children: PuptNode };
 
 export class Task extends Component<TaskProps> {
+  static schema = taskSchema;
+
   render({ delimiter = 'xml', children }: TaskProps, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 

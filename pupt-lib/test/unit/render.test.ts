@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { z } from 'zod';
 import { render } from '../../src/render';
 import { jsx, Fragment } from '../../src/jsx-runtime';
 import { Component } from '../../src/component';
 import { createRegistry } from '../../src/services/component-registry';
+
+const emptySchema = z.object({}).passthrough();
 
 describe('render()', () => {
   it('should render string nodes', () => {
@@ -24,7 +27,9 @@ describe('render()', () => {
   });
 
   it('should render Component instances', () => {
+    const greetingSchema = z.object({ name: z.string() }).passthrough();
     class Greeting extends Component<{ name: string }> {
+      static schema = greetingSchema;
       render({ name }) {
         return `Hello, ${name}!`;
       }
@@ -41,6 +46,7 @@ describe('render()', () => {
 
   it('should pass context to components', () => {
     class EnvAware extends Component {
+      static schema = emptySchema;
       render(props, context) {
         return `Model: ${context.env.llm.model}`;
       }
@@ -62,6 +68,7 @@ describe('render()', () => {
 
   it('should render function components via registry', () => {
     const Greeting = ({ name }: { name: string }) => `Hello, ${name}!`;
+    (Greeting as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).passthrough();
 
     const registry = createRegistry();
     registry.register('Greeting', Greeting);
@@ -75,6 +82,7 @@ describe('render()', () => {
 
   it('should look up string types in registry', () => {
     class Hello extends Component<{ children?: string }> {
+      static schema = emptySchema;
       render({ children }) {
         return `Hello, ${children}!`;
       }
@@ -91,6 +99,7 @@ describe('render()', () => {
 
   it('should look up function components in registry', () => {
     const FunctionGreeting = ({ name }: { name: string }) => `Hi, ${name}!`;
+    (FunctionGreeting as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).passthrough();
 
     const registry = createRegistry();
     registry.register('FunctionGreeting', FunctionGreeting);
@@ -132,6 +141,7 @@ describe('render()', () => {
 
   it('should pass inputs to context', () => {
     class InputReader extends Component {
+      static schema = emptySchema;
       render(_props, context) {
         return `Value: ${context.inputs.get('key')}`;
       }
@@ -149,6 +159,7 @@ describe('render()', () => {
 
   it('should accept object inputs and convert to Map', () => {
     class InputReader extends Component {
+      static schema = emptySchema;
       render(_props, context) {
         return `Value: ${context.inputs.get('key')}`;
       }
@@ -178,5 +189,119 @@ describe('render()', () => {
 
     const result = render(invalidElement as Parameters<typeof render>[0]);
     expect(result.text).toBe('');
+  });
+
+  describe('validation', () => {
+    it('should return ok: true for valid component render', () => {
+      const result = render(jsx(Fragment, { children: 'test' }));
+      expect(result.ok).toBe(true);
+    });
+
+    it('should return ok: false with errors for component without schema', () => {
+      class NoSchema extends Component {
+        render() { return 'hello'; }
+      }
+
+      const registry = createRegistry();
+      registry.register('NoSchema', NoSchema);
+
+      const element = jsx(NoSchema, {});
+      const result = render(element, { registry });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].code).toBe('missing_schema');
+        expect(result.errors[0].component).toBe('NoSchema');
+      }
+    });
+
+    it('should return ok: false with errors for invalid props', () => {
+      const testSchema = z.object({ name: z.string() }).passthrough();
+      class Strict extends Component<{ name: string }> {
+        static schema = testSchema;
+        render({ name }) { return `Hello ${name}`; }
+      }
+
+      const registry = createRegistry();
+      registry.register('Strict', Strict);
+
+      const element = jsx(Strict, {} as { name: string });
+      const result = render(element, { registry });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].prop).toBe('name');
+        expect(result.errors[0].component).toBe('Strict');
+      }
+    });
+
+    it('should fall back to rendering children on validation failure', () => {
+      const testSchema = z.object({ name: z.string() }).passthrough();
+      class Strict extends Component<{ name: string }> {
+        static schema = testSchema;
+        render({ name }) { return `Hello ${name}`; }
+      }
+
+      const registry = createRegistry();
+      registry.register('Strict', Strict);
+
+      const element = jsx(Strict, { children: 'fallback content' } as unknown as { name: string });
+      const result = render(element, { registry });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.text).toBe('fallback content');
+      }
+    });
+
+    it('should accumulate errors from nested components', () => {
+      class NoSchema1 extends Component {
+        render() { return 'a'; }
+      }
+      class NoSchema2 extends Component {
+        render() { return 'b'; }
+      }
+
+      const registry = createRegistry();
+      registry.register('NoSchema1', NoSchema1);
+      registry.register('NoSchema2', NoSchema2);
+
+      const element = jsx(Fragment, {
+        children: [
+          jsx(NoSchema1, {}),
+          jsx(NoSchema2, {}),
+        ],
+      });
+
+      const result = render(element, { registry });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors).toHaveLength(2);
+        expect(result.errors[0].component).toBe('NoSchema1');
+        expect(result.errors[1].component).toBe('NoSchema2');
+      }
+    });
+
+    it('should capture runtime errors as RenderError', () => {
+      class Throws extends Component {
+        static schema = emptySchema;
+        render() { throw new Error('boom'); }
+      }
+
+      const registry = createRegistry();
+      registry.register('Throws', Throws);
+
+      const element = jsx(Throws, {});
+      const result = render(element, { registry });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors).toHaveLength(1);
+        expect(result.errors[0].code).toBe('runtime_error');
+        expect(result.errors[0].message).toContain('boom');
+      }
+    });
   });
 });

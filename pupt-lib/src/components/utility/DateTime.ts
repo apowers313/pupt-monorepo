@@ -1,11 +1,16 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-interface DateTimeProps {
-  format?: string;
-}
+export const dateTimeSchema = z.object({
+  format: z.string().optional(),
+}).passthrough();
+
+type DateTimeProps = z.infer<typeof dateTimeSchema>;
 
 export class DateTime extends Component<DateTimeProps> {
+  static schema = dateTimeSchema;
+
   render({ format }: DateTimeProps, _context: RenderContext): PuptNode {
     const now = new Date();
 

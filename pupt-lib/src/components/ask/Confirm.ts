@@ -1,18 +1,17 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface ConfirmProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: boolean;
-  children?: PuptNode;
-}
+export const askConfirmSchema = askBaseSchema.extend({
+  default: z.boolean().optional(),
+}).passthrough();
+
+export type ConfirmProps = z.infer<typeof askConfirmSchema> & { children?: PuptNode };
 
 // Named AskConfirm for consistent Ask component naming
 export class AskConfirm extends Component<ConfirmProps> {
+  static schema = askConfirmSchema;
   render(props: ConfirmProps, context: RenderContext): PuptNode {
     const {
       name,

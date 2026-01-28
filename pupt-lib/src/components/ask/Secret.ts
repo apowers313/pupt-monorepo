@@ -1,19 +1,18 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface SecretProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  validator?: string;
-  children?: PuptNode;
-}
+export const askSecretSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  validator: z.string().optional(),
+}).passthrough();
+
+export type SecretProps = z.infer<typeof askSecretSchema> & { children?: PuptNode };
 
 // Named AskSecret for consistent Ask component naming
 export class AskSecret extends Component<SecretProps> {
+  static schema = askSecretSchema;
   render(props: SecretProps, context: RenderContext): PuptNode {
     const {
       name,

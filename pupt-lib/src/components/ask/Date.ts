@@ -1,21 +1,20 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface DateProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  includeTime?: boolean;
-  minDate?: string;
-  maxDate?: string;
-  children?: PuptNode;
-}
+export const askDateSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  includeTime: z.boolean().optional(),
+  minDate: z.string().optional(),
+  maxDate: z.string().optional(),
+}).passthrough();
+
+export type DateProps = z.infer<typeof askDateSchema> & { children?: PuptNode };
 
 // Named AskDate to avoid collision with JavaScript's Date global
 export class AskDate extends Component<DateProps> {
+  static schema = askDateSchema;
   render(props: DateProps, context: RenderContext): PuptNode {
     const {
       name,

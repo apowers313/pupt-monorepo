@@ -1,19 +1,18 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface EditorProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  language?: string;
-  children?: PuptNode;
-}
+export const askEditorSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  language: z.string().optional(),
+}).passthrough();
+
+export type EditorProps = z.infer<typeof askEditorSchema> & { children?: PuptNode };
 
 // Named AskEditor for consistent Ask component naming
 export class AskEditor extends Component<EditorProps> {
+  static schema = askEditorSchema;
   render(props: EditorProps, context: RenderContext): PuptNode {
     const {
       name,

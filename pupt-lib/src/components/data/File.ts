@@ -1,13 +1,16 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 import { readFileSync } from 'fs';
 import { extname, basename } from 'path';
 
-interface FileProps {
-  path: string;
-  language?: string;
-  encoding?: BufferEncoding;
-}
+export const fileSchema = z.object({
+  path: z.string(),
+  language: z.string().optional(),
+  encoding: z.string().optional(),
+}).passthrough();
+
+type FileProps = z.infer<typeof fileSchema> & { encoding?: BufferEncoding };
 
 // Map common file extensions to language identifiers
 const EXTENSION_TO_LANGUAGE: Record<string, string> = {
@@ -37,6 +40,8 @@ const EXTENSION_TO_LANGUAGE: Record<string, string> = {
 };
 
 export class File extends Component<FileProps> {
+  static schema = fileSchema;
+
   render({ path, language, encoding = 'utf-8' }: FileProps, _context: RenderContext): PuptNode {
     try {
       const content = readFileSync(path, { encoding });

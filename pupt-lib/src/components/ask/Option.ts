@@ -1,9 +1,12 @@
-import type { PuptNode } from '../../types';
+import { z } from 'zod';
+import { Component } from '../../component';
+import type { PuptNode, RenderContext } from '../../types';
 
-export interface OptionProps {
-  value: string;
-  children?: PuptNode;
-}
+export const askOptionSchema = z.object({
+  value: z.string(),
+}).passthrough();
+
+export type OptionProps = z.infer<typeof askOptionSchema> & { children?: PuptNode };
 
 /**
  * Option component for use within Select/MultiSelect.
@@ -11,9 +14,10 @@ export interface OptionProps {
  * The parent Select/MultiSelect component processes the options.
  */
 // Named AskOption for consistent Ask component naming
-export function AskOption(props: unknown): PuptNode {
-  // Options don't render directly - they're collected by parent Select
-  // Props are available as OptionProps if needed
-  void props;
-  return null;
+export class AskOption extends Component<OptionProps> {
+  static schema = askOptionSchema;
+  render(_props: OptionProps, _context: RenderContext): PuptNode {
+    // Options don't render directly - they're collected by parent Select
+    return null;
+  }
 }

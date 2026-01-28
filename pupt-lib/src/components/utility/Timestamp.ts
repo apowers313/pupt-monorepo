@@ -1,10 +1,14 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface TimestampProps {}
+export const timestampSchema = z.object({}).passthrough();
+
+type TimestampProps = z.infer<typeof timestampSchema>;
 
 export class Timestamp extends Component<TimestampProps> {
+  static schema = timestampSchema;
+
   render(_props: TimestampProps, _context: RenderContext): PuptNode {
     // Return Unix timestamp in seconds
     return String(Math.floor(Date.now() / 1000));

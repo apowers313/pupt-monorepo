@@ -17,13 +17,49 @@ export interface RenderOptions {
 }
 
 /**
- * Result of rendering a prompt
+ * A validation or runtime error encountered during rendering
  */
-export interface RenderResult {
+export interface RenderError {
+  /** Component class name or registry name, e.g. "Section" */
+  component: string;
+  /** The specific prop that failed validation, or null for cross-field/runtime errors */
+  prop: string | null;
+  /** Human-readable error message */
+  message: string;
+  /** Error code (Zod issue code or 'runtime_error' / 'missing_schema') */
+  code: string;
+  /** Path within the props object */
+  path: (string | number)[];
+  /** The value that was received */
+  received?: unknown;
+  /** The expected type or constraint */
+  expected?: string;
+}
+
+/**
+ * Successful render result — no validation errors
+ */
+export interface RenderSuccess {
+  ok: true;
   text: string;
-  metadata?: RenderMetadata;
   postExecution: PostExecutionAction[];
 }
+
+/**
+ * Failed render result — contains validation errors and best-effort output
+ */
+export interface RenderFailure {
+  ok: false;
+  /** Best-effort rendered output (children rendered as fallback for invalid components) */
+  text: string;
+  errors: RenderError[];
+  postExecution: PostExecutionAction[];
+}
+
+/**
+ * Result of rendering a prompt — discriminated union on `ok`
+ */
+export type RenderResult = RenderSuccess | RenderFailure;
 
 /**
  * Metadata collected during rendering

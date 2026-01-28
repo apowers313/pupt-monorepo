@@ -1,13 +1,17 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-interface FormatProps {
-  type: 'json' | 'markdown' | 'xml' | 'text' | 'code';
-  language?: string;
-  children?: PuptNode;
-}
+export const formatSchema = z.object({
+  type: z.enum(['json', 'markdown', 'xml', 'text', 'code']),
+  language: z.string().optional(),
+}).passthrough();
+
+type FormatProps = z.infer<typeof formatSchema> & { children?: PuptNode };
 
 export class Format extends Component<FormatProps> {
+  static schema = formatSchema;
+
   render({ type, language, children }: FormatProps, _context: RenderContext): PuptNode {
     const formatDescription = language ? `${type} (${language})` : type;
 

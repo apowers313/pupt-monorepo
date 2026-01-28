@@ -179,6 +179,7 @@ export function createInputIterator(
       scope: null,
       registry: defaultRegistry,
       postExecution: [],
+      errors: [],
       __requirements: collected,
     };
 

@@ -1,19 +1,18 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface TextProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  placeholder?: string;
-  children?: PuptNode;
-}
+export const askTextSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  placeholder: z.string().optional(),
+}).passthrough();
+
+export type TextProps = z.infer<typeof askTextSchema> & { children?: PuptNode };
 
 // Named AskText to avoid potential bundler conflicts with common identifiers
 export class AskText extends Component<TextProps> {
+  static schema = askTextSchema;
   render(props: TextProps, context: RenderContext): PuptNode {
     const {
       name,

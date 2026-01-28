@@ -1,24 +1,29 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
 export interface ChoiceOption {
   value: string;
   label: string;
 }
 
-export interface ChoiceProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  options: [ChoiceOption, ChoiceOption];  // Exactly 2 options
-  children?: PuptNode;
-}
+export const choiceOptionSchema = z.object({
+  value: z.string(),
+  label: z.string(),
+  description: z.string().optional(),
+}).passthrough();
+
+export const askChoiceSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  options: z.array(choiceOptionSchema).length(2),
+}).passthrough();
+
+export type ChoiceProps = z.infer<typeof askChoiceSchema> & { children?: PuptNode };
 
 // Named AskChoice for consistent Ask component naming
 export class AskChoice extends Component<ChoiceProps> {
+  static schema = askChoiceSchema;
   render(props: ChoiceProps, context: RenderContext): PuptNode {
     const {
       name,

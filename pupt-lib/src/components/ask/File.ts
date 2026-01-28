@@ -1,21 +1,20 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface FileProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string | string[];
-  extensions?: string[];
-  multiple?: boolean;
-  mustExist?: boolean;
-  includeContents?: boolean;
-  children?: PuptNode;
-}
+export const askFileSchema = askBaseSchema.extend({
+  default: z.union([z.string(), z.array(z.string())]).optional(),
+  extensions: z.array(z.string()).optional(),
+  multiple: z.boolean().optional(),
+  mustExist: z.boolean().optional(),
+  includeContents: z.boolean().optional(),
+}).passthrough();
+
+export type FileProps = z.infer<typeof askFileSchema> & { children?: PuptNode };
 
 export class AskFile extends Component<FileProps> {
+  static schema = askFileSchema;
   render(props: FileProps, context: RenderContext): PuptNode {
     const {
       name,

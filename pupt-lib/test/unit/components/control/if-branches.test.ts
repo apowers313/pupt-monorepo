@@ -9,54 +9,75 @@ import '../../../../src/components';
 
 describe('If branch coverage', () => {
   describe('non-boolean, non-string when values', () => {
-    it('should coerce truthy number to true', () => {
+    it('should produce validation error for number when value', () => {
       const element = jsx(If, {
         when: 1 as unknown as boolean,
         children: 'Visible',
       });
 
       const result = render(element);
-      expect(result.text).toBe('Visible');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0].component).toBe('If');
+        expect(result.errors[0].prop).toBe('when');
+      }
     });
 
-    it('should coerce zero to false', () => {
+    it('should produce validation error for zero when value', () => {
       const element = jsx(If, {
         when: 0 as unknown as boolean,
         children: 'Hidden',
       });
 
       const result = render(element);
-      expect(result.text).toBe('');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0].component).toBe('If');
+      }
     });
 
-    it('should coerce truthy object to true', () => {
+    it('should produce validation error for object when value', () => {
       const element = jsx(If, {
         when: { truthy: true } as unknown as boolean,
         children: 'Visible',
       });
 
       const result = render(element);
-      expect(result.text).toBe('Visible');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0].component).toBe('If');
+      }
     });
 
-    it('should coerce null to false', () => {
+    it('should produce validation error for null when value', () => {
       const element = jsx(If, {
         when: null as unknown as boolean,
         children: 'Hidden',
       });
 
       const result = render(element);
-      expect(result.text).toBe('');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0].component).toBe('If');
+      }
     });
 
-    it('should coerce undefined to false', () => {
+    it('should produce validation error for undefined when value', () => {
       const element = jsx(If, {
         when: undefined as unknown as boolean,
         children: 'Hidden',
       });
 
       const result = render(element);
-      expect(result.text).toBe('');
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.errors.length).toBeGreaterThan(0);
+        expect(result.errors[0].component).toBe('If');
+      }
     });
   });
 

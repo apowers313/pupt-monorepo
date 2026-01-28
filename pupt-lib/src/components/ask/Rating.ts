@@ -1,21 +1,20 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface RatingProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: number;
-  min?: number;
-  max?: number;
-  labels?: Record<number, string>;
-  children?: PuptNode;
-}
+export const askRatingSchema = askBaseSchema.extend({
+  default: z.number().optional(),
+  min: z.number().optional(),
+  max: z.number().optional(),
+  labels: z.record(z.string(), z.string()).optional(),
+}).passthrough();
+
+export type RatingProps = z.infer<typeof askRatingSchema> & { children?: PuptNode };
 
 // Named AskRating for consistent Ask component naming
 export class AskRating extends Component<RatingProps> {
+  static schema = askRatingSchema;
   render(props: RatingProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -54,7 +53,7 @@ export class AskRating extends Component<RatingProps> {
     const selectedValue = value ?? defaultValue;
     if (selectedValue !== undefined) {
       // If there's a label for this value, render it; otherwise render the number
-      const labelText = allLabels[selectedValue];
+      const labelText = (allLabels as Record<number, string>)[selectedValue];
       if (labelText) {
         return `${selectedValue} (${labelText})`;
       }

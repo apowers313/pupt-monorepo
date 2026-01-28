@@ -1,5 +1,6 @@
 // Component base class for pupt-lib
 
+import type { ZodObject, ZodRawShape } from 'zod';
 import type { PuptNode, RenderContext } from './types';
 
 /**
@@ -22,6 +23,9 @@ export const COMPONENT_MARKER = Symbol.for('pupt-lib:component:v1');
  */
 export abstract class Component<Props = Record<string, unknown>> {
   static [COMPONENT_MARKER] = true;
+
+  /** Zod schema for validating component props (excluding children) */
+  static schema: ZodObject<ZodRawShape>;
 
   /**
    * Render the component with the given props and context.

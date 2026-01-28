@@ -29,6 +29,9 @@ export {
 export type {
   RenderOptions,
   RenderResult,
+  RenderSuccess,
+  RenderFailure,
+  RenderError,
   RenderMetadata,
   PostExecutionAction,
   ReviewFileAction,

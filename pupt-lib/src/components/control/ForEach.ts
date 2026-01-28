@@ -1,13 +1,21 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext } from '../../types';
 
-export interface ForEachProps<T = unknown> {
+export const forEachSchema = z.object({
+  items: z.array(z.unknown()),
+  as: z.string(),
+}).passthrough();
+
+export type ForEachProps<T = unknown> = {
   items: T[];
   as: string;
   children?: ((item: T, index: number) => PuptNode) | PuptNode | PuptNode[];
-}
+};
 
 export class ForEach<T = unknown> extends Component<ForEachProps<T>> {
+  static schema = forEachSchema;
+
   render({ items, children }: ForEachProps<T>, _context: RenderContext): PuptNode {
     if (!items || items.length === 0) {
       return null;

@@ -1,4 +1,5 @@
 // Test fixture library for module loading and API tests
+import { z } from 'zod';
 import { Component } from '../../../../src/component';
 import { jsx } from '../../../../src/jsx-runtime';
 import { Prompt, Section, Task } from '../../../../src/components/structural';
@@ -6,18 +7,21 @@ import { AskText } from '../../../../src/components/ask';
 
 // Component exports for hasComponent tests
 export class TestComponent extends Component<{ value?: string; children?: unknown }> {
+  static schema = z.object({ value: z.string().optional() }).passthrough();
   render(props: { value?: string }): string {
     return `Test: ${props.value ?? 'default'}`;
   }
 }
 
 export class SimpleGreeting extends Component<{ name?: string; children?: unknown }> {
+  static schema = z.object({ name: z.string().optional() }).passthrough();
   render(props: { name?: string }): string {
     return `Hello, ${props.name ?? 'World'}!`;
   }
 }
 
 export class SimpleTask extends Component<{ task: string; children?: unknown }> {
+  static schema = z.object({ task: z.string() }).passthrough();
   render(props: { task: string }): string {
     return `Please complete the following task: ${props.task}`;
   }

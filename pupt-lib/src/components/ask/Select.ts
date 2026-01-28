@@ -1,6 +1,7 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
 export interface SelectOption {
   value: string;
@@ -8,18 +9,21 @@ export interface SelectOption {
   text?: string;
 }
 
-export interface SelectProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  options?: SelectOption[];
-  children?: PuptNode;
-}
+export const selectOptionSchema = z.object({
+  value: z.string(),
+  label: z.string().optional(),
+}).passthrough();
+
+export const askSelectSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  options: z.array(selectOptionSchema).optional(),
+}).passthrough();
+
+export type SelectProps = z.infer<typeof askSelectSchema> & { children?: PuptNode };
 
 // Named AskSelect for consistent Ask component naming
 export class AskSelect extends Component<SelectProps> {
+  static schema = askSelectSchema;
   render(props: SelectProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -37,8 +41,8 @@ export class AskSelect extends Component<SelectProps> {
     // Merge: children first, then prop options
     const allOptions = [...childOptions, ...propOptions].map((opt) => ({
       value: opt.value,
-      label: opt.label,
-      text: opt.text ?? opt.label,
+      label: opt.label ?? opt.value,
+      text: (opt.text ?? opt.label ?? opt.value) as string,
     }));
 
     // Check if input was provided
@@ -63,7 +67,7 @@ export class AskSelect extends Component<SelectProps> {
     if (selectedValue !== undefined) {
       const selectedOption = allOptions.find((opt) => opt.value === selectedValue);
       if (selectedOption) {
-        return selectedOption.text ?? selectedOption.label;
+        return String(selectedOption.text ?? selectedOption.label);
       }
       return String(selectedValue);
     }

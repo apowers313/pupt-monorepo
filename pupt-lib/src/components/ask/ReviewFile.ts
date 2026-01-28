@@ -1,17 +1,15 @@
+import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, RenderContext, InputRequirement } from '../../types';
-import { attachRequirement } from './utils';
+import { attachRequirement, askBaseSchema } from './utils';
 
-export interface ReviewFileProps {
-  name: string;
-  label: string;
-  description?: string;
-  required?: boolean;
-  default?: string;
-  extensions?: string[];
-  editor?: string;
-  children?: PuptNode;
-}
+export const askReviewFileSchema = askBaseSchema.extend({
+  default: z.string().optional(),
+  extensions: z.array(z.string()).optional(),
+  editor: z.string().optional(),
+}).passthrough();
+
+export type ReviewFileProps = z.infer<typeof askReviewFileSchema> & { children?: PuptNode };
 
 /**
  * Ask.ReviewFile combines file selection with automatic post-execution review.
@@ -20,6 +18,7 @@ export interface ReviewFileProps {
  *   <PostExecution><ReviewFile input="..." /></PostExecution>
  */
 export class AskReviewFile extends Component<ReviewFileProps> {
+  static schema = askReviewFileSchema;
   render(props: ReviewFileProps, context: RenderContext): PuptNode {
     const {
       name,
