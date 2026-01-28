@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/apowers313/pupt-lib/compare/v1.0.1...v1.0.2) (2026-01-28)
+
+
+### Bug Fixes
+
+* rename components with Ask prefix and add non-interactive input mode ([276ba70](https://github.com/apowers313/pupt-lib/commit/276ba7000ac5a22f36bf58e3b62e205023cfd124))
+
 ## [1.0.1](https://github.com/apowers313/pupt-lib/compare/v1.0.0...v1.0.1) (2026-01-26)
 
 
