@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, Option } from '../../../../src/components/ask';
+import { Ask, AskOption } from '../../../../src/components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
@@ -67,7 +67,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         name: 'items',
         label: 'Items',
         children: [
-          jsx(Option, { value: 'a', label: 'Item A' }),
+          jsx(AskOption, { value: 'a', label: 'Item A' }),
         ],
       });
 
@@ -83,7 +83,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         name: 'items',
         label: 'Items',
         children: [
-          jsx(Option, { value: 'b', children: 'Item B Text' }),
+          jsx(AskOption, { value: 'b', children: 'Item B Text' }),
         ],
       });
 
@@ -99,8 +99,8 @@ describe('Ask.MultiSelect branch coverage', () => {
         name: 'numbers',
         label: 'Numbers',
         children: [
-          jsx(Option, { value: '1', children: 1 }),
-          jsx(Option, { value: '2', children: 2 }),
+          jsx(AskOption, { value: '1', children: 1 }),
+          jsx(AskOption, { value: '2', children: 2 }),
         ],
       });
 
@@ -117,7 +117,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         name: 'items',
         label: 'Items',
         children: [
-          jsx(Option, { value: 'combined', children: ['Part 1', ' - ', 'Part 2'] }),
+          jsx(AskOption, { value: 'combined', children: ['Part 1', ' - ', 'Part 2'] }),
         ],
       });
 
@@ -132,7 +132,7 @@ describe('Ask.MultiSelect branch coverage', () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'single',
         label: 'Single',
-        children: jsx(Option, { value: 'only', children: 'Only Option' }),
+        children: jsx(AskOption, { value: 'only', children: 'Only Option' }),
       });
 
       const iterator = createInputIterator(element);
@@ -151,7 +151,7 @@ describe('Ask.MultiSelect branch coverage', () => {
           123,
           null,
           undefined,
-          jsx(Option, { value: 'real', children: 'Real Option' }),
+          jsx(AskOption, { value: 'real', children: 'Real Option' }),
         ],
       });
 
@@ -223,7 +223,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         name: 'items',
         label: 'Items',
         children: [
-          jsx(Option, {
+          jsx(AskOption, {
             value: 'nested',
             // Children is a nested element (object), not string/number/array
             children: jsx('span', { children: 'nested text' }),
@@ -250,7 +250,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         label: 'Function Options',
         children: [
           // This creates an element with type=Option (the function)
-          jsx(Option, { value: 'funcopt', children: 'Function Option' }),
+          jsx(AskOption, { value: 'funcopt', children: 'Function Option' }),
         ],
       });
 

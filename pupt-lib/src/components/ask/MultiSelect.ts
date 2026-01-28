@@ -20,7 +20,8 @@ export interface MultiSelectProps {
   children?: PuptNode;
 }
 
-export class MultiSelect extends Component<MultiSelectProps> {
+// Named AskMultiSelect for consistent Ask component naming
+export class AskMultiSelect extends Component<MultiSelectProps> {
   render(props: MultiSelectProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -89,8 +90,8 @@ function collectOptionsFromChildren(children: PuptNode): MultiSelectOption[] {
     const element = child as PuptElement;
 
     const isOption =
-      element.type === 'Option' ||
-      (typeof element.type === 'function' && element.type.name === 'Option');
+      element.type === 'AskOption' ||
+      (typeof element.type === 'function' && element.type.name === 'AskOption');
 
     if (isOption) {
       const props = element.props as { value?: string; label?: string; children?: PuptNode };

@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
 import { Ask } from '../../../../src/components/ask';
-import { Label } from '../../../../src/components/ask/Label';
+import { AskLabel } from '../../../../src/components/ask/Label';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
@@ -52,9 +52,9 @@ describe('Ask.Rating branch coverage', () => {
         min: 1,
         max: 5,
         children: [
-          jsx(Label, { value: 1, children: 'Very Unsatisfied' }),
-          jsx(Label, { value: 3, children: 'Neutral' }),
-          jsx(Label, { value: 5, children: 'Very Satisfied' }),
+          jsx(AskLabel, { value: 1, children: 'Very Unsatisfied' }),
+          jsx(AskLabel, { value: 3, children: 'Neutral' }),
+          jsx(AskLabel, { value: 5, children: 'Very Satisfied' }),
         ],
       });
 
@@ -74,8 +74,8 @@ describe('Ask.Rating branch coverage', () => {
         name: 'score',
         label: 'Score',
         children: [
-          jsx(Label, { value: '1', children: 'One' }),
-          jsx(Label, { value: '2', children: 'Two' }),
+          jsx(AskLabel, { value: '1', children: 'One' }),
+          jsx(AskLabel, { value: '2', children: 'Two' }),
         ],
       });
 
@@ -92,7 +92,7 @@ describe('Ask.Rating branch coverage', () => {
         name: 'level',
         label: 'Level',
         children: [
-          jsx(Label, { value: 1, children: 100 }),
+          jsx(AskLabel, { value: 1, children: 100 }),
         ],
       });
 
@@ -108,7 +108,7 @@ describe('Ask.Rating branch coverage', () => {
         name: 'quality',
         label: 'Quality',
         children: [
-          jsx(Label, { value: 5, children: ['Very', ' ', 'Good'] }),
+          jsx(AskLabel, { value: 5, children: ['Very', ' ', 'Good'] }),
         ],
       });
 
@@ -124,8 +124,8 @@ describe('Ask.Rating branch coverage', () => {
         name: 'score',
         label: 'Score',
         children: [
-          jsx(Label, { children: 'No Value' } as { value: number; children: string }),
-          jsx(Label, { value: 1, children: 'Has Value' }),
+          jsx(AskLabel, { children: 'No Value' } as { value: number; children: string }),
+          jsx(AskLabel, { value: 1, children: 'Has Value' }),
         ],
       });
 
@@ -142,8 +142,8 @@ describe('Ask.Rating branch coverage', () => {
         name: 'score',
         label: 'Score',
         children: [
-          jsx(Label, { value: 1 }),  // No children
-          jsx(Label, { value: 2, children: 'Valid' }),
+          jsx(AskLabel, { value: 1 }),  // No children
+          jsx(AskLabel, { value: 2, children: 'Valid' }),
         ],
       });
 
@@ -159,7 +159,7 @@ describe('Ask.Rating branch coverage', () => {
       const element = jsx(Ask.Rating, {
         name: 'single',
         label: 'Single',
-        children: jsx(Label, { value: 5, children: 'Max' }),
+        children: jsx(AskLabel, { value: 5, children: 'Max' }),
       });
 
       const iterator = createInputIterator(element);
@@ -177,7 +177,7 @@ describe('Ask.Rating branch coverage', () => {
           'text',
           123,
           null,
-          jsx(Label, { value: 1, children: 'One' }),
+          jsx(AskLabel, { value: 1, children: 'One' }),
         ],
       });
 
@@ -196,8 +196,8 @@ describe('Ask.Rating branch coverage', () => {
         label: 'Priority',
         labels: { 1: 'Prop Low' },
         children: [
-          jsx(Label, { value: 1, children: 'Child Low' }),
-          jsx(Label, { value: 5, children: 'Child High' }),
+          jsx(AskLabel, { value: 1, children: 'Child Low' }),
+          jsx(AskLabel, { value: 5, children: 'Child High' }),
         ],
       });
 

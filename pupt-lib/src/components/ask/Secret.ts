@@ -12,7 +12,8 @@ export interface SecretProps {
   children?: PuptNode;
 }
 
-export class Secret extends Component<SecretProps> {
+// Named AskSecret for consistent Ask component naming
+export class AskSecret extends Component<SecretProps> {
   render(props: SecretProps, context: RenderContext): PuptNode {
     const {
       name,

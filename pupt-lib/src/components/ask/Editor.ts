@@ -12,7 +12,8 @@ export interface EditorProps {
   children?: PuptNode;
 }
 
-export class Editor extends Component<EditorProps> {
+// Named AskEditor for consistent Ask component naming
+export class AskEditor extends Component<EditorProps> {
   render(props: EditorProps, context: RenderContext): PuptNode {
     const {
       name,

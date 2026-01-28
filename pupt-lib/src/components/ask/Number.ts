@@ -13,7 +13,8 @@ export interface NumberProps {
   children?: PuptNode;
 }
 
-export class Number extends Component<NumberProps> {
+// Named AskNumber to avoid collision with JavaScript's Number global
+export class AskNumber extends Component<NumberProps> {
   render(props: NumberProps, context: RenderContext): PuptNode {
     const {
       name,

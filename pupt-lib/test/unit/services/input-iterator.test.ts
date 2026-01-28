@@ -747,6 +747,228 @@ describe('InputIterator additional validation', () => {
   });
 });
 
+describe('InputIterator pre-supplied values', () => {
+  it('should skip inputs that have pre-supplied values', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name' }),
+        jsx(Ask.Text, { name: 'email', label: 'Email' }),
+        jsx(Ask.Text, { name: 'phone', label: 'Phone' }),
+      ],
+    });
+
+    // Pre-supply name and phone, should only ask for email
+    const iterator = createInputIterator(element, {
+      values: { name: 'Alice', phone: '555-1234' },
+    });
+    iterator.start();
+
+    // Should skip to email (the only non-pre-supplied input)
+    expect(iterator.current()?.name).toBe('email');
+
+    await iterator.submit('alice@example.com');
+    iterator.advance();
+
+    expect(iterator.isDone()).toBe(true);
+
+    // Values should include both pre-supplied and collected
+    const values = iterator.getValues();
+    expect(values.get('name')).toBe('Alice');
+    expect(values.get('email')).toBe('alice@example.com');
+    expect(values.get('phone')).toBe('555-1234');
+  });
+
+  it('should be done immediately if all inputs are pre-supplied', () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name' }),
+        jsx(Ask.Number, { name: 'age', label: 'Age' }),
+      ],
+    });
+
+    const iterator = createInputIterator(element, {
+      values: { name: 'Bob', age: 25 },
+    });
+    iterator.start();
+
+    expect(iterator.isDone()).toBe(true);
+
+    const values = iterator.getValues();
+    expect(values.get('name')).toBe('Bob');
+    expect(values.get('age')).toBe(25);
+  });
+});
+
+describe('InputIterator non-interactive mode', () => {
+  it('should automatically use default values with runNonInteractive()', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name', default: 'DefaultName' }),
+        jsx(Ask.Number, { name: 'count', label: 'Count', default: 10 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('name')).toBe('DefaultName');
+    expect(values.get('count')).toBe(10);
+  });
+
+  it('should throw error when required input has no default (onMissingDefault=error)', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name', required: true }),
+      ],
+    });
+
+    const iterator = createInputIterator(element, { onMissingDefault: 'error' });
+
+    await expect(iterator.runNonInteractive()).rejects.toThrow(
+      'Non-interactive mode: Required input "name" has no default value',
+    );
+  });
+
+  it('should skip inputs without defaults when onMissingDefault=skip', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name', required: true }),
+        jsx(Ask.Number, { name: 'count', label: 'Count', default: 5 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element, { onMissingDefault: 'skip' });
+    const values = await iterator.runNonInteractive();
+
+    // name should not be in values (skipped)
+    expect(values.has('name')).toBe(false);
+    // count should have its default
+    expect(values.get('count')).toBe(5);
+  });
+
+  it('should combine pre-supplied values with defaults in non-interactive mode', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'name', label: 'Name', default: 'DefaultName' }),
+        jsx(Ask.Text, { name: 'email', label: 'Email', default: 'default@example.com' }),
+        jsx(Ask.Number, { name: 'count', label: 'Count', default: 10 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element, {
+      values: { name: 'SuppliedName' },
+    });
+    const values = await iterator.runNonInteractive();
+
+    // name should be the pre-supplied value
+    expect(values.get('name')).toBe('SuppliedName');
+    // email and count should use defaults
+    expect(values.get('email')).toBe('default@example.com');
+    expect(values.get('count')).toBe(10);
+  });
+
+  it('should skip optional inputs without defaults', async () => {
+    const element = jsx(Fragment, {
+      children: [
+        jsx(Ask.Text, { name: 'optional', label: 'Optional', required: false }),
+        jsx(Ask.Number, { name: 'count', label: 'Count', default: 5 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    // optional should not be in values (skipped, no default)
+    expect(values.has('optional')).toBe(false);
+    // count should have its default
+    expect(values.get('count')).toBe(5);
+  });
+
+  it('should handle empty element tree in non-interactive mode', async () => {
+    const element = jsx(Fragment, { children: [] });
+    const iterator = createInputIterator(element);
+
+    const values = await iterator.runNonInteractive();
+    expect(values.size).toBe(0);
+  });
+
+  it('should throw validation error if default value is invalid', async () => {
+    const element = jsx(Ask.Number, {
+      name: 'num',
+      label: 'Number',
+      min: 10,
+      max: 20,
+      default: 5, // Invalid: below min
+    });
+
+    const iterator = createInputIterator(element);
+
+    await expect(iterator.runNonInteractive()).rejects.toThrow(
+      'Non-interactive mode: Validation failed for "num"',
+    );
+  });
+
+  it('should work with select inputs using defaults', async () => {
+    const element = jsx(Ask.Select, {
+      name: 'color',
+      label: 'Color',
+      default: 'blue',
+      options: [
+        { value: 'red', label: 'Red' },
+        { value: 'green', label: 'Green' },
+        { value: 'blue', label: 'Blue' },
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('color')).toBe('blue');
+  });
+
+  it('should work with boolean inputs using defaults', async () => {
+    const element = jsx(Ask.Confirm, {
+      name: 'proceed',
+      label: 'Proceed?',
+      default: true,
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('proceed')).toBe(true);
+  });
+
+  it('should be callable without calling start() first', async () => {
+    const element = jsx(Ask.Text, {
+      name: 'name',
+      label: 'Name',
+      default: 'Test',
+    });
+
+    const iterator = createInputIterator(element);
+    // Don't call start() - runNonInteractive should handle it
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('name')).toBe('Test');
+  });
+
+  it('should be callable after start() has been called', async () => {
+    const element = jsx(Ask.Text, {
+      name: 'name',
+      label: 'Name',
+      default: 'Test',
+    });
+
+    const iterator = createInputIterator(element);
+    iterator.start();
+    // Now call runNonInteractive after start
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('name')).toBe('Test');
+  });
+});
+
 describe('InputIterator path validation (Node.js)', () => {
   it('should validate mustBeDirectory without mustExist', async () => {
     setupTmpDir();

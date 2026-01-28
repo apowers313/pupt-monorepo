@@ -18,7 +18,8 @@ export interface SelectProps {
   children?: PuptNode;
 }
 
-export class Select extends Component<SelectProps> {
+// Named AskSelect for consistent Ask component naming
+export class AskSelect extends Component<SelectProps> {
   render(props: SelectProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -89,8 +90,8 @@ function collectOptionsFromChildren(children: PuptNode): SelectOption[] {
 
     // Check if this is an Option component (by type name or function name)
     const isOption =
-      element.type === 'Option' ||
-      (typeof element.type === 'function' && element.type.name === 'Option');
+      element.type === 'AskOption' ||
+      (typeof element.type === 'function' && element.type.name === 'AskOption');
 
     if (isOption) {
       const props = element.props as { value?: string; label?: string; children?: PuptNode };

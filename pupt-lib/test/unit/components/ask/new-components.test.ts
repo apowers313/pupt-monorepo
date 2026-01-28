@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, Option, Label } from '../../../../src/components/ask';
+import { Ask, AskOption, AskLabel } from '../../../../src/components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
@@ -51,9 +51,9 @@ describe('Ask.MultiSelect', () => {
       name: 'features',
       label: 'Select features',
       children: [
-        jsx(Option, { value: 'auth', children: 'Authentication' }),
-        jsx(Option, { value: 'api', children: 'API' }),
-        jsx(Option, { value: 'db', children: 'Database' }),
+        jsx(AskOption, { value: 'auth', children: 'Authentication' }),
+        jsx(AskOption, { value: 'api', children: 'API' }),
+        jsx(AskOption, { value: 'db', children: 'Database' }),
       ],
     });
 
@@ -69,8 +69,8 @@ describe('Ask.MultiSelect', () => {
       name: 'features',
       label: 'Select features',
       children: [
-        jsx(Option, { value: 'a', children: 'Option A' }),
-        jsx(Option, { value: 'b', children: 'Option B' }),
+        jsx(AskOption, { value: 'a', children: 'Option A' }),
+        jsx(AskOption, { value: 'b', children: 'Option B' }),
       ],
     });
 
@@ -308,15 +308,15 @@ describe('Ask.Rating', () => {
     expect(result.text).toBe('3 (Medium)');
   });
 
-  it('should collect labels from Label children', () => {
+  it('should collect labels from AskLabel children', () => {
     const element = jsx(Ask.Rating, {
       name: 'urgency',
       label: 'Urgency',
       min: 1,
       max: 5,
       children: [
-        jsx(Label, { value: 1, children: 'Low' }),
-        jsx(Label, { value: 5, children: 'Critical' }),
+        jsx(AskLabel, { value: 1, children: 'Low' }),
+        jsx(AskLabel, { value: 5, children: 'Critical' }),
       ],
     });
 

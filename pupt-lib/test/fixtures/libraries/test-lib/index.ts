@@ -2,7 +2,7 @@
 import { Component } from '../../../../src/component';
 import { jsx } from '../../../../src/jsx-runtime';
 import { Prompt, Section, Task } from '../../../../src/components/structural';
-import { Text as AskText } from '../../../../src/components/ask';
+import { AskText } from '../../../../src/components/ask';
 
 // Component exports for hasComponent tests
 export class TestComponent extends Component<{ value?: string; children?: unknown }> {

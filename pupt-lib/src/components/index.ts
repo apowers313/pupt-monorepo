@@ -32,20 +32,20 @@ import { Uses } from './meta';
 
 // Ask components
 import {
-  Option,
-  Label,
-  Text,
-  Number,
-  Select,
-  Confirm,
-  Editor,
-  MultiSelect,
+  AskOption,
+  AskLabel,
+  AskText,
+  AskNumber,
+  AskSelect,
+  AskConfirm,
+  AskEditor,
+  AskMultiSelect,
   AskFile,
-  Path,
+  AskPath,
   AskDate,
-  Secret,
-  Choice,
-  Rating,
+  AskSecret,
+  AskChoice,
+  AskRating,
   AskReviewFile,
 } from './ask';
 
@@ -89,21 +89,21 @@ defaultRegistry.register('Cwd', Cwd);
 // Register meta components
 defaultRegistry.register('Uses', Uses);
 
-// Register Ask components (using function names for registry lookup)
-defaultRegistry.register('Text', Text);
-defaultRegistry.register('Number', Number);
-defaultRegistry.register('Select', Select);
-defaultRegistry.register('Confirm', Confirm);
-defaultRegistry.register('Option', Option);
-defaultRegistry.register('Label', Label);
-defaultRegistry.register('Editor', Editor);
-defaultRegistry.register('MultiSelect', MultiSelect);
+// Register Ask components
+defaultRegistry.register('AskText', AskText);
+defaultRegistry.register('AskNumber', AskNumber);
+defaultRegistry.register('AskSelect', AskSelect);
+defaultRegistry.register('AskConfirm', AskConfirm);
+defaultRegistry.register('AskOption', AskOption);
+defaultRegistry.register('AskLabel', AskLabel);
+defaultRegistry.register('AskEditor', AskEditor);
+defaultRegistry.register('AskMultiSelect', AskMultiSelect);
 defaultRegistry.register('AskFile', AskFile);
-defaultRegistry.register('Path', Path);
+defaultRegistry.register('AskPath', AskPath);
 defaultRegistry.register('AskDate', AskDate);
-defaultRegistry.register('Secret', Secret);
-defaultRegistry.register('Choice', Choice);
-defaultRegistry.register('Rating', Rating);
+defaultRegistry.register('AskSecret', AskSecret);
+defaultRegistry.register('AskChoice', AskChoice);
+defaultRegistry.register('AskRating', AskRating);
 defaultRegistry.register('AskReviewFile', AskReviewFile);
 
 // Register control flow components
@@ -140,20 +140,20 @@ export * from './meta';
 // Re-export ask components with explicit names to avoid File conflict with data
 export {
   Ask,
-  Option,
-  Label,
-  Text,
-  Number,
-  Select,
-  Confirm,
-  Editor,
-  MultiSelect,
+  AskOption,
+  AskLabel,
+  AskText,
+  AskNumber,
+  AskSelect,
+  AskConfirm,
+  AskEditor,
+  AskMultiSelect,
   AskFile,
-  Path,
+  AskPath,
   AskDate,
-  Secret,
-  Choice,
-  Rating,
+  AskSecret,
+  AskChoice,
+  AskRating,
   AskReviewFile,
 } from './ask';
 export { If } from './control/If';

@@ -11,7 +11,8 @@ export interface ConfirmProps {
   children?: PuptNode;
 }
 
-export class Confirm extends Component<ConfirmProps> {
+// Named AskConfirm for consistent Ask component naming
+export class AskConfirm extends Component<ConfirmProps> {
   render(props: ConfirmProps, context: RenderContext): PuptNode {
     const {
       name,

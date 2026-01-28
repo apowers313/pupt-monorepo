@@ -14,7 +14,8 @@ export interface RatingProps {
   children?: PuptNode;
 }
 
-export class Rating extends Component<RatingProps> {
+// Named AskRating for consistent Ask component naming
+export class AskRating extends Component<RatingProps> {
   render(props: RatingProps, context: RenderContext): PuptNode {
     const {
       name,
@@ -79,8 +80,8 @@ function collectLabelsFromChildren(children: PuptNode): Record<number, string> {
     const element = child as PuptElement;
 
     const isLabel =
-      element.type === 'Label' ||
-      (typeof element.type === 'function' && element.type.name === 'Label');
+      element.type === 'AskLabel' ||
+      (typeof element.type === 'function' && element.type.name === 'AskLabel');
 
     if (isLabel) {
       const props = element.props as { value?: number | string; children?: PuptNode };

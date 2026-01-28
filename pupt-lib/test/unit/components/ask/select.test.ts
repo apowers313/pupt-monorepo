@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, Option } from '../../../../src/components/ask';
+import { Ask, AskOption } from '../../../../src/components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
@@ -43,15 +43,15 @@ describe('Ask.Select', () => {
     });
   });
 
-  describe('Option children', () => {
-    it('should collect options from Option children', () => {
+  describe('AskOption children', () => {
+    it('should collect options from AskOption children', () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
         children: [
-          jsx(Option, { value: 'react', children: 'React' }),
-          jsx(Option, { value: 'vue', children: 'Vue' }),
-          jsx(Option, { value: 'angular', children: 'Angular' }),
+          jsx(AskOption, { value: 'react', children: 'React' }),
+          jsx(AskOption, { value: 'vue', children: 'Vue' }),
+          jsx(AskOption, { value: 'angular', children: 'Angular' }),
         ],
       });
 
@@ -66,13 +66,13 @@ describe('Ask.Select', () => {
       expect(req!.options![2]).toEqual({ value: 'angular', label: 'Angular', text: 'Angular' });
     });
 
-    it('should use Option label when provided', () => {
+    it('should use AskOption label when provided', () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority level',
         children: [
-          jsx(Option, { value: 'high', label: 'High (urgent)', children: 'high priority' }),
-          jsx(Option, { value: 'low', label: 'Low (can wait)', children: 'low priority' }),
+          jsx(AskOption, { value: 'high', label: 'High (urgent)', children: 'high priority' }),
+          jsx(AskOption, { value: 'low', label: 'Low (can wait)', children: 'low priority' }),
         ],
       });
 
@@ -92,13 +92,13 @@ describe('Ask.Select', () => {
       });
     });
 
-    it('should render Option children text when selected', () => {
+    it('should render AskOption children text when selected', () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority level',
         children: [
-          jsx(Option, { value: 'high', label: 'High (urgent)', children: 'high priority' }),
-          jsx(Option, { value: 'low', label: 'Low (can wait)', children: 'low priority' }),
+          jsx(AskOption, { value: 'high', label: 'High (urgent)', children: 'high priority' }),
+          jsx(AskOption, { value: 'low', label: 'Low (can wait)', children: 'low priority' }),
         ],
       });
 
@@ -114,8 +114,8 @@ describe('Ask.Select', () => {
         name: 'color',
         label: 'Pick color',
         children: [
-          jsx(Option, { value: 'red' }),
-          jsx(Option, { value: 'blue' }),
+          jsx(AskOption, { value: 'red' }),
+          jsx(AskOption, { value: 'blue' }),
         ],
       });
 
@@ -126,15 +126,15 @@ describe('Ask.Select', () => {
       expect(req!.options![0]).toEqual({ value: 'red', label: 'red', text: 'red' });
     });
 
-    it('should ignore non-Option children', () => {
+    it('should ignore non-AskOption children', () => {
       const element = jsx(Ask.Select, {
         name: 'color',
         label: 'Pick color',
         children: [
           'Some text that should be ignored',
-          jsx(Option, { value: 'red', children: 'Red' }),
+          jsx(AskOption, { value: 'red', children: 'Red' }),
           null,
-          jsx(Option, { value: 'blue', children: 'Blue' }),
+          jsx(AskOption, { value: 'blue', children: 'Blue' }),
         ],
       });
 
@@ -147,7 +147,7 @@ describe('Ask.Select', () => {
   });
 
   describe('combined options', () => {
-    it('should merge Option children with options prop (children first)', () => {
+    it('should merge AskOption children with options prop (children first)', () => {
       const element = jsx(Ask.Select, {
         name: 'choice',
         label: 'Make a choice',
@@ -155,7 +155,7 @@ describe('Ask.Select', () => {
           { value: 'from-prop', label: 'From Prop' },
         ],
         children: [
-          jsx(Option, { value: 'from-child', children: 'From Child' }),
+          jsx(AskOption, { value: 'from-child', children: 'From Child' }),
         ],
       });
 
@@ -175,8 +175,8 @@ describe('Ask.Select', () => {
         name: 'framework',
         label: 'Choose framework',
         children: [
-          jsx(Option, { value: 'react', children: 'React' }),
-          jsx(Option, { value: 'vue', children: 'Vue' }),
+          jsx(AskOption, { value: 'react', children: 'React' }),
+          jsx(AskOption, { value: 'vue', children: 'Vue' }),
         ],
       });
 
@@ -222,8 +222,8 @@ describe('Ask.Select', () => {
         label: 'Choose framework',
         default: 'react',
         children: [
-          jsx(Option, { value: 'react', children: 'React' }),
-          jsx(Option, { value: 'vue', children: 'Vue' }),
+          jsx(AskOption, { value: 'react', children: 'React' }),
+          jsx(AskOption, { value: 'vue', children: 'Vue' }),
         ],
       });
 

@@ -56,8 +56,9 @@ export { createRegistry, defaultRegistry } from './services/component-registry';
 export type { ComponentRegistry } from './services/component-registry';
 export { Scope, createScope } from './services/scope';
 export { createInputIterator } from './services/input-iterator';
-export type { InputIterator, InputIteratorOptions } from './services/input-iterator';
+export type { InputIterator, InputIteratorOptions, OnMissingDefaultStrategy } from './services/input-iterator';
 export { evaluateFormula } from './services/formula-parser';
+export { Transformer } from './services/transformer';
 
 // Export module loading services
 export { ModuleLoader } from './services/module-loader';
@@ -80,6 +81,10 @@ export type {
 
 // Export built-in components (also registers them with defaultRegistry)
 export * from './components';
+
+// Export prompt creation
+export { createPromptFromSource, createPrompt } from './create-prompt';
+export type { CreatePromptOptions } from './create-prompt';
 
 // Export API
 export { Pupt } from './api';

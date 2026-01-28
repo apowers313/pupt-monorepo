@@ -13,7 +13,8 @@ export interface PathProps {
   children?: PuptNode;
 }
 
-export class Path extends Component<PathProps> {
+// Named AskPath for consistent Ask component naming
+export class AskPath extends Component<PathProps> {
   render(props: PathProps, context: RenderContext): PuptNode {
     const {
       name,

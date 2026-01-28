@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, Option } from '../../../../src/components/ask';
+import { Ask, AskOption } from '../../../../src/components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
@@ -69,7 +69,7 @@ describe('Ask.Select branch coverage', () => {
         name: 'choice',
         label: 'Choice',
         children: [
-          jsx(Option, { value: 'opt1', children: 'Option 1' }),
+          jsx(AskOption, { value: 'opt1', children: 'Option 1' }),
         ],
       });
 
@@ -85,8 +85,8 @@ describe('Ask.Select branch coverage', () => {
         name: 'number',
         label: 'Number',
         children: [
-          jsx(Option, { value: '1', children: 1 }),
-          jsx(Option, { value: '2', children: 2 }),
+          jsx(AskOption, { value: '1', children: 1 }),
+          jsx(AskOption, { value: '2', children: 2 }),
         ],
       });
 
@@ -103,7 +103,7 @@ describe('Ask.Select branch coverage', () => {
         name: 'combined',
         label: 'Combined',
         children: [
-          jsx(Option, { value: 'ab', children: ['Part A', ' and ', 'Part B'] }),
+          jsx(AskOption, { value: 'ab', children: ['Part A', ' and ', 'Part B'] }),
         ],
       });
 
@@ -118,7 +118,7 @@ describe('Ask.Select branch coverage', () => {
       const element = jsx(Ask.Select, {
         name: 'single',
         label: 'Single',
-        children: jsx(Option, { value: 'only', children: 'Only Option' }),
+        children: jsx(AskOption, { value: 'only', children: 'Only Option' }),
       });
 
       const iterator = createInputIterator(element);
@@ -133,7 +133,7 @@ describe('Ask.Select branch coverage', () => {
         name: 'empty',
         label: 'Empty',
         children: [
-          jsx(Option, { value: 'notext', children: [] }),
+          jsx(AskOption, { value: 'notext', children: [] }),
         ],
       });
 
@@ -153,7 +153,7 @@ describe('Ask.Select branch coverage', () => {
         label: 'Filtered',
         children: [
           { notType: 'object' } as unknown,  // Object without 'type'
-          jsx(Option, { value: 'valid', children: 'Valid' }),
+          jsx(AskOption, { value: 'valid', children: 'Valid' }),
         ],
       });
 
@@ -173,7 +173,7 @@ describe('Ask.Select branch coverage', () => {
         name: 'items',
         label: 'Items',
         children: [
-          jsx(Option, {
+          jsx(AskOption, {
             value: 'nested',
             // Children is a nested element (object), not string/number/array
             children: jsx('span', { children: 'nested text' }),
@@ -198,7 +198,7 @@ describe('Ask.Select branch coverage', () => {
         name: 'func',
         label: 'Function Options',
         children: [
-          jsx(Option, { value: 'funcopt', children: 'Function Option' }),
+          jsx(AskOption, { value: 'funcopt', children: 'Function Option' }),
         ],
       });
 

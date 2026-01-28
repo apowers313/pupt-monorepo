@@ -17,7 +17,8 @@ export interface ChoiceProps {
   children?: PuptNode;
 }
 
-export class Choice extends Component<ChoiceProps> {
+// Named AskChoice for consistent Ask component naming
+export class AskChoice extends Component<ChoiceProps> {
   render(props: ChoiceProps, context: RenderContext): PuptNode {
     const {
       name,

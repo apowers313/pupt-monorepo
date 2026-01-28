@@ -1,52 +1,52 @@
 // Export Ask namespace with all input components
-import { Text } from './Text';
-import { Number } from './Number';
-import { Select } from './Select';
-import { Confirm } from './Confirm';
-import { Editor } from './Editor';
-import { MultiSelect } from './MultiSelect';
+import { AskText } from './Text';
+import { AskNumber } from './Number';
+import { AskSelect } from './Select';
+import { AskConfirm } from './Confirm';
+import { AskEditor } from './Editor';
+import { AskMultiSelect } from './MultiSelect';
 import { AskFile } from './File';
-import { Path } from './Path';
+import { AskPath } from './Path';
 import { AskDate } from './Date';
-import { Secret } from './Secret';
-import { Choice } from './Choice';
-import { Rating } from './Rating';
+import { AskSecret } from './Secret';
+import { AskChoice } from './Choice';
+import { AskRating } from './Rating';
 import { AskReviewFile } from './ReviewFile';
-import { Option } from './Option';
-import { Label } from './Label';
-
-export { Option, Label };
+import { AskOption } from './Option';
+import { AskLabel } from './Label';
 
 // Create the Ask namespace object
 export const Ask = {
-  Text,
-  Number,
-  Select,
-  Confirm,
-  Editor,
-  MultiSelect,
+  Text: AskText,
+  Number: AskNumber,
+  Select: AskSelect,
+  Confirm: AskConfirm,
+  Editor: AskEditor,
+  MultiSelect: AskMultiSelect,
   File: AskFile,
-  Path,
+  Path: AskPath,
   Date: AskDate,
-  Secret,
-  Choice,
-  Rating,
+  Secret: AskSecret,
+  Choice: AskChoice,
+  Rating: AskRating,
   ReviewFile: AskReviewFile,
 };
 
 // Export individual components for tree shaking
 export {
-  Text,
-  Number,
-  Select,
-  Confirm,
-  Editor,
-  MultiSelect,
+  AskText,
+  AskNumber,
+  AskSelect,
+  AskConfirm,
+  AskEditor,
+  AskMultiSelect,
   AskFile,
-  Path,
+  AskPath,
   AskDate,
-  Secret,
-  Choice,
-  Rating,
+  AskSecret,
+  AskChoice,
+  AskRating,
   AskReviewFile,
+  AskOption,
+  AskLabel,
 };

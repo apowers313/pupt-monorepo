@@ -12,7 +12,8 @@ export interface TextProps {
   children?: PuptNode;
 }
 
-export class Text extends Component<TextProps> {
+// Named AskText to avoid potential bundler conflicts with common identifiers
+export class AskText extends Component<TextProps> {
   render(props: TextProps, context: RenderContext): PuptNode {
     const {
       name,

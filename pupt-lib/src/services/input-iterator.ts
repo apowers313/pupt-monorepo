@@ -51,10 +51,32 @@ async function getFilesystemHelpers(): Promise<FilesystemHelpers | null> {
   }
 }
 
+/**
+ * Strategy for handling inputs without defaults in non-interactive mode
+ */
+export type OnMissingDefaultStrategy = 'error' | 'skip';
+
 export interface InputIteratorOptions {
   validateOnSubmit?: boolean;
   /** Override environment detection. Useful for testing. */
   environment?: RuntimeEnvironment;
+  /**
+   * Pre-supply input values. Inputs with pre-supplied values will be skipped
+   * during iteration (they won't appear as requirements to collect).
+   */
+  values?: Record<string, unknown>;
+  /**
+   * Enable non-interactive mode. When true, inputs are automatically filled
+   * with their default values. Use with `onMissingDefault` to control behavior
+   * when a required input has no default.
+   */
+  nonInteractive?: boolean;
+  /**
+   * Strategy for handling inputs without defaults in non-interactive mode.
+   * - 'error' (default): Throw an error if a required input has no default
+   * - 'skip': Skip inputs without defaults, leaving them undefined
+   */
+  onMissingDefault?: OnMissingDefaultStrategy;
 }
 
 export interface InputIterator {
@@ -64,6 +86,14 @@ export interface InputIterator {
   advance(): void;
   isDone(): boolean;
   getValues(): Map<string, unknown>;
+  /**
+   * Run through all inputs non-interactively using defaults and pre-supplied values.
+   * This is a convenience method that handles the entire iteration loop.
+   *
+   * @throws Error if a required input has no default and onMissingDefault is 'error'
+   * @returns Map of all collected values
+   */
+  runNonInteractive(): Promise<Map<string, unknown>>;
 }
 
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode;
@@ -72,12 +102,72 @@ export function createInputIterator(
   element: PuptElement,
   options: InputIteratorOptions = {},
 ): InputIterator {
-  const { validateOnSubmit = true, environment = detectEnvironment() } = options;
+  const {
+    validateOnSubmit = true,
+    environment = detectEnvironment(),
+    values: preSuppliedValues = {},
+    nonInteractive = false,
+    onMissingDefault = 'error',
+  } = options;
 
   let state: IteratorState = 'NOT_STARTED';
   const values = new Map<string, unknown>();
   let requirements: InputRequirement[] = [];
   let currentIndex = 0;
+
+  // Pre-populate values with pre-supplied values
+  for (const [key, value] of Object.entries(preSuppliedValues)) {
+    values.set(key, value);
+  }
+
+  /**
+   * Process inputs non-interactively using defaults.
+   * Called automatically when nonInteractive option is true.
+   */
+  async function processNonInteractively(): Promise<void> {
+    // Collect all requirements first
+    const allReqs = collectRequirements(element);
+
+    for (const req of allReqs) {
+      // Skip if already has a value (pre-supplied)
+      if (values.has(req.name)) {
+        continue;
+      }
+
+      // Determine the value to use
+      let valueToUse: unknown;
+
+      if (req.default !== undefined) {
+        valueToUse = req.default;
+      } else if (req.required) {
+        // Required input with no default
+        if (onMissingDefault === 'error') {
+          throw new Error(
+            `Non-interactive mode: Required input "${req.name}" has no default value. ` +
+            'Either provide a default in the component, pre-supply a value, or use onMissingDefault: \'skip\'.',
+          );
+        }
+        // onMissingDefault === 'skip' - leave undefined
+        continue;
+      } else {
+        // Optional input with no default - skip
+        continue;
+      }
+
+      // Validate the default value
+      if (validateOnSubmit) {
+        const result = await validateInput(req, valueToUse);
+        if (!result.valid) {
+          const errorMessages = result.errors.map(e => e.message).join('; ');
+          throw new Error(
+            `Non-interactive mode: Validation failed for "${req.name}": ${errorMessages}`,
+          );
+        }
+      }
+
+      values.set(req.name, valueToUse);
+    }
+  }
 
   function collectRequirements(node: PuptNode): InputRequirement[] {
     const collected: InputRequirement[] = [];
@@ -96,6 +186,19 @@ export function createInputIterator(
     walkNode(node, context);
 
     return collected;
+  }
+
+  /**
+   * Find the next requirement index that doesn't have a value yet.
+   * This handles both pre-supplied values and previously collected values.
+   */
+  function findNextUnfilledIndex(reqs: InputRequirement[], startIndex: number): number {
+    for (let i = startIndex; i < reqs.length; i++) {
+      if (!values.has(reqs[i].name)) {
+        return i;
+      }
+    }
+    return reqs.length; // All filled
   }
 
   function walkNode(
@@ -522,8 +625,22 @@ export function createInputIterator(
       if (state !== 'NOT_STARTED') {
         throw new Error('Iterator already started.');
       }
+
+      // In non-interactive mode, we process everything upfront
+      // Note: processNonInteractively() is async, but start() is sync.
+      // If nonInteractive is true, use runNonInteractive() instead.
+      if (nonInteractive) {
+        // Mark as started but immediately done - user should use runNonInteractive()
+        // or getValues() after awaiting the processing
+        state = 'DONE';
+        return;
+      }
+
       requirements = collectRequirements(element);
-      state = requirements.length > 0 ? 'ITERATING' : 'DONE';
+
+      // Find the first requirement that doesn't have a pre-supplied value
+      currentIndex = findNextUnfilledIndex(requirements, 0);
+      state = currentIndex < requirements.length ? 'ITERATING' : 'DONE';
     },
 
     current() {
@@ -578,11 +695,11 @@ export function createInputIterator(
         throw new Error('Iterator is done. Nothing to advance.');
       }
 
-      currentIndex++;
-
       // Re-collect requirements with new values (for conditionals)
       requirements = collectRequirements(element);
 
+      // Find the next requirement that doesn't have a value yet
+      currentIndex = findNextUnfilledIndex(requirements, currentIndex + 1);
       state = currentIndex < requirements.length ? 'ITERATING' : 'DONE';
     },
 
@@ -592,6 +709,16 @@ export function createInputIterator(
 
     getValues() {
       return new Map(values);
+    },
+
+    async runNonInteractive(): Promise<Map<string, unknown>> {
+      // Process all inputs using defaults and pre-supplied values
+      await processNonInteractively();
+
+      // Mark as done since all inputs are processed
+      state = 'DONE';
+
+      return this.getValues();
     },
   };
 }
