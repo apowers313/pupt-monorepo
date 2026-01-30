@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/apowers313/pupt-lib/compare/v1.0.2...v1.1.0) (2026-01-28)
+
+
+### Features
+
+* add zod prop validation for all components ([eaefecd](https://github.com/apowers313/pupt-lib/commit/eaefecd860ecfdac9ab86b0e5b06a4dc4058eac2))
+
 ## [1.0.2](https://github.com/apowers313/pupt-lib/compare/v1.0.1...v1.0.2) (2026-01-28)
 
 
