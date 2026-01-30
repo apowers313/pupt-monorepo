@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/apowers313/pupt-lib/compare/v1.1.0...v1.1.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* fix imports for .tsx files ([215c056](https://github.com/apowers313/pupt-lib/commit/215c05634dc4edf9116fcc5009eb3ffa8da39a24))
+
 # [1.1.0](https://github.com/apowers313/pupt-lib/compare/v1.0.2...v1.1.0) (2026-01-28)
 
 
