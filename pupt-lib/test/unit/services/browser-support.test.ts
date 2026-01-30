@@ -255,6 +255,22 @@ describe('generatePuptLibImportMap', () => {
     expect(importMap.imports['zod']).toBe('https://esm.sh/zod@3.20.0');
   });
 
+  it('should include minisearch dependency', () => {
+    const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
+
+    expect(importMap.imports['minisearch']).toBeDefined();
+    expect(importMap.imports['minisearch']).toContain('minisearch@');
+  });
+
+  it('should use custom minisearch version when provided', () => {
+    const importMap = generatePuptLibImportMap({
+      puptLibVersion: '1.1.0',
+      minisearchVersion: '6.0.0',
+    });
+
+    expect(importMap.imports['minisearch']).toBe('https://esm.sh/minisearch@6.0.0');
+  });
+
   it('should support different CDN providers', () => {
     const importMap = generatePuptLibImportMap({
       puptLibVersion: '1.1.0',
@@ -304,6 +320,7 @@ describe('generatePuptLibImportMapScript', () => {
     expect(html).toContain('"pupt-lib"');
     expect(html).toContain('"pupt-lib/jsx-runtime"');
     expect(html).toContain('"zod"');
+    expect(html).toContain('"minisearch"');
   });
 
   it('should generate valid embeddable HTML', () => {

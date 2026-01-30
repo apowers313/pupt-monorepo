@@ -192,6 +192,8 @@ export interface PuptLibImportMapOptions {
   puptLibVersion?: string;
   /** zod version (default: '3.24.2') */
   zodVersion?: string;
+  /** minisearch version (default: '7.2.0') */
+  minisearchVersion?: string;
   /** Additional dependencies to include */
   additionalDependencies?: Dependency[];
 }
@@ -203,6 +205,12 @@ export interface PuptLibImportMapOptions {
 const DEFAULT_ZOD_VERSION = '3.24.2';
 
 /**
+ * Default minisearch version that works with pupt-lib.
+ * This matches the version used in pupt-lib's dependencies.
+ */
+const DEFAULT_MINISEARCH_VERSION = '7.2.0';
+
+/**
  * Generate an import map for browser usage of pupt-lib.
  *
  * This creates the minimal import map required to use `createPromptFromSource`
@@ -210,6 +218,7 @@ const DEFAULT_ZOD_VERSION = '3.24.2';
  * - pupt-lib main entry
  * - pupt-lib/jsx-runtime subpath
  * - zod (required peer dependency)
+ * - minisearch (required for search functionality)
  *
  * @param options - Configuration options
  * @returns An ImportMap object ready to be serialized
@@ -242,7 +251,8 @@ const DEFAULT_ZOD_VERSION = '3.24.2';
  *     "imports": {
  *       "pupt-lib": "https://esm.sh/pupt-lib@1.1.0",
  *       "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime",
- *       "zod": "https://esm.sh/zod@3.24.2"
+ *       "zod": "https://esm.sh/zod@3.24.2",
+ *       "minisearch": "https://esm.sh/minisearch@7.2.0"
  *     }
  *   }
  * </script>
@@ -256,6 +266,7 @@ export function generatePuptLibImportMap(
     cdnTemplate,
     puptLibVersion = 'latest',
     zodVersion = DEFAULT_ZOD_VERSION,
+    minisearchVersion = DEFAULT_MINISEARCH_VERSION,
     additionalDependencies = [],
   } = options;
 
@@ -274,6 +285,9 @@ export function generatePuptLibImportMap(
 
   // zod is a required dependency
   imports['zod'] = resolveCdn('zod', zodVersion, cdnOptions);
+
+  // minisearch is required for search functionality
+  imports['minisearch'] = resolveCdn('minisearch', minisearchVersion, cdnOptions);
 
   // Add any additional dependencies
   for (const dep of additionalDependencies) {
