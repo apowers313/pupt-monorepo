@@ -1,6 +1,62 @@
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
+// Browser-safe detection
+const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+
+// Node.js module type definitions
+type PathModule = typeof import('path');
+type FsModule = typeof import('fs');
+type OsModule = typeof import('os');
+
+// Module references - these are set up lazily or can be injected for testing
+let pathModule: PathModule | null = null;
+let fsModule: FsModule | null = null;
+let osModule: OsModule | null = null;
+
+/**
+ * Get the Node.js modules. Lazily loads them on first use.
+ * Throws if called in browser environment.
+ */
+function getNodeModules(): { path: PathModule; fs: FsModule; os: OsModule } {
+  if (isBrowser) {
+    throw new Error('FileSearchEngine is not available in browser environments');
+  }
+
+  // Lazily load modules on first use
+  if (!pathModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    pathModule = require('path');
+  }
+  if (!fsModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    fsModule = require('fs');
+  }
+  if (!osModule) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    osModule = require('os');
+  }
+
+  // Non-null assertion is safe here because we've just loaded the modules
+  return { path: pathModule!, fs: fsModule!, os: osModule! };
+}
+
+/**
+ * Inject mock modules for testing. Only use in test environments.
+ * @internal
+ */
+export function _injectModulesForTesting(mocks: { path?: PathModule; fs?: FsModule; os?: OsModule }): void {
+  if (mocks.path) pathModule = mocks.path;
+  if (mocks.fs) fsModule = mocks.fs;
+  if (mocks.os) osModule = mocks.os;
+}
+
+/**
+ * Reset injected modules. Only use in test environments.
+ * @internal
+ */
+export function _resetModulesForTesting(): void {
+  pathModule = null;
+  fsModule = null;
+  osModule = null;
+}
 
 /**
  * Information about a file or directory
@@ -47,6 +103,9 @@ export interface FileSearchEngineConfig {
 /**
  * File search engine with fuzzy matching and caching.
  * Provides real-time directory navigation and file selection.
+ *
+ * Note: This class is only available in Node.js environments.
+ * It will throw an error if instantiated in a browser.
  */
 export class FileSearchEngine {
   private basePath: string;
@@ -57,6 +116,9 @@ export class FileSearchEngine {
   private maxCacheEntries: number;
 
   constructor(config: FileSearchEngineConfig = {}) {
+    // Get Node.js modules (throws in browser)
+    const { path } = getNodeModules();
+
     this.basePath = path.resolve(config.basePath ?? '.');
     this.filter = config.filter;
     this.cacheTimeout = config.cacheTimeout ?? 5000;
@@ -135,6 +197,8 @@ export class FileSearchEngine {
   normalizePathInput(input: string): string {
     if (!input) return '';
 
+    const { path, os } = getNodeModules();
+
     // Handle home directory expansion
     if (input.startsWith('~')) {
       input = input.replace(/^~/, os.homedir());
@@ -155,6 +219,7 @@ export class FileSearchEngine {
    * @returns Absolute path
    */
   resolveToAbsolutePath(input: string): string {
+    const { path } = getNodeModules();
     const normalized = this.normalizePathInput(input);
     return path.resolve(this.basePath, normalized);
   }
@@ -206,12 +271,14 @@ export class FileSearchEngine {
    * @param basePath - New base path
    */
   setBasePath(basePath: string): void {
+    const { path } = getNodeModules();
     this.basePath = path.resolve(basePath);
     this.clearCache();
   }
 
   private async getCandidatePaths(searchPath: string, signal?: AbortSignal): Promise<FileInfo[]> {
-    const resolvedPath = path.resolve(this.basePath, searchPath);
+    const { path: pathMod, fs: fsMod } = getNodeModules();
+    const resolvedPath = pathMod.resolve(this.basePath, searchPath);
 
     // Check cache
     const cached = this.getFromCache(resolvedPath);
@@ -224,7 +291,7 @@ export class FileSearchEngine {
         return [];
       }
 
-      const entries = fs.readdirSync(resolvedPath);
+      const entries = fsMod.readdirSync(resolvedPath);
 
       if (signal?.aborted) {
         return [];
@@ -238,14 +305,14 @@ export class FileSearchEngine {
           continue;
         }
 
-        const absolutePath = path.join(resolvedPath, entry);
+        const absolutePath = pathMod.join(resolvedPath, entry);
 
         try {
-          const stat = fs.statSync(absolutePath);
+          const stat = fsMod.statSync(absolutePath);
 
           // Apply filter if configured
           if (this.filter && !stat.isDirectory()) {
-            const ext = path.extname(entry);
+            const ext = pathMod.extname(entry);
             if (!this.matchesFilter(entry, ext)) {
               continue;
             }
@@ -254,7 +321,7 @@ export class FileSearchEngine {
           fileInfos.push({
             name: entry,
             absolutePath,
-            relativePath: path.relative(this.basePath, absolutePath),
+            relativePath: pathMod.relative(this.basePath, absolutePath),
             isDirectory: stat.isDirectory(),
             modTime: stat.mtime,
           });

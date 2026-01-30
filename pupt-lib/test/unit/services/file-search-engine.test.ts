@@ -1,21 +1,27 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import type { Dirent, Stats } from 'fs';
 import {
   FileSearchEngine,
   createFileSearchEngine,
   type FileInfo,
+  _injectModulesForTesting,
+  _resetModulesForTesting,
 } from '../../../src/services/file-search-engine';
-
-// Mock fs module
-vi.mock('fs', () => ({
-  readdirSync: vi.fn(),
-  statSync: vi.fn(),
-}));
 
 describe('FileSearchEngine', () => {
   let engine: FileSearchEngine;
+
+  // Mock fs functions
+  const mockReaddirSync = vi.fn();
+  const mockStatSync = vi.fn();
+
+  // Create mock fs module
+  const mockFs = {
+    readdirSync: mockReaddirSync,
+    statSync: mockStatSync,
+  } as unknown as typeof import('fs');
 
   const mockFiles = [
     { name: 'design', isDirectory: true, modTime: new Date('2024-01-01') },
@@ -26,24 +32,27 @@ describe('FileSearchEngine', () => {
   ];
 
   function setupMocks(files = mockFiles) {
-    vi.mocked(fs.readdirSync).mockReturnValue(files.map(f => f.name) as unknown as fs.Dirent[]);
-    vi.mocked(fs.statSync).mockImplementation((filePath) => {
+    mockReaddirSync.mockReturnValue(files.map(f => f.name));
+    mockStatSync.mockImplementation((filePath) => {
       const name = path.basename(filePath as string);
       const file = files.find(f => f.name === name);
       return {
         isDirectory: () => file?.isDirectory ?? false,
         mtime: file?.modTime ?? new Date(),
-      } as fs.Stats;
+      };
     });
   }
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Inject mock modules before creating engine
+    _injectModulesForTesting({ path, fs: mockFs, os });
     engine = new FileSearchEngine();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    _resetModulesForTesting();
   });
 
   describe('constructor', () => {
@@ -131,21 +140,21 @@ describe('FileSearchEngine', () => {
         { name: 'phase2.md', isDirectory: false, modTime: new Date() },
       ];
 
-      vi.mocked(fs.readdirSync).mockImplementation((dirPath) => {
+      mockReaddirSync.mockImplementation((dirPath) => {
         if ((dirPath as string).includes('design')) {
-          return designFiles.map(f => f.name) as unknown as fs.Dirent[];
+          return designFiles.map(f => f.name) as unknown as Dirent[];
         }
-        return mockFiles.map(f => f.name) as unknown as fs.Dirent[];
+        return mockFiles.map(f => f.name) as unknown as Dirent[];
       });
 
-      vi.mocked(fs.statSync).mockImplementation((filePath) => {
+      mockStatSync.mockImplementation((filePath) => {
         const name = path.basename(filePath as string);
         const allFiles = [...mockFiles, ...designFiles];
         const file = allFiles.find(f => f.name === name);
         return {
           isDirectory: () => file?.isDirectory ?? false,
           mtime: file?.modTime ?? new Date(),
-        } as fs.Stats;
+        } as Stats;
       });
 
       const results = await engine.search('design/ph');
@@ -155,7 +164,7 @@ describe('FileSearchEngine', () => {
     });
 
     it('should return empty array for non-existent directory', async () => {
-      vi.mocked(fs.readdirSync).mockImplementation(() => {
+      mockReaddirSync.mockImplementation(() => {
         throw new Error('ENOENT');
       });
 
@@ -391,23 +400,23 @@ describe('FileSearchEngine', () => {
 
       // First call
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
 
       // Second call should use cache
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
     });
 
     it('should clear cache', async () => {
       setupMocks();
 
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
 
       engine.clearCache();
 
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(2);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(2);
     });
 
     it('should invalidate cache after timeout', async () => {
@@ -415,13 +424,13 @@ describe('FileSearchEngine', () => {
       setupMocks();
 
       await shortCacheEngine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
 
       // Wait for cache to expire
       await new Promise(resolve => setTimeout(resolve, 20));
 
       await shortCacheEngine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(2);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -430,14 +439,14 @@ describe('FileSearchEngine', () => {
       setupMocks();
 
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
 
       engine.setBasePath('/tmp');
       expect(engine.getBasePath()).toBe(path.resolve('/tmp'));
 
       // Cache should be cleared, so next search should call readdirSync
       await engine.search('');
-      expect(fs.readdirSync).toHaveBeenCalledTimes(2);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -547,15 +556,15 @@ describe('FileSearchEngine', () => {
       const smallCacheEngine = new FileSearchEngine({ maxCacheEntries: 2 });
 
       // Mock different directories
-      vi.mocked(fs.readdirSync).mockImplementation((dirPath) => {
+      mockReaddirSync.mockImplementation((dirPath) => {
         const dir = path.basename(dirPath as string);
-        return [`file-in-${dir}.txt`] as unknown as fs.Dirent[];
+        return [`file-in-${dir}.txt`] as unknown as Dirent[];
       });
 
-      vi.mocked(fs.statSync).mockReturnValue({
+      mockStatSync.mockReturnValue({
         isDirectory: () => false,
         mtime: new Date(),
-      } as fs.Stats);
+      } as Stats);
 
       // Fill cache with 2 entries
       await smallCacheEngine.search('dir1/');
@@ -565,10 +574,10 @@ describe('FileSearchEngine', () => {
       await smallCacheEngine.search('dir3/');
 
       // Verify we called readdir for all 3 directories
-      expect(fs.readdirSync).toHaveBeenCalledTimes(3);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(3);
 
       // Clear mocks and search again - dir1 should have been evicted
-      vi.mocked(fs.readdirSync).mockClear();
+      mockReaddirSync.mockClear();
 
       // dir2 and dir3 should still be cached
       await smallCacheEngine.search('dir2/');
@@ -578,15 +587,15 @@ describe('FileSearchEngine', () => {
       await smallCacheEngine.search('dir1/');
 
       // Only dir1 should have caused a new readdirSync call
-      expect(fs.readdirSync).toHaveBeenCalledTimes(1);
+      expect(mockReaddirSync).toHaveBeenCalledTimes(1);
     });
   });
 
   describe('error handling', () => {
     it('should skip files that cannot be statted', async () => {
-      vi.mocked(fs.readdirSync).mockReturnValue(['good.txt', 'bad.txt', 'also-good.txt'] as unknown as fs.Dirent[]);
+      mockReaddirSync.mockReturnValue(['good.txt', 'bad.txt', 'also-good.txt'] as unknown as Dirent[]);
 
-      vi.mocked(fs.statSync).mockImplementation((filePath) => {
+      mockStatSync.mockImplementation((filePath) => {
         const name = path.basename(filePath as string);
         if (name === 'bad.txt') {
           throw new Error('Permission denied');
@@ -594,7 +603,7 @@ describe('FileSearchEngine', () => {
         return {
           isDirectory: () => false,
           mtime: new Date(),
-        } as fs.Stats;
+        } as Stats;
       });
 
       const results = await engine.search('');

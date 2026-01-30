@@ -7,6 +7,9 @@ dist/
 # Test coverage
 coverage/
 
+# Browser test failure screenshots
+__screenshots__/
+
 # Logs
 *.log
 npm-debug.log*
