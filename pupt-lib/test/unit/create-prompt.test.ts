@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createPrompt, createPromptFromSource } from '../../src/create-prompt';
+import { createPrompt, createPromptFromSource, CUSTOM_COMPONENTS_GLOBAL } from '../../src/create-prompt';
+import { Component } from '../../src/component';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
+import { z } from 'zod';
+import type { PuptNode, RenderContext } from '../../src/types';
 
 /**
  * Get the type name from an element's type property.
@@ -180,6 +183,129 @@ describe('createPromptFromSource', () => {
     await expect(createPromptFromSource(source, 'test.prompt')).rejects.toThrow(
       /element type is undefined/i,
     );
+  });
+
+  it('should support custom components via options', async () => {
+    // Define a custom component
+    class MyCustomHeader extends Component<{ title: string; children?: PuptNode }> {
+      static schema = z.object({
+        title: z.string(),
+        children: z.any().optional(),
+      });
+
+      render(props: { title: string; children?: PuptNode }, _context: RenderContext): PuptNode {
+        return `=== ${props.title} ===`;
+      }
+    }
+
+    const source = `
+      <Prompt name="custom-test">
+        <MyCustomHeader title="Welcome" />
+        <Task>Help user</Task>
+      </Prompt>
+    `;
+
+    const element = await createPromptFromSource(source, 'test.prompt', {
+      components: {
+        MyCustomHeader,
+      },
+    });
+
+    expect(getTypeName(element.type)).toBe('Prompt');
+    expect(element.children.length).toBe(2);
+    expect(getTypeName(element.children[0].type)).toBe('MyCustomHeader');
+    expect(element.children[0].props.title).toBe('Welcome');
+  });
+
+  it('should support multiple custom components', async () => {
+    class CustomHeader extends Component<{ text: string }> {
+      static schema = z.object({ text: z.string() });
+      render(props: { text: string }): PuptNode {
+        return `# ${props.text}`;
+      }
+    }
+
+    class CustomFooter extends Component<{ text: string }> {
+      static schema = z.object({ text: z.string() });
+      render(props: { text: string }): PuptNode {
+        return `-- ${props.text} --`;
+      }
+    }
+
+    const source = `
+      <Prompt name="multi-custom">
+        <CustomHeader text="Top" />
+        <Task>Middle</Task>
+        <CustomFooter text="Bottom" />
+      </Prompt>
+    `;
+
+    const element = await createPromptFromSource(source, 'test.prompt', {
+      components: {
+        CustomHeader,
+        CustomFooter,
+      },
+    });
+
+    expect(element.children.length).toBe(3);
+    expect(getTypeName(element.children[0].type)).toBe('CustomHeader');
+    expect(getTypeName(element.children[2].type)).toBe('CustomFooter');
+  });
+
+  it('should clean up custom components global after successful evaluation', async () => {
+    class TempComponent extends Component<{ children?: PuptNode }> {
+      static schema = z.object({ children: z.any().optional() });
+      render(props: { children?: PuptNode }): PuptNode {
+        return props.children ?? '';
+      }
+    }
+
+    const source = `
+      <Prompt name="cleanup-test">
+        <TempComponent>Test</TempComponent>
+      </Prompt>
+    `;
+
+    // Before: global should not exist
+    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+
+    await createPromptFromSource(source, 'test.prompt', {
+      components: { TempComponent },
+    });
+
+    // After: global should be cleaned up
+    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+  });
+
+  it('should clean up custom components global even on error', async () => {
+    class ErrorComponent extends Component<Record<string, never>> {
+      static schema = z.object({});
+      render(): PuptNode {
+        throw new Error('Intentional error');
+      }
+    }
+
+    const source = `
+      <Prompt name="error-test">
+        <ErrorComponent />
+      </Prompt>
+    `;
+
+    // Before: global should not exist
+    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+
+    // This will throw because the source has a syntax issue with ErrorComponent
+    // The component is defined but the JSX will fail to evaluate
+    try {
+      await createPromptFromSource(source, 'test.prompt', {
+        components: { ErrorComponent },
+      });
+    } catch {
+      // Expected to throw
+    }
+
+    // After: global should still be cleaned up
+    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
   });
 });
 

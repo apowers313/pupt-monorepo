@@ -4,6 +4,8 @@ import {
   resolveCdn,
   serializeImportMap,
   generateImportMapScript,
+  generatePuptLibImportMap,
+  generatePuptLibImportMapScript,
   type ImportMap,
   type Dependency,
 } from '../../../src/services/browser-support';
@@ -224,6 +226,89 @@ describe('generateImportMapScript', () => {
     const html = generateImportMapScript(deps, { cdn: 'esm.sh' });
 
     // Should start and end correctly for embedding in HTML
+    expect(html.startsWith('<script type="importmap">')).toBe(true);
+    expect(html.endsWith('</script>')).toBe(true);
+  });
+});
+
+describe('generatePuptLibImportMap', () => {
+  it('should generate import map with pupt-lib and jsx-runtime', () => {
+    const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
+
+    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@1.1.0');
+    expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://esm.sh/pupt-lib@1.1.0/jsx-runtime');
+  });
+
+  it('should include zod dependency', () => {
+    const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
+
+    expect(importMap.imports['zod']).toBeDefined();
+    expect(importMap.imports['zod']).toContain('zod@');
+  });
+
+  it('should use custom zod version when provided', () => {
+    const importMap = generatePuptLibImportMap({
+      puptLibVersion: '1.1.0',
+      zodVersion: '3.20.0',
+    });
+
+    expect(importMap.imports['zod']).toBe('https://esm.sh/zod@3.20.0');
+  });
+
+  it('should support different CDN providers', () => {
+    const importMap = generatePuptLibImportMap({
+      puptLibVersion: '1.1.0',
+      cdn: 'unpkg',
+    });
+
+    expect(importMap.imports['pupt-lib']).toBe('https://unpkg.com/pupt-lib@1.1.0');
+    expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://unpkg.com/pupt-lib@1.1.0/jsx-runtime');
+    expect(importMap.imports['zod']).toContain('unpkg.com');
+  });
+
+  it('should support custom CDN template', () => {
+    const importMap = generatePuptLibImportMap({
+      puptLibVersion: '1.1.0',
+      cdnTemplate: 'https://mycdn.example.com/{name}@{version}',
+    });
+
+    expect(importMap.imports['pupt-lib']).toBe('https://mycdn.example.com/pupt-lib@1.1.0');
+  });
+
+  it('should include additional dependencies when provided', () => {
+    const importMap = generatePuptLibImportMap({
+      puptLibVersion: '1.1.0',
+      additionalDependencies: [
+        { name: 'my-component-lib', version: '2.0.0' },
+        { name: '@org/utils', version: '1.0.0' },
+      ],
+    });
+
+    expect(importMap.imports['my-component-lib']).toBe('https://esm.sh/my-component-lib@2.0.0');
+    expect(importMap.imports['@org/utils']).toBe('https://esm.sh/@org/utils@1.0.0');
+  });
+
+  it('should use "latest" as default version', () => {
+    const importMap = generatePuptLibImportMap({});
+
+    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@latest');
+  });
+});
+
+describe('generatePuptLibImportMapScript', () => {
+  it('should generate HTML script tag with pupt-lib import map', () => {
+    const html = generatePuptLibImportMapScript({ puptLibVersion: '1.1.0' });
+
+    expect(html).toContain('<script type="importmap">');
+    expect(html).toContain('</script>');
+    expect(html).toContain('"pupt-lib"');
+    expect(html).toContain('"pupt-lib/jsx-runtime"');
+    expect(html).toContain('"zod"');
+  });
+
+  it('should generate valid embeddable HTML', () => {
+    const html = generatePuptLibImportMapScript({ puptLibVersion: '1.1.0' });
+
     expect(html.startsWith('<script type="importmap">')).toBe(true);
     expect(html.endsWith('</script>')).toBe(true);
   });

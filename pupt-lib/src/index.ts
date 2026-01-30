@@ -47,6 +47,7 @@ export {
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  ensureRuntimeCacheReady,
 } from './types';
 
 // Export Component base class
@@ -75,12 +76,15 @@ export {
   generateImportMap,
   serializeImportMap,
   generateImportMapScript,
+  generatePuptLibImportMap,
+  generatePuptLibImportMapScript,
 } from './services/browser-support';
 export type {
   CdnProvider,
   CdnOptions,
   Dependency,
   ImportMap,
+  PuptLibImportMapOptions,
 } from './services/browser-support';
 
 // Export built-in components

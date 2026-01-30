@@ -1,8 +1,11 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import {
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  ensureRuntimeCacheReady,
   llmConfigSchema,
   outputConfigSchema,
   codeConfigSchema,
@@ -306,7 +309,8 @@ describe('Zod Schema Validation', () => {
 
     it('should reject invalid format through validation', () => {
       expect(() => createEnvironment({
-        output: { format: 'invalid' as any, trim: true, indent: '' },
+        // @ts-expect-error Testing invalid value
+        output: { format: 'invalid', trim: true, indent: '' },
       })).toThrow();
     });
 
@@ -315,5 +319,55 @@ describe('Zod Schema Validation', () => {
         llm: { model: 'test', provider: 'test', temperature: 5.0 },
       })).toThrow();
     });
+  });
+});
+
+describe('ensureRuntimeCacheReady()', () => {
+  it('should resolve without error', async () => {
+    await expect(ensureRuntimeCacheReady()).resolves.toBeUndefined();
+  });
+
+  it('should populate runtime values after awaiting', async () => {
+    await ensureRuntimeCacheReady();
+    const config = createRuntimeConfig();
+
+    // After cache is ready, we should have actual system values, not defaults
+    // In Node.js environment, hostname should not be 'unknown' or 'browser'
+    expect(config.hostname).not.toBe('browser');
+    expect(config.platform).toBe('node');
+    expect(config.os).not.toBe('unknown');
+  });
+
+  it('should be idempotent (safe to call multiple times)', async () => {
+    await ensureRuntimeCacheReady();
+    await ensureRuntimeCacheReady();
+    await ensureRuntimeCacheReady();
+
+    const config = createRuntimeConfig();
+    expect(config.platform).toBe('node');
+  });
+});
+
+describe('Browser compatibility (regression tests)', () => {
+  it('should not use require() for Node.js modules in context.ts', () => {
+    // This test ensures we don't regress to using require('os') which breaks browser bundles
+    const contextSource = readFileSync(
+      join(__dirname, '../../../src/types/context.ts'),
+      'utf-8',
+    );
+
+    // Check for require('os'), require("os"), require('crypto'), etc.
+    const requirePattern = /require\s*\(\s*['"](?:os|crypto|fs|path)['"]\s*\)/;
+    expect(contextSource).not.toMatch(requirePattern);
+  });
+
+  it('should use dynamic import() for Node.js modules', () => {
+    const contextSource = readFileSync(
+      join(__dirname, '../../../src/types/context.ts'),
+      'utf-8',
+    );
+
+    // Should use dynamic import for os module (may have comments like /* webpackIgnore: true */)
+    expect(contextSource).toMatch(/await\s+import\s*\([^)]*['"]os['"]\s*\)/);
   });
 });

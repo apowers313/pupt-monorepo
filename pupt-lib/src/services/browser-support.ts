@@ -179,3 +179,126 @@ export function generateImportMapScript(
   const json = serializeImportMap(importMap);
   return `<script type="importmap">\n${json}\n</script>`;
 }
+
+/**
+ * Options for generating pupt-lib import map
+ */
+export interface PuptLibImportMapOptions {
+  /** CDN provider to use (default: 'esm.sh') */
+  cdn?: CdnProvider;
+  /** Custom CDN template URL */
+  cdnTemplate?: string;
+  /** pupt-lib version (default: current installed version) */
+  puptLibVersion?: string;
+  /** zod version (default: '3.24.2') */
+  zodVersion?: string;
+  /** Additional dependencies to include */
+  additionalDependencies?: Dependency[];
+}
+
+/**
+ * Default zod version that works with pupt-lib.
+ * This matches the version used in pupt-lib's dependencies.
+ */
+const DEFAULT_ZOD_VERSION = '3.24.2';
+
+/**
+ * Generate an import map for browser usage of pupt-lib.
+ *
+ * This creates the minimal import map required to use `createPromptFromSource`
+ * in browser environments. It includes:
+ * - pupt-lib main entry
+ * - pupt-lib/jsx-runtime subpath
+ * - zod (required peer dependency)
+ *
+ * @param options - Configuration options
+ * @returns An ImportMap object ready to be serialized
+ *
+ * @example
+ * ```typescript
+ * // Using esm.sh (default)
+ * const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
+ *
+ * // Using unpkg
+ * const importMap = generatePuptLibImportMap({
+ *   puptLibVersion: '1.1.0',
+ *   cdn: 'unpkg'
+ * });
+ *
+ * // With additional dependencies
+ * const importMap = generatePuptLibImportMap({
+ *   puptLibVersion: '1.1.0',
+ *   additionalDependencies: [
+ *     { name: 'my-component-lib', version: '2.0.0' }
+ *   ]
+ * });
+ * ```
+ *
+ * @example
+ * ```html
+ * <!-- Usage in HTML -->
+ * <script type="importmap">
+ *   {
+ *     "imports": {
+ *       "pupt-lib": "https://esm.sh/pupt-lib@1.1.0",
+ *       "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime",
+ *       "zod": "https://esm.sh/zod@3.24.2"
+ *     }
+ *   }
+ * </script>
+ * ```
+ */
+export function generatePuptLibImportMap(
+  options: PuptLibImportMapOptions = {},
+): ImportMap {
+  const {
+    cdn = 'esm.sh',
+    cdnTemplate,
+    puptLibVersion = 'latest',
+    zodVersion = DEFAULT_ZOD_VERSION,
+    additionalDependencies = [],
+  } = options;
+
+  const cdnOptions: CdnOptions = cdnTemplate ? { cdnTemplate } : { cdn };
+
+  // Build the imports object
+  const imports: Record<string, string> = {};
+
+  // pupt-lib main entry
+  const puptLibUrl = resolveCdn('pupt-lib', puptLibVersion, cdnOptions);
+  imports['pupt-lib'] = puptLibUrl;
+
+  // pupt-lib/jsx-runtime subpath
+  // Most CDNs support subpath exports, so we construct the URL directly
+  imports['pupt-lib/jsx-runtime'] = `${puptLibUrl}/jsx-runtime`;
+
+  // zod is a required dependency
+  imports['zod'] = resolveCdn('zod', zodVersion, cdnOptions);
+
+  // Add any additional dependencies
+  for (const dep of additionalDependencies) {
+    imports[dep.name] = resolveCdn(dep.name, dep.version, cdnOptions);
+  }
+
+  return { imports };
+}
+
+/**
+ * Generate an HTML script tag with the pupt-lib import map.
+ *
+ * @param options - Configuration options
+ * @returns HTML string for the import map script tag
+ *
+ * @example
+ * ```typescript
+ * const html = generatePuptLibImportMapScript({ puptLibVersion: '1.1.0' });
+ * // Use in HTML head: document.head.insertAdjacentHTML('afterbegin', html);
+ * ```
+ */
+export function generatePuptLibImportMapScript(
+  options: PuptLibImportMapOptions = {},
+): string {
+  const importMap = generatePuptLibImportMap(options);
+  const json = serializeImportMap(importMap);
+  return `<script type="importmap">\n${json}\n</script>`;
+}

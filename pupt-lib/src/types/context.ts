@@ -7,6 +7,90 @@ import type { PostExecutionAction, RenderError } from './render';
 const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
 
 // ============================================================================
+// Runtime Values Cache (for Node.js)
+// ============================================================================
+
+interface NodeRuntimeValues {
+  hostname: string;
+  username: string;
+  platform: string;
+  os: string;
+}
+
+// Cache for Node.js runtime values - populated lazily
+let nodeRuntimeCache: NodeRuntimeValues | null = null;
+let nodeRuntimeCachePromise: Promise<void> | null = null;
+
+/**
+ * Initialize the Node.js runtime cache using dynamic imports.
+ * This is called lazily on first access to avoid bundling issues in browsers.
+ */
+async function initNodeRuntimeCache(): Promise<void> {
+  if (nodeRuntimeCache) return;
+
+  try {
+    // Dynamic import to avoid bundling in browser builds
+    const osModule = await import(/* webpackIgnore: true */ 'os');
+    nodeRuntimeCache = {
+      hostname: osModule.hostname(),
+      username: osModule.userInfo().username,
+      platform: 'node',
+      os: osModule.platform(),
+    };
+  } catch {
+    // Fall back to defaults if os module not available
+    nodeRuntimeCache = {
+      hostname: 'unknown',
+      username: 'anonymous',
+      platform: 'node',
+      os: 'unknown',
+    };
+  }
+}
+
+/**
+ * Get the Node.js runtime values, initializing the cache if needed.
+ * Returns defaults synchronously if cache isn't ready yet.
+ */
+function getNodeRuntimeValues(): NodeRuntimeValues {
+  // Start async initialization if not already started
+  if (!nodeRuntimeCachePromise && !isBrowser) {
+    nodeRuntimeCachePromise = initNodeRuntimeCache();
+  }
+
+  // Return cached values if available, otherwise defaults
+  return nodeRuntimeCache || {
+    hostname: 'unknown',
+    username: 'anonymous',
+    platform: 'node',
+    os: 'unknown',
+  };
+}
+
+/**
+ * Ensure the Node.js runtime cache is initialized.
+ * In browser environments, this resolves immediately.
+ * In Node.js, this waits for the async initialization to complete.
+ *
+ * This is primarily useful for testing to ensure runtime values are available.
+ */
+export async function ensureRuntimeCacheReady(): Promise<void> {
+  if (isBrowser) return;
+
+  if (!nodeRuntimeCachePromise) {
+    nodeRuntimeCachePromise = initNodeRuntimeCache();
+  }
+
+  await nodeRuntimeCachePromise;
+}
+
+// Eagerly start initialization in Node.js environment
+// This runs when the module is first imported
+if (!isBrowser) {
+  nodeRuntimeCachePromise = initNodeRuntimeCache();
+}
+
+// ============================================================================
 // Zod Schemas
 // ============================================================================
 
@@ -192,42 +276,42 @@ function detectLocale(): string {
 /**
  * Create a runtime configuration from the current environment.
  * Works in both Node.js and browser environments.
+ *
+ * In Node.js, system values (hostname, username, os) are loaded asynchronously
+ * via dynamic import to avoid bundling Node.js modules in browser builds.
+ * If the cache isn't ready on first call, defaults are used temporarily.
  */
 export function createRuntimeConfig(): RuntimeConfig {
   const now = new Date();
 
-  // Browser-safe defaults
-  let hostname = 'browser';
-  let username = 'anonymous';
-  let cwd = '/';
-  let platform = 'browser';
-  let os = 'unknown';
-
-  // In Node.js, use actual system values
-  if (!isBrowser) {
-    try {
-      // Dynamic require to avoid bundling issues
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const osModule = require('os');
-      hostname = osModule.hostname();
-      username = osModule.userInfo().username;
-      cwd = process.cwd();
-      platform = 'node';
-      os = osModule.platform();
-    } catch {
-      // Fall back to defaults if os module not available
-    }
-  }
-
   // Detect locale from system/browser
   const locale = detectLocale();
 
+  // Browser environment
+  if (isBrowser) {
+    return {
+      hostname: 'browser',
+      username: 'anonymous',
+      cwd: '/',
+      platform: 'browser',
+      os: 'unknown',
+      locale,
+      timestamp: Date.now(),
+      date: now.toISOString().split('T')[0],
+      time: now.toISOString().split('T')[1].split('.')[0],
+      uuid: crypto.randomUUID(),
+    };
+  }
+
+  // Node.js environment - use cached values
+  const nodeValues = getNodeRuntimeValues();
+
   return {
-    hostname,
-    username,
-    cwd,
-    platform,
-    os,
+    hostname: nodeValues.hostname,
+    username: nodeValues.username,
+    cwd: process.cwd(), // cwd is always synchronous
+    platform: nodeValues.platform,
+    os: nodeValues.os,
     locale,
     timestamp: Date.now(),
     date: now.toISOString().split('T')[0],

@@ -22,6 +22,7 @@ export {
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  ensureRuntimeCacheReady,
   // Zod schemas for validation
   llmConfigSchema,
   outputConfigSchema,
