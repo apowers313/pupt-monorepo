@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/apowers313/pupt-lib/compare/v1.1.2...v1.1.3) (2026-01-30)
+
+
+### Bug Fixes
+
+* remove remaining browser-incompatible imports ([40ae9e8](https://github.com/apowers313/pupt-lib/commit/40ae9e816c963f7b87cec6a8add4dc248459d781))
+
 ## [1.1.2](https://github.com/apowers313/pupt-lib/compare/v1.1.1...v1.1.2) (2026-01-30)
 
 
