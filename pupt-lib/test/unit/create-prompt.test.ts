@@ -3,6 +3,18 @@ import { createPrompt, createPromptFromSource } from '../../src/create-prompt';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 
+/**
+ * Get the type name from an element's type property.
+ * Since the new system keeps component references instead of strings,
+ * we need to extract the name from functions/classes.
+ */
+function getTypeName(type: unknown): string {
+  if (typeof type === 'string') return type;
+  if (typeof type === 'function') return type.name;
+  if (typeof type === 'symbol') return type.toString();
+  return String(type);
+}
+
 describe('createPromptFromSource', () => {
   it('should create element from TSX source', async () => {
     const source = `
@@ -16,7 +28,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element.props.name).toBe('test');
   });
 
@@ -38,7 +50,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('Section');
+    expect(getTypeName(element.type)).toBe('Section');
     expect(element.props.title).toBe('Test');
     expect(element.props.priority).toBe(1);
   });
@@ -55,7 +67,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element.children.length).toBe(2);
   });
 
@@ -105,9 +117,9 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element.children.length).toBe(1);
-    expect(element.children[0].type).toBe('If');
+    expect(getTypeName(element.children[0].type)).toBe('If');
   });
 
   it('should handle data components', async () => {
@@ -121,8 +133,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('Prompt');
-    expect(element.children[0].type).toBe('Code');
+    expect(getTypeName(element.type)).toBe('Prompt');
+    expect(getTypeName(element.children[0].type)).toBe('Code');
   });
 
   it('should auto-wrap raw JSX without export default', async () => {
@@ -134,7 +146,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.prompt');
 
-    expect(element.type).toBe('Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element.props.name).toBe('auto-wrapped');
   });
 
@@ -143,7 +155,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.prompt');
 
-    expect(element.type).toBe('Task');
+    expect(getTypeName(element.type)).toBe('Task');
   });
 
   it('should throw helpful error for undefined component (Ask.FooBar)', async () => {
@@ -267,7 +279,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(element.type).toBe('Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element.props.name).toBe('raw-test');
   });
 });

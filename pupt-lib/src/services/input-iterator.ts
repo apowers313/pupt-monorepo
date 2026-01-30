@@ -1,7 +1,6 @@
 import type { PuptElement, PuptNode, InputRequirement, ValidationResult, RenderContext } from '../types';
 import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
-import { defaultRegistry } from './component-registry';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
@@ -176,8 +175,6 @@ export function createInputIterator(
     const context: RenderContext & { __requirements: InputRequirement[] } = {
       inputs: values,
       env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
-      scope: null,
-      registry: defaultRegistry,
       postExecution: [],
       errors: [],
       __requirements: collected,
@@ -256,31 +253,9 @@ export function createInputIterator(
       return;
     }
 
-    // String type - look up in registry
+    // String type - should not happen with ES module evaluation
+    // Just walk children if encountered
     if (typeof type === 'string') {
-      const ComponentClass = context.registry.get(type);
-      if (ComponentClass) {
-        if (isComponentClass(ComponentClass)) {
-          const instance = new (ComponentClass as new () => Component)();
-          const result = instance.render({ ...props, children }, context);
-
-          if (result !== null && typeof result === 'object') {
-            walkNode(result, context);
-          }
-          return;
-        }
-
-        // Function component from registry
-        const fn = ComponentClass as FunctionComponent;
-        const result = fn({ ...props, children });
-
-        if (result !== null && typeof result === 'object') {
-          walkNode(result, context);
-        }
-        return;
-      }
-
-      // Unknown component - walk children
       for (const child of children) {
         walkNode(child, context);
       }

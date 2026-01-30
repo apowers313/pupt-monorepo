@@ -33,12 +33,27 @@ export class Steps extends Component<StepsProps> {
   }
 
   private isStepElement(node: PuptNode): node is PuptElement {
-    return (
-      node !== null &&
-      typeof node === 'object' &&
-      !Array.isArray(node) &&
-      'type' in node &&
-      node.type === 'Step'
-    );
+    if (
+      node === null ||
+      typeof node !== 'object' ||
+      Array.isArray(node) ||
+      !('type' in node)
+    ) {
+      return false;
+    }
+
+    const { type } = node;
+
+    // Check for Step class (type is a function/class with name 'Step')
+    if (typeof type === 'function' && type.name === 'Step') {
+      return true;
+    }
+
+    // Fallback: check for string type 'Step' (legacy compatibility)
+    if (type === 'Step') {
+      return true;
+    }
+
+    return false;
   }
 }

@@ -5,8 +5,6 @@ export type {
   PuptNode,
   PuptElement,
   ComponentType,
-  RegisterableComponent,
-  RegistryComponentType,
 } from './element';
 
 // Context types
@@ -14,6 +12,7 @@ export type {
   LlmConfig,
   OutputConfig,
   CodeConfig,
+  UserConfig,
   RuntimeConfig,
   EnvironmentContext,
   RenderContext,
@@ -23,6 +22,13 @@ export {
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  // Zod schemas for validation
+  llmConfigSchema,
+  outputConfigSchema,
+  codeConfigSchema,
+  userConfigSchema,
+  runtimeConfigSchema,
+  environmentContextSchema,
 } from './context';
 
 // Render types
@@ -73,7 +79,3 @@ export type {
   LibraryLoadResult,
   PuptInitConfig,
 } from './module';
-
-// Service types (re-exported for convenience)
-export type { ComponentRegistry } from '../services/component-registry';
-export type { Scope } from '../services/scope';

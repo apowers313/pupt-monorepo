@@ -32,19 +32,3 @@ export interface PuptElement<P = Record<string, unknown>> {
 export type ComponentType<P = Record<string, unknown>> =
   | (new () => Component<P>)
   | ((props: P & { children?: PuptNode }) => PuptNode);
-
-/**
- * RegisterableComponent is the type accepted by the registry.
- * Uses structural typing to accept any class with a render method.
- */
-export interface RegisterableComponent {
-  new (): { render(props: unknown, context: unknown): PuptNode };
-}
-
-/**
- * Type for storing components in the registry.
- * Accepts both class components and function components.
- */
-export type RegistryComponentType =
-  | RegisterableComponent
-  | ((props: unknown) => PuptNode);

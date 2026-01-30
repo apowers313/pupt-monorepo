@@ -10,7 +10,7 @@ class TestComponent extends Component<{ name: string }> {
 
 class ContextAwareComponent extends Component<{ value: number }> {
   render(props: { value: number }, context: RenderContext): string {
-    return `Value: ${props.value}, Model: ${context.environment.llm.model}`;
+    return `Value: ${props.value}, Model: ${context.env.llm.model}`;
   }
 }
 
@@ -22,10 +22,11 @@ describe('Component', () => {
   it('should render with props', () => {
     const instance = new TestComponent();
     const mockContext: RenderContext = {
-      environment: {
+      env: {
         llm: { model: 'test-model', provider: 'test' },
         output: { format: 'xml', trim: true, indent: '  ' },
         code: { language: 'typescript' },
+        user: { editor: 'unknown' },
         runtime: {},
       },
       inputs: {},
@@ -38,17 +39,18 @@ describe('Component', () => {
   it('should have access to context', () => {
     const instance = new ContextAwareComponent();
     const mockContext: RenderContext = {
-      environment: {
-        llm: { model: 'claude-3-sonnet', provider: 'anthropic' },
+      env: {
+        llm: { model: 'unspecified', provider: 'unspecified' },
         output: { format: 'xml', trim: true, indent: '  ' },
         code: { language: 'typescript' },
+        user: { editor: 'unknown' },
         runtime: {},
       },
       inputs: {},
       depth: 0,
     };
     const result = instance.render({ value: 42 }, mockContext);
-    expect(result).toBe('Value: 42, Model: claude-3-sonnet');
+    expect(result).toBe('Value: 42, Model: unspecified');
   });
 });
 

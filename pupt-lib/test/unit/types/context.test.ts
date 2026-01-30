@@ -3,25 +3,35 @@ import {
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  llmConfigSchema,
+  outputConfigSchema,
+  codeConfigSchema,
+  userConfigSchema,
+  environmentContextSchema,
 } from '../../../src/types/context';
 
 describe('DEFAULT_ENVIRONMENT', () => {
   it('should have llm config', () => {
     expect(DEFAULT_ENVIRONMENT.llm).toBeDefined();
-    expect(DEFAULT_ENVIRONMENT.llm.model).toBe('claude-3-sonnet');
-    expect(DEFAULT_ENVIRONMENT.llm.provider).toBe('anthropic');
+    expect(DEFAULT_ENVIRONMENT.llm.model).toBe('unspecified');
+    expect(DEFAULT_ENVIRONMENT.llm.provider).toBe('unspecified');
   });
 
   it('should have output config', () => {
     expect(DEFAULT_ENVIRONMENT.output).toBeDefined();
-    expect(DEFAULT_ENVIRONMENT.output.format).toBe('xml');
+    expect(DEFAULT_ENVIRONMENT.output.format).toBe('unspecified');
     expect(DEFAULT_ENVIRONMENT.output.trim).toBe(true);
     expect(DEFAULT_ENVIRONMENT.output.indent).toBe('  ');
   });
 
   it('should have code config', () => {
     expect(DEFAULT_ENVIRONMENT.code).toBeDefined();
-    expect(DEFAULT_ENVIRONMENT.code.language).toBe('typescript');
+    expect(DEFAULT_ENVIRONMENT.code.language).toBe('unspecified');
+  });
+
+  it('should have user config', () => {
+    expect(DEFAULT_ENVIRONMENT.user).toBeDefined();
+    expect(DEFAULT_ENVIRONMENT.user.editor).toBe('unknown');
   });
 
   it('should have runtime config', () => {
@@ -69,6 +79,9 @@ describe('createRuntimeConfig()', () => {
     expect(config).toHaveProperty('hostname');
     expect(config).toHaveProperty('username');
     expect(config).toHaveProperty('cwd');
+    expect(config).toHaveProperty('platform');
+    expect(config).toHaveProperty('os');
+    expect(config).toHaveProperty('locale');
     expect(config).toHaveProperty('timestamp');
     expect(config).toHaveProperty('date');
     expect(config).toHaveProperty('time');
@@ -123,5 +136,184 @@ describe('createRuntimeConfig()', () => {
     const config = createRuntimeConfig();
     expect(typeof config.cwd).toBe('string');
     expect(config.cwd.length).toBeGreaterThan(0);
+  });
+
+  it('should detect platform as node in test environment', () => {
+    const config = createRuntimeConfig();
+    expect(config.platform).toBe('node');
+  });
+
+  it('should detect os', () => {
+    const config = createRuntimeConfig();
+    expect(typeof config.os).toBe('string');
+    expect(config.os.length).toBeGreaterThan(0);
+    expect(config.os).not.toBe('unknown');
+  });
+
+  it('should detect locale', () => {
+    const config = createRuntimeConfig();
+    expect(typeof config.locale).toBe('string');
+    expect(config.locale.length).toBeGreaterThan(0);
+    // Should be a valid locale like "en-US", "en", "ja", etc. or "unknown"
+    expect(config.locale).toMatch(/^[a-z]{2}(-[A-Z]{2})?$|^unknown$/);
+  });
+});
+
+describe('Zod Schema Validation', () => {
+  describe('llmConfigSchema', () => {
+    it('should accept valid llm config', () => {
+      const result = llmConfigSchema.parse({
+        model: 'gpt-4',
+        provider: 'openai',
+      });
+      expect(result.model).toBe('gpt-4');
+      expect(result.provider).toBe('openai');
+    });
+
+    it('should apply defaults for missing fields', () => {
+      const result = llmConfigSchema.parse({});
+      expect(result.model).toBe('unspecified');
+      expect(result.provider).toBe('unspecified');
+    });
+
+    it('should accept optional maxTokens and temperature', () => {
+      const result = llmConfigSchema.parse({
+        model: 'claude-sonnet',
+        provider: 'anthropic',
+        maxTokens: 4096,
+        temperature: 0.7,
+      });
+      expect(result.maxTokens).toBe(4096);
+      expect(result.temperature).toBe(0.7);
+    });
+
+    it('should reject invalid temperature (out of range)', () => {
+      expect(() => llmConfigSchema.parse({
+        model: 'test',
+        provider: 'test',
+        temperature: 3.0,
+      })).toThrow();
+    });
+
+    it('should reject negative maxTokens', () => {
+      expect(() => llmConfigSchema.parse({
+        model: 'test',
+        provider: 'test',
+        maxTokens: -100,
+      })).toThrow();
+    });
+  });
+
+  describe('outputConfigSchema', () => {
+    it('should accept valid output config', () => {
+      const result = outputConfigSchema.parse({
+        format: 'markdown',
+        trim: false,
+        indent: '    ',
+      });
+      expect(result.format).toBe('markdown');
+      expect(result.trim).toBe(false);
+      expect(result.indent).toBe('    ');
+    });
+
+    it('should apply defaults', () => {
+      const result = outputConfigSchema.parse({});
+      expect(result.format).toBe('unspecified');
+      expect(result.trim).toBe(true);
+      expect(result.indent).toBe('  ');
+    });
+
+    it('should reject invalid format', () => {
+      expect(() => outputConfigSchema.parse({
+        format: 'invalid-format',
+      })).toThrow();
+    });
+  });
+
+  describe('codeConfigSchema', () => {
+    it('should accept valid code config', () => {
+      const result = codeConfigSchema.parse({
+        language: 'python',
+        highlight: true,
+      });
+      expect(result.language).toBe('python');
+      expect(result.highlight).toBe(true);
+    });
+
+    it('should apply defaults', () => {
+      const result = codeConfigSchema.parse({});
+      expect(result.language).toBe('unspecified');
+    });
+  });
+
+  describe('userConfigSchema', () => {
+    it('should accept valid user config', () => {
+      const result = userConfigSchema.parse({
+        editor: 'vscode',
+      });
+      expect(result.editor).toBe('vscode');
+    });
+
+    it('should apply defaults', () => {
+      const result = userConfigSchema.parse({});
+      expect(result.editor).toBe('unknown');
+    });
+  });
+
+  describe('environmentContextSchema', () => {
+    it('should accept full valid config', () => {
+      const result = environmentContextSchema.parse({
+        llm: { model: 'gpt-4o', provider: 'openai' },
+        output: { format: 'json', trim: true, indent: '' },
+        code: { language: 'typescript' },
+        user: { editor: 'cursor' },
+        runtime: { platform: 'node', os: 'linux' },
+      });
+      expect(result.llm.model).toBe('gpt-4o');
+      expect(result.output.format).toBe('json');
+      expect(result.code.language).toBe('typescript');
+      expect(result.user.editor).toBe('cursor');
+      expect(result.runtime.platform).toBe('node');
+    });
+
+    it('should apply all defaults for empty object', () => {
+      const result = environmentContextSchema.parse({});
+      expect(result.llm.model).toBe('unspecified');
+      expect(result.llm.provider).toBe('unspecified');
+      expect(result.output.format).toBe('unspecified');
+      expect(result.code.language).toBe('unspecified');
+      expect(result.user.editor).toBe('unknown');
+      expect(result.runtime).toEqual({});
+    });
+
+    it('should allow partial overrides', () => {
+      const result = environmentContextSchema.parse({
+        llm: { model: 'claude-opus-4-5-20251101' },
+      });
+      expect(result.llm.model).toBe('claude-opus-4-5-20251101');
+      expect(result.llm.provider).toBe('unspecified');
+      expect(result.output.format).toBe('unspecified');
+    });
+  });
+
+  describe('createEnvironment() validation', () => {
+    it('should validate overrides through zod', () => {
+      const env = createEnvironment({
+        llm: { model: 'test-model', provider: 'test-provider' },
+      });
+      expect(env.llm.model).toBe('test-model');
+    });
+
+    it('should reject invalid format through validation', () => {
+      expect(() => createEnvironment({
+        output: { format: 'invalid' as any, trim: true, indent: '' },
+      })).toThrow();
+    });
+
+    it('should reject invalid temperature through validation', () => {
+      expect(() => createEnvironment({
+        llm: { model: 'test', provider: 'test', temperature: 5.0 },
+      })).toThrow();
+    });
   });
 });

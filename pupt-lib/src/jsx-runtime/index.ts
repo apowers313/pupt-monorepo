@@ -42,25 +42,21 @@ function flattenChildren(children: PuptNode[], result: PuptNode[]): void {
 }
 
 /**
- * Get the string name for a type.
+ * Validate and pass through the element type.
  * - Strings pass through as-is (e.g., "div", "span")
  * - Symbols pass through as-is (e.g., Fragment)
- * - Functions/classes use their name property (e.g., Prompt.name = "Prompt")
+ * - Functions/classes pass through as-is (component references)
  */
-function getTypeName<P extends Record<string, unknown>>(
+function validateType<P extends Record<string, unknown>>(
   type: string | symbol | ComponentType<P>,
-): string | symbol {
+): string | symbol | ComponentType<P> {
   if (type === undefined || type === null) {
     throw new Error(
       'JSX element type is undefined. This usually means you\'re using a component that doesn\'t exist ' +
       '(e.g., Ask.MultiSelect when only Ask.Select is available). Check your component name spelling.',
     );
   }
-  if (typeof type === 'string' || typeof type === 'symbol') {
-    return type;
-  }
-  // Component class or function - extract name
-  return type.name;
+  return type;
 }
 
 /**
@@ -77,7 +73,7 @@ export function jsx<P extends Record<string, unknown>>(
 ): PuptElement<P> {
   const { children, ...restProps } = props;
   return {
-    type: getTypeName(type),
+    type: validateType(type),
     props: restProps as P,
     children: normalizeChildren(children),
   };

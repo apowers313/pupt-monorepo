@@ -4,13 +4,10 @@
  *
  * Note: We import specific components rather than the full index to avoid
  * pulling in Node.js-only components like File that use 'fs'.
- * We create a local registry for browser tests since the default registry
- * setup uses Node.js modules.
  */
 import { describe, it, expect } from 'vitest';
 import { render } from '../../src/render';
 import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { createRegistry } from '../../src/services/component-registry';
 import { Prompt } from '../../src/components/structural/Prompt';
 import { Role } from '../../src/components/structural/Role';
 import { Task } from '../../src/components/structural/Task';
@@ -22,19 +19,6 @@ import { Code } from '../../src/components/data/Code';
 import { Steps } from '../../src/components/reasoning/Steps';
 import { Step } from '../../src/components/reasoning/Step';
 
-// Create a browser-safe registry with the components needed for tests
-const browserRegistry = createRegistry();
-browserRegistry.register('Prompt', Prompt);
-browserRegistry.register('Role', Role);
-browserRegistry.register('Task', Task);
-browserRegistry.register('Example', Example);
-browserRegistry.register('ExampleInput', ExampleInput);
-browserRegistry.register('ExampleOutput', ExampleOutput);
-browserRegistry.register('Examples', Examples);
-browserRegistry.register('Code', Code);
-browserRegistry.register('Steps', Steps);
-browserRegistry.register('Step', Step);
-
 describe('Browser: render', () => {
   it('should render a simple prompt', () => {
     const element = jsx(Prompt, {
@@ -42,7 +26,7 @@ describe('Browser: render', () => {
       children: 'Hello, world!',
     });
 
-    const result = render(element, { registry: browserRegistry });
+    const result = render(element);
     expect(result.text).toBe('Hello, world!');
   });
 
@@ -55,7 +39,7 @@ describe('Browser: render', () => {
       ],
     });
 
-    const result = render(element, { registry: browserRegistry });
+    const result = render(element);
     expect(result.text).toContain('You are a helpful assistant.');
     expect(result.text).toContain('Help the user.');
   });
@@ -84,7 +68,7 @@ describe('Browser: render', () => {
       }),
     });
 
-    const result = render(element, { registry: browserRegistry });
+    const result = render(element);
     expect(result.text).toContain('Add two numbers');
     expect(result.text).toContain('```typescript');
     expect(result.text).toContain('const sum = a + b;');
@@ -99,7 +83,7 @@ describe('Browser: render', () => {
       ],
     });
 
-    const result = render(element, { registry: browserRegistry });
+    const result = render(element);
     expect(result.text).toContain('1.');
     expect(result.text).toContain('First step');
     expect(result.text).toContain('2.');
@@ -198,6 +182,16 @@ describe('Browser: .prompt file transformation', () => {
     return moduleExports.default;
   }
 
+  /**
+   * Get the type name from an element's type property.
+   */
+  function getTypeName(type: unknown): string {
+    if (typeof type === 'string') return type;
+    if (typeof type === 'function') return type.name;
+    if (typeof type === 'symbol') return type.toString();
+    return String(type);
+  }
+
   it('should transform and evaluate .prompt source in browser', async () => {
     const source = `
       export default (
@@ -208,9 +202,9 @@ describe('Browser: .prompt file transformation', () => {
       );
     `;
 
-    const element = await createPromptFromSourceBrowser(source, 'test.prompt');
+    const element = await createPromptFromSourceBrowser(source, 'test.prompt') as { type: unknown; props: { name: string } };
 
-    expect(element).toHaveProperty('type', 'Prompt');
+    expect(getTypeName(element.type)).toBe('Prompt');
     expect(element).toHaveProperty('props.name', 'browser-test');
   });
 
@@ -226,7 +220,7 @@ describe('Browser: .prompt file transformation', () => {
       );
     `;
 
-    const element = await createPromptFromSourceBrowser(source, 'typed.tsx');
+    const element = await createPromptFromSourceBrowser(source, 'typed.tsx') as { props: { name: string } };
 
     expect(element).toHaveProperty('props.name', 'typed-browser-test');
   });
@@ -242,7 +236,7 @@ describe('Browser: .prompt file transformation', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'render.prompt');
-    const result = render(element as Parameters<typeof render>[0], { registry: browserRegistry });
+    const result = render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Assistant');
     expect(result.text).toContain('Help with testing');

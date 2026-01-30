@@ -5,22 +5,39 @@
  * Works in both Node.js and browser environments.
  */
 
+import { usesToImportPlugin } from './babel-plugins';
+
 // Type for Babel transform interface
-interface BabelTransform {
+interface BabelStandalone {
   transform: (source: string, options: Record<string, unknown>) => { code?: string | null };
+  registerPlugin: (name: string, plugin: object | (() => void)) => void;
 }
 
 // Babel instance (loaded dynamically)
-let BabelInstance: BabelTransform | null = null;
+let BabelInstance: BabelStandalone | null = null;
+let pluginsRegistered = false;
+
+/**
+ * Register custom plugins with Babel.
+ */
+function registerPlugins(Babel: BabelStandalone): void {
+  if (pluginsRegistered) return;
+
+  // Register the uses-to-import plugin
+  Babel.registerPlugin('uses-to-import', usesToImportPlugin);
+
+  pluginsRegistered = true;
+}
 
 /**
  * Get the babel-standalone instance.
  * Lazily loads to support both Node.js and browser environments.
  */
-async function getBabel(): Promise<BabelTransform> {
+async function getBabel(): Promise<BabelStandalone> {
   if (!BabelInstance) {
     const module = await import('@babel/standalone');
-    BabelInstance = module.default || module;
+    BabelInstance = (module.default || module) as BabelStandalone;
+    registerPlugins(BabelInstance);
   }
   return BabelInstance;
 }
@@ -33,6 +50,9 @@ function getTransformOptions(filename: string): Record<string, unknown> {
     presets: ['typescript'],
     filename,
     plugins: [
+      // Transform <Uses> to import declarations (must run before JSX transform)
+      'uses-to-import',
+      // Transform JSX to jsx() calls
       ['transform-react-jsx', {
         runtime: 'automatic',
         importSource: 'pupt-lib',

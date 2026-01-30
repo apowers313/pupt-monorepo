@@ -1,18 +1,16 @@
 // Render-related types for pupt-lib
 
-import type { ComponentRegistry } from '../services/component-registry';
 import type { EnvironmentContext } from './context';
 
 /**
  * Options for rendering a prompt
  */
 export interface RenderOptions {
-  format?: 'xml' | 'markdown' | 'json' | 'text';
+  format?: 'xml' | 'markdown' | 'json' | 'text' | 'unspecified';
   trim?: boolean;
   indent?: string;
   maxDepth?: number;
   inputs?: Map<string, unknown> | Record<string, unknown>;
-  registry?: ComponentRegistry;
   env?: EnvironmentContext;
 }
 

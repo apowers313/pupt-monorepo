@@ -1,7 +1,6 @@
-import type { PuptElement, PuptNode, RenderResult, RenderOptions, RenderContext, PostExecutionAction, RenderError, ComponentType } from './types';
+import type { PuptElement, PuptNode, RenderResult, RenderOptions, RenderContext, PostExecutionAction, RenderError } from './types';
 import { Fragment } from './jsx-runtime';
 import { isComponentClass, Component } from './component';
-import { defaultRegistry } from './services/component-registry';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
@@ -14,7 +13,6 @@ export function render(
 ): RenderResult {
   const {
     inputs = new Map(),
-    registry = defaultRegistry,
     env = DEFAULT_ENVIRONMENT,
     trim = true,
   } = options;
@@ -25,8 +23,6 @@ export function render(
   const context: RenderContext = {
     inputs: inputs instanceof Map ? inputs : new Map(Object.entries(inputs)),
     env: { ...env, runtime: createRuntimeConfig() },
-    scope: null, // Set during component rendering
-    registry,
     postExecution,
     errors,
   };
@@ -157,38 +153,10 @@ function renderElement(
     );
   }
 
-  // String type - look up in registry
+  // String type - should not happen with ES module evaluation
+  // This would only occur if JSX was created with a string type directly
   if (typeof type === 'string') {
-    const ComponentClass: ComponentType | undefined = context.registry.get(type);
-    if (ComponentClass) {
-      if (isComponentClass(ComponentClass)) {
-        return renderComponentWithValidation(
-          ComponentClass,
-          type,
-          props as Record<string, unknown>,
-          children,
-          context,
-          () => {
-            const instance = new (ComponentClass as new () => Component)();
-            return instance.render({ ...props, children }, context);
-          },
-        );
-      }
-      // Function component from registry
-      return renderComponentWithValidation(
-        ComponentClass,
-        type,
-        props as Record<string, unknown>,
-        children,
-        context,
-        () => {
-          const fn = ComponentClass as FunctionComponent;
-          return fn({ ...props, children });
-        },
-      );
-    }
-    // Unknown string type - render as-is for now
-    console.warn(`Unknown component: ${type}`);
+    console.warn(`Unknown component type "${type}". Components should be imported, not referenced by string.`);
     return children.map(c => renderNode(c, context)).join('');
   }
 

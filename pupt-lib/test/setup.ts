@@ -1,10 +1,8 @@
 // Test setup file - runs before all tests
-// This ensures the default registry is populated with built-in components
 
-// Import the main entry point which triggers component registration
+// Import the main entry point which triggers component loading
 import '../src/components/index';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../src/types/context';
-import { defaultRegistry } from '../src/services/component-registry';
 import type { RenderContext } from '../src/types/context';
 
 /**
@@ -15,9 +13,8 @@ export function createRenderContext(overrides?: Partial<RenderContext>): RenderC
   return {
     inputs: new Map(),
     env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
-    scope: null,
-    registry: defaultRegistry,
     postExecution: [],
+    errors: [],
     ...overrides,
   };
 }

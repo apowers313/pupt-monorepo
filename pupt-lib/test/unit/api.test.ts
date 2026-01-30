@@ -9,7 +9,9 @@ describe('Pupt', () => {
 
     await pupt.init();
 
-    expect(pupt.hasComponent('TestComponent')).toBe(true);
+    // Verify initialization completes without error
+    const prompts = pupt.getPrompts();
+    expect(Array.isArray(prompts)).toBe(true);
   });
 
   it('should return discovered prompts', async () => {
@@ -112,19 +114,6 @@ describe('Pupt', () => {
 
     expect(Array.isArray(tags)).toBe(true);
     expect(tags.length).toBeGreaterThan(0);
-  });
-
-  it('should get registry', async () => {
-    const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
-    });
-
-    await pupt.init();
-
-    const registry = pupt.getRegistry();
-
-    expect(registry).toBeDefined();
-    expect(registry.has('TestComponent')).toBe(true);
   });
 });
 

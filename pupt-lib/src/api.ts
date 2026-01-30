@@ -6,12 +6,10 @@ import type {
   RenderResult,
   PuptElement,
 } from './types';
-import { ScopeLoader } from './services/scope-loader';
 import { createSearchEngine, type SearchEngine } from './services/search-engine';
 import { render } from './render';
 import { createInputIterator, type InputIterator } from './services/input-iterator';
 import { ModuleLoader } from './services/module-loader';
-import type { Scope } from './services/scope';
 
 /**
  * A discovered prompt with render and input iterator capabilities
@@ -30,7 +28,6 @@ export interface DiscoveredPromptWithMethods {
  * Main Pupt class for initializing, discovering, and rendering prompts
  */
 export class Pupt {
-  private scopeLoader = new ScopeLoader();
   private moduleLoader = new ModuleLoader();
   private searchEngine: SearchEngine;
   private prompts: DiscoveredPromptWithMethods[] = [];
@@ -43,12 +40,7 @@ export class Pupt {
   async init(): Promise<void> {
     if (this.initialized) return;
 
-    // Load all modules
-    for (const source of this.config.modules ?? []) {
-      await this.scopeLoader.loadPackage(source);
-    }
-
-    // Discover prompts from loaded libraries
+    // Discover prompts from configured modules
     this.prompts = await this.discoverPrompts();
 
     // Index for search
@@ -87,18 +79,10 @@ export class Pupt {
     return this.prompts.filter(p => p.tags.includes(tag));
   }
 
-  hasComponent(name: string): boolean {
-    return this.scopeLoader.getCombinedScope().has(name);
-  }
-
-  getRegistry(): Scope {
-    return this.scopeLoader.getCombinedScope();
-  }
-
   private async discoverPrompts(): Promise<DiscoveredPromptWithMethods[]> {
     const discovered: DiscoveredPromptWithMethods[] = [];
 
-    // Go through all loaded modules and find prompts
+    // Go through all configured modules and find prompts
     for (const source of this.config.modules ?? []) {
       const library = await this.moduleLoader.load(source);
 

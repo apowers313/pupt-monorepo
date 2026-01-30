@@ -10,6 +10,7 @@ export type {
   LlmConfig,
   OutputConfig,
   CodeConfig,
+  UserConfig,
   RuntimeConfig,
   EnvironmentContext,
   RenderContext,
@@ -55,18 +56,18 @@ export { Component, isComponentClass, COMPONENT_MARKER } from './component';
 export { render } from './render';
 
 // Export services
-export { createRegistry, defaultRegistry } from './services/component-registry';
-export type { ComponentRegistry } from './services/component-registry';
-export { Scope, createScope } from './services/scope';
 export { createInputIterator } from './services/input-iterator';
 export type { InputIterator, InputIteratorOptions, OnMissingDefaultStrategy } from './services/input-iterator';
 export { evaluateFormula } from './services/formula-parser';
 export { Transformer } from './services/transformer';
+export { evaluateModule } from './services/module-evaluator';
+export type { EvaluateOptions } from './services/module-evaluator';
+export { preprocessSource, isPromptFile, needsPreprocessing, BUILTIN_COMPONENTS } from './services/preprocessor';
+export type { PreprocessOptions } from './services/preprocessor';
 
 // Export module loading services
 export { ModuleLoader } from './services/module-loader';
 export type { SourceType, LoadedLibrary, ParsedPackageSource } from './services/module-loader';
-export { ScopeLoader, createScopeLoader } from './services/scope-loader';
 
 // Export browser support utilities
 export {
@@ -82,7 +83,7 @@ export type {
   ImportMap,
 } from './services/browser-support';
 
-// Export built-in components (also registers them with defaultRegistry)
+// Export built-in components
 export * from './components';
 
 // Export prompt creation
