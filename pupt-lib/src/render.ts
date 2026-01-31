@@ -4,8 +4,8 @@ import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
-// Debug timing for CI
-const DEBUG_TIMING = process.env.CI === 'true';
+// Debug timing for CI (browser-safe check)
+const DEBUG_TIMING = typeof process !== 'undefined' && process.env?.CI === 'true';
 let renderCallCount = 0;
 
 /** Type for function components */
