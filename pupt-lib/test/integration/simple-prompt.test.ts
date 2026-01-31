@@ -4,7 +4,7 @@ import { jsx } from '../../src/jsx-runtime';
 import { Prompt, Role, Task, Context, Constraint, Format } from '../../src/components/structural';
 
 describe('Simple Prompt Rendering', () => {
-  it('should render a complete prompt', () => {
+  it('should render a complete prompt', async () => {
     const element = jsx(Prompt, {
       name: 'code-review',
       children: [
@@ -16,7 +16,7 @@ describe('Simple Prompt Rendering', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('senior software engineer');
     expect(result.text).toContain('TypeScript code');

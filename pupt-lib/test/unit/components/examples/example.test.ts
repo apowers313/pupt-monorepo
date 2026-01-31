@@ -4,7 +4,7 @@ import { jsx } from '../../../../src/jsx-runtime';
 import { Example, Examples } from '../../../../src/components/examples';
 
 describe('Example', () => {
-  it('should render input/output pair', () => {
+  it('should render input/output pair', async () => {
     const element = jsx(Example, {
       children: [
         jsx(Example.Input, { children: 'Calculate 15% of 200' }),
@@ -12,14 +12,14 @@ describe('Example', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('Calculate 15% of 200');
     expect(result.text).toContain('30');
   });
 });
 
 describe('Examples', () => {
-  it('should render multiple examples', () => {
+  it('should render multiple examples', async () => {
     const element = jsx(Examples, {
       children: [
         jsx(Example, {
@@ -37,7 +37,7 @@ describe('Examples', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('Input 1');
     expect(result.text).toContain('Output 2');
   });

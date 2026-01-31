@@ -93,7 +93,7 @@ describe('Browser: Main Entry Point Import', () => {
 });
 
 describe('Browser: Render with Main Entry Components', () => {
-  it('should render a prompt using imported components', () => {
+  it('should render a prompt using imported components', async () => {
     const element = jsx(Prompt, {
       name: 'browser-entry-test',
       children: [
@@ -102,14 +102,14 @@ describe('Browser: Render with Main Entry Components', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.ok).toBe(true);
     expect(result.text).toContain('helpful assistant');
     expect(result.text).toContain('Help the user');
   });
 
-  it('should render control flow components', () => {
+  it('should render control flow components', async () => {
     const element = jsx(Prompt, {
       name: 'control-test',
       children: jsx(If, {
@@ -118,13 +118,13 @@ describe('Browser: Render with Main Entry Components', () => {
       }),
     });
 
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.ok).toBe(true);
     expect(result.text).toContain('Visible task');
   });
 
-  it('should render with ForEach component', () => {
+  it('should render with ForEach component', async () => {
     const items = ['Item 1', 'Item 2', 'Item 3'];
     const element = jsx(Prompt, {
       name: 'foreach-test',
@@ -135,7 +135,7 @@ describe('Browser: Render with Main Entry Components', () => {
       }),
     });
 
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.ok).toBe(true);
     expect(result.text).toContain('Item 1');
@@ -143,7 +143,7 @@ describe('Browser: Render with Main Entry Components', () => {
     expect(result.text).toContain('Item 3');
   });
 
-  it('should render Steps with auto-numbering', () => {
+  it('should render Steps with auto-numbering', async () => {
     const element = jsx(Steps, {
       children: [
         jsx(Step, { children: 'First step' }),
@@ -151,7 +151,7 @@ describe('Browser: Render with Main Entry Components', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.ok).toBe(true);
     expect(result.text).toContain('1.');

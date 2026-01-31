@@ -4,17 +4,17 @@ import { jsx } from '../../../../src/jsx-runtime';
 import { Prompt } from '../../../../src/components/structural/Prompt';
 
 describe('Prompt', () => {
-  it('should render children', () => {
+  it('should render children', async () => {
     const element = jsx(Prompt, {
       name: 'test-prompt',
       children: 'Hello World',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('Hello World');
   });
 
-  it('should include metadata in output', () => {
+  it('should include metadata in output', async () => {
     const element = jsx(Prompt, {
       name: 'test-prompt',
       version: '1.0.0',
@@ -23,7 +23,7 @@ describe('Prompt', () => {
       children: 'Content',
     });
 
-    const result = render(element);
+    const result = await render(element);
     // Metadata available but may not be in text output
     expect(result.text).toContain('Content');
   });

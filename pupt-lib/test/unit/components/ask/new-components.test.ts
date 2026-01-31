@@ -6,31 +6,31 @@ import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../src/components';
 
 describe('Ask.Editor', () => {
-  it('should render placeholder when no input provided', () => {
+  it('should render placeholder when no input provided', async () => {
     const element = jsx(Ask.Editor, {
       name: 'code',
       label: 'Paste your code',
       language: 'typescript',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('{code}');
   });
 
-  it('should render input value when provided', () => {
+  it('should render input value when provided', async () => {
     const element = jsx(Ask.Editor, {
       name: 'code',
       label: 'Paste your code',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { code: 'const x = 1;' },
     });
 
     expect(result.text).toBe('const x = 1;');
   });
 
-  it('should include language in requirement', () => {
+  it('should include language in requirement', async () => {
     const element = jsx(Ask.Editor, {
       name: 'code',
       label: 'Paste code',
@@ -38,7 +38,7 @@ describe('Ask.Editor', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.language).toBe('python');
@@ -46,7 +46,7 @@ describe('Ask.Editor', () => {
 });
 
 describe('Ask.MultiSelect', () => {
-  it('should render comma-separated values', () => {
+  it('should render comma-separated values', async () => {
     const element = jsx(Ask.MultiSelect, {
       name: 'features',
       label: 'Select features',
@@ -57,14 +57,14 @@ describe('Ask.MultiSelect', () => {
       ],
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { features: ['auth', 'db'] },
     });
 
     expect(result.text).toBe('Authentication, Database');
   });
 
-  it('should collect options from children', () => {
+  it('should collect options from children', async () => {
     const element = jsx(Ask.MultiSelect, {
       name: 'features',
       label: 'Select features',
@@ -75,14 +75,14 @@ describe('Ask.MultiSelect', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('multiselect');
     expect(req?.options).toHaveLength(2);
   });
 
-  it('should support min/max constraints', () => {
+  it('should support min/max constraints', async () => {
     const element = jsx(Ask.MultiSelect, {
       name: 'features',
       label: 'Select features',
@@ -95,7 +95,7 @@ describe('Ask.MultiSelect', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.min).toBe(1);
@@ -104,30 +104,30 @@ describe('Ask.MultiSelect', () => {
 });
 
 describe('Ask.File', () => {
-  it('should render placeholder when no input', () => {
+  it('should render placeholder when no input', async () => {
     const element = jsx(Ask.File, {
       name: 'config',
       label: 'Config file',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('{config}');
   });
 
-  it('should render file path when provided', () => {
+  it('should render file path when provided', async () => {
     const element = jsx(Ask.File, {
       name: 'config',
       label: 'Config file',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { config: '/path/to/config.json' },
     });
 
     expect(result.text).toBe('/path/to/config.json');
   });
 
-  it('should include file-specific properties in requirement', () => {
+  it('should include file-specific properties in requirement', async () => {
     const element = jsx(Ask.File, {
       name: 'source',
       label: 'Source files',
@@ -137,7 +137,7 @@ describe('Ask.File', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('file');
@@ -148,20 +148,20 @@ describe('Ask.File', () => {
 });
 
 describe('Ask.Path', () => {
-  it('should render path when provided', () => {
+  it('should render path when provided', async () => {
     const element = jsx(Ask.Path, {
       name: 'output',
       label: 'Output directory',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { output: '/home/user/output' },
     });
 
     expect(result.text).toBe('/home/user/output');
   });
 
-  it('should include path-specific properties', () => {
+  it('should include path-specific properties', async () => {
     const element = jsx(Ask.Path, {
       name: 'dir',
       label: 'Directory',
@@ -170,7 +170,7 @@ describe('Ask.Path', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('path');
@@ -180,20 +180,20 @@ describe('Ask.Path', () => {
 });
 
 describe('Ask.Date', () => {
-  it('should render date when provided', () => {
+  it('should render date when provided', async () => {
     const element = jsx(Ask.Date, {
       name: 'deadline',
       label: 'Deadline',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { deadline: '2024-12-31' },
     });
 
     expect(result.text).toBe('2024-12-31');
   });
 
-  it('should include date-specific properties', () => {
+  it('should include date-specific properties', async () => {
     const element = jsx(Ask.Date, {
       name: 'deadline',
       label: 'Deadline',
@@ -202,7 +202,7 @@ describe('Ask.Date', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('date');
@@ -212,27 +212,27 @@ describe('Ask.Date', () => {
 });
 
 describe('Ask.Secret', () => {
-  it('should render value when provided', () => {
+  it('should render value when provided', async () => {
     const element = jsx(Ask.Secret, {
       name: 'apiKey',
       label: 'API Key',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { apiKey: 'sk-1234' },
     });
 
     expect(result.text).toBe('sk-1234');
   });
 
-  it('should mark as masked in requirement', () => {
+  it('should mark as masked in requirement', async () => {
     const element = jsx(Ask.Secret, {
       name: 'password',
       label: 'Password',
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('secret');
@@ -241,7 +241,7 @@ describe('Ask.Secret', () => {
 });
 
 describe('Ask.Choice', () => {
-  it('should render selected option label', () => {
+  it('should render selected option label', async () => {
     const element = jsx(Ask.Choice, {
       name: 'approach',
       label: 'Which approach?',
@@ -251,14 +251,14 @@ describe('Ask.Choice', () => {
       ],
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { approach: 'refactor' },
     });
 
     expect(result.text).toBe('Refactor code');
   });
 
-  it('should have exactly 2 options', () => {
+  it('should have exactly 2 options', async () => {
     const element = jsx(Ask.Choice, {
       name: 'choice',
       label: 'Choose',
@@ -269,7 +269,7 @@ describe('Ask.Choice', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.options).toHaveLength(2);
@@ -277,7 +277,7 @@ describe('Ask.Choice', () => {
 });
 
 describe('Ask.Rating', () => {
-  it('should render rating value', () => {
+  it('should render rating value', async () => {
     const element = jsx(Ask.Rating, {
       name: 'priority',
       label: 'Priority',
@@ -285,14 +285,14 @@ describe('Ask.Rating', () => {
       max: 5,
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { priority: 3 },
     });
 
     expect(result.text).toBe('3');
   });
 
-  it('should render rating with label when available', () => {
+  it('should render rating with label when available', async () => {
     const element = jsx(Ask.Rating, {
       name: 'priority',
       label: 'Priority',
@@ -301,14 +301,14 @@ describe('Ask.Rating', () => {
       labels: { 1: 'Low', 3: 'Medium', 5: 'High' },
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { priority: 3 },
     });
 
     expect(result.text).toBe('3 (Medium)');
   });
 
-  it('should collect labels from AskLabel children', () => {
+  it('should collect labels from AskLabel children', async () => {
     const element = jsx(Ask.Rating, {
       name: 'urgency',
       label: 'Urgency',
@@ -321,14 +321,14 @@ describe('Ask.Rating', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.type).toBe('rating');
     expect(req?.labels).toEqual({ 1: 'Low', 5: 'Critical' });
   });
 
-  it('should include min/max in requirement', () => {
+  it('should include min/max in requirement', async () => {
     const element = jsx(Ask.Rating, {
       name: 'score',
       label: 'Score',
@@ -337,7 +337,7 @@ describe('Ask.Rating', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     const req = iterator.current();
 
     expect(req?.min).toBe(0);

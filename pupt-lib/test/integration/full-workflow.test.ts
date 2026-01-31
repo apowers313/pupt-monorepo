@@ -19,7 +19,7 @@ describe('Full Workflow', () => {
 
     // Select and render
     const prompt = prompts[0];
-    const result = prompt.render({
+    const result = await prompt.render({
       inputs: { name: 'World' },
     });
 
@@ -50,7 +50,7 @@ describe('Full Workflow', () => {
     const reviewPrompt = pupt.getPrompt('code-review');
     expect(reviewPrompt).toBeDefined();
 
-    const result = reviewPrompt!.render({});
+    const result = await reviewPrompt!.render({});
     expect(result.text).toBeDefined();
   });
 
@@ -67,7 +67,7 @@ describe('Full Workflow', () => {
 
     // Get input iterator
     const iterator = prompt!.getInputIterator();
-    iterator.start();
+    await iterator.start();
 
     // Should have at least one input requirement
     const firstInput = iterator.current();
@@ -76,10 +76,10 @@ describe('Full Workflow', () => {
 
     // Submit value and advance
     await iterator.submit('TestUser');
-    iterator.advance();
+    await iterator.advance();
 
     // Now render with collected values
-    const result = prompt!.render({
+    const result = await prompt!.render({
       inputs: Object.fromEntries(iterator.getValues()),
     });
     expect(result.text).toBeDefined();

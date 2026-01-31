@@ -4,7 +4,7 @@ import { jsx } from '../../../../src/jsx-runtime';
 import { Steps, Step } from '../../../../src/components/reasoning';
 
 describe('Steps', () => {
-  it('should render numbered steps', () => {
+  it('should render numbered steps', async () => {
     const element = jsx(Steps, {
       children: [
         jsx(Step, { number: 1, children: 'Parse input' }),
@@ -13,14 +13,14 @@ describe('Steps', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('1.');
     expect(result.text).toContain('Parse input');
     expect(result.text).toContain('2.');
     expect(result.text).toContain('3.');
   });
 
-  it('should auto-number if not provided', () => {
+  it('should auto-number if not provided', async () => {
     const element = jsx(Steps, {
       children: [
         jsx(Step, { children: 'First' }),
@@ -28,7 +28,7 @@ describe('Steps', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toMatch(/1\..*First/s);
     expect(result.text).toMatch(/2\..*Second/s);
   });

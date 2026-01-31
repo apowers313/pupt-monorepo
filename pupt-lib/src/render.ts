@@ -5,12 +5,28 @@ import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
 /** Type for function components */
-type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode;
+type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
 
-export function render(
+/**
+ * Render a PuptElement tree to a string.
+ *
+ * This function is async to support components with async render methods.
+ * Components can perform async operations like API calls in their render methods.
+ *
+ * @param element - The root PuptElement to render
+ * @param options - Render options including inputs and environment
+ * @returns A Promise resolving to the RenderResult
+ *
+ * @example
+ * ```typescript
+ * const result = await render(<MyPrompt />);
+ * console.log(result.text);
+ * ```
+ */
+export async function render(
   element: PuptElement,
   options: RenderOptions = {},
-): RenderResult {
+): Promise<RenderResult> {
   const {
     inputs = new Map(),
     env = DEFAULT_ENVIRONMENT,
@@ -27,7 +43,7 @@ export function render(
     errors,
   };
 
-  const text = renderNode(element, context);
+  const text = await renderNode(element, context);
   const trimmedText = trim ? text.trim() : text;
 
   if (errors.length > 0) {
@@ -46,10 +62,10 @@ export function render(
   };
 }
 
-function renderNode(
+async function renderNode(
   node: PuptNode,
   context: RenderContext,
-): string {
+): Promise<string> {
   if (node === null || node === undefined || node === false) {
     return '';
   }
@@ -59,25 +75,28 @@ function renderNode(
   }
 
   if (Array.isArray(node)) {
-    return node.map(n => renderNode(n, context)).join('');
+    // Render children in parallel for better performance
+    const results = await Promise.all(node.map(n => renderNode(n, context)));
+    return results.join('');
   }
 
   // PuptElement
   return renderElement(node as PuptElement, context);
 }
 
-function renderChildrenFallback(children: PuptNode[], context: RenderContext): string {
-  return children.map(c => renderNode(c, context)).join('');
+async function renderChildrenFallback(children: PuptNode[], context: RenderContext): Promise<string> {
+  const results = await Promise.all(children.map(c => renderNode(c, context)));
+  return results.join('');
 }
 
-function renderComponentWithValidation(
+async function renderComponentWithValidation(
   type: unknown,
   componentName: string,
   props: Record<string, unknown>,
   children: PuptNode[],
   context: RenderContext,
-  renderFn: () => PuptNode,
-): string {
+  renderFn: () => PuptNode | Promise<PuptNode>,
+): Promise<string> {
   const schema = getSchema(type);
   if (!schema) {
     context.errors.push({
@@ -98,7 +117,9 @@ function renderComponentWithValidation(
 
   try {
     const result = renderFn();
-    return renderNode(result, context);
+    // Handle both sync and async render methods
+    const resolvedResult = result instanceof Promise ? await result : result;
+    return renderNode(resolvedResult, context);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     context.errors.push({
@@ -112,15 +133,16 @@ function renderComponentWithValidation(
   }
 }
 
-function renderElement(
+async function renderElement(
   element: PuptElement,
   context: RenderContext,
-): string {
+): Promise<string> {
   const { type, props, children } = element;
 
-  // Fragment - just render children
+  // Fragment - just render children in parallel
   if (type === Fragment) {
-    return children.map(c => renderNode(c, context)).join('');
+    const results = await Promise.all(children.map(c => renderNode(c, context)));
+    return results.join('');
   }
 
   // Component class
@@ -157,7 +179,8 @@ function renderElement(
   // This would only occur if JSX was created with a string type directly
   if (typeof type === 'string') {
     console.warn(`Unknown component type "${type}". Components should be imported, not referenced by string.`);
-    return children.map(c => renderNode(c, context)).join('');
+    const results = await Promise.all(children.map(c => renderNode(c, context)));
+    return results.join('');
   }
 
   return '';

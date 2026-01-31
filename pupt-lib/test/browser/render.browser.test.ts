@@ -20,17 +20,17 @@ import { Steps } from '../../src/components/reasoning/Steps';
 import { Step } from '../../src/components/reasoning/Step';
 
 describe('Browser: render', () => {
-  it('should render a simple prompt', () => {
+  it('should render a simple prompt', async () => {
     const element = jsx(Prompt, {
       name: 'test',
       children: 'Hello, world!',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('Hello, world!');
   });
 
-  it('should render nested components', () => {
+  it('should render nested components', async () => {
     const element = jsx(Prompt, {
       name: 'test',
       children: [
@@ -39,21 +39,21 @@ describe('Browser: render', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('You are a helpful assistant.');
     expect(result.text).toContain('Help the user.');
   });
 
-  it('should render fragments', () => {
+  it('should render fragments', async () => {
     const element = jsx(Fragment, {
       children: ['Hello', ' ', 'World'],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('Hello World');
   });
 
-  it('should render examples with code', () => {
+  it('should render examples with code', async () => {
     const element = jsx(Examples, {
       children: jsx(Example, {
         children: [
@@ -68,13 +68,13 @@ describe('Browser: render', () => {
       }),
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('Add two numbers');
     expect(result.text).toContain('```typescript');
     expect(result.text).toContain('const sum = a + b;');
   });
 
-  it('should render steps with auto-numbering', () => {
+  it('should render steps with auto-numbering', async () => {
     const element = jsx(Steps, {
       children: [
         jsx(Step, { children: 'First step' }),
@@ -83,7 +83,7 @@ describe('Browser: render', () => {
       ],
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('1.');
     expect(result.text).toContain('First step');
     expect(result.text).toContain('2.');
@@ -236,7 +236,7 @@ describe('Browser: .prompt file transformation', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'render.prompt');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Assistant');
     expect(result.text).toContain('Help with testing');

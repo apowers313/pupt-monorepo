@@ -4,9 +4,9 @@ import { jsx } from '../../../../src/jsx-runtime';
 import { Hostname, Username, Cwd } from '../../../../src/components/utility';
 
 describe('Hostname', () => {
-  it('should render system hostname', () => {
+  it('should render system hostname', async () => {
     const element = jsx(Hostname, {});
-    const result = render(element);
+    const result = await render(element);
 
     // Should be a non-empty string
     expect(result.text.length).toBeGreaterThan(0);
@@ -16,9 +16,9 @@ describe('Hostname', () => {
 });
 
 describe('Username', () => {
-  it('should render current username', () => {
+  it('should render current username', async () => {
     const element = jsx(Username, {});
-    const result = render(element);
+    const result = await render(element);
 
     // Should be a non-empty string
     expect(result.text.length).toBeGreaterThan(0);
@@ -28,9 +28,9 @@ describe('Username', () => {
 });
 
 describe('Cwd', () => {
-  it('should render current working directory', () => {
+  it('should render current working directory', async () => {
     const element = jsx(Cwd, {});
-    const result = render(element);
+    const result = await render(element);
 
     // Should be an absolute path (starts with / on unix)
     expect(result.text).toMatch(/^(\/|[A-Z]:\\)/);

@@ -20,7 +20,7 @@ export interface DiscoveredPromptWithMethods {
   tags: string[];
   library: string;
   element: PuptElement;
-  render(options?: Partial<RenderOptions>): RenderResult;
+  render(options?: Partial<RenderOptions>): Promise<RenderResult>;
   getInputIterator(): InputIterator;
 }
 
@@ -161,7 +161,7 @@ export class Pupt {
       tags,
       library,
       element,
-      render: (options?: Partial<RenderOptions>): RenderResult => {
+      render: async (options?: Partial<RenderOptions>): Promise<RenderResult> => {
         const inputsObj = options?.inputs ?? {};
         const inputsMap =
           inputsObj instanceof Map

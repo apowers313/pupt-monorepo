@@ -9,13 +9,13 @@ import '../../../../src/components';
 
 describe('If branch coverage', () => {
   describe('non-boolean, non-string when values', () => {
-    it('should produce validation error for number when value', () => {
+    it('should produce validation error for number when value', async () => {
       const element = jsx(If, {
         when: 1 as unknown as boolean,
         children: 'Visible',
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.errors.length).toBeGreaterThan(0);
@@ -24,13 +24,13 @@ describe('If branch coverage', () => {
       }
     });
 
-    it('should produce validation error for zero when value', () => {
+    it('should produce validation error for zero when value', async () => {
       const element = jsx(If, {
         when: 0 as unknown as boolean,
         children: 'Hidden',
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.errors.length).toBeGreaterThan(0);
@@ -38,13 +38,13 @@ describe('If branch coverage', () => {
       }
     });
 
-    it('should produce validation error for object when value', () => {
+    it('should produce validation error for object when value', async () => {
       const element = jsx(If, {
         when: { truthy: true } as unknown as boolean,
         children: 'Visible',
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.errors.length).toBeGreaterThan(0);
@@ -52,13 +52,13 @@ describe('If branch coverage', () => {
       }
     });
 
-    it('should produce validation error for null when value', () => {
+    it('should produce validation error for null when value', async () => {
       const element = jsx(If, {
         when: null as unknown as boolean,
         children: 'Hidden',
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.errors.length).toBeGreaterThan(0);
@@ -66,13 +66,13 @@ describe('If branch coverage', () => {
       }
     });
 
-    it('should produce validation error for undefined when value', () => {
+    it('should produce validation error for undefined when value', async () => {
       const element = jsx(If, {
         when: undefined as unknown as boolean,
         children: 'Hidden',
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.errors.length).toBeGreaterThan(0);
@@ -82,23 +82,23 @@ describe('If branch coverage', () => {
   });
 
   describe('children edge cases', () => {
-    it('should handle undefined children when condition is true', () => {
+    it('should handle undefined children when condition is true', async () => {
       const element = jsx(If, {
         when: true,
         // No children provided
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.text).toBe('');
     });
 
-    it('should handle null children when condition is true', () => {
+    it('should handle null children when condition is true', async () => {
       const element = jsx(If, {
         when: true,
         children: null,
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.text).toBe('');
     });
   });

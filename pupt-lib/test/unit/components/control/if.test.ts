@@ -5,112 +5,112 @@ import { If } from '../../../../src/components/control/If';
 import '../../../../src/components';
 
 describe('If', () => {
-  it('should render children when condition is true', () => {
+  it('should render children when condition is true', async () => {
     const element = jsx(If, {
       when: true,
       children: 'Visible',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('Visible');
   });
 
-  it('should not render when condition is false', () => {
+  it('should not render when condition is false', async () => {
     const element = jsx(If, {
       when: false,
       children: 'Hidden',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toBe('');
   });
 
-  it('should evaluate Excel formula syntax', () => {
+  it('should evaluate Excel formula syntax', async () => {
     const element = jsx(If, {
       when: '=count>5',
       children: 'Many items',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { count: 10 },
     });
 
     expect(result.text).toBe('Many items');
   });
 
-  it('should not render when Excel formula evaluates to false', () => {
+  it('should not render when Excel formula evaluates to false', async () => {
     const element = jsx(If, {
       when: '=count>5',
       children: 'Many items',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { count: 3 },
     });
 
     expect(result.text).toBe('');
   });
 
-  it('should support complex Excel formulas with AND', () => {
+  it('should support complex Excel formulas with AND', async () => {
     const element = jsx(If, {
       when: '=AND(count>5, userType="admin")',
       children: 'Admin with many items',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { count: 10, userType: 'admin' },
     });
 
     expect(result.text).toContain('Admin');
   });
 
-  it('should not render when AND condition partially fails', () => {
+  it('should not render when AND condition partially fails', async () => {
     const element = jsx(If, {
       when: '=AND(count>5, userType="admin")',
       children: 'Admin with many items',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { count: 10, userType: 'user' },
     });
 
     expect(result.text).toBe('');
   });
 
-  it('should support OR formulas', () => {
+  it('should support OR formulas', async () => {
     const element = jsx(If, {
       when: '=OR(role="admin", role="moderator")',
       children: 'Has elevated permissions',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { role: 'moderator' },
     });
 
     expect(result.text).toContain('elevated');
   });
 
-  it('should support equality check formulas', () => {
+  it('should support equality check formulas', async () => {
     const element = jsx(If, {
       when: '=status="active"',
       children: 'Active user',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { status: 'active' },
     });
 
     expect(result.text).toBe('Active user');
   });
 
-  it('should handle nested elements as children', () => {
+  it('should handle nested elements as children', async () => {
     const element = jsx(If, {
       when: true,
       children: jsx('span', { children: 'Nested content' }),
     });
 
     // Since 'span' is not a registered component, we just test the structure renders
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('Nested content');
   });
 });

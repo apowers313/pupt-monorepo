@@ -79,10 +79,18 @@ export interface InputIteratorOptions {
 }
 
 export interface InputIterator {
-  start(): void;
+  /**
+   * Start the iterator by collecting input requirements from the element tree.
+   * This is async to support components with async render methods.
+   */
+  start(): Promise<void>;
   current(): InputRequirement | null;
   submit(value: unknown): Promise<ValidationResult>;
-  advance(): void;
+  /**
+   * Advance to the next unfilled requirement.
+   * This is async to support re-collecting requirements from async components.
+   */
+  advance(): Promise<void>;
   isDone(): boolean;
   getValues(): Map<string, unknown>;
   /**
@@ -95,7 +103,7 @@ export interface InputIterator {
   runNonInteractive(): Promise<Map<string, unknown>>;
 }
 
-type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode;
+type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
 
 export function createInputIterator(
   element: PuptElement,
@@ -125,7 +133,7 @@ export function createInputIterator(
    */
   async function processNonInteractively(): Promise<void> {
     // Collect all requirements first
-    const allReqs = collectRequirements(element);
+    const allReqs = await collectRequirements(element);
 
     for (const req of allReqs) {
       // Skip if already has a value (pre-supplied)
@@ -168,7 +176,7 @@ export function createInputIterator(
     }
   }
 
-  function collectRequirements(node: PuptNode): InputRequirement[] {
+  async function collectRequirements(node: PuptNode): Promise<InputRequirement[]> {
     const collected: InputRequirement[] = [];
 
     // Create a render context with requirement collection enabled
@@ -181,7 +189,7 @@ export function createInputIterator(
     };
 
     // Walk the tree and collect requirements
-    walkNode(node, context);
+    await walkNode(node, context);
 
     return collected;
   }
@@ -199,10 +207,10 @@ export function createInputIterator(
     return reqs.length; // All filled
   }
 
-  function walkNode(
+  async function walkNode(
     node: PuptNode,
     context: RenderContext & { __requirements: InputRequirement[] },
-  ): void {
+  ): Promise<void> {
     if (node === null || node === undefined || node === false) {
       return;
     }
@@ -213,7 +221,7 @@ export function createInputIterator(
 
     if (Array.isArray(node)) {
       for (const child of node) {
-        walkNode(child, context);
+        await walkNode(child, context);
       }
       return;
     }
@@ -225,7 +233,7 @@ export function createInputIterator(
     // Fragment - just walk children
     if (type === Fragment) {
       for (const child of children) {
-        walkNode(child, context);
+        await walkNode(child, context);
       }
       return;
     }
@@ -233,11 +241,14 @@ export function createInputIterator(
     // Component class - render it to collect requirements
     if (isComponentClass(type)) {
       const instance = new (type as new () => Component)();
-      const result = instance.render({ ...props, children }, context);
+      const renderResult = instance.render({ ...props, children }, context);
+
+      // Handle both sync and async render methods
+      const result = renderResult instanceof Promise ? await renderResult : renderResult;
 
       // If the result is not primitive, walk it for more Ask components
       if (result !== null && typeof result === 'object') {
-        walkNode(result, context);
+        await walkNode(result, context);
       }
       return;
     }
@@ -245,10 +256,13 @@ export function createInputIterator(
     // Function component
     if (typeof type === 'function' && !isComponentClass(type)) {
       const fn = type as FunctionComponent;
-      const result = fn({ ...props, children });
+      const renderResult = fn({ ...props, children });
+
+      // Handle both sync and async function components
+      const result = renderResult instanceof Promise ? await renderResult : renderResult;
 
       if (result !== null && typeof result === 'object') {
-        walkNode(result, context);
+        await walkNode(result, context);
       }
       return;
     }
@@ -257,7 +271,7 @@ export function createInputIterator(
     // Just walk children if encountered
     if (typeof type === 'string') {
       for (const child of children) {
-        walkNode(child, context);
+        await walkNode(child, context);
       }
     }
   }
@@ -597,14 +611,13 @@ export function createInputIterator(
   }
 
   return {
-    start() {
+    async start() {
       if (state !== 'NOT_STARTED') {
         throw new Error('Iterator already started.');
       }
 
       // In non-interactive mode, we process everything upfront
-      // Note: processNonInteractively() is async, but start() is sync.
-      // If nonInteractive is true, use runNonInteractive() instead.
+      // Use runNonInteractive() instead for convenience.
       if (nonInteractive) {
         // Mark as started but immediately done - user should use runNonInteractive()
         // or getValues() after awaiting the processing
@@ -612,7 +625,7 @@ export function createInputIterator(
         return;
       }
 
-      requirements = collectRequirements(element);
+      requirements = await collectRequirements(element);
 
       // Find the first requirement that doesn't have a pre-supplied value
       currentIndex = findNextUnfilledIndex(requirements, 0);
@@ -660,7 +673,7 @@ export function createInputIterator(
       };
     },
 
-    advance() {
+    async advance() {
       if (state === 'NOT_STARTED') {
         throw new Error('Iterator not started. Call start() first.');
       }
@@ -672,7 +685,7 @@ export function createInputIterator(
       }
 
       // Re-collect requirements with new values (for conditionals)
-      requirements = collectRequirements(element);
+      requirements = await collectRequirements(element);
 
       // Find the next requirement that doesn't have a value yet
       currentIndex = findNextUnfilledIndex(requirements, currentIndex + 1);

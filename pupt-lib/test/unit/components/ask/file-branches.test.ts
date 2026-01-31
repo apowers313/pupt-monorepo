@@ -8,27 +8,27 @@ import { Ask } from '../../../../src/components/ask';
 
 describe('Ask.File branch coverage', () => {
   describe('array value handling', () => {
-    it('should render array value as comma-separated list', () => {
+    it('should render array value as comma-separated list', async () => {
       const element = jsx(Ask.File, {
         name: 'files',
         label: 'Select files',
         multiple: true,
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { files: ['file1.ts', 'file2.ts', 'file3.ts'] },
       });
 
       expect(result.text).toBe('file1.ts, file2.ts, file3.ts');
     });
 
-    it('should render single value as string', () => {
+    it('should render single value as string', async () => {
       const element = jsx(Ask.File, {
         name: 'file',
         label: 'Select file',
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { file: 'single-file.ts' },
       });
 
@@ -37,7 +37,7 @@ describe('Ask.File branch coverage', () => {
   });
 
   describe('array default value handling', () => {
-    it('should render array default value as comma-separated list', () => {
+    it('should render array default value as comma-separated list', async () => {
       const element = jsx(Ask.File, {
         name: 'files',
         label: 'Select files',
@@ -45,39 +45,39 @@ describe('Ask.File branch coverage', () => {
         default: ['default1.ts', 'default2.ts'],
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('default1.ts, default2.ts');
     });
 
-    it('should render single default value as string', () => {
+    it('should render single default value as string', async () => {
       const element = jsx(Ask.File, {
         name: 'file',
         label: 'Select file',
         default: 'default-file.ts',
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('default-file.ts');
     });
   });
 
   describe('placeholder rendering', () => {
-    it('should render placeholder when no value or default', () => {
+    it('should render placeholder when no value or default', async () => {
       const element = jsx(Ask.File, {
         name: 'configFile',
         label: 'Select config',
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('{configFile}');
     });
   });
 
   describe('all props handling', () => {
-    it('should pass all props to requirement', () => {
+    it('should pass all props to requirement', async () => {
       const element = jsx(Ask.File, {
         name: 'sourceFiles',
         label: 'Source files',
@@ -90,7 +90,7 @@ describe('Ask.File branch coverage', () => {
       });
 
       // Just render to ensure all props are handled
-      const result = render(element);
+      const result = await render(element);
       expect(result.text).toBe('{sourceFiles}');
     });
   });

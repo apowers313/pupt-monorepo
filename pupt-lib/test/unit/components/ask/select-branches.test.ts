@@ -10,7 +10,7 @@ import '../../../../src/components';
 
 describe('Ask.Select branch coverage', () => {
   describe('selected option not found', () => {
-    it('should render raw value when option not in list', () => {
+    it('should render raw value when option not in list', async () => {
       const element = jsx(Ask.Select, {
         name: 'color',
         label: 'Color',
@@ -20,7 +20,7 @@ describe('Ask.Select branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { color: 'green' },  // Not in options list
       });
 
@@ -29,7 +29,7 @@ describe('Ask.Select branch coverage', () => {
   });
 
   describe('option text fallback', () => {
-    it('should use text when provided', () => {
+    it('should use text when provided', async () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority',
@@ -38,14 +38,14 @@ describe('Ask.Select branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 'high' },
       });
 
       expect(result.text).toBe('urgent');
     });
 
-    it('should fall back to label when text not provided', () => {
+    it('should fall back to label when text not provided', async () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority',
@@ -54,7 +54,7 @@ describe('Ask.Select branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 'high' },
       });
 
@@ -63,7 +63,7 @@ describe('Ask.Select branch coverage', () => {
   });
 
   describe('Option children edge cases', () => {
-    it('should handle Option with function type (named Option)', () => {
+    it('should handle Option with function type (named Option)', async () => {
       // This tests the typeof element.type === 'function' && element.type.name === 'Option' branch
       const element = jsx(Ask.Select, {
         name: 'choice',
@@ -74,13 +74,13 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
     });
 
-    it('should handle Option with numeric children', () => {
+    it('should handle Option with numeric children', async () => {
       const element = jsx(Ask.Select, {
         name: 'number',
         label: 'Number',
@@ -91,14 +91,14 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].text).toBe('1');
       expect(req!.options![1].text).toBe('2');
     });
 
-    it('should handle Option with array children', () => {
+    it('should handle Option with array children', async () => {
       const element = jsx(Ask.Select, {
         name: 'combined',
         label: 'Combined',
@@ -108,13 +108,13 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].text).toBe('Part A and Part B');
     });
 
-    it('should handle single Option child (not array)', () => {
+    it('should handle single Option child (not array)', async () => {
       const element = jsx(Ask.Select, {
         name: 'single',
         label: 'Single',
@@ -122,13 +122,13 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
     });
 
-    it('should handle empty array children in Option', () => {
+    it('should handle empty array children in Option', async () => {
       const element = jsx(Ask.Select, {
         name: 'empty',
         label: 'Empty',
@@ -138,7 +138,7 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       // Falls back to value when children array is empty
@@ -147,7 +147,7 @@ describe('Ask.Select branch coverage', () => {
   });
 
   describe('children without type property', () => {
-    it('should skip children without type property', () => {
+    it('should skip children without type property', async () => {
       const element = jsx(Ask.Select, {
         name: 'filtered',
         label: 'Filtered',
@@ -158,7 +158,7 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
@@ -166,7 +166,7 @@ describe('Ask.Select branch coverage', () => {
   });
 
   describe('getTextFromChildren edge cases', () => {
-    it('should return undefined for object children (PuptElement)', () => {
+    it('should return undefined for object children (PuptElement)', async () => {
       // When a child is an object that's not an array (e.g., a nested element),
       // getTextFromChildren should return undefined
       const element = jsx(Ask.Select, {
@@ -182,7 +182,7 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       // When getTextFromChildren returns undefined for object child,
@@ -192,7 +192,7 @@ describe('Ask.Select branch coverage', () => {
   });
 
   describe('Option function type detection', () => {
-    it('should detect Option when type is function with name Option', () => {
+    it('should detect Option when type is function with name Option', async () => {
       // This exercises the `typeof element.type === 'function' && element.type.name === 'Option'` branch
       const element = jsx(Ask.Select, {
         name: 'func',
@@ -203,7 +203,7 @@ describe('Ask.Select branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);

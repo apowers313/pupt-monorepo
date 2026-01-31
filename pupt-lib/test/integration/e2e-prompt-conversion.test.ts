@@ -25,7 +25,7 @@ describe('End-to-End: .prompt file conversion', () => {
       const source = '<Prompt name="text">Hello, World!</Prompt>';
 
       const element = await createPromptFromSource(source, 'text.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('Hello, World!');
     });
@@ -39,7 +39,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'nested.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('helpful assistant');
       expect(result.text).toContain('Help the user');
@@ -59,7 +59,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'structural.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.ok).toBe(true);
       expect(result.text).toContain('Assistant');
@@ -78,7 +78,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'if.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('This should appear');
     });
@@ -94,7 +94,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'if.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).not.toContain('should NOT appear');
       expect(result.text).toContain('This should appear');
@@ -110,7 +110,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'foreach.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('apple');
       expect(result.text).toContain('banana');
@@ -130,7 +130,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'code.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('```typescript');
       expect(result.text).toContain('const greeting');
@@ -144,7 +144,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'json.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('"name"');
       expect(result.text).toContain('"test"');
@@ -159,7 +159,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'data.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('key');
       expect(result.text).toContain('value');
@@ -175,7 +175,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'uuid.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       // Should contain a UUID pattern
       expect(result.text).toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
@@ -189,7 +189,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'datetime.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       // Should contain a date/time string
       expect(result.text).toContain('Current time:');
@@ -215,7 +215,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'examples.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('2 + 2');
       expect(result.text).toContain('4');
@@ -237,7 +237,7 @@ describe('End-to-End: .prompt file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'steps.prompt');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('1.');
       expect(result.text).toContain('2.');
@@ -263,7 +263,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'vars.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(element.props.name).toBe('Dynamic Prompt');
       expect(result.text).toContain('The sum is 6');
@@ -286,7 +286,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'funcs.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('LOWERCASE TASK');
       expect(result.text).toContain('Hello, World!');
@@ -311,7 +311,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'classes.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Configure MyApp v2');
     });
@@ -329,7 +329,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'async.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Async data loaded');
     });
@@ -348,7 +348,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'destructure.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(element.props.name).toBe('test');
       expect(result.text).toContain('Version: 1');
@@ -371,7 +371,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'arrays.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('apple, banana');
     });
@@ -389,7 +389,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'templates.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Alice is 30 years old');
       expect(result.text).toContain('will be 40 in 10 years');
@@ -421,7 +421,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'types.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(element.props.name).toBe('typed-prompt');
       expect(result.text).toContain('- Task 1');
@@ -445,7 +445,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'generics.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Number: 42');
       expect(result.text).toContain('String: hello');
@@ -469,7 +469,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'enums.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Priority: high');
     });
@@ -491,7 +491,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'inline.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Header content for My Header');
     });
@@ -512,7 +512,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'multi.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Hello, User!');
       expect(result.text).toContain('Do this');
@@ -533,7 +533,7 @@ describe('End-to-End: .tsx file conversion', () => {
       `;
 
       const element = await createPromptFromSource(source, 'children.tsx');
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toContain('Section A');
       expect(result.text).toContain('Task inside wrapper');
@@ -556,7 +556,7 @@ describe('End-to-End: <Uses> component transformation', () => {
     `;
 
     const element = await createPromptFromSource(source, 'uses.prompt');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('Test role');
     expect(result.text).toContain('Test task');
@@ -582,7 +582,7 @@ describe('End-to-End: Custom components via options', () => {
     const element = await createPromptFromSource(source, 'custom.prompt', {
       components: { CustomBanner },
     });
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('*** Important Message ***');
     expect(result.text).toContain('Do something');
@@ -614,7 +614,7 @@ describe('End-to-End: Custom components via options', () => {
     const element = await createPromptFromSource(source, 'multi.prompt', {
       components: { Alert, Divider },
     });
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('[WARNING] Be careful!');
     expect(result.text).toContain('---');
@@ -643,7 +643,7 @@ describe('End-to-End: File-based prompts', () => {
     `);
 
     const element = await createPrompt(filePath);
-    const result = render(element);
+    const result = await render(element);
 
     expect(element.props.name).toBe('from-disk');
     expect(result.text).toContain('File-loaded assistant');
@@ -662,7 +662,7 @@ describe('End-to-End: File-based prompts', () => {
     `);
 
     const element = await createPrompt(filePath);
-    const result = render(element);
+    const result = await render(element);
 
     expect(element.props.name).toBe('tsx-from-disk');
     expect(result.text).toContain('Version 1');
@@ -698,7 +698,7 @@ describe('End-to-End: File-based prompts', () => {
     `);
 
     const element = await createPrompt(filePath);
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('Project Manager Assistant');
     expect(result.text).toContain('[P1] Setup environment');
@@ -723,7 +723,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'deep.prompt');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('Level-1');
     expect(result.text).toContain('Level-2');
@@ -742,7 +742,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'fragment.tsx');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('Part 1');
     expect(result.text).toContain('Part 2');
@@ -757,7 +757,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'empty.prompt');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.ok).toBe(true);
   });
@@ -770,7 +770,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'special.prompt');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('quotes');
     expect(result.text).toContain('apostrophes');
@@ -788,7 +788,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'multiline.prompt');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('multiline task');
     expect(result.text).toContain('spans multiple lines');
@@ -809,7 +809,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'nullable.tsx');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('This should appear');
   });
@@ -829,7 +829,7 @@ describe('End-to-End: Edge cases', () => {
     `;
 
     const element = await createPromptFromSource(source, 'boolean.tsx');
-    const result = render(element);
+    const result = await render(element);
 
     expect(result.text).toContain('Extra task');
     expect(result.text).not.toContain('Hidden task');

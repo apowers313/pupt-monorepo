@@ -102,7 +102,7 @@ describe('Browser E2E: Basic prompt rendering', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'simple.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Hello from the browser!');
   });
@@ -119,7 +119,7 @@ describe('Browser E2E: Basic prompt rendering', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'nested.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Browser Assistant');
     expect(result.text).toContain('Help with browser testing');
@@ -143,7 +143,7 @@ describe('Browser E2E: Control flow', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'if.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Visible in browser');
     expect(result.text).not.toContain('Hidden in browser');
@@ -161,7 +161,7 @@ describe('Browser E2E: Control flow', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'foreach.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Chrome');
     expect(result.text).toContain('Firefox');
@@ -182,7 +182,7 @@ describe('Browser E2E: Data components', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'code.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('```javascript');
     expect(result.text).toContain('console.log');
@@ -204,7 +204,7 @@ describe('Browser E2E: Reasoning components', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'steps.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('1.');
     expect(result.text).toContain('2.');
@@ -233,7 +233,7 @@ describe('Browser E2E: Example components', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'examples.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Browser input 1');
     expect(result.text).toContain('Browser output 1');
@@ -257,7 +257,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'js.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Sum of items: 15');
   });
@@ -276,7 +276,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'arrays.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('APPLE');
     expect(result.text).toContain('DATE');
@@ -297,7 +297,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'destructure.tsx') as { props: { name: string } };
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(element.props.name).toBe('BrowserTest');
     expect(result.text).toContain('Version: 2');
@@ -318,7 +318,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'components.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Browser Header');
     expect(result.text).toContain('Header task for Browser Header');
@@ -339,7 +339,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'conditional.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('First task (visible)');
     expect(result.text).not.toContain('Second task (hidden)');
@@ -359,7 +359,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'ternary.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Running in DEV mode');
   });
@@ -386,7 +386,7 @@ describe('Browser E2E: TypeScript features', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'typescript.tsx') as { props: { name: string } };
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(element.props.name).toBe('TypedBrowserTest');
     expect(result.text).toContain('item1, item2');
@@ -408,7 +408,7 @@ describe('Browser E2E: TypeScript features', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'types.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Priority: high');
     expect(result.text).toContain('Count: 42');
@@ -428,7 +428,7 @@ describe('Browser E2E: Edge cases', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'fragment.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Fragment role');
     expect(result.text).toContain('Fragment task');
@@ -449,7 +449,7 @@ describe('Browser E2E: Edge cases', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'null.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Visible content');
   });
@@ -470,7 +470,7 @@ describe('Browser E2E: Edge cases', () => {
     `;
 
     const element = await createPromptFromSourceBrowser(source, 'deep.tsx');
-    const result = render(element as Parameters<typeof render>[0]);
+    const result = await render(element as Parameters<typeof render>[0]);
 
     expect(result.text).toContain('Level-1');
     expect(result.text).toContain('Level-2');

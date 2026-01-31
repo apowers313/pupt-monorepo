@@ -7,7 +7,7 @@ import '../../../../src/components';
 
 describe('Ask.Select', () => {
   describe('options prop', () => {
-    it('should accept options as prop', () => {
+    it('should accept options as prop', async () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
@@ -17,7 +17,7 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { framework: 'vue' },
       });
 
@@ -25,7 +25,7 @@ describe('Ask.Select', () => {
       expect(result.text).toBe('Vue');
     });
 
-    it('should render option text when specified', () => {
+    it('should render option text when specified', async () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority',
@@ -35,7 +35,7 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 'high' },
       });
 
@@ -44,7 +44,7 @@ describe('Ask.Select', () => {
   });
 
   describe('AskOption children', () => {
-    it('should collect options from AskOption children', () => {
+    it('should collect options from AskOption children', async () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
@@ -56,7 +56,7 @@ describe('Ask.Select', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req).not.toBeNull();
@@ -66,7 +66,7 @@ describe('Ask.Select', () => {
       expect(req!.options![2]).toEqual({ value: 'angular', label: 'Angular', text: 'Angular' });
     });
 
-    it('should use AskOption label when provided', () => {
+    it('should use AskOption label when provided', async () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority level',
@@ -77,7 +77,7 @@ describe('Ask.Select', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0]).toEqual({
@@ -92,7 +92,7 @@ describe('Ask.Select', () => {
       });
     });
 
-    it('should render AskOption children text when selected', () => {
+    it('should render AskOption children text when selected', async () => {
       const element = jsx(Ask.Select, {
         name: 'priority',
         label: 'Priority level',
@@ -102,14 +102,14 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 'high' },
       });
 
       expect(result.text).toBe('high priority');
     });
 
-    it('should fall back to value when no children or label', () => {
+    it('should fall back to value when no children or label', async () => {
       const element = jsx(Ask.Select, {
         name: 'color',
         label: 'Pick color',
@@ -120,13 +120,13 @@ describe('Ask.Select', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0]).toEqual({ value: 'red', label: 'red', text: 'red' });
     });
 
-    it('should ignore non-AskOption children', () => {
+    it('should ignore non-AskOption children', async () => {
       const element = jsx(Ask.Select, {
         name: 'color',
         label: 'Pick color',
@@ -139,7 +139,7 @@ describe('Ask.Select', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(2);
@@ -147,7 +147,7 @@ describe('Ask.Select', () => {
   });
 
   describe('combined options', () => {
-    it('should merge AskOption children with options prop (children first)', () => {
+    it('should merge AskOption children with options prop (children first)', async () => {
       const element = jsx(Ask.Select, {
         name: 'choice',
         label: 'Make a choice',
@@ -160,7 +160,7 @@ describe('Ask.Select', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(2);
@@ -170,7 +170,7 @@ describe('Ask.Select', () => {
   });
 
   describe('rendering', () => {
-    it('should render selected value', () => {
+    it('should render selected value', async () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
@@ -180,14 +180,14 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { framework: 'react' },
       });
 
       expect(result.text).toBe('React');
     });
 
-    it('should render placeholder when no input provided', () => {
+    it('should render placeholder when no input provided', async () => {
       const element = jsx(Ask.Select, {
         name: 'color',
         label: 'Pick a color',
@@ -197,11 +197,11 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.text).toContain('{color}');
     });
 
-    it('should render only placeholder without label when no input', () => {
+    it('should render only placeholder without label when no input', async () => {
       const element = jsx(Ask.Select, {
         name: 'country',
         label: 'Select your country',
@@ -211,12 +211,12 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element);
+      const result = await render(element);
       // Label is metadata for CLI, not rendered in output
       expect(result.text).toBe('{country}');
     });
 
-    it('should render default value when no input provided', () => {
+    it('should render default value when no input provided', async () => {
       const element = jsx(Ask.Select, {
         name: 'framework',
         label: 'Choose framework',
@@ -227,30 +227,30 @@ describe('Ask.Select', () => {
         ],
       });
 
-      const result = render(element);
+      const result = await render(element);
       expect(result.text).toBe('React');
     });
   });
 });
 
 describe('Ask.Number', () => {
-  it('should render placeholder when no input provided', () => {
+  it('should render placeholder when no input provided', async () => {
     const element = jsx(Ask.Number, {
       name: 'age',
       label: 'Enter your age',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('{age}');
   });
 
-  it('should render input value when provided', () => {
+  it('should render input value when provided', async () => {
     const element = jsx(Ask.Number, {
       name: 'age',
       label: 'Enter your age',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { age: 25 },
     });
 
@@ -260,36 +260,36 @@ describe('Ask.Number', () => {
 });
 
 describe('Ask.Confirm', () => {
-  it('should render placeholder when no input provided', () => {
+  it('should render placeholder when no input provided', async () => {
     const element = jsx(Ask.Confirm, {
       name: 'proceed',
       label: 'Do you want to proceed?',
     });
 
-    const result = render(element);
+    const result = await render(element);
     expect(result.text).toContain('{proceed}');
   });
 
-  it('should render Yes when true is provided', () => {
+  it('should render Yes when true is provided', async () => {
     const element = jsx(Ask.Confirm, {
       name: 'proceed',
       label: 'Do you want to proceed?',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { proceed: true },
     });
 
     expect(result.text).toContain('Yes');
   });
 
-  it('should render No when false is provided', () => {
+  it('should render No when false is provided', async () => {
     const element = jsx(Ask.Confirm, {
       name: 'proceed',
       label: 'Do you want to proceed?',
     });
 
-    const result = render(element, {
+    const result = await render(element, {
       inputs: { proceed: false },
     });
 

@@ -27,17 +27,17 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     expect(iterator.current()?.name).toBe('first');
 
     await iterator.submit('value1');
-    iterator.advance();
+    await iterator.advance();
 
     expect(iterator.current()?.name).toBe('second');
 
     await iterator.submit('value2');
-    iterator.advance();
+    await iterator.advance();
 
     expect(iterator.isDone()).toBe(true);
   });
@@ -53,12 +53,12 @@ describe('InputIterator', () => {
     await expect(iterator.submit('value')).rejects.toThrow('Iterator not started');
 
     // advance() before start()
-    expect(() => iterator.advance()).toThrow('Iterator not started');
+    await expect(iterator.advance()).rejects.toThrow('Iterator not started');
 
-    iterator.start();
+    await iterator.start();
 
     // advance() before submit()
-    expect(() => iterator.advance()).toThrow('Current requirement not submitted');
+    await expect(iterator.advance()).rejects.toThrow('Current requirement not submitted');
   });
 
   it('should validate inputs', async () => {
@@ -70,7 +70,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     const result = await iterator.submit(150);
     expect(result.valid).toBe(false);
@@ -86,22 +86,22 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     await iterator.submit('Alice');
-    iterator.advance();
+    await iterator.advance();
     await iterator.submit(30);
-    iterator.advance();
+    await iterator.advance();
 
     const values = iterator.getValues();
     expect(values.get('name')).toBe('Alice');
     expect(values.get('age')).toBe(30);
   });
 
-  it('should handle empty element tree', () => {
+  it('should handle empty element tree', async () => {
     const element = jsx(Fragment, { children: [] });
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     expect(iterator.isDone()).toBe(true);
   });
@@ -118,7 +118,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     expect(iterator.current()?.name).toBe('nested');
   });
@@ -135,7 +135,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid option should pass
     const validResult = await iterator.submit('red');
@@ -143,7 +143,7 @@ describe('InputIterator', () => {
 
     // Reset for invalid test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
 
     // Invalid option should fail
     const invalidResult = await iterator2.submit('purple');
@@ -165,7 +165,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid options should pass
     const validResult = await iterator.submit(['auth', 'db']);
@@ -173,7 +173,7 @@ describe('InputIterator', () => {
 
     // Reset for invalid test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
 
     // Invalid option in array should fail
     const invalidResult = await iterator2.submit(['auth', 'cache']);
@@ -183,7 +183,7 @@ describe('InputIterator', () => {
 
     // Reset for non-array test
     const iterator3 = createInputIterator(element);
-    iterator3.start();
+    await iterator3.start();
 
     // Non-array should fail
     const typeResult = await iterator3.submit('auth');
@@ -200,7 +200,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid rating should pass
     const validResult = await iterator.submit(3);
@@ -208,28 +208,28 @@ describe('InputIterator', () => {
 
     // Reset for below min test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const belowMinResult = await iterator2.submit(0);
     expect(belowMinResult.valid).toBe(false);
     expect(belowMinResult.errors[0].code).toBe('BELOW_MIN');
 
     // Reset for above max test
     const iterator3 = createInputIterator(element);
-    iterator3.start();
+    await iterator3.start();
     const aboveMaxResult = await iterator3.submit(10);
     expect(aboveMaxResult.valid).toBe(false);
     expect(aboveMaxResult.errors[0].code).toBe('EXCEEDS_MAX');
 
     // Reset for non-integer test
     const iterator4 = createInputIterator(element);
-    iterator4.start();
+    await iterator4.start();
     const floatResult = await iterator4.submit(3.5);
     expect(floatResult.valid).toBe(false);
     expect(floatResult.errors[0].code).toBe('NOT_INTEGER');
 
     // Reset for wrong type test
     const iterator5 = createInputIterator(element);
-    iterator5.start();
+    await iterator5.start();
     const typeResult = await iterator5.submit('high');
     expect(typeResult.valid).toBe(false);
     expect(typeResult.errors[0].code).toBe('INVALID_TYPE');
@@ -244,7 +244,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid date should pass
     const validResult = await iterator.submit('2024-06-15');
@@ -252,21 +252,21 @@ describe('InputIterator', () => {
 
     // Reset for invalid format test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const invalidResult = await iterator2.submit('not-a-date');
     expect(invalidResult.valid).toBe(false);
     expect(invalidResult.errors[0].code).toBe('INVALID_DATE');
 
     // Reset for too early test
     const iterator3 = createInputIterator(element);
-    iterator3.start();
+    await iterator3.start();
     const earlyResult = await iterator3.submit('2023-12-01');
     expect(earlyResult.valid).toBe(false);
     expect(earlyResult.errors[0].code).toBe('DATE_TOO_EARLY');
 
     // Reset for too late test
     const iterator4 = createInputIterator(element);
-    iterator4.start();
+    await iterator4.start();
     const lateResult = await iterator4.submit('2025-01-15');
     expect(lateResult.valid).toBe(false);
     expect(lateResult.errors[0].code).toBe('DATE_TOO_LATE');
@@ -279,7 +279,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid string should pass
     const validResult = await iterator.submit('sk-1234567890');
@@ -287,7 +287,7 @@ describe('InputIterator', () => {
 
     // Reset for wrong type test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const typeResult = await iterator2.submit(12345);
     expect(typeResult.valid).toBe(false);
     expect(typeResult.errors[0].code).toBe('INVALID_TYPE');
@@ -301,7 +301,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid extension should pass
     const validResult = await iterator.submit('/path/to/config.json');
@@ -309,7 +309,7 @@ describe('InputIterator', () => {
 
     // Reset for invalid extension test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const invalidResult = await iterator2.submit('/path/to/config.txt');
     expect(invalidResult.valid).toBe(false);
     expect(invalidResult.errors[0].code).toBe('INVALID_EXTENSION');
@@ -322,7 +322,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid string should pass
     const validResult = await iterator.submit('/home/user/output');
@@ -330,7 +330,7 @@ describe('InputIterator', () => {
 
     // Reset for wrong type test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const typeResult = await iterator2.submit(12345);
     expect(typeResult.valid).toBe(false);
     expect(typeResult.errors[0].code).toBe('INVALID_TYPE');
@@ -345,7 +345,7 @@ describe('InputIterator', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Valid array should pass
     const validResult = await iterator.submit(['/path/to/file.ts', '/path/to/other.tsx']);
@@ -353,14 +353,14 @@ describe('InputIterator', () => {
 
     // Reset for non-array test
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const typeResult = await iterator2.submit('/path/to/file.ts');
     expect(typeResult.valid).toBe(false);
     expect(typeResult.errors[0].code).toBe('INVALID_TYPE');
 
     // Reset for invalid extension in array
     const iterator3 = createInputIterator(element);
-    iterator3.start();
+    await iterator3.start();
     const extResult = await iterator3.submit(['/path/to/file.ts', '/path/to/file.js']);
     expect(extResult.valid).toBe(false);
     expect(extResult.errors[0].code).toBe('INVALID_EXTENSION');
@@ -382,14 +382,14 @@ describe('InputIterator filesystem validation (Node.js)', () => {
 
       // Existing file should pass
       const iterator = createInputIterator(element, { environment: 'node' });
-      iterator.start();
+      await iterator.start();
       const validResult = await iterator.submit(existingFile);
       expect(validResult.valid).toBe(true);
       expect(validResult.warnings).toHaveLength(0);
 
       // Non-existing file should fail
       const iterator2 = createInputIterator(element, { environment: 'node' });
-      iterator2.start();
+      await iterator2.start();
       const invalidResult = await iterator2.submit('/path/to/nonexistent.txt');
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors[0].code).toBe('FILE_NOT_FOUND');
@@ -409,13 +409,13 @@ describe('InputIterator filesystem validation (Node.js)', () => {
 
       // Existing path should pass
       const iterator = createInputIterator(element, { environment: 'node' });
-      iterator.start();
+      await iterator.start();
       const validResult = await iterator.submit(tmpDir);
       expect(validResult.valid).toBe(true);
 
       // Non-existing path should fail
       const iterator2 = createInputIterator(element, { environment: 'node' });
-      iterator2.start();
+      await iterator2.start();
       const invalidResult = await iterator2.submit('/path/to/nonexistent');
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors[0].code).toBe('PATH_NOT_FOUND');
@@ -439,13 +439,13 @@ describe('InputIterator filesystem validation (Node.js)', () => {
 
       // Directory should pass
       const iterator = createInputIterator(element, { environment: 'node' });
-      iterator.start();
+      await iterator.start();
       const validResult = await iterator.submit(tmpDir);
       expect(validResult.valid).toBe(true);
 
       // File (not directory) should fail
       const iterator2 = createInputIterator(element, { environment: 'node' });
-      iterator2.start();
+      await iterator2.start();
       const invalidResult = await iterator2.submit(existingFile);
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors[0].code).toBe('NOT_A_DIRECTORY');
@@ -464,7 +464,7 @@ describe('InputIterator filesystem validation (Browser)', () => {
     });
 
     const iterator = createInputIterator(element, { environment: 'browser' });
-    iterator.start();
+    await iterator.start();
     const result = await iterator.submit('/path/to/file.txt');
 
     // Should pass (no error) but have a warning
@@ -482,7 +482,7 @@ describe('InputIterator filesystem validation (Browser)', () => {
     });
 
     const iterator = createInputIterator(element, { environment: 'browser' });
-    iterator.start();
+    await iterator.start();
     const result = await iterator.submit('/path/to/dir');
 
     // Should pass (no error) but have a warning
@@ -499,7 +499,7 @@ describe('InputIterator filesystem validation (Browser)', () => {
     });
 
     const iterator = createInputIterator(element, { environment: 'browser' });
-    iterator.start();
+    await iterator.start();
     const result = await iterator.submit('/path/to/dir');
 
     // Should pass (no error) but have a warning
@@ -517,7 +517,7 @@ describe('InputIterator filesystem validation (Browser)', () => {
     });
 
     const iterator = createInputIterator(element, { environment: 'browser' });
-    iterator.start();
+    await iterator.start();
     const result = await iterator.submit(['/path/to/file1.txt', '/path/to/file2.txt']);
 
     // Should pass (no error) but have a warning
@@ -536,7 +536,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Empty string should fail with REQUIRED
     const emptyResult = await iterator.submit('');
@@ -553,7 +553,7 @@ describe('InputIterator additional validation', () => {
 
     // Null should fail with INVALID_TYPE (type check comes before required)
     const iterator2 = createInputIterator(element);
-    iterator2.start();
+    await iterator2.start();
     const nullResult = await iterator2.submit(null);
     expect(nullResult.valid).toBe(false);
     // Type validation for string fails first, then required check may also fail
@@ -569,7 +569,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Number should fail
     const result = await iterator.submit(123);
@@ -584,7 +584,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // String should fail
     const result = await iterator.submit('yes');
@@ -599,7 +599,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // String should fail
     const result = await iterator.submit('not a number');
@@ -615,7 +615,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Negative should fail
     const result = await iterator.submit(-5);
@@ -631,7 +631,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Date in the past should fail
     const result = await iterator.submit('2020-01-01');
@@ -647,7 +647,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Date in the future should fail
     const result = await iterator.submit('2099-12-31');
@@ -662,7 +662,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Number should fail
     const result = await iterator.submit(12345);
@@ -677,7 +677,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
 
     // Array should fail for single file
     const result = await iterator.submit(['file1.txt', 'file2.txt']);
@@ -694,7 +694,7 @@ describe('InputIterator additional validation', () => {
     });
 
     const iterator = createInputIterator(element, { validateOnSubmit: false });
-    iterator.start();
+    await iterator.start();
 
     // Invalid value should pass without validation
     const result = await iterator.submit('not a number');
@@ -703,19 +703,19 @@ describe('InputIterator additional validation', () => {
     expect(result.warnings).toHaveLength(0);
   });
 
-  it('should throw when calling start() twice', () => {
+  it('should throw when calling start() twice', async () => {
     const element = jsx(Ask.Text, { name: 'test', label: 'Test' });
     const iterator = createInputIterator(element);
 
-    iterator.start();
-    expect(() => iterator.start()).toThrow('Iterator already started');
+    await iterator.start();
+    await expect(iterator.start()).rejects.toThrow('Iterator already started');
   });
 
   it('should throw when calling submit() on done iterator', async () => {
     const element = jsx(Fragment, { children: [] });
     const iterator = createInputIterator(element);
 
-    iterator.start();
+    await iterator.start();
     expect(iterator.isDone()).toBe(true);
 
     await expect(iterator.submit('value')).rejects.toThrow('Iterator is done');
@@ -725,22 +725,22 @@ describe('InputIterator additional validation', () => {
     const element = jsx(Ask.Text, { name: 'test', label: 'Test' });
     const iterator = createInputIterator(element);
 
-    iterator.start();
+    await iterator.start();
     await iterator.submit('value');
-    iterator.advance();
+    await iterator.advance();
 
     // Now it's done
     expect(iterator.isDone()).toBe(true);
-    expect(() => iterator.advance()).toThrow('Iterator is done');
+    await expect(iterator.advance()).rejects.toThrow('Iterator is done');
   });
 
   it('should return null from current() when done', async () => {
     const element = jsx(Ask.Text, { name: 'test', label: 'Test' });
     const iterator = createInputIterator(element);
 
-    iterator.start();
+    await iterator.start();
     await iterator.submit('value');
-    iterator.advance();
+    await iterator.advance();
 
     expect(iterator.isDone()).toBe(true);
     expect(iterator.current()).toBeNull();
@@ -761,13 +761,13 @@ describe('InputIterator pre-supplied values', () => {
     const iterator = createInputIterator(element, {
       values: { name: 'Alice', phone: '555-1234' },
     });
-    iterator.start();
+    await iterator.start();
 
     // Should skip to email (the only non-pre-supplied input)
     expect(iterator.current()?.name).toBe('email');
 
     await iterator.submit('alice@example.com');
-    iterator.advance();
+    await iterator.advance();
 
     expect(iterator.isDone()).toBe(true);
 
@@ -778,7 +778,7 @@ describe('InputIterator pre-supplied values', () => {
     expect(values.get('phone')).toBe('555-1234');
   });
 
-  it('should be done immediately if all inputs are pre-supplied', () => {
+  it('should be done immediately if all inputs are pre-supplied', async () => {
     const element = jsx(Fragment, {
       children: [
         jsx(Ask.Text, { name: 'name', label: 'Name' }),
@@ -789,7 +789,7 @@ describe('InputIterator pre-supplied values', () => {
     const iterator = createInputIterator(element, {
       values: { name: 'Bob', age: 25 },
     });
-    iterator.start();
+    await iterator.start();
 
     expect(iterator.isDone()).toBe(true);
 
@@ -961,7 +961,7 @@ describe('InputIterator non-interactive mode', () => {
     });
 
     const iterator = createInputIterator(element);
-    iterator.start();
+    await iterator.start();
     // Now call runNonInteractive after start
     const values = await iterator.runNonInteractive();
 
@@ -985,20 +985,20 @@ describe('InputIterator path validation (Node.js)', () => {
 
       // Directory should pass
       const iterator = createInputIterator(element, { environment: 'node' });
-      iterator.start();
+      await iterator.start();
       const dirResult = await iterator.submit(tmpDir);
       expect(dirResult.valid).toBe(true);
 
       // File (not directory) should fail
       const iterator2 = createInputIterator(element, { environment: 'node' });
-      iterator2.start();
+      await iterator2.start();
       const fileResult = await iterator2.submit(existingFile);
       expect(fileResult.valid).toBe(false);
       expect(fileResult.errors[0].code).toBe('NOT_A_DIRECTORY');
 
       // Non-existent path should pass (mustExist is false)
       const iterator3 = createInputIterator(element, { environment: 'node' });
-      iterator3.start();
+      await iterator3.start();
       const nonExistentResult = await iterator3.submit('/path/that/does/not/exist');
       expect(nonExistentResult.valid).toBe(true);
     } finally {
@@ -1023,13 +1023,13 @@ describe('InputIterator path validation (Node.js)', () => {
 
       // All existing files should pass
       const iterator = createInputIterator(element, { environment: 'node' });
-      iterator.start();
+      await iterator.start();
       const validResult = await iterator.submit([existingFile1, existingFile2]);
       expect(validResult.valid).toBe(true);
 
       // One missing file should fail
       const iterator2 = createInputIterator(element, { environment: 'node' });
-      iterator2.start();
+      await iterator2.start();
       const invalidResult = await iterator2.submit([existingFile1, '/nonexistent/file.txt']);
       expect(invalidResult.valid).toBe(false);
       expect(invalidResult.errors[0].code).toBe('FILE_NOT_FOUND');

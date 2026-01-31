@@ -172,7 +172,7 @@ describe('DiscoveredPrompt', () => {
     await pupt.init();
 
     const prompt = pupt.getPrompt('test-prompt');
-    const result = prompt?.render({ inputs: { name: 'Alice' } });
+    const result = await prompt?.render({ inputs: { name: 'Alice' } });
 
     expect(result?.text).toBeDefined();
   });
@@ -187,7 +187,7 @@ describe('DiscoveredPrompt', () => {
     const prompt = pupt.getPrompt('test-prompt');
     // Pass inputs as a Map instead of an object
     const inputsMap = new Map<string, unknown>([['name', 'Bob']]);
-    const result = prompt?.render({ inputs: inputsMap });
+    const result = await prompt?.render({ inputs: inputsMap });
 
     expect(result?.text).toBeDefined();
   });
@@ -203,7 +203,7 @@ describe('DiscoveredPrompt', () => {
     const iterator = prompt?.getInputIterator();
 
     expect(iterator).toBeDefined();
-    iterator?.start();
+    await iterator?.start();
     expect(iterator?.current()).toBeDefined();
   });
 

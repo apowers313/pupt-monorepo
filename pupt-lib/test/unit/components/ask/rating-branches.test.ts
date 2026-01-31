@@ -11,7 +11,7 @@ import '../../../../src/components';
 
 describe('Ask.Rating branch coverage', () => {
   describe('label text rendering', () => {
-    it('should render rating with label text when available', () => {
+    it('should render rating with label text when available', async () => {
       const element = jsx(Ask.Rating, {
         name: 'priority',
         label: 'Priority',
@@ -20,14 +20,14 @@ describe('Ask.Rating branch coverage', () => {
         labels: { 1: 'Very Low', 5: 'Very High' },
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 5 },
       });
 
       expect(result.text).toBe('5 (Very High)');
     });
 
-    it('should render rating without label when not defined', () => {
+    it('should render rating without label when not defined', async () => {
       const element = jsx(Ask.Rating, {
         name: 'priority',
         label: 'Priority',
@@ -36,7 +36,7 @@ describe('Ask.Rating branch coverage', () => {
         labels: { 1: 'Low', 5: 'High' },
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { priority: 3 },  // No label for 3
       });
 
@@ -45,7 +45,7 @@ describe('Ask.Rating branch coverage', () => {
   });
 
   describe('Label children', () => {
-    it('should collect labels from Label children', () => {
+    it('should collect labels from Label children', async () => {
       const element = jsx(Ask.Rating, {
         name: 'satisfaction',
         label: 'Satisfaction',
@@ -59,7 +59,7 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels).toEqual({
@@ -69,7 +69,7 @@ describe('Ask.Rating branch coverage', () => {
       });
     });
 
-    it('should handle string value in Label', () => {
+    it('should handle string value in Label', async () => {
       const element = jsx(Ask.Rating, {
         name: 'score',
         label: 'Score',
@@ -80,14 +80,14 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![1]).toBe('One');
       expect(req!.labels![2]).toBe('Two');
     });
 
-    it('should handle numeric children in Label', () => {
+    it('should handle numeric children in Label', async () => {
       const element = jsx(Ask.Rating, {
         name: 'level',
         label: 'Level',
@@ -97,13 +97,13 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![1]).toBe('100');
     });
 
-    it('should handle array children in Label', () => {
+    it('should handle array children in Label', async () => {
       const element = jsx(Ask.Rating, {
         name: 'quality',
         label: 'Quality',
@@ -113,13 +113,13 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![5]).toBe('Very Good');
     });
 
-    it('should skip Label with missing value', () => {
+    it('should skip Label with missing value', async () => {
       const element = jsx(Ask.Rating, {
         name: 'score',
         label: 'Score',
@@ -130,14 +130,14 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![1]).toBe('Has Value');
       expect(Object.keys(req!.labels!)).toHaveLength(1);
     });
 
-    it('should skip Label with empty children', () => {
+    it('should skip Label with empty children', async () => {
       const element = jsx(Ask.Rating, {
         name: 'score',
         label: 'Score',
@@ -148,14 +148,14 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![2]).toBe('Valid');
       expect(req!.labels![1]).toBeUndefined();
     });
 
-    it('should handle single Label child (not array)', () => {
+    it('should handle single Label child (not array)', async () => {
       const element = jsx(Ask.Rating, {
         name: 'single',
         label: 'Single',
@@ -163,13 +163,13 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.labels![5]).toBe('Max');
     });
 
-    it('should skip non-Label children', () => {
+    it('should skip non-Label children', async () => {
       const element = jsx(Ask.Rating, {
         name: 'mixed',
         label: 'Mixed',
@@ -182,7 +182,7 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(Object.keys(req!.labels!)).toHaveLength(1);
@@ -190,7 +190,7 @@ describe('Ask.Rating branch coverage', () => {
   });
 
   describe('prop labels override child labels', () => {
-    it('should override child labels with prop labels', () => {
+    it('should override child labels with prop labels', async () => {
       const element = jsx(Ask.Rating, {
         name: 'priority',
         label: 'Priority',
@@ -202,7 +202,7 @@ describe('Ask.Rating branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       // Prop label overrides child label
@@ -213,25 +213,25 @@ describe('Ask.Rating branch coverage', () => {
   });
 
   describe('default value rendering', () => {
-    it('should render default value when no input', () => {
+    it('should render default value when no input', async () => {
       const element = jsx(Ask.Rating, {
         name: 'priority',
         label: 'Priority',
         default: 3,
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('3');
     });
 
-    it('should render placeholder when no value or default', () => {
+    it('should render placeholder when no value or default', async () => {
       const element = jsx(Ask.Rating, {
         name: 'priority',
         label: 'Priority',
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('{priority}');
     });

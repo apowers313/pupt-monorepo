@@ -10,7 +10,7 @@ import '../../../../src/components';
 
 describe('Ask.MultiSelect branch coverage', () => {
   describe('option text fallback', () => {
-    it('should use option text field when available', () => {
+    it('should use option text field when available', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'features',
         label: 'Features',
@@ -20,14 +20,14 @@ describe('Ask.MultiSelect branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { features: ['auth', 'api'] },
       });
 
       expect(result.text).toBe('auth feature, api feature');
     });
 
-    it('should fall back to label when text not provided', () => {
+    it('should fall back to label when text not provided', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'features',
         label: 'Features',
@@ -37,14 +37,14 @@ describe('Ask.MultiSelect branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { features: ['auth'] },
       });
 
       expect(result.text).toBe('Authentication');
     });
 
-    it('should fall back to value when option not found', () => {
+    it('should fall back to value when option not found', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'features',
         label: 'Features',
@@ -53,7 +53,7 @@ describe('Ask.MultiSelect branch coverage', () => {
         ],
       });
 
-      const result = render(element, {
+      const result = await render(element, {
         inputs: { features: ['auth', 'unknown'] },
       });
 
@@ -62,7 +62,7 @@ describe('Ask.MultiSelect branch coverage', () => {
   });
 
   describe('Option children with various props', () => {
-    it('should handle Option with label prop', () => {
+    it('should handle Option with label prop', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'items',
         label: 'Items',
@@ -72,13 +72,13 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].label).toBe('Item A');
     });
 
-    it('should handle Option with children text', () => {
+    it('should handle Option with children text', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'items',
         label: 'Items',
@@ -88,13 +88,13 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].text).toBe('Item B Text');
     });
 
-    it('should handle Option with numeric children', () => {
+    it('should handle Option with numeric children', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'numbers',
         label: 'Numbers',
@@ -105,14 +105,14 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].text).toBe('1');
       expect(req!.options![1].text).toBe('2');
     });
 
-    it('should handle Option with array children', () => {
+    it('should handle Option with array children', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'items',
         label: 'Items',
@@ -122,13 +122,13 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options![0].text).toBe('Part 1 - Part 2');
     });
 
-    it('should handle single child (not array)', () => {
+    it('should handle single child (not array)', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'single',
         label: 'Single',
@@ -136,13 +136,13 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
     });
 
-    it('should skip non-object children', () => {
+    it('should skip non-object children', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'mixed',
         label: 'Mixed',
@@ -156,7 +156,7 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
@@ -164,7 +164,7 @@ describe('Ask.MultiSelect branch coverage', () => {
   });
 
   describe('default value handling', () => {
-    it('should render default value when no input', () => {
+    it('should render default value when no input', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'features',
         label: 'Features',
@@ -175,26 +175,26 @@ describe('Ask.MultiSelect branch coverage', () => {
         ],
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('Auth, API');
     });
 
-    it('should render placeholder when no value or default', () => {
+    it('should render placeholder when no value or default', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'features',
         label: 'Features',
         options: [{ value: 'auth', label: 'Auth' }],
       });
 
-      const result = render(element);
+      const result = await render(element);
 
       expect(result.text).toBe('{features}');
     });
   });
 
   describe('min/max constraints', () => {
-    it('should pass min/max to requirement', () => {
+    it('should pass min/max to requirement', async () => {
       const element = jsx(Ask.MultiSelect, {
         name: 'tags',
         label: 'Tags',
@@ -207,7 +207,7 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.min).toBe(1);
@@ -216,7 +216,7 @@ describe('Ask.MultiSelect branch coverage', () => {
   });
 
   describe('getTextFromChildren edge cases', () => {
-    it('should return undefined for object children (PuptElement)', () => {
+    it('should return undefined for object children (PuptElement)', async () => {
       // When a child is an object that's not an array (e.g., a nested element),
       // getTextFromChildren should return undefined
       const element = jsx(Ask.MultiSelect, {
@@ -232,7 +232,7 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       // When getTextFromChildren returns undefined for object child,
@@ -242,7 +242,7 @@ describe('Ask.MultiSelect branch coverage', () => {
   });
 
   describe('Option function type detection', () => {
-    it('should detect Option when type is function with name Option', () => {
+    it('should detect Option when type is function with name Option', async () => {
       // Create an element where Option is passed as a function reference
       // This exercises the `typeof element.type === 'function' && element.type.name === 'Option'` branch
       const element = jsx(Ask.MultiSelect, {
@@ -255,7 +255,7 @@ describe('Ask.MultiSelect branch coverage', () => {
       });
 
       const iterator = createInputIterator(element);
-      iterator.start();
+      await iterator.start();
 
       const req = iterator.current();
       expect(req!.options).toHaveLength(1);
