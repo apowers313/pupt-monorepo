@@ -1,7 +1,13 @@
 import { defineConfig } from 'vitest/config';
 
+// Windows CI can be slow to load large modules like @babel/standalone
+// Use a higher timeout for CI environments
+const isCI = process.env.CI === 'true';
+const testTimeout = isCI ? 30000 : 5000;
+
 export default defineConfig({
   test: {
+    testTimeout,
     projects: [
       // Node.js project - runs unit tests in Node environment
       {

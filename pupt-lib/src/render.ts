@@ -4,6 +4,10 @@ import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
+// Debug timing for CI
+const DEBUG_TIMING = process.env.CI === 'true';
+let renderCallCount = 0;
+
 /** Type for function components */
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
 
@@ -27,26 +31,41 @@ export async function render(
   element: PuptElement,
   options: RenderOptions = {},
 ): Promise<RenderResult> {
+  const callNum = ++renderCallCount;
+  const start = Date.now();
+  const log = (msg: string) => {
+    if (DEBUG_TIMING) console.log(`[RENDER #${callNum}] ${msg}: ${Date.now() - start}ms`);
+  };
+  log('render() start');
+
   const {
     inputs = new Map(),
     env = DEFAULT_ENVIRONMENT,
     trim = true,
   } = options;
 
+  log('after destructure');
+
   const postExecution: PostExecutionAction[] = [];
   const errors: RenderError[] = [];
 
+  log('before createRuntimeConfig');
   const context: RenderContext = {
     inputs: inputs instanceof Map ? inputs : new Map(Object.entries(inputs)),
     env: { ...env, runtime: createRuntimeConfig() },
     postExecution,
     errors,
   };
+  log('after createRuntimeConfig');
 
+  log('before renderNode');
   const text = await renderNode(element, context);
+  log('after renderNode');
+
   const trimmedText = trim ? text.trim() : text;
 
   if (errors.length > 0) {
+    log('returning with errors');
     return {
       ok: false,
       text: trimmedText,
@@ -55,6 +74,7 @@ export async function render(
     };
   }
 
+  log('returning success');
   return {
     ok: true,
     text: trimmedText,

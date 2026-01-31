@@ -3,6 +3,10 @@ import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
 
+// Debug timing for CI
+const DEBUG_TIMING = process.env.CI === 'true';
+let iteratorCallCount = 0;
+
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
 export type RuntimeEnvironment = 'node' | 'browser';
@@ -177,9 +181,16 @@ export function createInputIterator(
   }
 
   async function collectRequirements(node: PuptNode): Promise<InputRequirement[]> {
+    const startTime = Date.now();
+    const log = (msg: string) => {
+      if (DEBUG_TIMING) console.log(`[COLLECT] ${msg}: ${Date.now() - startTime}ms`);
+    };
+    log('collectRequirements start');
+
     const collected: InputRequirement[] = [];
 
     // Create a render context with requirement collection enabled
+    log('before createRuntimeConfig');
     const context: RenderContext & { __requirements: InputRequirement[] } = {
       inputs: values,
       env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
@@ -187,10 +198,14 @@ export function createInputIterator(
       errors: [],
       __requirements: collected,
     };
+    log('after createRuntimeConfig');
 
     // Walk the tree and collect requirements
+    log('before walkNode');
     await walkNode(node, context);
+    log('after walkNode');
 
+    log('collectRequirements done');
     return collected;
   }
 
@@ -612,6 +627,13 @@ export function createInputIterator(
 
   return {
     async start() {
+      const callNum = ++iteratorCallCount;
+      const startTime = Date.now();
+      const log = (msg: string) => {
+        if (DEBUG_TIMING) console.log(`[ITERATOR #${callNum}] ${msg}: ${Date.now() - startTime}ms`);
+      };
+      log('start() called');
+
       if (state !== 'NOT_STARTED') {
         throw new Error('Iterator already started.');
       }
@@ -622,14 +644,18 @@ export function createInputIterator(
         // Mark as started but immediately done - user should use runNonInteractive()
         // or getValues() after awaiting the processing
         state = 'DONE';
+        log('non-interactive mode, done');
         return;
       }
 
+      log('before collectRequirements');
       requirements = await collectRequirements(element);
+      log('after collectRequirements');
 
       // Find the first requirement that doesn't have a pre-supplied value
       currentIndex = findNextUnfilledIndex(requirements, 0);
       state = currentIndex < requirements.length ? 'ITERATING' : 'DONE';
+      log('start() complete');
     },
 
     current() {
