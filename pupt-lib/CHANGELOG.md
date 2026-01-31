@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/apowers313/pupt-lib/compare/v1.1.4...v1.1.5) (2026-01-31)
+
+
+### Bug Fixes
+
+* async rendering for async components ([e29ab99](https://github.com/apowers313/pupt-lib/commit/e29ab9970e3e28e44f829b09614e5c3837462981))
+
 ## [1.1.4](https://github.com/apowers313/pupt-lib/compare/v1.1.3...v1.1.4) (2026-01-30)
 
 
