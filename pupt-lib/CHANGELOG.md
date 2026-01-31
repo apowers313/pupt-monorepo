@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/apowers313/pupt-lib/compare/v1.1.6...v1.1.7) (2026-01-31)
+
+
+### Bug Fixes
+
+* add Option and Label to Ask namespace ([5674d45](https://github.com/apowers313/pupt-lib/commit/5674d453ad4682ac2597885212bf4f2cc266d780)), closes [#4](https://github.com/apowers313/pupt-lib/issues/4)
+
 ## [1.1.6](https://github.com/apowers313/pupt-lib/compare/v1.1.5...v1.1.6) (2026-01-31)
 
 
