@@ -150,20 +150,33 @@ describe('render()', () => {
       expect(result.ok).toBe(true);
     });
 
-    it('should return ok: false with errors for component without schema', async () => {
+    it('should fail fast when custom component lacks static schema (issue #6)', async () => {
+      // Regression test: components without schema should throw immediately
+      // rather than silently rendering empty content
+      class GitHubUser extends Component<{ username: string }> {
+        // Missing: static schema = z.object({ username: z.string() })
+        async render({ username }: { username: string }) {
+          return `User: ${username}`;
+        }
+      }
+
+      const element = jsx(GitHubUser, { username: 'octocat' });
+
+      await expect(render(element)).rejects.toThrow(
+        'Component "GitHubUser" does not have a schema defined. All components must declare a static schema.',
+      );
+    });
+
+    it('should throw error for component without schema', async () => {
       class NoSchema extends Component {
         render() { return 'hello'; }
       }
 
       const element = jsx(NoSchema, {});
-      const result = await render(element);
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.errors).toHaveLength(1);
-        expect(result.errors[0].code).toBe('missing_schema');
-        expect(result.errors[0].component).toBe('NoSchema');
-      }
+      await expect(render(element)).rejects.toThrow(
+        'Component "NoSchema" does not have a schema defined. All components must declare a static schema.',
+      );
     });
 
     it('should return ok: false with errors for invalid props', async () => {
@@ -200,7 +213,7 @@ describe('render()', () => {
       }
     });
 
-    it('should accumulate errors from nested components', async () => {
+    it('should throw on first component without schema in nested tree', async () => {
       class NoSchema1 extends Component {
         render() { return 'a'; }
       }
@@ -215,13 +228,10 @@ describe('render()', () => {
         ],
       });
 
-      const result = await render(element);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.errors).toHaveLength(2);
-        expect(result.errors[0].component).toBe('NoSchema1');
-        expect(result.errors[1].component).toBe('NoSchema2');
-      }
+      // Should throw on first component without schema (fails fast)
+      await expect(render(element)).rejects.toThrow(
+        'Component "NoSchema1" does not have a schema defined',
+      );
     });
 
     it('should capture runtime errors as RenderError', async () => {
