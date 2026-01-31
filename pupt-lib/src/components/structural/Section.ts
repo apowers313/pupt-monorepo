@@ -15,12 +15,14 @@ export class Section extends Component<SectionProps> {
   render({ name, delimiter, children }: SectionProps, _context: RenderContext): PuptNode {
     const effectiveDelimiter = delimiter ?? (name ? 'xml' : 'none');
     const childContent = Array.isArray(children) ? children : children;
+    // Default tag name to 'section' if not provided
+    const tagName = name ?? 'section';
 
     switch (effectiveDelimiter) {
       case 'xml':
-        return [`<${name}>\n`, childContent, `\n</${name}>`];
+        return [`<${tagName}>\n`, childContent, `\n</${tagName}>`];
       case 'markdown':
-        return [`## ${name}\n\n`, childContent];
+        return [`## ${tagName}\n\n`, childContent];
       case 'none':
         return childContent;
     }

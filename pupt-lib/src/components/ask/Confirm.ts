@@ -19,6 +19,7 @@ export class AskConfirm extends Component<ConfirmProps> {
       description = label,
       required = false,
       default: defaultValue,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -33,6 +34,10 @@ export class AskConfirm extends Component<ConfirmProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return value ? 'Yes' : 'No';

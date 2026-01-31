@@ -26,6 +26,7 @@ export class AskFile extends Component<FileProps> {
       multiple = false,
       mustExist = false,
       includeContents = false,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -44,6 +45,10 @@ export class AskFile extends Component<FileProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       if (Array.isArray(value)) {

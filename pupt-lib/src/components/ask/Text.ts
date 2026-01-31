@@ -20,6 +20,7 @@ export class AskText extends Component<TextProps> {
       description = label,
       required = false,
       default: defaultValue,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -34,6 +35,10 @@ export class AskText extends Component<TextProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return String(value);

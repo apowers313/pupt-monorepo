@@ -32,6 +32,7 @@ export class AskChoice extends Component<ChoiceProps> {
       required = false,
       default: defaultValue,
       options,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -51,6 +52,10 @@ export class AskChoice extends Component<ChoiceProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     const selectedValue = value ?? defaultValue;
     if (selectedValue !== undefined) {

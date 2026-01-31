@@ -63,4 +63,41 @@ describe('Ask.Text', () => {
     // Required is metadata for CLI validation, not rendered in output
     expect(result.text).toBe('{name}');
   });
+
+  it('should render empty string when silent is true', async () => {
+    const element = jsx(Ask.Text, {
+      name: 'prompt',
+      label: 'Enter prompt',
+      silent: true,
+    });
+
+    const result = await render(element, {
+      inputs: { prompt: 'say hello' },
+    });
+
+    expect(result.text).toBe('');
+  });
+
+  it('should render empty string with silent even when no input provided', async () => {
+    const element = jsx(Ask.Text, {
+      name: 'prompt',
+      label: 'Enter prompt',
+      silent: true,
+    });
+
+    const result = await render(element);
+    expect(result.text).toBe('');
+  });
+
+  it('should render empty string with silent even with default value', async () => {
+    const element = jsx(Ask.Text, {
+      name: 'prompt',
+      label: 'Enter prompt',
+      silent: true,
+      default: 'default value',
+    });
+
+    const result = await render(element);
+    expect(result.text).toBe('');
+  });
 });

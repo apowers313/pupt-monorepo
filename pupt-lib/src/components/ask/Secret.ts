@@ -20,6 +20,7 @@ export class AskSecret extends Component<SecretProps> {
       description = label,
       required = false,
       default: defaultValue,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -35,6 +36,10 @@ export class AskSecret extends Component<SecretProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     // Note: In real usage, you may want to mask or omit the value
     // For now, we render it (the consuming application should handle masking in logs)

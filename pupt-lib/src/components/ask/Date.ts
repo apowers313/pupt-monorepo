@@ -25,6 +25,7 @@ export class AskDate extends Component<DateProps> {
       includeTime = false,
       minDate,
       maxDate,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -42,6 +43,10 @@ export class AskDate extends Component<DateProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return String(value);

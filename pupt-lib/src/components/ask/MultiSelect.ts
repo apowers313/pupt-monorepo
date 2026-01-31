@@ -37,6 +37,7 @@ export class AskMultiSelect extends Component<MultiSelectProps> {
       min,
       max,
       children,
+      silent = false,
     } = props;
 
     // Collect options from Option children
@@ -64,6 +65,10 @@ export class AskMultiSelect extends Component<MultiSelectProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     // Find display texts for selected values
     const selectedValues = value ?? defaultValue;

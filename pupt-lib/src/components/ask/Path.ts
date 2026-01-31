@@ -23,6 +23,7 @@ export class AskPath extends Component<PathProps> {
       default: defaultValue,
       mustExist = false,
       mustBeDirectory = false,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -39,6 +40,10 @@ export class AskPath extends Component<PathProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return String(value);

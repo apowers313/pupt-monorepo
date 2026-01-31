@@ -23,6 +23,7 @@ export class AskNumber extends Component<NumberProps> {
       default: defaultValue,
       min,
       max,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -39,6 +40,10 @@ export class AskNumber extends Component<NumberProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return String(value);

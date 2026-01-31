@@ -26,6 +26,7 @@ export class AskRating extends Component<RatingProps> {
       max = 5,
       labels: propLabels = {},
       children,
+      silent = false,
     } = props;
 
     // Collect labels from Label children
@@ -49,6 +50,10 @@ export class AskRating extends Component<RatingProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     const selectedValue = value ?? defaultValue;
     if (selectedValue !== undefined) {

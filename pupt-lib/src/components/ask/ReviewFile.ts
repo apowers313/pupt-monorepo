@@ -28,6 +28,7 @@ export class AskReviewFile extends Component<ReviewFileProps> {
       default: defaultValue,
       extensions,
       editor,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -54,6 +55,10 @@ export class AskReviewFile extends Component<ReviewFileProps> {
         file: String(filePath),
         editor,
       });
+    }
+
+    if (silent) {
+      return '';
     }
 
     if (value !== undefined) {

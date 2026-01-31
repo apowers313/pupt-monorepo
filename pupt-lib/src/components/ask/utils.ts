@@ -6,6 +6,7 @@ export const askBaseSchema = z.object({
   label: z.string(),
   description: z.string().optional(),
   required: z.boolean().optional(),
+  silent: z.boolean().optional(),
 });
 
 /**

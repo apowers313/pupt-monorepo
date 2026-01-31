@@ -33,6 +33,7 @@ export class AskSelect extends Component<SelectProps> {
       default: defaultValue,
       options: propOptions = [],
       children,
+      silent = false,
     } = props;
 
     // Collect options from Option children
@@ -61,6 +62,10 @@ export class AskSelect extends Component<SelectProps> {
 
     // Attach requirement to context for iterator to collect
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     // Find the display text for the selected value
     const selectedValue = value ?? defaultValue;

@@ -21,6 +21,7 @@ export class AskEditor extends Component<EditorProps> {
       required = false,
       default: defaultValue,
       language,
+      silent = false,
     } = props;
 
     const value = context.inputs.get(name);
@@ -36,6 +37,10 @@ export class AskEditor extends Component<EditorProps> {
     };
 
     attachRequirement(context, requirement);
+
+    if (silent) {
+      return '';
+    }
 
     if (value !== undefined) {
       return String(value);
