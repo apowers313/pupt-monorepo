@@ -3,8 +3,9 @@ import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
 
-// Debug timing for CI (browser-safe check)
+// Debug timing for CI - only log slow operations (>1s) to find flaky tests
 const DEBUG_TIMING = typeof process !== 'undefined' && process.env?.CI === 'true';
+const SLOW_THRESHOLD_MS = 1000;
 let iteratorCallCount = 0;
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
@@ -181,16 +182,10 @@ export function createInputIterator(
   }
 
   async function collectRequirements(node: PuptNode): Promise<InputRequirement[]> {
-    const startTime = Date.now();
-    const log = (msg: string) => {
-      if (DEBUG_TIMING) console.log(`[COLLECT] ${msg}: ${Date.now() - startTime}ms`);
-    };
-    log('collectRequirements start');
-
     const collected: InputRequirement[] = [];
 
     // Create a render context with requirement collection enabled
-    log('before createRuntimeConfig');
+    const configStart = Date.now();
     const context: RenderContext & { __requirements: InputRequirement[] } = {
       inputs: values,
       env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
@@ -198,14 +193,17 @@ export function createInputIterator(
       errors: [],
       __requirements: collected,
     };
-    log('after createRuntimeConfig');
+    if (DEBUG_TIMING && Date.now() - configStart >= SLOW_THRESHOLD_MS) {
+      console.log(`[SLOW] createRuntimeConfig took ${Date.now() - configStart}ms`);
+    }
 
     // Walk the tree and collect requirements
-    log('before walkNode');
+    const walkStart = Date.now();
     await walkNode(node, context);
-    log('after walkNode');
+    if (DEBUG_TIMING && Date.now() - walkStart >= SLOW_THRESHOLD_MS) {
+      console.log(`[SLOW] walkNode took ${Date.now() - walkStart}ms`);
+    }
 
-    log('collectRequirements done');
     return collected;
   }
 
@@ -628,11 +626,13 @@ export function createInputIterator(
   return {
     async start() {
       const callNum = ++iteratorCallCount;
-      const startTime = Date.now();
-      const log = (msg: string) => {
-        if (DEBUG_TIMING) console.log(`[ITERATOR #${callNum}] ${msg}: ${Date.now() - startTime}ms`);
+      const logSlow = (step: string, stepStart: number) => {
+        if (!DEBUG_TIMING) return;
+        const stepTime = Date.now() - stepStart;
+        if (stepTime >= SLOW_THRESHOLD_MS) {
+          console.log(`[SLOW ITERATOR #${callNum}] ${step} took ${stepTime}ms`);
+        }
       };
-      log('start() called');
 
       if (state !== 'NOT_STARTED') {
         throw new Error('Iterator already started.');
@@ -644,18 +644,16 @@ export function createInputIterator(
         // Mark as started but immediately done - user should use runNonInteractive()
         // or getValues() after awaiting the processing
         state = 'DONE';
-        log('non-interactive mode, done');
         return;
       }
 
-      log('before collectRequirements');
+      const collectStart = Date.now();
       requirements = await collectRequirements(element);
-      log('after collectRequirements');
+      logSlow('collectRequirements', collectStart);
 
       // Find the first requirement that doesn't have a pre-supplied value
       currentIndex = findNextUnfilledIndex(requirements, 0);
       state = currentIndex < requirements.length ? 'ITERATING' : 'DONE';
-      log('start() complete');
     },
 
     current() {

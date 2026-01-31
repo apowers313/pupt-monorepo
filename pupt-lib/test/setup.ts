@@ -1,21 +1,27 @@
 // Test setup file - runs before all tests
 
-// Debug timing for CI
+// Debug timing for CI - only log slow operations (>1s)
 const DEBUG_TIMING = process.env.CI === 'true';
+const SLOW_THRESHOLD_MS = 1000;
 const setupStart = Date.now();
-function logTiming(label: string) {
-  if (DEBUG_TIMING) {
-    console.log(`[TIMING] ${label}: ${Date.now() - setupStart}ms`);
+let lastCheckpoint = setupStart;
+
+function logSlowStep(step: string) {
+  if (!DEBUG_TIMING) return;
+  const now = Date.now();
+  const stepTime = now - lastCheckpoint;
+  if (stepTime >= SLOW_THRESHOLD_MS) {
+    console.log(`[SLOW SETUP] ${step} took ${stepTime}ms`);
   }
+  lastCheckpoint = now;
 }
-logTiming('Setup file started');
 
 // Import the main entry point which triggers component loading
 import '../src/components/index';
-logTiming('After components import');
+logSlowStep('components import');
 
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../src/types/context';
-logTiming('After context import');
+logSlowStep('context import');
 
 import type { RenderContext } from '../src/types/context';
 

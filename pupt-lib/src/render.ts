@@ -4,8 +4,9 @@ import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
-// Debug timing for CI (browser-safe check)
+// Debug timing for CI - only log slow operations (>1s) to find flaky tests
 const DEBUG_TIMING = typeof process !== 'undefined' && process.env?.CI === 'true';
+const SLOW_THRESHOLD_MS = 1000;
 let renderCallCount = 0;
 
 /** Type for function components */
@@ -33,10 +34,17 @@ export async function render(
 ): Promise<RenderResult> {
   const callNum = ++renderCallCount;
   const start = Date.now();
-  const log = (msg: string) => {
-    if (DEBUG_TIMING) console.log(`[RENDER #${callNum}] ${msg}: ${Date.now() - start}ms`);
+  let lastCheckpoint = start;
+  const logSlow = (step: string) => {
+    if (!DEBUG_TIMING) return;
+    const now = Date.now();
+    const stepTime = now - lastCheckpoint;
+    const totalTime = now - start;
+    if (stepTime >= SLOW_THRESHOLD_MS) {
+      console.log(`[SLOW RENDER #${callNum}] ${step} took ${stepTime}ms (total: ${totalTime}ms)`);
+    }
+    lastCheckpoint = now;
   };
-  log('render() start');
 
   const {
     inputs = new Map(),
@@ -44,28 +52,23 @@ export async function render(
     trim = true,
   } = options;
 
-  log('after destructure');
-
   const postExecution: PostExecutionAction[] = [];
   const errors: RenderError[] = [];
 
-  log('before createRuntimeConfig');
   const context: RenderContext = {
     inputs: inputs instanceof Map ? inputs : new Map(Object.entries(inputs)),
     env: { ...env, runtime: createRuntimeConfig() },
     postExecution,
     errors,
   };
-  log('after createRuntimeConfig');
+  logSlow('context setup');
 
-  log('before renderNode');
   const text = await renderNode(element, context);
-  log('after renderNode');
+  logSlow('renderNode');
 
   const trimmedText = trim ? text.trim() : text;
 
   if (errors.length > 0) {
-    log('returning with errors');
     return {
       ok: false,
       text: trimmedText,
@@ -74,7 +77,6 @@ export async function render(
     };
   }
 
-  log('returning success');
   return {
     ok: true,
     text: trimmedText,

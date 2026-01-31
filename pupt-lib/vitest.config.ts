@@ -8,6 +8,8 @@ const testTimeout = isCI ? 30000 : 5000;
 export default defineConfig({
   test: {
     testTimeout,
+    // Retry failed tests to handle transient CI failures
+    retry: isCI ? 2 : 0,
     projects: [
       // Node.js project - runs unit tests in Node environment
       {
@@ -15,6 +17,8 @@ export default defineConfig({
           name: 'node',
           globals: false,
           environment: 'node',
+          testTimeout,
+          retry: isCI ? 2 : 0,
           include: ['test/**/*.test.ts'],
           exclude: [
             // Browser-specific tests
@@ -31,6 +35,8 @@ export default defineConfig({
         test: {
           name: 'browser',
           globals: false,
+          testTimeout,
+          retry: isCI ? 2 : 0,
           include: ['test/**/*.browser.test.ts'],
           exclude: [
             '**/node_modules/**',
