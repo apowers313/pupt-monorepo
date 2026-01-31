@@ -1,3 +1,11 @@
+## [1.1.8](https://github.com/apowers313/pupt-lib/compare/v1.1.7...v1.1.8) (2026-01-31)
+
+
+### Bug Fixes
+
+* add Component base class to preprocessor auto-imports ([a6f3f40](https://github.com/apowers313/pupt-lib/commit/a6f3f406052b9451b1ebcd31e15c75a7a0d20592)), closes [#5](https://github.com/apowers313/pupt-lib/issues/5)
+* throw error when component lacks static schema ([bfab9bc](https://github.com/apowers313/pupt-lib/commit/bfab9bc098b0b591a3812960a3a302764b2cb0a0)), closes [#6](https://github.com/apowers313/pupt-lib/issues/6)
+
 ## [1.1.7](https://github.com/apowers313/pupt-lib/compare/v1.1.6...v1.1.7) (2026-01-31)
 
 
