@@ -4,11 +4,6 @@ import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
 
-// Debug timing for CI - only log slow operations (>1s) to find flaky tests
-const DEBUG_TIMING = typeof process !== 'undefined' && process.env?.CI === 'true';
-const SLOW_THRESHOLD_MS = 1000;
-let renderCallCount = 0;
-
 /** Type for function components */
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
 
@@ -32,20 +27,6 @@ export async function render(
   element: PuptElement,
   options: RenderOptions = {},
 ): Promise<RenderResult> {
-  const callNum = ++renderCallCount;
-  const start = Date.now();
-  let lastCheckpoint = start;
-  const logSlow = (step: string) => {
-    if (!DEBUG_TIMING) return;
-    const now = Date.now();
-    const stepTime = now - lastCheckpoint;
-    const totalTime = now - start;
-    if (stepTime >= SLOW_THRESHOLD_MS) {
-      console.log(`[SLOW RENDER #${callNum}] ${step} took ${stepTime}ms (total: ${totalTime}ms)`);
-    }
-    lastCheckpoint = now;
-  };
-
   const {
     inputs = new Map(),
     env = DEFAULT_ENVIRONMENT,
@@ -61,11 +42,8 @@ export async function render(
     postExecution,
     errors,
   };
-  logSlow('context setup');
 
   const text = await renderNode(element, context);
-  logSlow('renderNode');
-
   const trimmedText = trim ? text.trim() : text;
 
   if (errors.length > 0) {

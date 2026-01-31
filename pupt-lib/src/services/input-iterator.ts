@@ -3,11 +3,6 @@ import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
 
-// Debug timing for CI - only log slow operations (>1s) to find flaky tests
-const DEBUG_TIMING = typeof process !== 'undefined' && process.env?.CI === 'true';
-const SLOW_THRESHOLD_MS = 1000;
-let iteratorCallCount = 0;
-
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
 export type RuntimeEnvironment = 'node' | 'browser';
@@ -185,7 +180,6 @@ export function createInputIterator(
     const collected: InputRequirement[] = [];
 
     // Create a render context with requirement collection enabled
-    const configStart = Date.now();
     const context: RenderContext & { __requirements: InputRequirement[] } = {
       inputs: values,
       env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
@@ -193,16 +187,9 @@ export function createInputIterator(
       errors: [],
       __requirements: collected,
     };
-    if (DEBUG_TIMING && Date.now() - configStart >= SLOW_THRESHOLD_MS) {
-      console.log(`[SLOW] createRuntimeConfig took ${Date.now() - configStart}ms`);
-    }
 
     // Walk the tree and collect requirements
-    const walkStart = Date.now();
     await walkNode(node, context);
-    if (DEBUG_TIMING && Date.now() - walkStart >= SLOW_THRESHOLD_MS) {
-      console.log(`[SLOW] walkNode took ${Date.now() - walkStart}ms`);
-    }
 
     return collected;
   }
@@ -625,15 +612,6 @@ export function createInputIterator(
 
   return {
     async start() {
-      const callNum = ++iteratorCallCount;
-      const logSlow = (step: string, stepStart: number) => {
-        if (!DEBUG_TIMING) return;
-        const stepTime = Date.now() - stepStart;
-        if (stepTime >= SLOW_THRESHOLD_MS) {
-          console.log(`[SLOW ITERATOR #${callNum}] ${step} took ${stepTime}ms`);
-        }
-      };
-
       if (state !== 'NOT_STARTED') {
         throw new Error('Iterator already started.');
       }
@@ -647,9 +625,7 @@ export function createInputIterator(
         return;
       }
 
-      const collectStart = Date.now();
       requirements = await collectRequirements(element);
-      logSlow('collectRequirements', collectStart);
 
       // Find the first requirement that doesn't have a pre-supplied value
       currentIndex = findNextUnfilledIndex(requirements, 0);
