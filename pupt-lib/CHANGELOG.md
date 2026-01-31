@@ -1,3 +1,17 @@
+## [1.1.7](https://github.com/apowers313/pupt-lib/compare/v1.1.6...v1.1.7) (2026-01-31)
+
+
+### Bug Fixes
+
+* add Option and Label to Ask namespace ([5674d45](https://github.com/apowers313/pupt-lib/commit/5674d453ad4682ac2597885212bf4f2cc266d780)), closes [#4](https://github.com/apowers313/pupt-lib/issues/4)
+
+## [1.1.6](https://github.com/apowers313/pupt-lib/compare/v1.1.5...v1.1.6) (2026-01-31)
+
+
+### Bug Fixes
+
+* resolve structural component rendering issues ([995d325](https://github.com/apowers313/pupt-lib/commit/995d325956b1c72f500e4f5ff9b95913857d6909)), closes [#1](https://github.com/apowers313/pupt-lib/issues/1) [#2](https://github.com/apowers313/pupt-lib/issues/2) [#3](https://github.com/apowers313/pupt-lib/issues/3)
+
 ## [1.1.5](https://github.com/apowers313/pupt-lib/compare/v1.1.4...v1.1.5) (2026-01-31)
 
 
