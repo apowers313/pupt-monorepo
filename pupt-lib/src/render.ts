@@ -99,14 +99,9 @@ async function renderComponentWithValidation(
 ): Promise<string> {
   const schema = getSchema(type);
   if (!schema) {
-    context.errors.push({
-      component: componentName,
-      prop: null,
-      message: `Component "${componentName}" does not have a schema defined. All components must declare a static schema.`,
-      code: 'missing_schema',
-      path: [],
-    });
-    return renderChildrenFallback(children, context);
+    throw new Error(
+      `Component "${componentName}" does not have a schema defined. All components must declare a static schema.`,
+    );
   }
 
   const validationErrors = validateProps(componentName, { ...props, children }, schema);
