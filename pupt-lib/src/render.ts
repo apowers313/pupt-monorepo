@@ -278,17 +278,14 @@ async function renderComponentWithValidation(
   renderFn: (resolvedValue: unknown) => PuptNode | Promise<PuptNode>,
   resolveFn?: () => unknown | Promise<unknown>,
 ): Promise<string> {
+  // Schema is optional - validate props only if schema is provided
   const schema = getSchema(type);
-  if (!schema) {
-    throw new Error(
-      `Component "${componentName}" does not have a schema defined. All components must declare a static schema.`,
-    );
-  }
-
-  const validationErrors = validateProps(componentName, { ...props, children }, schema);
-  if (validationErrors.length > 0) {
-    state.context.errors.push(...validationErrors);
-    return renderChildrenFallback(children, state);
+  if (schema) {
+    const validationErrors = validateProps(componentName, { ...props, children }, schema);
+    if (validationErrors.length > 0) {
+      state.context.errors.push(...validationErrors);
+      return renderChildrenFallback(children, state);
+    }
   }
 
   try {
