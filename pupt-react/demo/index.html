@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pupt-react Demo</title>
+    <!-- Import map for dynamic ES module evaluation in pupt-lib -->
+    <!-- Using local pupt-lib to test unpublished features like name-hoisting -->
+    <script type="importmap">
+      {
+        "imports": {
+          "pupt-lib": "/pupt-react/@fs/home/apowers/Projects/pupt-lib/dist/index.js",
+          "pupt-lib/jsx-runtime": "/pupt-react/@fs/home/apowers/Projects/pupt-lib/dist/jsx-runtime/index.js",
+          "zod": "https://unpkg.com/zod@3.24.2/lib/index.mjs",
+          "minisearch": "https://unpkg.com/minisearch@7.1.1/dist/es/index.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
