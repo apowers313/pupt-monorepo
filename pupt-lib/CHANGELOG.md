@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/apowers313/pupt-lib/compare/v1.1.8...v1.2.0) (2026-02-03)
+
+
+### Features
+
+* add variables between components ([b226fa0](https://github.com/apowers313/pupt-lib/commit/b226fa0acac99ef5c86b0b2dc3923f727adebf44)), closes [#10](https://github.com/apowers313/pupt-lib/issues/10) [#11](https://github.com/apowers313/pupt-lib/issues/11)
+
 ## [1.1.8](https://github.com/apowers313/pupt-lib/compare/v1.1.7...v1.1.8) (2026-01-31)
 
 
