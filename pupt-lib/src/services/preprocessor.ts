@@ -7,6 +7,8 @@
  * List of all built-in components that should be auto-imported for .prompt files.
  */
 export const BUILTIN_COMPONENTS = [
+  // Base class for custom components
+  'Component',
   // Structural
   'Prompt',
   'Section',

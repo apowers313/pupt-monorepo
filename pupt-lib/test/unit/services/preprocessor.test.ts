@@ -120,6 +120,14 @@ export default <Prompt />;
       }
     });
 
+    it('should include Component base class in imports for custom components', () => {
+      const source = '<Prompt>Hello</Prompt>';
+
+      const result = preprocessSource(source, { filename: 'test.prompt' });
+
+      expect(result).toContain('Component');
+    });
+
     it('should include Ask components in imports', () => {
       const source = '<Prompt>Hello</Prompt>';
 
@@ -252,6 +260,10 @@ describe('exported constants', () => {
     for (const comp of structural) {
       expect(BUILTIN_COMPONENTS).toContain(comp);
     }
+  });
+
+  it('BUILTIN_COMPONENTS should contain Component base class for custom components', () => {
+    expect(BUILTIN_COMPONENTS).toContain('Component');
   });
 
   it('BUILTIN_COMPONENTS should contain control flow components', () => {

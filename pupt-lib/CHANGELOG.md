@@ -1,3 +1,25 @@
+## [1.1.8](https://github.com/apowers313/pupt-lib/compare/v1.1.7...v1.1.8) (2026-01-31)
+
+
+### Bug Fixes
+
+* add Component base class to preprocessor auto-imports ([a6f3f40](https://github.com/apowers313/pupt-lib/commit/a6f3f406052b9451b1ebcd31e15c75a7a0d20592)), closes [#5](https://github.com/apowers313/pupt-lib/issues/5)
+* throw error when component lacks static schema ([bfab9bc](https://github.com/apowers313/pupt-lib/commit/bfab9bc098b0b591a3812960a3a302764b2cb0a0)), closes [#6](https://github.com/apowers313/pupt-lib/issues/6)
+
+## [1.1.7](https://github.com/apowers313/pupt-lib/compare/v1.1.6...v1.1.7) (2026-01-31)
+
+
+### Bug Fixes
+
+* add Option and Label to Ask namespace ([5674d45](https://github.com/apowers313/pupt-lib/commit/5674d453ad4682ac2597885212bf4f2cc266d780)), closes [#4](https://github.com/apowers313/pupt-lib/issues/4)
+
+## [1.1.6](https://github.com/apowers313/pupt-lib/compare/v1.1.5...v1.1.6) (2026-01-31)
+
+
+### Bug Fixes
+
+* resolve structural component rendering issues ([995d325](https://github.com/apowers313/pupt-lib/commit/995d325956b1c72f500e4f5ff9b95913857d6909)), closes [#1](https://github.com/apowers313/pupt-lib/issues/1) [#2](https://github.com/apowers313/pupt-lib/issues/2) [#3](https://github.com/apowers313/pupt-lib/issues/3)
+
 ## [1.1.5](https://github.com/apowers313/pupt-lib/compare/v1.1.4...v1.1.5) (2026-01-31)
 
 
