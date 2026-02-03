@@ -11,9 +11,25 @@ export const askTextSchema = askBaseSchema.extend({
 export type TextProps = z.infer<typeof askTextSchema> & { children?: PuptNode };
 
 // Named AskText to avoid potential bundler conflicts with common identifiers
-export class AskText extends Component<TextProps> {
+export class AskText extends Component<TextProps, string> {
   static schema = askTextSchema;
-  render(props: TextProps, context: RenderContext): PuptNode {
+
+  resolve(props: TextProps, context: RenderContext): string {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return `{${name}}`;
+  }
+
+  render(props: TextProps, resolvedValue: string | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -22,8 +38,6 @@ export class AskText extends Component<TextProps> {
       default: defaultValue,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -40,14 +54,7 @@ export class AskText extends Component<TextProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      return String(value);
-    }
-
-    if (defaultValue !== undefined) {
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    return resolvedValue ?? this.resolve(props, context);
   }
 }

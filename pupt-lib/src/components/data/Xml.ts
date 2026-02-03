@@ -11,7 +11,7 @@ type XmlProps = z.infer<typeof xmlSchema> & { children: PuptNode };
 export class Xml extends Component<XmlProps> {
   static schema = xmlSchema;
 
-  render({ root = 'data', children }: XmlProps, _context: RenderContext): PuptNode {
+  render({ root = 'data', children }: XmlProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return [
       '```xml\n',
       `<${root}>\n`,

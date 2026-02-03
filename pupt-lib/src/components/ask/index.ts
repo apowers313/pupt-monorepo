@@ -30,6 +30,8 @@ export const Ask = {
   Choice: AskChoice,
   Rating: AskRating,
   ReviewFile: AskReviewFile,
+  Option: AskOption,
+  Label: AskLabel,
 };
 
 // Export individual components for tree shaking

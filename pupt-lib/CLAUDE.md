@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 pupt-lib is a TypeScript library for creating AI prompts using JSX syntax. It provides a component-based approach to prompt engineering where prompts are written as JSX elements that render to plain text.
 
+## Design Principles
+
+- **Stay close to React/JSX** - pupt-lib should behave as similarly to React and JSX as possible. When making design decisions, prefer patterns that React developers would find familiar.
+- **Simple for non-technical users** - `.prompt` files should provide a simple experience for non-technical users, hiding unnecessary JavaScript complexity while maintaining compatibility with standard JSX.
+- **Identical behavior** - `.prompt` and `.tsx` files MUST behave the same. No special preprocessing or magic for one format that doesn't apply to the other.
+
 ## Commands
 
 ```bash
@@ -17,7 +23,8 @@ npm run test:node    # Run only Node.js tests
 npm run test:browser # Run only browser tests (Playwright/Chromium)
 npm run test:watch   # Watch mode
 npm run test -- test/unit/render.test.ts  # Run single test file
-npm run prompt       # Interactive CLI to run prompts from ./tmp directory
+npm run test:ci      # CI mode (no coverage, passWithNoTests)
+npm run prompt       # Interactive CLI (examples/cli.ts) to run prompts from ./tmp directory
 ```
 
 ## Architecture
@@ -56,8 +63,16 @@ Maps string names to component classes. `defaultRegistry` is auto-populated with
 ### Runtime Transformation (`src/services/transformer.ts`)
 Uses `@babel/standalone` to transform TSX at runtime. Works in both Node.js and browser. `createPrompt()` and `createPromptFromSource()` use this to load `.prompt` and `.tsx` files.
 
+Note: `.prompt` files are JSX with automatic wrapping - they don't require `export default` or explicit imports. The transformer adds this boilerplate automatically. Both `.prompt` and `.tsx` files go through the same transformation pipeline and must behave identically.
+
 ### Pupt API (`src/api.ts`)
 High-level `Pupt` class for loading prompt libraries, discovering prompts, and searching via MiniSearch.
+
+### Key Dependencies
+- **@babel/standalone** - Runtime JSX transformation for browser/Node
+- **hyperformula** - Excel-like formula evaluation for `<If when='=...' />`
+- **minisearch** - Fuzzy search for prompt discovery
+- **zod** - Schema validation for component props
 
 ## Package Exports
 

@@ -1,11 +1,17 @@
 // Re-export all types from pupt-lib
 
+// Symbols for element properties
+export { TYPE, PROPS, CHILDREN, DEFERRED_REF } from './symbols';
+
 // Element types
 export type {
   PuptNode,
   PuptElement,
   ComponentType,
+  DeferredRef,
 } from './element';
+
+export { isPuptElement, isDeferredRef } from './element';
 
 // Context types
 export type {

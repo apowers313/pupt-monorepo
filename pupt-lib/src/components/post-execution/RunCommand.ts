@@ -13,7 +13,7 @@ type RunCommandProps = z.infer<typeof runCommandSchema>;
 export class RunCommand extends Component<RunCommandProps> {
   static schema = runCommandSchema;
 
-  render({ command, cwd, env }: RunCommandProps, context: RenderContext): PuptNode {
+  render({ command, cwd, env }: RunCommandProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const action: RunCommandAction = {
       type: 'runCommand',
       command,

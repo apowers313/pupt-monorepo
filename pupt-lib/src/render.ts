@@ -3,9 +3,135 @@ import { Fragment } from './jsx-runtime';
 import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
 import { validateProps, getSchema, getComponentName } from './services/prop-validator';
+import { TYPE, PROPS, CHILDREN } from './types/symbols';
+import { isPuptElement, isDeferredRef } from './types/element';
 
 /** Type for function components */
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
+
+/**
+ * Internal state for rendering, passed through the render tree.
+ * Contains the resolved values map for component value resolution.
+ */
+interface RenderState {
+  context: RenderContext;
+  resolvedValues: Map<PuptElement, unknown>;
+  /** Track pending resolutions to avoid duplicate concurrent resolution of the same element */
+  pendingResolutions: Map<PuptElement, Promise<string>>;
+}
+
+/**
+ * Follow a property path on an object to retrieve a nested value.
+ *
+ * @param obj - The object to traverse
+ * @param path - Array of property keys/indices to follow
+ * @returns The value at the path, or undefined if not found
+ */
+function followPath(obj: unknown, path: (string | number)[]): unknown {
+  return path.reduce((current, key) => {
+    if (current == null) return undefined;
+    return (current as Record<string | number, unknown>)[key];
+  }, obj);
+}
+
+/**
+ * Ensure an element is resolved, handling concurrent resolution requests.
+ * Uses pendingResolutions to avoid resolving the same element multiple times.
+ *
+ * @param element - The element to ensure is resolved
+ * @param state - The current render state
+ */
+async function ensureElementResolved(element: PuptElement, state: RenderState): Promise<void> {
+  // Already resolved - nothing to do
+  if (state.resolvedValues.has(element)) {
+    return;
+  }
+
+  // Check if resolution is already in progress
+  const pending = state.pendingResolutions.get(element);
+  if (pending) {
+    // Wait for the existing resolution to complete
+    await pending;
+    return;
+  }
+
+  // Start new resolution and track it
+  const resolutionPromise = renderElement(element, state);
+  state.pendingResolutions.set(element, resolutionPromise);
+
+  try {
+    await resolutionPromise;
+  } finally {
+    // Clean up pending state after completion
+    state.pendingResolutions.delete(element);
+  }
+}
+
+/**
+ * Resolve a single prop value by rendering element references.
+ * This ensures that element dependencies are resolved before their values are used.
+ *
+ * @param value - The prop value to resolve
+ * @param state - The current render state with resolved values
+ * @returns The resolved value
+ */
+async function resolvePropValue(value: unknown, state: RenderState): Promise<unknown> {
+  if (isPuptElement(value)) {
+    // Direct element reference - resolve it first if not already resolved
+    await ensureElementResolved(value, state);
+    return state.resolvedValues.get(value);
+  }
+
+  if (isDeferredRef(value)) {
+    // Deferred reference - ensure element is resolved, then follow path
+    await ensureElementResolved(value.element, state);
+    const elementValue = state.resolvedValues.get(value.element);
+    return followPath(elementValue, value.path);
+  }
+
+  if (Array.isArray(value)) {
+    // Recursively resolve array elements
+    const resolved = await Promise.all(value.map(item => resolvePropValue(item, state)));
+    return resolved;
+  }
+
+  if (value !== null && typeof value === 'object' && !isPuptElement(value) && !isDeferredRef(value)) {
+    // Recursively resolve object properties
+    const resolved: Record<string, unknown> = {};
+    const entries = Object.entries(value);
+    const resolvedValues = await Promise.all(entries.map(([_, val]) => resolvePropValue(val, state)));
+    entries.forEach(([key], index) => {
+      resolved[key] = resolvedValues[index];
+    });
+    return resolved;
+  }
+
+  // Primitive value - return as-is
+  return value;
+}
+
+/**
+ * Resolve props by rendering element dependencies and replacing references with their values.
+ *
+ * @param props - The props object to resolve
+ * @param state - The current render state with resolved values
+ * @returns The props with element references replaced by their resolved values
+ */
+async function resolveProps(
+  props: Record<string, unknown>,
+  state: RenderState,
+): Promise<Record<string, unknown>> {
+  if (props == null) {
+    return {};
+  }
+  const resolved: Record<string, unknown> = {};
+  const entries = Object.entries(props);
+  const resolvedValues = await Promise.all(entries.map(([_, value]) => resolvePropValue(value, state)));
+  entries.forEach(([key], index) => {
+    resolved[key] = resolvedValues[index];
+  });
+  return resolved;
+}
 
 /**
  * Render a PuptElement tree to a string.
@@ -43,7 +169,13 @@ export async function render(
     errors,
   };
 
-  const text = await renderNode(element, context);
+  const state: RenderState = {
+    context,
+    resolvedValues: new Map(),
+    pendingResolutions: new Map(),
+  };
+
+  const text = await renderNode(element, state);
   const trimmedText = trim ? text.trim() : text;
 
   if (errors.length > 0) {
@@ -64,7 +196,7 @@ export async function render(
 
 async function renderNode(
   node: PuptNode,
-  context: RenderContext,
+  state: RenderState,
 ): Promise<string> {
   if (node === null || node === undefined || node === false) {
     return '';
@@ -76,16 +208,64 @@ async function renderNode(
 
   if (Array.isArray(node)) {
     // Render children in parallel for better performance
-    const results = await Promise.all(node.map(n => renderNode(n, context)));
+    const results = await Promise.all(node.map(n => renderNode(n, state)));
     return results.join('');
   }
 
+  // Handle DeferredRef (property access like {user.displayName})
+  if (isDeferredRef(node)) {
+    await ensureElementResolved(node.element, state);
+    const elementValue = state.resolvedValues.get(node.element);
+    const value = followPath(elementValue, node.path);
+    if (value === null || value === undefined) {
+      return '';
+    }
+    return String(value);
+  }
+
   // PuptElement
-  return renderElement(node as PuptElement, context);
+  const element = node as PuptElement;
+  if (isPuptElement(element)) {
+    // Check if this element was already resolved (variable reference like {firstName})
+    // If so, return the string representation of the resolved value
+    if (state.resolvedValues.has(element)) {
+      const resolved = state.resolvedValues.get(element);
+      if (resolved === null || resolved === undefined) {
+        return '';
+      }
+      return String(resolved);
+    }
+
+    // Check if resolution is already in progress (parallel rendering)
+    const pending = state.pendingResolutions.get(element);
+    if (pending) {
+      // Wait for resolution, then return the resolved value
+      await pending;
+      if (state.resolvedValues.has(element)) {
+        const resolved = state.resolvedValues.get(element);
+        if (resolved === null || resolved === undefined) {
+          return '';
+        }
+        return String(resolved);
+      }
+    }
+
+    // Start new resolution and track it to handle parallel rendering
+    const resolutionPromise = renderElement(element, state);
+    state.pendingResolutions.set(element, resolutionPromise);
+    try {
+      return await resolutionPromise;
+    } finally {
+      state.pendingResolutions.delete(element);
+    }
+  }
+
+  // Render non-PuptElement (shouldn't happen in normal flow)
+  return renderElement(node as PuptElement, state);
 }
 
-async function renderChildrenFallback(children: PuptNode[], context: RenderContext): Promise<string> {
-  const results = await Promise.all(children.map(c => renderNode(c, context)));
+async function renderChildrenFallback(children: PuptNode[], state: RenderState): Promise<string> {
+  const results = await Promise.all(children.map(c => renderNode(c, state)));
   return results.join('');
 }
 
@@ -94,8 +274,9 @@ async function renderComponentWithValidation(
   componentName: string,
   props: Record<string, unknown>,
   children: PuptNode[],
-  context: RenderContext,
-  renderFn: () => PuptNode | Promise<PuptNode>,
+  state: RenderState,
+  renderFn: (resolvedValue: unknown) => PuptNode | Promise<PuptNode>,
+  resolveFn?: () => unknown | Promise<unknown>,
 ): Promise<string> {
   const schema = getSchema(type);
   if (!schema) {
@@ -106,52 +287,93 @@ async function renderComponentWithValidation(
 
   const validationErrors = validateProps(componentName, { ...props, children }, schema);
   if (validationErrors.length > 0) {
-    context.errors.push(...validationErrors);
-    return renderChildrenFallback(children, context);
+    state.context.errors.push(...validationErrors);
+    return renderChildrenFallback(children, state);
   }
 
   try {
-    const result = renderFn();
+    // Phase 1: Resolve value if component has resolve()
+    let resolvedValue: unknown;
+    if (resolveFn) {
+      const resolveResult = resolveFn();
+      resolvedValue = resolveResult instanceof Promise ? await resolveResult : resolveResult;
+    }
+
+    // Phase 2: Render if component has render()
+    const result = renderFn(resolvedValue);
     // Handle both sync and async render methods
     const resolvedResult = result instanceof Promise ? await result : result;
-    return renderNode(resolvedResult, context);
+    return renderNode(resolvedResult, state);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    context.errors.push({
+    state.context.errors.push({
       component: componentName,
       prop: null,
       message: `Runtime error in ${componentName}: ${message}`,
       code: 'runtime_error',
       path: [],
     });
-    return renderChildrenFallback(children, context);
+    return renderChildrenFallback(children, state);
   }
 }
 
 async function renderElement(
   element: PuptElement,
-  context: RenderContext,
+  state: RenderState,
 ): Promise<string> {
-  const { type, props, children } = element;
+  const type = element[TYPE];
+  const props = element[PROPS];
+  const children = element[CHILDREN];
 
   // Fragment - just render children in parallel
   if (type === Fragment) {
-    const results = await Promise.all(children.map(c => renderNode(c, context)));
+    const results = await Promise.all(children.map(c => renderNode(c, state)));
     return results.join('');
   }
 
+  // Resolve props by rendering element dependencies and looking up their values
+  const resolvedProps = await resolveProps(props as Record<string, unknown>, state);
+
   // Component class
   if (isComponentClass(type)) {
+    const instance = new (type as new () => Component)();
+
+    // Check if component has resolve() method
+    const hasResolve = typeof instance.resolve === 'function';
+    const hasRender = typeof instance.render === 'function';
+
+    // Create resolve function if component has resolve()
+    const resolveFn = hasResolve
+      ? () => instance.resolve!({ ...resolvedProps, children }, state.context)
+      : undefined;
+
+    // Create render function
+    const renderFn = (resolvedValue: unknown) => {
+      if (hasRender) {
+        // Pass resolved value as second argument to render()
+        return instance.render!({ ...resolvedProps, children }, resolvedValue as never, state.context);
+      }
+      // No render method - return resolved value to be stringified
+      if (resolvedValue === null || resolvedValue === undefined) {
+        return '';
+      }
+      return String(resolvedValue);
+    };
+
     return renderComponentWithValidation(
       type,
       getComponentName(type),
-      props as Record<string, unknown>,
+      resolvedProps,
       children,
-      context,
-      () => {
-        const instance = new (type as new () => Component)();
-        return instance.render({ ...props, children }, context);
+      state,
+      (resolvedValue: unknown) => {
+        // Store resolved value for other components to reference
+        if (hasResolve) {
+          state.resolvedValues.set(element, resolvedValue);
+        }
+        return renderFn(resolvedValue);
       },
+      resolveFn,
     );
   }
 
@@ -160,12 +382,12 @@ async function renderElement(
     return renderComponentWithValidation(
       type,
       getComponentName(type),
-      props as Record<string, unknown>,
+      resolvedProps,
       children,
-      context,
+      state,
       () => {
         const fn = type as FunctionComponent;
-        return fn({ ...props, children });
+        return fn({ ...resolvedProps, children });
       },
     );
   }
@@ -174,7 +396,7 @@ async function renderElement(
   // This would only occur if JSX was created with a string type directly
   if (typeof type === 'string') {
     console.warn(`Unknown component type "${type}". Components should be imported, not referenced by string.`);
-    const results = await Promise.all(children.map(c => renderNode(c, context)));
+    const results = await Promise.all(children.map(c => renderNode(c, state)));
     return results.join('');
   }
 

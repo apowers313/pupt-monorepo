@@ -10,9 +10,25 @@ export const askConfirmSchema = askBaseSchema.extend({
 export type ConfirmProps = z.infer<typeof askConfirmSchema> & { children?: PuptNode };
 
 // Named AskConfirm for consistent Ask component naming
-export class AskConfirm extends Component<ConfirmProps> {
+export class AskConfirm extends Component<ConfirmProps, boolean | undefined> {
   static schema = askConfirmSchema;
-  render(props: ConfirmProps, context: RenderContext): PuptNode {
+
+  resolve(props: ConfirmProps, context: RenderContext): boolean | undefined {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return Boolean(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return undefined;
+  }
+
+  render(props: ConfirmProps, resolvedValue: boolean | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -21,8 +37,6 @@ export class AskConfirm extends Component<ConfirmProps> {
       default: defaultValue,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -39,14 +53,13 @@ export class AskConfirm extends Component<ConfirmProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      return value ? 'Yes' : 'No';
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    if (actualValue === undefined) {
+      return `{${name}}`;
     }
 
-    if (defaultValue !== undefined) {
-      return defaultValue ? 'Yes' : 'No';
-    }
-
-    return `{${name}}`;
+    return actualValue ? 'Yes' : 'No';
   }
 }

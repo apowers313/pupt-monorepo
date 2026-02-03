@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext, InputRequirement } from '../../types';
+import { isPuptElement } from '../../types/element';
+import { TYPE, PROPS, CHILDREN } from '../../types/symbols';
 import { attachRequirement, askBaseSchema } from './utils';
 
 export interface MultiSelectOption {
@@ -24,9 +26,25 @@ export const askMultiSelectSchema = askBaseSchema.extend({
 export type MultiSelectProps = z.infer<typeof askMultiSelectSchema> & { children?: PuptNode };
 
 // Named AskMultiSelect for consistent Ask component naming
-export class AskMultiSelect extends Component<MultiSelectProps> {
+export class AskMultiSelect extends Component<MultiSelectProps, string[]> {
   static schema = askMultiSelectSchema;
-  render(props: MultiSelectProps, context: RenderContext): PuptNode {
+
+  resolve(props: MultiSelectProps, context: RenderContext): string[] {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name) as string[] | undefined;
+
+    if (value !== undefined && Array.isArray(value)) {
+      return value;
+    }
+
+    if (defaultValue !== undefined && Array.isArray(defaultValue)) {
+      return defaultValue;
+    }
+
+    return [];
+  }
+
+  render(props: MultiSelectProps, resolvedValue: string[] | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -50,8 +68,6 @@ export class AskMultiSelect extends Component<MultiSelectProps> {
       text: (opt.text ?? opt.label ?? opt.value) as string,
     }));
 
-    const value = context.inputs.get(name) as string[] | undefined;
-
     const requirement: InputRequirement = {
       name,
       label,
@@ -70,10 +86,13 @@ export class AskMultiSelect extends Component<MultiSelectProps> {
       return '';
     }
 
-    // Find display texts for selected values
-    const selectedValues = value ?? defaultValue;
-    if (selectedValues !== undefined && Array.isArray(selectedValues)) {
-      const texts = selectedValues.map((v) => {
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    // (handles input-iterator case where render is called without resolve)
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    // Find display texts for values
+    if (actualValue.length > 0) {
+      const texts = actualValue.map((v) => {
         const opt = allOptions.find((o) => o.value === v);
         return opt ? (opt.text ?? opt.label) : v;
       });
@@ -92,20 +111,21 @@ function collectOptionsFromChildren(children: PuptNode): MultiSelectOption[] {
   const childArray = Array.isArray(children) ? children : [children];
 
   for (const child of childArray) {
-    if (!child || typeof child !== 'object' || !('type' in child)) {
+    if (!isPuptElement(child)) {
       continue;
     }
 
     const element = child as PuptElement;
+    const elementType = element[TYPE];
 
     const isOption =
-      element.type === 'AskOption' ||
-      (typeof element.type === 'function' && element.type.name === 'AskOption');
+      elementType === 'AskOption' ||
+      (typeof elementType === 'function' && elementType.name === 'AskOption');
 
     if (isOption) {
-      const props = element.props as { value?: string; label?: string; children?: PuptNode };
+      const props = element[PROPS] as { value?: string; label?: string; children?: PuptNode };
       const value = props.value ?? '';
-      const childText = getTextFromChildren(element.children);
+      const childText = getTextFromChildren(element[CHILDREN]);
       const label = props.label ?? childText ?? value;
       const text = childText ?? label;
 

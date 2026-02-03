@@ -12,9 +12,25 @@ export const askNumberSchema = askBaseSchema.extend({
 export type NumberProps = z.infer<typeof askNumberSchema> & { children?: PuptNode };
 
 // Named AskNumber to avoid collision with JavaScript's Number global
-export class AskNumber extends Component<NumberProps> {
+export class AskNumber extends Component<NumberProps, number> {
   static schema = askNumberSchema;
-  render(props: NumberProps, context: RenderContext): PuptNode {
+
+  resolve(props: NumberProps, context: RenderContext): number {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return typeof value === 'number' ? value : Number(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return NaN;
+  }
+
+  render(props: NumberProps, resolvedValue: number | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -25,8 +41,6 @@ export class AskNumber extends Component<NumberProps> {
       max,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -45,14 +59,13 @@ export class AskNumber extends Component<NumberProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      return String(value);
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    if (Number.isNaN(actualValue)) {
+      return `{${name}}`;
     }
 
-    if (defaultValue !== undefined) {
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    return String(actualValue);
   }
 }

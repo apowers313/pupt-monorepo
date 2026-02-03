@@ -10,7 +10,7 @@ describe('Ask.ReviewFile', () => {
     const result = component.render({
       name: 'outputFile',
       label: 'Output file',
-    }, context);
+    }, undefined, context);
 
     expect(result).toBe('{outputFile}');
   });
@@ -23,7 +23,7 @@ describe('Ask.ReviewFile', () => {
       name: 'outputFile',
       label: 'Output file',
       default: './default-output.txt',
-    }, context);
+    }, undefined, context);
 
     expect(result).toBe('./default-output.txt');
   });
@@ -37,7 +37,7 @@ describe('Ask.ReviewFile', () => {
       name: 'outputFile',
       label: 'Output file',
       default: './default-output.txt',
-    }, context);
+    }, undefined, context);
 
     expect(result).toBe('./custom-output.txt');
   });
@@ -50,7 +50,7 @@ describe('Ask.ReviewFile', () => {
     component.render({
       name: 'outputFile',
       label: 'Output file',
-    }, context);
+    }, undefined, context);
 
     expect(context.postExecution).toHaveLength(1);
     expect(context.postExecution[0]).toEqual({
@@ -68,7 +68,7 @@ describe('Ask.ReviewFile', () => {
       name: 'outputFile',
       label: 'Output file',
       default: './default.ts',
-    }, context);
+    }, undefined, context);
 
     expect(context.postExecution).toHaveLength(1);
     expect(context.postExecution[0]).toEqual({
@@ -87,7 +87,7 @@ describe('Ask.ReviewFile', () => {
       name: 'outputFile',
       label: 'Output file',
       editor: 'vscode',
-    }, context);
+    }, undefined, context);
 
     expect(context.postExecution[0]).toEqual({
       type: 'reviewFile',
@@ -103,7 +103,7 @@ describe('Ask.ReviewFile', () => {
     component.render({
       name: 'outputFile',
       label: 'Output file',
-    }, context);
+    }, undefined, context);
 
     expect(context.postExecution).toHaveLength(0);
   });
@@ -120,7 +120,7 @@ describe('Ask.ReviewFile', () => {
       required: true,
       default: './config.json',
       extensions: ['.json', '.yaml'],
-    }, context);
+    }, undefined, context);
 
     expect(context.__requirements).toHaveLength(1);
     expect(context.__requirements[0]).toMatchObject({
@@ -143,7 +143,7 @@ describe('Ask.ReviewFile', () => {
     component.render({
       name: 'file',
       label: 'Select a file',
-    }, context);
+    }, undefined, context);
 
     expect(context.__requirements).toHaveLength(1);
     expect((context.__requirements[0] as { description: string }).description).toBe('Select a file');
@@ -158,7 +158,7 @@ describe('Ask.ReviewFile', () => {
       name: 'sourceFile',
       label: 'Source file',
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    }, context);
+    }, undefined, context);
 
     expect(context.__requirements).toHaveLength(1);
     expect((context.__requirements[0] as { extensions: string[] }).extensions).toEqual(['.ts', '.tsx', '.js', '.jsx']);

@@ -2,11 +2,18 @@
 
 export const VERSION = '0.0.0-development';
 
+// Export symbols for element properties
+export { TYPE, PROPS, CHILDREN, DEFERRED_REF } from './types/symbols';
+
+// Export element utilities
+export { isPuptElement, isDeferredRef } from './types/element';
+
 // Export types
 export type {
   PuptNode,
   PuptElement,
   ComponentType,
+  DeferredRef,
   LlmConfig,
   OutputConfig,
   CodeConfig,

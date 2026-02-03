@@ -9,7 +9,7 @@ type ExampleInputProps = z.infer<typeof exampleInputSchema> & { children: PuptNo
 export class ExampleInput extends Component<ExampleInputProps> {
   static schema = exampleInputSchema;
 
-  render({ children }: ExampleInputProps, _context: RenderContext): PuptNode {
+  render({ children }: ExampleInputProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return ['<input>\n', children, '\n</input>'];
   }
 }

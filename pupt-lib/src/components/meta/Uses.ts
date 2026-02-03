@@ -49,7 +49,7 @@ type UsesProps = z.infer<typeof usesSchema> & { children?: PuptNode };
 export class Uses extends Component<UsesProps> {
   static schema = usesSchema;
 
-  render(props: UsesProps, _context: RenderContext): PuptNode {
+  render(props: UsesProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     // This component should be transformed to an import by the Babel plugin.
     // If we reach here, the plugin didn't run.
     console.warn(

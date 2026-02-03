@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { Component } from '../../component';
 import type { PuptNode, PuptElement, RenderContext, InputRequirement } from '../../types';
+import { isPuptElement } from '../../types/element';
+import { TYPE, PROPS, CHILDREN } from '../../types/symbols';
 import { attachRequirement, askBaseSchema } from './utils';
 
 export const askRatingSchema = askBaseSchema.extend({
@@ -13,9 +15,25 @@ export const askRatingSchema = askBaseSchema.extend({
 export type RatingProps = z.infer<typeof askRatingSchema> & { children?: PuptNode };
 
 // Named AskRating for consistent Ask component naming
-export class AskRating extends Component<RatingProps> {
+export class AskRating extends Component<RatingProps, number | undefined> {
   static schema = askRatingSchema;
-  render(props: RatingProps, context: RenderContext): PuptNode {
+
+  resolve(props: RatingProps, context: RenderContext): number | undefined {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name) as number | undefined;
+
+    if (value !== undefined) {
+      return typeof value === 'number' ? value : Number(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return undefined;
+  }
+
+  render(props: RatingProps, resolvedValue: number | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -35,8 +53,6 @@ export class AskRating extends Component<RatingProps> {
     // Merge: prop labels override child labels
     const allLabels = { ...childLabels, ...propLabels };
 
-    const value = context.inputs.get(name) as number | undefined;
-
     const requirement: InputRequirement = {
       name,
       label,
@@ -55,17 +71,19 @@ export class AskRating extends Component<RatingProps> {
       return '';
     }
 
-    const selectedValue = value ?? defaultValue;
-    if (selectedValue !== undefined) {
-      // If there's a label for this value, render it; otherwise render the number
-      const labelText = (allLabels as Record<number, string>)[selectedValue];
-      if (labelText) {
-        return `${selectedValue} (${labelText})`;
-      }
-      return String(selectedValue);
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    if (actualValue === undefined) {
+      return `{${name}}`;
     }
 
-    return `{${name}}`;
+    // If there's a label for this value, render it; otherwise render the number
+    const labelText = (allLabels as Record<number, string>)[actualValue];
+    if (labelText) {
+      return `${actualValue} (${labelText})`;
+    }
+    return String(actualValue);
   }
 }
 
@@ -77,20 +95,21 @@ function collectLabelsFromChildren(children: PuptNode): Record<number, string> {
   const childArray = Array.isArray(children) ? children : [children];
 
   for (const child of childArray) {
-    if (!child || typeof child !== 'object' || !('type' in child)) {
+    if (!isPuptElement(child)) {
       continue;
     }
 
     const element = child as PuptElement;
+    const elementType = element[TYPE];
 
     const isLabel =
-      element.type === 'AskLabel' ||
-      (typeof element.type === 'function' && element.type.name === 'AskLabel');
+      elementType === 'AskLabel' ||
+      (typeof elementType === 'function' && elementType.name === 'AskLabel');
 
     if (isLabel) {
-      const props = element.props as { value?: number | string; children?: PuptNode };
+      const props = element[PROPS] as { value?: number | string; children?: PuptNode };
       const value = typeof props.value === 'string' ? parseInt(props.value, 10) : props.value;
-      const text = getTextFromChildren(element.children);
+      const text = getTextFromChildren(element[CHILDREN]);
 
       if (value !== undefined && !isNaN(value) && text) {
         labels[value] = text;

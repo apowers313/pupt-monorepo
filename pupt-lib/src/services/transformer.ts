@@ -5,7 +5,7 @@
  * Works in both Node.js and browser environments.
  */
 
-import { usesToImportPlugin } from './babel-plugins';
+import { usesToImportPlugin, nameHoistingPlugin } from './babel-plugins';
 
 // Type for Babel transform interface
 interface BabelStandalone {
@@ -25,6 +25,9 @@ function registerPlugins(Babel: BabelStandalone): void {
 
   // Register the uses-to-import plugin
   Babel.registerPlugin('uses-to-import', usesToImportPlugin);
+
+  // Register the name-hoisting plugin (transforms name="x" to const x = ...)
+  Babel.registerPlugin('name-hoisting', nameHoistingPlugin);
 
   pluginsRegistered = true;
 }
@@ -52,6 +55,8 @@ function getTransformOptions(filename: string): Record<string, unknown> {
     plugins: [
       // Transform <Uses> to import declarations (must run before JSX transform)
       'uses-to-import',
+      // Hoist named elements to variable declarations (must run before JSX transform)
+      'name-hoisting',
       // Transform JSX to jsx() calls
       ['transform-react-jsx', {
         runtime: 'automatic',

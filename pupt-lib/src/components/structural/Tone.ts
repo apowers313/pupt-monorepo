@@ -11,7 +11,7 @@ type ToneProps = z.infer<typeof toneSchema> & { children: PuptNode };
 export class Tone extends Component<ToneProps> {
   static schema = toneSchema;
 
-  render({ delimiter = 'xml', children }: ToneProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: ToneProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {

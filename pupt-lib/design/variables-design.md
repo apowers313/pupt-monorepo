@@ -27,743 +27,733 @@ This breaks a natural expectation: that components should be able to receive val
    - Static values: `username="octocat"`
    - Dynamic inputs: `username={<Ask.Text name="username" />}`
    - Values from other components: `username={<SomeOtherComponent />}`
+7. **Identical behavior** - `.prompt` and `.tsx` files must behave the same; no special preprocessing for one format
+8. **No separate preprocessor** - All transformations happen in the standard Babel JSX transform
+9. **Clean export syntax** - Accessing values should be simple: `{github.stars}` not `{github.exports.stars}`
+10. **Nested property access** - Support accessing nested properties: `{github.raw.email}`
+11. **Type safety** - Export types declared via TypeScript generics, with optional Zod schemas for runtime validation
+12. **Uniform value handling** - All value types (string, number, object, array) should be treated uniformly; no special cases based on type
+13. **Single value per element** - Each named element has one resolved value (which can be any type)
+14. **Separation of concerns** - Data resolution and presentation should be separate
 
-## Research: Prior Art and Inspiration
+## Design Decisions
 
-### React Component Communication
+### PuptElements All The Way Down
 
-React uses several patterns for component communication ([Pluralsight](https://www.pluralsight.com/resources/blog/react-communicating-between-components), [Medium](https://medium.com/@aristela.marku/communication-between-components-in-reactjs-5b86d5bb4321)):
+Components return PuptElements, not strings. This aligns with React's model:
 
-- **Props** - Parent passes data down to children (one-way data flow)
-- **Callback functions** - Child notifies parent via function props
-- **Context API** - Global data shared across component tree without prop drilling
-- **Compound components** - Related components share implicit state (like `<Select>` and `<Option>`)
+- React: Components → React Elements → DOM (via ReactDOM)
+- pupt-lib: Components → PuptElements → Text (via renderer)
 
-**Relevance to pupt-lib**: Props and compound components are most applicable. Context is already used for `inputs`. Callbacks don't apply since pupt-lib has no interactivity.
+### Two Methods: resolve() and render()
 
-### Angular Template Reference Variables
+Components have two separate concerns:
 
-Angular provides template reference variables using `#var` syntax ([Angular Docs](https://angular.dev/guide/templates/variables), [Ultimate Courses](https://ultimatecourses.com/blog/angular-template-reference-variables)):
+1. **`resolve()`** - Compute the value (data fetching, input collection, computation)
+2. **`render()`** - Produce the visual output (optional, for custom presentation)
 
-```html
-<input #username placeholder="Enter username">
-<button (click)="greet(username.value)">Greet</button>
+```tsx
+class GitHubUserInfo extends Component {
+  // Compute the resolved value
+  async resolve({ username }) {
+    const data = await fetchUser(username);
+    return { name: data.name, stars: data.stars };
+  }
 
-<app-child #childComp></app-child>
-<button (click)="childComp.doSomething()">Call Child Method</button>
-```
-
-Key characteristics:
-- `#name` declares a variable referencing that element/component
-- Variable scope is the entire template
-- Can access component instance properties and methods
-- `#var="exportAsName"` exports a specific directive/aspect
-
-**Relevance to pupt-lib**: The `#name` / `name="x"` pattern for declaring named references is directly applicable. The concept of accessing component outputs via the reference is useful.
-
-### Svelte Reactive Declarations
-
-Svelte uses the `$:` label for reactive declarations ([Svelte Tutorial](https://learn.svelte.dev/tutorial/reactive-declarations), [DigitalOcean](https://www.digitalocean.com/community/tutorials/svelte-reactivity-intro)):
-
-```svelte
-<script>
-  let firstName = 'John';
-  let lastName = 'Doe';
-  $: fullName = `${firstName} ${lastName}`;  // Re-runs when dependencies change
-</script>
-```
-
-Key characteristics:
-- Automatic dependency tracking
-- Declarations re-evaluate when dependencies change
-- Uses valid JavaScript syntax (labels) with new semantics
-
-**Relevance to pupt-lib**: The concept of derived/computed values that automatically resolve based on dependencies is relevant. However, pupt-lib doesn't have reactivity (single render pass), so we only need initial resolution, not updates.
-
-### Dataflow Programming
-
-Dataflow programming models programs as directed graphs where nodes have inputs and outputs connected by wires ([Wikipedia](https://en.wikipedia.org/wiki/Dataflow_programming), [Devopedia](https://devopedia.org/dataflow-programming)):
-
-- Nodes represent operations with explicit inputs and outputs
-- Edges/wires connect outputs to inputs
-- Operations execute when all inputs are available
-- Inherently parallel - independent nodes can run concurrently
-
-Examples: LabVIEW, Node-RED, Max/MSP, Unreal Blueprints
-
-**Relevance to pupt-lib**: The mental model of components having named outputs that can be wired to other components' inputs is directly applicable. The "execute when inputs are ready" model maps well to async resolution.
-
-### GraphQL Fragments
-
-GraphQL uses named fragments for composition and reuse ([Apollo Docs](https://www.apollographql.com/docs/react/data/fragments), [GraphQL.org](https://graphql.org/learn/queries/)):
-
-```graphql
-fragment UserFields on User {
-  id
-  name
-  email
+  // Produce the rendered output (receives resolved value)
+  render(props, value) {
+    return <Section>{value.name} - {value.stars} repos</Section>;
+  }
 }
+```
 
-query {
-  user(id: "123") {
-    ...UserFields
-    posts {
-      title
+### Simple Components Only Need resolve()
+
+If `render()` is not defined, the resolved value is converted to text directly:
+
+```tsx
+class Text extends Component {
+  resolve(props) {
+    return collectInput(props);  // "octocat"
+  }
+  // No render() - resolved value IS the output
+}
+```
+
+### Uniform Value Resolution
+
+All value types are treated the same - no special cases:
+
+```tsx
+// String value
+{username}           // → "octocat"
+{username.length}    // → 7 (strings have .length)
+
+// Object value
+{github}             // → { name: "octocat", stars: 42 }
+{github.stars}       // → 42
+{github.name.length} // → 7
+
+// Array value
+{results}            // → [{ title: "..." }, ...]
+{results.length}     // → 10
+{results[0].title}   // → "React Guide"
+```
+
+### Symbols for Internal Element Properties
+
+PuptElement internal properties use symbols to avoid conflicts with property access:
+
+```tsx
+const TYPE = Symbol('pupt.type');
+const PROPS = Symbol('pupt.props');
+const CHILDREN = Symbol('pupt.children');
+
+const element = {
+  [TYPE]: GitHubUserInfo,
+  [PROPS]: { username: "octocat", name: "github" },
+  [CHILDREN]: [],
+};
+```
+
+### Proxy-Wrapped Elements
+
+Every element is wrapped in a Proxy that intercepts property access:
+
+```tsx
+function jsx(type, props) {
+  const element = {
+    [TYPE]: type,
+    [PROPS]: props,
+    [CHILDREN]: props.children ?? [],
+  };
+
+  return new Proxy(element, {
+    get(target, prop) {
+      if (typeof prop === 'symbol') return target[prop];
+      // Any property access creates a deferred reference
+      return createDeferredRef(target, [prop]);
     }
-  }
+  });
 }
 ```
 
-Key characteristics:
-- Fragments define reusable field sets
-- `...fragmentName` spreads a fragment's fields
-- Fragments can access query variables
-- Collocating fragments with components is a best practice (Relay)
+### Deferred References with Path Tracking
 
-**Relevance to pupt-lib**: The pattern of named, reusable pieces that get "spread" into a larger structure is applicable. The collocation pattern (fragments defined alongside components) is a good practice.
-
-### Jinja2 Template Scoping
-
-Jinja2 has specific scoping rules for macros, includes, and inheritance ([Jinja Docs](https://jinja.palletsprojects.com/en/stable/templates/), [TTL255](https://ttl255.com/jinja2-tutorial-part-5-macros/)):
-
-- Macros have local scope - variables set inside don't leak out
-- Blocks in child templates don't access outer scope by default (can opt-in with `scoped`)
-- Imports are cached and don't access current template variables by default
-- Includes inherit the current context
-
-**Relevance to pupt-lib**: Understanding scoping tradeoffs is important. We need to decide if named values are document-scoped (simpler) or tree-scoped (more encapsulated).
-
-## Design Options Considered
-
-### Option 1: Auto-resolve Element Props
-
-Any PuptElement passed as a prop is automatically rendered to its string value.
+Property access returns a deferred reference that tracks the access path:
 
 ```tsx
-<GitHubUserInfo username={<Ask.Text name="username" default="octocat" />} />
-// GitHubUserInfo receives username="octocat"
-```
+function createDeferredRef(element, path) {
+  const ref = { __ref: true, element, path };
 
-**Pros:**
-- Pure JSX syntax, no new concepts
-- `.prompt` friendly
-- Preserves component encapsulation
-
-**Cons:**
-- Implicit behavior - might surprise developers expecting React semantics
-- Only works for string values, not structured data
-
-### Option 2: Named References with `$` Binding
-
-Use `$name` syntax to reference named values.
-
-```tsx
-<Ask.Text name="username" default="octocat" />
-<GitHubUserInfo username="$username" />
-```
-
-**Pros:**
-- Explicit binding
-- Decoupled - components don't need to be nested
-- `.prompt` friendly
-
-**Cons:**
-- New syntax to learn
-- String-based, loses type information
-- Similar to but different from shell/template variable syntax
-
-### Option 3: Scoped Providers
-
-Explicit scope boundaries with provider/consumer pattern.
-
-```tsx
-<Scope username={<Ask.Text default="octocat" />}>
-  <GitHubUserInfo username={<Use name="username" />} />
-</Scope>
-```
-
-**Pros:**
-- Familiar React Context pattern
-- Explicit scope boundaries
-- Supports structured data
-
-**Cons:**
-- Verbose
-- Extra nesting
-
-### Option 4: Render Props
-
-Pass functions that receive resolved values.
-
-```tsx
-<Ask.Text name="username" default="octocat">
-  {(username) => <GitHubUserInfo username={username} />}
-</Ask.Text>
-```
-
-**Pros:**
-- Standard React pattern
-- Explicit data flow
-- Type-safe
-
-**Cons:**
-- **Requires JavaScript functions - not `.prompt` friendly**
-- Inverted nesting structure
-
-### Option 5: Named Variables (Proposed)
-
-Components declare named outputs via `name` attribute. Those names become referenceable values.
-
-```tsx
-<Ask.Text name="myAnswer" default="octocat" />
-<Foo fooProp={myAnswer} />
-```
-
-Components can also expose named exports:
-
-```tsx
-<Foo name="myFoo" />
-<Bar barProp={myFoo.customReturn} />
-```
-
-**Pros:**
-- Clean, intuitive syntax
-- Feels like regular variable references
-- `.prompt` friendly
-- Supports structured data via exports
-- Similar to Angular template variables
-
-**Cons:**
-- Requires preprocessor transformation in `.prompt` files
-- Need to define scoping rules
-- Need to handle forward references
-
-## Proposed Design: Named Variables
-
-### Core Concept
-
-Components can declare a name, making their output available as a named variable:
-
-```tsx
-<Ask.Text name="username" default="octocat" />
-<GitHubUserInfo username={username} />
-```
-
-**Mental model:**
-- `name="X"` declares a variable `X` whose value is the component's rendered output
-- `{X}` anywhere in the prompt references that value
-- `{X.property}` accesses a named export from component `X`
-
-### Syntax
-
-#### Declaring a Named Output
-
-```tsx
-// The 'name' attribute declares a variable
-<Ask.Text name="username" label="Enter username" default="octocat" />
-```
-
-#### Referencing a Value
-
-```tsx
-// Reference by name - gets the component's rendered text output
-<GitHubUserInfo username={username} />
-```
-
-#### Component Exports (Structured Data)
-
-Components can export structured data beyond their text output:
-
-```tsx
-// UserFetcher exports structured data
-<UserFetcher userId="123" name="user" />
-
-// Access specific exports
-<Display name={user.name} email={user.email} />
-```
-
-Component implementation:
-
-```tsx
-class UserFetcher extends Component {
-  static schema = z.object({ userId: z.string() });
-  static exports = ['name', 'email', 'avatar'];  // Declare available exports
-
-  async render({ userId }, context) {
-    const data = await fetchUser(userId);
-
-    // Provide exports
-    context.provide('name', data.name);
-    context.provide('email', data.email);
-    context.provide('avatar', data.avatarUrl);
-
-    // Return text representation (optional)
-    return `User: ${data.name}`;
-  }
+  return new Proxy(ref, {
+    get(target, prop) {
+      if (prop === '__ref' || prop === 'element' || prop === 'path') {
+        return target[prop];
+      }
+      // Extend path for nested access
+      return createDeferredRef(element, [...path, prop]);
+    }
+  });
 }
 ```
 
-### Transformation (for `.prompt` files)
+This enables arbitrarily deep property access:
 
-The preprocessor transforms bare identifiers that match declared names:
+```tsx
+github.user.address.city
+// → Proxy({ __ref: true, element: github, path: ['user', 'address', 'city'] })
+```
+
+### JSX Transform Handles Named Variables
+
+The Babel JSX transform hoists `name="X"` to variable declarations:
 
 ```tsx
 // User writes:
 <Ask.Text name="username" default="octocat" />
 <GitHubUserInfo username={username} />
 
-// Transformed to:
-<Ask.Text name="username" default="octocat" />
-<GitHubUserInfo username={<Ref name="username" />} />
+// Babel outputs:
+const username = jsx(Ask.Text, { name: "username", default: "octocat" });
+username;
+jsx(GitHubUserInfo, { username: username });
 ```
 
-The `<Ref>` component resolves the reference at render time.
+## Syntax
 
-### Resolution Order
-
-The renderer builds a dependency graph and resolves in topological order:
-
-1. **Discovery phase**: Walk the tree, find all `name="X"` declarations and `{X}` references
-2. **Dependency analysis**: Build a directed graph of what depends on what
-3. **Resolution phase**: Resolve values in topological order (leaves first)
-4. **Render phase**: Render components with resolved prop values
-
-This naturally handles:
-- Async components (await resolution before dependents render)
-- Mixed sync/async (resolved in correct order)
-- Parallel resolution (independent branches resolve concurrently)
-
-### Error Handling
-
-- **Undefined reference**: Error if `{X}` is used but `name="X"` is never declared
-- **Circular dependency**: Error if A depends on B and B depends on A
-- **Duplicate names**: Warning or error if same name declared twice
-
-## Scoping Model: Component-Boundary Scoping
-
-After considering the tradeoffs between global scope (simple but collision-prone) and tree scope (encapsulated but confusing), we adopt **component-boundary scoping** - similar to how JavaScript modules work.
-
-### Core Principles
-
-1. **Each `.prompt` file has its own scope** - Names declared at the top level are local to that file
-2. **Components encapsulate their internals** - Names inside a component don't leak out
-3. **Explicit exports via `name` attribute** - Components expose their output through naming
-4. **Dot notation for exports** - Access component exports via `{componentName.exportName}`
-
-### How It Works
-
-**Inside a component - names are private:**
-```tsx
-// GitHubUserInfo.prompt (component definition)
-<Ask.Text name="username" />           // Private to this component
-<Fetch url={`/users/${username}`} />   // Can reference it internally
-// "username" does NOT leak out to consumers
-```
-
-**Exposing values - via `name` attribute:**
-```tsx
-// Consumer prompt
-<GitHubUserInfo name="github" />       // "github" is now a reference
-<Display value={github} />             // Gets rendered text output
-<Display value={github.stars} />       // Gets named export (if defined)
-```
-
-**Simple prompts - just works:**
-```tsx
-// When there's no component boundary, top-level names are accessible
-<Ask.Text name="username" />
-<Foo prop={username} />                // ✓ Works, same scope
-```
-
-### Mental Model
-
-| Concept | JavaScript Analogy |
-|---------|-------------------|
-| `.prompt` file | Module |
-| Names inside component | Private variables |
-| Component with `name="X"` | Named export |
-| `{X}` reference | Import/usage |
-| `{X.property}` | Accessing export's property |
-
-### Progressive Complexity
-
-**Level 1 (Beginner):** Simple prompts with flat scope
-```tsx
-<Ask.Text name="username" label="Your name" />
-<Greeting name={username} />
-```
-*Mental model: "`name` creates a variable, `{variable}` uses it."*
-
-**Level 2 (Intermediate):** Using components with exports
-```tsx
-<GitHubUserInfo username="octocat" name="info" />
-<Bar value={info.stars} />
-```
-
-**Level 3 (Advanced):** Building reusable components with encapsulation
-```tsx
-// Component authors use scoped names internally
-// Only exports are visible to consumers
-```
-
-### Benefits
-
-- **No conflicts across imports** - Each component's internals are isolated
-- **Simple for simple cases** - Beginners don't hit scoping issues
-- **Familiar pattern** - Works like JavaScript modules
-- **Clear ownership** - Always know where a name came from (`{componentName.export}`)
-
-## Forward References
-
-Forward references ARE supported:
+### Declaring a Named Element
 
 ```tsx
-<Foo prop={username} />        // Reference before declaration
-<Ask.Text name="username" />   // Declaration comes later
+<Ask.Text name="username" label="Enter username" default="octocat" />
 ```
 
-### Why This Works
-
-The renderer uses a **dependency graph** to determine resolution order, not source order:
-
-1. **Discovery pass**: Walk tree, collect all `name="X"` declarations and `{X}` references
-2. **Build graph**: Create edges from references to declarations
-3. **Topological sort**: Determine resolution order
-4. **Resolution pass**: Resolve values in dependency order
-
-This matches the **dataflow programming model** where execution order follows data dependencies, not textual order.
-
-### Error Cases
-
-- **Undefined reference**: `{X}` used but `name="X"` never declared → Error with suggestion
-- **Circular dependency**: A needs B, B needs A → Error showing the cycle
-- **Duplicate names in same scope**: Warning (last declaration wins) or error
-
-## Primary Output vs Named Exports
-
-### The Rule: Primary output is ALWAYS text
-
-pupt-lib generates **text**. To avoid ambiguity:
-
-- `{componentName}` → Always the rendered text output
-- `{componentName.exportName}` → Always a named export (never object property access)
-
-### Component Implementation
+### Passing an Element as a Prop
 
 ```tsx
-class GitHubUserInfo extends Component {
-  static schema = z.object({ username: z.string() });
-  static exports = ['name', 'stars', 'avatar', 'raw'];  // Declare available exports
-
-  async render({ username }, context) {
-    const data = await fetchUser(username);
-
-    // Explicit exports - consumers access via {github.exportName}
-    context.export('name', data.name);
-    context.export('stars', data.public_repos);
-    context.export('avatar', data.avatar_url);
-    context.export('raw', data);  // Full object if consumers need it
-
-    // Return is always the TEXT output
-    return `${data.name} - ${data.public_repos} public repos`;
-  }
-}
+// The element is passed; renderer resolves to its value
+<GitHubUserInfo username={username} />
 ```
 
-### Usage
+### Accessing Properties of Resolved Value
 
 ```tsx
 <GitHubUserInfo username="octocat" name="github" />
 
-{github}              // "octocat - 42 public repos" (always text)
-{github.name}         // "octocat" (named export)
-{github.stars}        // 42 (named export)
-{github.raw}          // { name: "octocat", ... } (full object export)
-{github.raw.email}    // Nested access on exported object
+{github}              // The whole resolved value
+{github.stars}        // Property of resolved value
+{github.raw.email}    // Nested property
 ```
 
-### Why This Design
-
-1. **No ambiguity** - Clear distinction between text output and exports
-2. **Consistent with pupt-lib's purpose** - Everything is ultimately text
-3. **Component author controls API** - Exports are explicitly declared
-4. **Flexible** - Want the raw object? Export it as `raw` or `data`
-
-## Naming Conflicts
-
-### Component Names vs Variable Names
-
-JSX syntax naturally distinguishes:
-- `<Section>` - Always a component (capitalized, JSX element)
-- `{Section}` - Always a variable reference (inside braces)
+### Inline Elements (No Variable Needed)
 
 ```tsx
-<Ask.Text name="Section" />    // Creates variable "Section"
-<Section>                      // Uses Section component
-  {Section}                    // Uses variable "Section"
-</Section>
+<GitHubUserInfo username={<Ask.Text default="octocat" />} />
 ```
 
-**Recommendation**: Allow this but emit a warning when a variable shadows a component name.
+### No Forward References
 
-### Duplicate Names in Same Scope
+Variables must be declared before use (matches JavaScript):
 
 ```tsx
-<Ask.Text name="username" />
-<Ask.Text name="username" />   // Duplicate!
+// ✓ Works
+<Ask.Text name="username" default="octocat" />
+<GitHubUserInfo username={username} />
+
+// ✗ Error: username is not defined
+<GitHubUserInfo username={username} />
+<Ask.Text name="username" default="octocat" />
 ```
 
-**Behavior**: Error - "Duplicate name 'username' in scope. Names must be unique."
+## Component Implementation
 
-## Integration with Input Collection
+### TypeScript Generics for Type Safety
 
-The `createInputIterator` is extended to:
-
-1. **Discover Ask components anywhere** - Including in props, not just children
-2. **Build dependency graph** - Understand resolution order
-3. **Collect in dependency order** - Ensure inputs are collected before dependents need them
+Components use `Component<Props, ResolveType>` generics for compile-time type checking:
 
 ```tsx
-<GitHubUserInfo username={<Ask.Text name="username" default="octocat" />} />
+// The resolve type flows through to:
+// - resolve() return type
+// - render() value parameter
+// - Property access like {github.stars}
+class GitHubUserInfo extends Component<Props, GitHubData> {
+  async resolve({ username }): Promise<GitHubData> { ... }
+  render(props: Props, value: GitHubData) { ... }
+}
 ```
 
-The iterator discovers the Ask.Text even though it's in a prop position.
+### Optional Runtime Validation with Zod
+
+Schemas are optional. If provided, the renderer validates the `resolve()` output:
+
+```tsx
+// Option 1: TypeScript only (no runtime validation)
+class GitHubUserInfo extends Component<Props, GitHubData> {
+  async resolve({ username }): Promise<GitHubData> { ... }
+}
+
+// Option 2: TypeScript + runtime validation
+const gitHubDataSchema = z.object({ name: z.string(), stars: z.number() });
+type GitHubData = z.infer<typeof gitHubDataSchema>;
+
+class GitHubUserInfo extends Component<Props, GitHubData> {
+  static schema = z.object({ username: z.string() });      // props validation
+  static resolveSchema = gitHubDataSchema;                  // resolve() validation
+
+  async resolve({ username }): Promise<GitHubData> { ... }
+}
+```
+
+### Simple Component (resolve only)
+
+```tsx
+interface TextProps {
+  name?: string;
+  label?: string;
+  default?: string;
+}
+
+class Text extends Component<TextProps, string> {
+  static schema = z.object({
+    name: z.string().optional(),
+    label: z.string().optional(),
+    default: z.string().optional(),
+  });
+
+  resolve(props: TextProps): string {
+    return collectInput(props);  // "octocat"
+  }
+  // No render() - resolved value is rendered directly
+}
+```
+
+### Complex Component (resolve + render)
+
+```tsx
+interface Props {
+  username: string;
+}
+
+interface GitHubData {
+  name: string;
+  stars: number;
+  email: string;
+}
+
+class GitHubUserInfo extends Component<Props, GitHubData> {
+  static schema = z.object({ username: z.string() });
+
+  async resolve({ username }: Props): Promise<GitHubData> {
+    const data = await fetchUser(username);
+    return {
+      name: data.name,
+      stars: data.public_repos,
+      email: data.email,
+    };
+  }
+
+  render(props: Props, value: GitHubData) {
+    return <Section>{value.name} - {value.stars} repos</Section>;
+  }
+}
+```
+
+### Presentation-Only Component (render only)
+
+```tsx
+interface SectionProps {
+  title?: string;
+  children: PuptNode;
+}
+
+class Section extends Component<SectionProps> {
+  static schema = z.object({
+    title: z.string().optional(),
+    children: z.any(),
+  });
+
+  render({ title, children }: SectionProps) {
+    return <>{title ? `## ${title}\n` : ''}{children}</>;
+  }
+  // No resolve() - no value to export
+}
+```
+
+## Execution Flow
+
+### 1. JSX Transform (Babel)
+
+```tsx
+// Input
+<Ask.Text name="username" default="octocat" />
+<GitHubUserInfo username={username} name="github" />
+<Display user={github} stars={github.stars} />
+
+// Output
+const username = jsx(Ask.Text, { name: "username", default: "octocat" });
+const github = jsx(GitHubUserInfo, { username: username, name: "github" });
+jsx(Display, { user: github, stars: github.stars });
+```
+
+### 2. JavaScript Execution (Element Tree)
+
+```js
+// username is a Proxy-wrapped element
+username = Proxy({
+  [TYPE]: Ask.Text,
+  [PROPS]: { name: "username", default: "octocat" },
+  [CHILDREN]: []
+})
+
+// github is a Proxy-wrapped element
+github = Proxy({
+  [TYPE]: GitHubUserInfo,
+  [PROPS]: { username: username, name: "github" },
+  [CHILDREN]: []
+})
+
+// github.stars triggers the Proxy
+github.stars = Proxy({ __ref: true, element: github, path: ['stars'] })
+```
+
+### 3. Renderer Resolution
+
+```
+1. Render username (Ask.Text)
+   - Call resolve(props) → "octocat"
+   - Store: resolvedValues[username] = "octocat"
+   - No render(), so output the value directly: "octocat"
+
+2. Render github (GitHubUserInfo)
+   - Resolve props.username:
+     - It's an element (Proxy)
+     - Look up resolvedValues[username] → "octocat"
+   - Call await resolve({ username: "octocat" })
+     → { name: "octocat", stars: 42, email: "..." }
+   - Store: resolvedValues[github] = { name: "octocat", stars: 42, ... }
+   - Call render(props, value)
+     → <Section>octocat - 42 repos</Section>
+   - Output: "## GitHub User\noctocat - 42 repos"
+
+3. Render Display
+   - Resolve props.user:
+     - It's an element (Proxy)
+     - Look up resolvedValues[github] → { name, stars, ... }
+   - Resolve props.stars:
+     - It's a deferred ref with path ['stars']
+     - Look up resolvedValues[github]['stars'] → 42
+   - Call render({ user: { name, stars, ... }, stars: 42 }, value)
+```
+
+### Resolution Logic
+
+```tsx
+function resolveValue(value, resolvedValues) {
+  if (isPuptElement(value)) {
+    // Element → return its resolved value
+    return resolvedValues.get(value);
+  }
+  if (isDeferredRef(value)) {
+    // Deferred ref → get resolved value, follow path
+    const resolved = resolvedValues.get(value.element);
+    return followPath(resolved, value.path);
+  }
+  // Already a plain value
+  return value;
+}
+
+function followPath(obj, path) {
+  return path.reduce((current, key) => current?.[key], obj);
+}
+```
+
+### Parallel Async Resolution
+
+Independent components resolve in parallel. Each element awaits only its specific dependencies:
+
+```tsx
+async function resolveElement(el, resolvePromises, resolvedValues) {
+  // Wait only for elements this one depends on (via props)
+  const deps = Object.values(el[PROPS]).filter(isPuptElement);
+  await Promise.all(deps.map(dep => resolvePromises.get(dep)));
+
+  // Now resolve this element
+  const props = resolveProps(el, resolvedValues);
+  const value = await el[TYPE].prototype.resolve?.(props);
+  resolvedValues.set(el, value);
+}
+
+// Start all resolves immediately - they await their deps internally
+const resolvePromises = new Map();
+for (const el of elements) {
+  resolvePromises.set(el, resolveElement(el, resolvePromises, resolvedValues));
+}
+await Promise.all(resolvePromises.values());
+```
+
+For this tree:
+```tsx
+<Ask.Text name="username" />           // A
+<GitHubUserInfo username={username} /> // B (depends on A)
+<TwitterInfo username={username} />    // C (depends on A)
+```
+
+- A starts immediately
+- B and C both start, but await A internally
+- Once A resolves, B and C run in parallel
+- No topological sort needed - `await` calls naturally serialize dependent work
 
 ## Examples
 
-### Basic Input to Component
+### Basic: String Value
+
+```tsx
+<Prompt name="greeting">
+  <Ask.Text name="username" label="Your name" default="World" />
+
+  <Task>Write a greeting for {username}.</Task>
+</Prompt>
+```
+
+### Passing Values Between Components
 
 ```tsx
 <Prompt name="github-profile">
   <Ask.Text name="username" label="GitHub username" default="octocat" />
 
-  <Task>Write a professional summary for this GitHub user.</Task>
-
-  <Context>
-    <GitHubUserInfo username={username} />
-  </Context>
-</Prompt>
-```
-
-### Using Component Exports
-
-```tsx
-<Prompt name="github-profile-detailed">
-  <Ask.Text name="username" label="GitHub username" default="octocat" />
-
-  <!-- GitHubUserInfo fetches data and exposes exports -->
+  <!-- username's resolved value ("octocat") is passed to GitHubUserInfo -->
   <GitHubUserInfo username={username} name="github" />
 
-  <Task>Write a professional summary for this GitHub user.</Task>
-
-  <Context>
-    <Data label="User Profile">{github}</Data>           <!-- Text output -->
-    <Data label="Name">{github.name}</Data>              <!-- Export -->
-    <Data label="Public Repos">{github.stars}</Data>     <!-- Export -->
-  </Context>
-</Prompt>
-```
-
-### Forward References (Order Doesn't Matter)
-
-```tsx
-<Prompt name="flexible-ordering">
-  <!-- Reference before declaration - works because dependency graph resolves order -->
-  <GitHubUserInfo username={username} name="github" />
+  <Task>Write a professional summary.</Task>
 
   <Context>
     <Data label="Profile">{github}</Data>
-  </Context>
-
-  <!-- Declaration can come after usage -->
-  <Ask.Text name="username" label="GitHub username" default="octocat" />
-
-  <Task>Summarize this user's GitHub activity.</Task>
-</Prompt>
-```
-
-### Chained Components with Exports
-
-```tsx
-<Prompt name="repo-analysis">
-  <Ask.Text name="repoUrl" label="Repository URL" />
-
-  <!-- RepoFetcher exposes structured data via exports -->
-  <RepoFetcher url={repoUrl} name="repo" />
-
-  <Context>
-    <Data label="Repository">{repo}</Data>               <!-- Text summary -->
-    <Data label="Primary Language">{repo.language}</Data>
-    <Data label="Stars">{repo.stars}</Data>
-    <Data label="Open Issues">{repo.issues}</Data>
-  </Context>
-
-  <Task>Analyze this repository's code quality and suggest improvements.</Task>
-</Prompt>
-```
-
-### Nested Export Access
-
-```tsx
-<Prompt name="detailed-analysis">
-  <Ask.Text name="username" default="octocat" />
-
-  <GitHubUserInfo username={username} name="github" />
-
-  <Context>
-    <!-- Access the raw object export for full data -->
-    <Json data={github.raw} />
-
-    <!-- Or access nested properties on exported objects -->
-    <Data label="Email">{github.raw.email}</Data>
-    <Data label="Company">{github.raw.company}</Data>
+    <Data label="Stars">{github.stars}</Data>
   </Context>
 </Prompt>
 ```
 
-### Component Encapsulation (No Leaking)
+### Accessing String Properties
 
 ```tsx
-// ProfileCard.prompt - a reusable component
-// Internal names like "avatar" are private
-<Fetch url={`/users/${username}/avatar`} name="avatar" />
-<Fetch url={`/users/${username}/stats`} name="stats" />
+<Ask.Text name="username" default="octocat" />
 
-<Card>
-  <Image src={avatar} />
-  <Text>{stats.followers} followers</Text>
-</Card>
+{username}           // "octocat"
+{username.length}    // 7
 ```
+
+### Accessing Object Properties
 
 ```tsx
-// Consumer prompt - cannot access ProfileCard's internal names
-<Prompt name="user-page">
-  <ProfileCard username="octocat" name="card" />
+<GitHubUserInfo username="octocat" name="github" />
 
-  {card}                  <!-- ✓ Gets ProfileCard's rendered output -->
-  {card.someExport}       <!-- ✓ If ProfileCard exports it -->
-  {avatar}                <!-- ✗ Error: "avatar" is not defined -->
-  {stats}                 <!-- ✗ Error: "stats" is not defined -->
-</Prompt>
+{github}             // { name: "octocat", stars: 42, email: "..." }
+{github.stars}       // 42
+{github.name}        // "octocat"
+{github.name.length} // 7
 ```
 
-### Multiple Instances with Unique Names
+### Accessing Array Elements
+
+```tsx
+<SearchResults query="react" name="results" />
+
+{results}            // [{ title: "React Guide", ... }, ...]
+{results.length}     // 10
+{results[0]}         // { title: "React Guide", ... }
+{results[0].title}   // "React Guide"
+```
+
+### Multiple Instances
 
 ```tsx
 <Prompt name="compare-users">
-  <Ask.Text name="user1" label="First GitHub username" />
-  <Ask.Text name="user2" label="Second GitHub username" />
+  <Ask.Text name="user1" label="First username" />
+  <Ask.Text name="user2" label="Second username" />
 
-  <!-- Same component, different instances with different names -->
   <GitHubUserInfo username={user1} name="profile1" />
   <GitHubUserInfo username={user2} name="profile2" />
 
-  <Task>
-    Compare these two GitHub profiles and determine who would be
-    a better fit for a senior frontend role.
-  </Task>
+  <Task>Compare these two profiles.</Task>
 
   <Context>
-    <Section title="Candidate 1">
-      {profile1}
-      <Data label="Repos">{profile1.stars}</Data>
+    <Section title="User 1">
+      <Data label="Name">{profile1.name}</Data>
+      <Data label="Stars">{profile1.stars}</Data>
     </Section>
-    <Section title="Candidate 2">
-      {profile2}
-      <Data label="Repos">{profile2.stars}</Data>
+    <Section title="User 2">
+      <Data label="Name">{profile2.name}</Data>
+      <Data label="Stars">{profile2.stars}</Data>
     </Section>
   </Context>
 </Prompt>
 ```
 
-### Conditional Based on Input
+### Async Components
 
 ```tsx
-<Prompt name="code-review">
-  <Ask.Select name="language" label="Programming language">
-    <Ask.Option value="typescript">TypeScript</Ask.Option>
-    <Ask.Option value="python">Python</Ask.Option>
-    <Ask.Option value="rust">Rust</Ask.Option>
-  </Ask.Select>
+<Prompt name="async-example">
+  <Ask.Text name="query" label="Search query" />
 
-  <Role>You are an expert {language} developer.</Role>
+  <!-- SearchResults fetches data asynchronously -->
+  <SearchResults query={query} name="results" />
 
-  <If condition={language === "typescript"}>
-    <Constraint>Follow the official TypeScript style guide.</Constraint>
-  </If>
+  <!-- Values available after async resolve completes -->
+  <Data label="Total">{results.length}</Data>
+  <Data label="Top Result">{results[0].title}</Data>
 </Prompt>
 ```
 
+### Inline vs Named
+
+```tsx
+<!-- Inline: element passed directly, no variable -->
+<GitHubUserInfo username={<Ask.Text default="octocat" />} />
+
+<!-- Named: element assigned to variable for reuse -->
+<Ask.Text name="username" default="octocat" />
+<GitHubUserInfo username={username} />
+<AnotherComponent user={username} />
+```
+
+## Reserved Property Names
+
+The following cannot be used as property access on elements (they conflict with JavaScript internals):
+
+- `then`, `catch`, `finally` (Promise methods - would break async/await)
+- `constructor`, `prototype`, `__proto__`
+- `toJSON`, `toString`, `valueOf`
+
+The Proxy should return `undefined` or the actual element property for these, not create a deferred reference.
+
+## Error Handling
+
+- **Undefined variable**: Standard JavaScript `ReferenceError`
+- **Duplicate names**: Standard JavaScript `SyntaxError`
+- **Property access on undefined value**: Runtime error with helpful message
+- **Value accessed before component resolved**: Runtime error explaining render order
+
 ## Implementation Plan
 
-### Phase 1: Auto-resolve element props (addresses issue #10)
-**Goal**: Quick win - elements in props render to their text value
+### Phase 1: Components Return PuptElements
 
-- Modify `renderComponentWithValidation` to detect PuptElement props
-- Render element props before calling component's render method
-- Minimal change, immediate value for users
+- Update component base class to support `resolve()` and `render()` methods
+- Update built-in components to use new pattern
+- Update renderer to call `resolve()` then `render()`
+- Use symbols for internal element properties (`TYPE`, `PROPS`, `CHILDREN`)
 
-**Estimated effort**: Small
+### Phase 2: JSX Transform for Named Variables
 
-### Phase 2: Dependency graph infrastructure
-**Goal**: Enable forward references and proper resolution ordering
+- Extend the existing Babel JSX plugin to detect `name="X"` attributes
+- Generate `const X = jsx(...)` declarations
+- Handle scoping correctly within the AST transformation
 
-- Add discovery pass to collect all `name="X"` declarations
-- Add pass to collect all `{X}` references (including in props)
-- Build directed dependency graph
-- Implement topological sort for resolution order
-- Detect and report cycles with clear error messages
-- Refactor renderer for two-pass approach (discovery → resolution)
+### Phase 3: Proxy-Wrapped Elements
 
-**Estimated effort**: Medium
+- Wrap all elements in Proxy in the `jsx()` function
+- Implement `createDeferredRef()` for property access
+- Handle reserved property names
 
-### Phase 3: Named variables with `<Ref>` component
-**Goal**: Support the `{variableName}` syntax in `.prompt` files
+### Phase 4: Renderer Updates
 
-- Implement `<Ref name="X" />` component that looks up values
-- Update preprocessor to transform bare identifiers to `<Ref>` elements
-- Handle undefined reference errors with helpful messages
-- Add duplicate name detection and warnings
+- Resolve element props by looking up resolved values
+- Resolve deferred references by following paths
+- Handle nested property access uniformly
+- Store resolved values per-element during render
+- Parallel async resolution (elements await only their dependencies)
 
-**Estimated effort**: Medium
+### Phase 5: Polish
 
-### Phase 4: Component exports
-**Goal**: Support structured data sharing between components
-
-- Add `context.export(name, value)` API
-- Add `static exports = [...]` declaration to Component class
-- Support dot notation `{component.exportName}` for accessing exports
-- Update `<Ref>` to handle dot notation paths
-- Document the "primary output is always text" rule
-
-**Estimated effort**: Medium
-
-### Phase 5: Component-boundary scoping
-**Goal**: Proper encapsulation for reusable components
-
-- Implement scope isolation per `.prompt` file / component definition
-- Internal names don't leak out of component boundaries
-- Only `name` attribute on component exposes values
-- Update discovery pass to respect scope boundaries
-
-**Estimated effort**: Medium-Large
-
-### Phase 6: Polish and edge cases
-**Goal**: Production-ready implementation
-
+- TypeScript types via `Component<Props, ResolveType>` generics
+- Optional `static resolveSchema` for runtime validation
 - Comprehensive error messages
-- Warning when variable shadows component name
 - Integration with input collection (discover Ask in props)
-- Performance optimization for large dependency graphs
 - Documentation and examples
 
-**Estimated effort**: Medium
+## What Was Eliminated
+
+- ~~Separate preprocessor~~ - Name hoisting is part of the Babel JSX transform
+- ~~Multiple named exports~~ - Single resolved value per element
+- ~~`context.setValue()`~~ - Replaced with `resolve()` return value
+- ~~`context.export()`~~ - Replaced with `resolve()` return value
+- ~~`.exports` property~~ - Properties accessed directly on element
+- ~~`<Ref>` component~~ - Variables are real JavaScript
+- ~~`<Export>` component~~ - `resolve()` method handles this
+- ~~Dependency graph~~ - Not needed without forward references
+- ~~Topological sorting~~ - Not needed without forward references
+- ~~Forward references~~ - Removed for simplicity
+- ~~Special scoping rules~~ - Standard JS scoping applies
+- ~~Type-specific handling~~ - All types handled uniformly
+- ~~`static valueType`~~ - Replaced with `Component<Props, ResolveType>` generics
+- ~~Sequential async resolution~~ - Parallel resolution with dependency awaiting
+
+## Comparison with React
+
+### What's the Same
+
+pupt-lib intentionally mirrors React patterns to minimize the learning curve:
+
+| Concept | How It Works |
+|---------|--------------|
+| **JSX Syntax** | Same `<Component prop={value}>children</Component>` syntax |
+| **Components** | Classes with render methods, or function components |
+| **Props** | Same pattern: parent passes data to child via attributes |
+| **Elements as Props** | Components can receive other components as prop values |
+| **Children** | Same `{children}` pattern for nested content |
+| **Fragments** | Same `<>...</>` syntax for grouping without wrapper |
+| **Render Method** | Similar signature: receives props, returns elements |
+
+### What's Different
+
+| Concept | React | pupt-lib | Why |
+|---------|-------|----------|-----|
+| **Render passes** | Multiple (re-renders on state change) | Single pass | No interactivity needed |
+| **State management** | `useState`, `useReducer`, context | None | Values computed once |
+| **Value computation** | `useEffect` + state | `resolve()` method | Simpler for one-shot computation |
+| **Variable binding** | Manual (useState, useRef) | `name="X"` attribute | Simplified for prompt authors |
+| **Property access** | Direct JavaScript | Proxy-wrapped deferred refs | Enables `{foo.bar}` before resolution |
+| **Output** | Virtual DOM → Real DOM | Element tree → Text | Different target medium |
+| **Lifecycle** | mount/update/unmount | resolve → render | No updates or unmount |
+
+### The `resolve()` Method
+
+React uses `useState` + `useEffect` for async data fetching:
+
+```tsx
+// React pattern
+function GitHubUserInfo({ username }) {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetchUser(username).then(setData);
+  }, [username]);
+
+  if (!data) return <Loading />;
+  return <div>{data.name} - {data.stars} repos</div>;
+}
+```
+
+pupt-lib uses a simpler `resolve()` method because there's no reactivity:
+
+```tsx
+// pupt-lib pattern
+class GitHubUserInfo extends Component {
+  async resolve({ username }) {
+    return await fetchUser(username);
+  }
+
+  render(props, value) {
+    return <Section>{value.name} - {value.stars} repos</Section>;
+  }
+}
+```
+
+The `resolve()` pattern is simpler because:
+- No loading states (renderer waits for resolution)
+- No dependency arrays (runs once)
+- No state management (return value is the state)
+- Separation of concerns (data vs. presentation)
+
+### Why These Differences Exist
+
+React is designed for **reactive UIs** where:
+- The UI must stay in sync with changing data
+- User interactions trigger state changes
+- Components re-render when dependencies change
+- The output is an interactive DOM
+
+pupt-lib is designed for **static text generation** where:
+- Values are computed once and don't change
+- There's no user interaction after render
+- Components produce final output in one pass
+- The output is plain text
+
+This fundamental difference (reactive vs. one-shot) allows pupt-lib to use simpler patterns:
+
+| React Complexity | pupt-lib Simplification |
+|------------------|------------------------|
+| useState + useEffect for async | Single `resolve()` method |
+| Dependency arrays | Not needed |
+| Loading/error states | Handled automatically |
+| Re-render optimization | Not needed |
+| State synchronization | Not needed |
+
+### Implications for React Developers
+
+If you know React, you'll find pupt-lib familiar but simpler:
+
+1. **No hooks** - Use `resolve()` instead of `useState`/`useEffect`
+2. **No state management** - Just return values from `resolve()`
+3. **`name="X"` magic** - Creates variables automatically (not standard JSX)
+4. **Single render** - No need to think about re-renders or optimization
+5. **Proxies everywhere** - Elements are wrapped, but this is transparent in usage
+
+The trade-off: pupt-lib's patterns are simpler for the non-reactive model, but differ from React in ways that might initially surprise React developers.
 
 ## References
 
 - [React Component Communication Patterns](https://www.pluralsight.com/resources/blog/react-communicating-between-components)
-- [Angular Template Reference Variables](https://angular.dev/guide/templates/variables)
-- [Svelte Reactive Declarations](https://learn.svelte.dev/tutorial/reactive-declarations)
-- [Dataflow Programming](https://en.wikipedia.org/wiki/Dataflow_programming)
-- [GraphQL Fragments](https://www.apollographql.com/docs/react/data/fragments)
-- [Jinja2 Template Scoping](https://jinja.palletsprojects.com/en/stable/templates/)
+- [Material UI Button (startIcon prop)](https://mui.com/material-ui/react-button/)
+- [Compound Components Pattern](https://www.smashingmagazine.com/2021/08/compound-components-react/)
+- [patterns.dev - Compound Pattern](https://www.patterns.dev/react/compound-pattern/)
+- [React createElement](https://react.dev/reference/react/createElement)

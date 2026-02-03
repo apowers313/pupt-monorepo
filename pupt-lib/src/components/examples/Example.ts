@@ -13,7 +13,7 @@ export class Example extends Component<ExampleProps> {
   static Output = ExampleOutput;
   static schema = exampleSchema;
 
-  render({ children }: ExampleProps, _context: RenderContext): PuptNode {
+  render({ children }: ExampleProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return ['<example>\n', children, '\n</example>\n'];
   }
 }

@@ -16,7 +16,7 @@ export type ForEachProps<T = unknown> = {
 export class ForEach<T = unknown> extends Component<ForEachProps<T>> {
   static schema = forEachSchema;
 
-  render({ items, children }: ForEachProps<T>, _context: RenderContext): PuptNode {
+  render({ items, children }: ForEachProps<T>, _resolvedValue: void, _context: RenderContext): PuptNode {
     if (!items || items.length === 0) {
       return null;
     }

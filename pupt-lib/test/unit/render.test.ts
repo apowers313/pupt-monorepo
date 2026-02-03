@@ -43,7 +43,7 @@ describe('render()', () => {
   it('should pass context to components', async () => {
     class EnvAware extends Component {
       static schema = emptySchema;
-      render(_props: Record<string, unknown>, context: Parameters<typeof Component.prototype.render>[1]) {
+      render(_props: Record<string, unknown>, _resolvedValue: void, context: Parameters<typeof Component.prototype.render>[2]) {
         return `Model: ${context.env.llm.model}`;
       }
     }
@@ -101,7 +101,7 @@ describe('render()', () => {
   it('should pass inputs to context', async () => {
     class InputReader extends Component {
       static schema = emptySchema;
-      render(_props: Record<string, unknown>, context: Parameters<typeof Component.prototype.render>[1]) {
+      render(_props: Record<string, unknown>, _resolvedValue: void, context: Parameters<typeof Component.prototype.render>[2]) {
         return `Value: ${context.inputs.get('key')}`;
       }
     }
@@ -116,7 +116,7 @@ describe('render()', () => {
   it('should accept object inputs and convert to Map', async () => {
     class InputReader extends Component {
       static schema = emptySchema;
-      render(_props: Record<string, unknown>, context: Parameters<typeof Component.prototype.render>[1]) {
+      render(_props: Record<string, unknown>, _resolvedValue: void, context: Parameters<typeof Component.prototype.render>[2]) {
         return `Value: ${context.inputs.get('key')}`;
       }
     }

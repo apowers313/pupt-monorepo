@@ -12,7 +12,7 @@ type OpenUrlProps = z.infer<typeof openUrlSchema>;
 export class OpenUrl extends Component<OpenUrlProps> {
   static schema = openUrlSchema;
 
-  render({ url, browser }: OpenUrlProps, context: RenderContext): PuptNode {
+  render({ url, browser }: OpenUrlProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const action: OpenUrlAction = {
       type: 'openUrl',
       url,

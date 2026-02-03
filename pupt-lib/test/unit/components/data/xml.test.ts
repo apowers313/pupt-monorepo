@@ -6,7 +6,7 @@ describe('Xml', () => {
   it('should render with default root element', () => {
     const xml = new Xml();
     const context = createRenderContext();
-    const result = xml.render({ children: 'content here' }, context);
+    const result = xml.render({ children: 'content here' }, undefined, context);
 
     expect(result).toEqual([
       '```xml\n',
@@ -20,7 +20,7 @@ describe('Xml', () => {
   it('should render with custom root element', () => {
     const xml = new Xml();
     const context = createRenderContext();
-    const result = xml.render({ root: 'config', children: '<item>test</item>' }, context);
+    const result = xml.render({ root: 'config', children: '<item>test</item>' }, undefined, context);
 
     expect(result).toEqual([
       '```xml\n',
@@ -37,7 +37,7 @@ describe('Xml', () => {
     const result = xml.render({
       root: 'list',
       children: ['<item>1</item>', '<item>2</item>'],
-    }, context);
+    }, undefined, context);
 
     expect(result).toEqual([
       '```xml\n',
@@ -51,7 +51,7 @@ describe('Xml', () => {
   it('should handle empty children', () => {
     const xml = new Xml();
     const context = createRenderContext();
-    const result = xml.render({ children: '' }, context);
+    const result = xml.render({ children: '' }, undefined, context);
 
     expect(result).toEqual([
       '```xml\n',

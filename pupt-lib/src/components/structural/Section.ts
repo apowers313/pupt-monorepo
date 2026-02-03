@@ -12,7 +12,7 @@ type SectionProps = z.infer<typeof sectionSchema> & { children: PuptNode };
 export class Section extends Component<SectionProps> {
   static schema = sectionSchema;
 
-  render({ name, delimiter, children }: SectionProps, _context: RenderContext): PuptNode {
+  render({ name, delimiter, children }: SectionProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const effectiveDelimiter = delimiter ?? (name ? 'xml' : 'none');
     const childContent = Array.isArray(children) ? children : children;
     // Default tag name to 'section' if not provided

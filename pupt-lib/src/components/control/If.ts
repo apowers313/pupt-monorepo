@@ -12,7 +12,7 @@ export type IfProps = z.infer<typeof ifSchema> & { children?: PuptNode };
 export class If extends Component<IfProps> {
   static schema = ifSchema;
 
-  render({ when, children }: IfProps, context: RenderContext): PuptNode {
+  render({ when, children }: IfProps, _resolvedValue: void, context: RenderContext): PuptNode {
     let condition: boolean;
 
     if (typeof when === 'boolean') {

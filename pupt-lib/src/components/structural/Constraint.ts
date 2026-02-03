@@ -12,7 +12,7 @@ type ConstraintProps = z.infer<typeof constraintSchema> & { children: PuptNode }
 export class Constraint extends Component<ConstraintProps> {
   static schema = constraintSchema;
 
-  render({ type, delimiter = 'xml', children }: ConstraintProps, _context: RenderContext): PuptNode {
+  render({ type, delimiter = 'xml', children }: ConstraintProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     // If a type is specified, add the prefix

@@ -11,7 +11,7 @@ type AudienceProps = z.infer<typeof audienceSchema> & { children: PuptNode };
 export class Audience extends Component<AudienceProps> {
   static schema = audienceSchema;
 
-  render({ delimiter = 'xml', children }: AudienceProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: AudienceProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {

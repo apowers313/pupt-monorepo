@@ -2,6 +2,7 @@ import type { PuptElement, PuptNode, InputRequirement, ValidationResult, RenderC
 import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
+import { TYPE, PROPS, CHILDREN } from '../types/symbols';
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
@@ -227,8 +228,10 @@ export function createInputIterator(
     }
 
     // PuptElement
-    const element = node as PuptElement;
-    const { type, props, children } = element;
+    const el = node as PuptElement;
+    const type = el[TYPE];
+    const props = el[PROPS];
+    const children = el[CHILDREN];
 
     // Fragment - just walk children
     if (type === Fragment) {
@@ -241,7 +244,8 @@ export function createInputIterator(
     // Component class - render it to collect requirements
     if (isComponentClass(type)) {
       const instance = new (type as new () => Component)();
-      const renderResult = instance.render({ ...props, children }, context);
+      // Pass undefined as resolvedValue since we're only collecting requirements
+      const renderResult = instance.render!({ ...props, children }, undefined as never, context);
 
       // Handle both sync and async render methods
       const result = renderResult instanceof Promise ? await renderResult : renderResult;

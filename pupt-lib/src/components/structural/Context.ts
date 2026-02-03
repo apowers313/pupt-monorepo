@@ -11,7 +11,7 @@ type ContextProps = z.infer<typeof contextSchema> & { children: PuptNode };
 export class Context extends Component<ContextProps> {
   static schema = contextSchema;
 
-  render({ delimiter = 'xml', children }: ContextProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: ContextProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {
