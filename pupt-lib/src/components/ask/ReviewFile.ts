@@ -17,9 +17,25 @@ export type ReviewFileProps = z.infer<typeof askReviewFileSchema> & { children?:
  *   <Ask.File name="..." />
  *   <PostExecution><ReviewFile input="..." /></PostExecution>
  */
-export class AskReviewFile extends Component<ReviewFileProps> {
+export class AskReviewFile extends Component<ReviewFileProps, string> {
   static schema = askReviewFileSchema;
-  render(props: ReviewFileProps, context: RenderContext): PuptNode {
+
+  resolve(props: ReviewFileProps, context: RenderContext): string {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return `{${name}}`;
+  }
+
+  render(props: ReviewFileProps, resolvedValue: string | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -30,8 +46,6 @@ export class AskReviewFile extends Component<ReviewFileProps> {
       editor,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     // Register as a file input
     const requirement: InputRequirement = {
@@ -47,12 +61,14 @@ export class AskReviewFile extends Component<ReviewFileProps> {
 
     attachRequirement(context, requirement);
 
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
     // Register post-execution action to review this file
-    const filePath = value ?? defaultValue;
-    if (filePath && context.postExecution) {
+    if (actualValue && !actualValue.startsWith('{') && context.postExecution) {
       context.postExecution.push({
         type: 'reviewFile',
-        file: String(filePath),
+        file: actualValue,
         editor,
       });
     }
@@ -61,14 +77,6 @@ export class AskReviewFile extends Component<ReviewFileProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      return String(value);
-    }
-
-    if (defaultValue !== undefined) {
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    return actualValue;
   }
 }

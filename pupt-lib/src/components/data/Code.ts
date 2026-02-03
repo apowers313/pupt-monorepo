@@ -12,7 +12,7 @@ type CodeProps = z.infer<typeof codeSchema> & { children: PuptNode };
 export class Code extends Component<CodeProps> {
   static schema = codeSchema;
 
-  render({ language = '', filename, children }: CodeProps, _context: RenderContext): PuptNode {
+  render({ language = '', filename, children }: CodeProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const parts: PuptNode[] = [];
 
     if (filename) {

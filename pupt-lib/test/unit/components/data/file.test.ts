@@ -30,7 +30,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.ts -->\n',
@@ -46,7 +46,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.js -->\n',
@@ -62,7 +62,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- script.py -->\n',
@@ -78,7 +78,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.json -->\n',
@@ -94,7 +94,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.yaml -->\n',
@@ -110,7 +110,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.yml -->\n',
@@ -126,7 +126,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath, language: 'rust' }, context);
+    const result = file.render({ path: filePath, language: 'rust' }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.txt -->\n',
@@ -142,7 +142,7 @@ describe('File', () => {
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, context);
+    const result = file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.xyz -->\n',
@@ -155,7 +155,7 @@ describe('File', () => {
   it('should handle file read errors gracefully', () => {
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: '/nonexistent/path/file.ts' }, context);
+    const result = file.render({ path: '/nonexistent/path/file.ts' }, undefined, context);
 
     expect(result).toMatch(/\[Error reading file:/);
   });
@@ -176,16 +176,16 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const cResult = file.render({ path: cPath }, context);
+    const cResult = file.render({ path: cPath }, undefined, context);
     expect(cResult[1]).toBe('```c\n');
 
-    const cppResult = file.render({ path: cppPath }, context);
+    const cppResult = file.render({ path: cppPath }, undefined, context);
     expect(cppResult[1]).toBe('```cpp\n');
 
-    const hResult = file.render({ path: hPath }, context);
+    const hResult = file.render({ path: hPath }, undefined, context);
     expect(hResult[1]).toBe('```c\n');
 
-    const hppResult = file.render({ path: hppPath }, context);
+    const hppResult = file.render({ path: hppPath }, undefined, context);
     expect(hppResult[1]).toBe('```cpp\n');
   });
 
@@ -202,13 +202,13 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const goResult = file.render({ path: goPath }, context);
+    const goResult = file.render({ path: goPath }, undefined, context);
     expect(goResult[1]).toBe('```go\n');
 
-    const rsResult = file.render({ path: rsPath }, context);
+    const rsResult = file.render({ path: rsPath }, undefined, context);
     expect(rsResult[1]).toBe('```rust\n');
 
-    const javaResult = file.render({ path: javaPath }, context);
+    const javaResult = file.render({ path: javaPath }, undefined, context);
     expect(javaResult[1]).toBe('```java\n');
   });
 
@@ -219,7 +219,7 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const rbResult = file.render({ path: rbPath }, context);
+    const rbResult = file.render({ path: rbPath }, undefined, context);
     expect(rbResult[1]).toBe('```ruby\n');
   });
 
@@ -233,10 +233,10 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const cssResult = file.render({ path: cssPath }, context);
+    const cssResult = file.render({ path: cssPath }, undefined, context);
     expect(cssResult[1]).toBe('```css\n');
 
-    const scssResult = file.render({ path: scssPath }, context);
+    const scssResult = file.render({ path: scssPath }, undefined, context);
     expect(scssResult[1]).toBe('```scss\n');
   });
 
@@ -250,10 +250,10 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const htmlResult = file.render({ path: htmlPath }, context);
+    const htmlResult = file.render({ path: htmlPath }, undefined, context);
     expect(htmlResult[1]).toBe('```html\n');
 
-    const xmlResult = file.render({ path: xmlPath }, context);
+    const xmlResult = file.render({ path: xmlPath }, undefined, context);
     expect(xmlResult[1]).toBe('```xml\n');
   });
 
@@ -267,10 +267,10 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const shResult = file.render({ path: shPath }, context);
+    const shResult = file.render({ path: shPath }, undefined, context);
     expect(shResult[1]).toBe('```bash\n');
 
-    const sqlResult = file.render({ path: sqlPath }, context);
+    const sqlResult = file.render({ path: sqlPath }, undefined, context);
     expect(sqlResult[1]).toBe('```sql\n');
   });
 
@@ -281,7 +281,7 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const mdResult = file.render({ path: mdPath }, context);
+    const mdResult = file.render({ path: mdPath }, undefined, context);
     expect(mdResult[1]).toBe('```markdown\n');
   });
 
@@ -295,10 +295,10 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const tsxResult = file.render({ path: tsxPath }, context);
+    const tsxResult = file.render({ path: tsxPath }, undefined, context);
     expect(tsxResult[1]).toBe('```typescript\n');
 
-    const jsxResult = file.render({ path: jsxPath }, context);
+    const jsxResult = file.render({ path: jsxPath }, undefined, context);
     expect(jsxResult[1]).toBe('```javascript\n');
   });
 });

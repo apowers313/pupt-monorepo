@@ -11,7 +11,7 @@ type SuccessCriteriaProps = z.infer<typeof successCriteriaSchema> & { children: 
 export class SuccessCriteria extends Component<SuccessCriteriaProps> {
   static schema = successCriteriaSchema;
 
-  render({ delimiter = 'xml', children }: SuccessCriteriaProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: SuccessCriteriaProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {

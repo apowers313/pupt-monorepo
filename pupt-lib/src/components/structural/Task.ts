@@ -11,7 +11,7 @@ type TaskProps = z.infer<typeof taskSchema> & { children: PuptNode };
 export class Task extends Component<TaskProps> {
   static schema = taskSchema;
 
-  render({ delimiter = 'xml', children }: TaskProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: TaskProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {

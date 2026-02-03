@@ -34,6 +34,7 @@ import {
 } from '../../src/index';
 
 import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
+import { TYPE, CHILDREN } from '../../src/types/symbols';
 
 describe('Browser: Main Entry Point Import', () => {
   it('should import render function successfully', () => {
@@ -177,9 +178,9 @@ describe('Browser: JSX Transformation', () => {
     const element = jsx(Task, { children: 'Test task' });
 
     expect(element).toBeDefined();
-    expect(element.type).toBe(Task);
+    expect(element[TYPE]).toBe(Task);
     // Children are normalized into an array and stored on the element
-    expect(element.children).toContain('Test task');
+    expect(element[CHILDREN]).toContain('Test task');
   });
 
   it('should create elements with jsxs for multiple children', () => {
@@ -192,8 +193,8 @@ describe('Browser: JSX Transformation', () => {
     });
 
     expect(element).toBeDefined();
-    expect(Array.isArray(element.children)).toBe(true);
-    expect(element.children.length).toBe(2);
+    expect(Array.isArray(element[CHILDREN])).toBe(true);
+    expect(element[CHILDREN].length).toBe(2);
   });
 
   it('should create fragment elements', () => {
@@ -205,6 +206,6 @@ describe('Browser: JSX Transformation', () => {
     });
 
     expect(element).toBeDefined();
-    expect(element.type).toBe(Fragment);
+    expect(element[TYPE]).toBe(Fragment);
   });
 });

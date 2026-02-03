@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { VERSION } from '../src/index';
+import { VERSION, TYPE, PROPS } from '../src/index';
 import { Fragment, jsx, jsxs } from '../src/jsx-runtime/index';
 import { jsxDEV } from '../src/jsx-runtime/jsx-dev-runtime';
-import puptBabelPreset from '../src/babel/preset';
 
 describe('Test Infrastructure', () => {
   it('should run tests', () => {
@@ -30,14 +29,14 @@ describe('JSX Runtime', () => {
   it('should export jsx function', () => {
     expect(typeof jsx).toBe('function');
     const element = jsx('div', { id: 'test' });
-    expect(element).toHaveProperty('type', 'div');
-    expect(element).toHaveProperty('props');
+    expect(element[TYPE]).toBe('div');
+    expect(element[PROPS]).toEqual({ id: 'test' });
   });
 
   it('should export jsxs function', () => {
     expect(typeof jsxs).toBe('function');
     const element = jsxs('span', { className: 'test' });
-    expect(element).toHaveProperty('type', 'span');
+    expect(element[TYPE]).toBe('span');
   });
 });
 
@@ -52,21 +51,7 @@ describe('JSX Dev Runtime', () => {
       { fileName: 'test.tsx', lineNumber: 1, columnNumber: 1 },
       null,
     );
-    expect(element).toHaveProperty('type', 'div');
+    expect(element[TYPE]).toBe('div');
   });
 });
 
-describe('Babel Preset', () => {
-  it('should export default preset function', () => {
-    expect(typeof puptBabelPreset).toBe('function');
-    // Create a mock Babel API object with cache method
-    const mockApi = {
-      cache: {
-        using: () => {},
-      },
-    };
-    const preset = puptBabelPreset(mockApi as Parameters<typeof puptBabelPreset>[0]);
-    expect(preset).toHaveProperty('plugins');
-    expect(Array.isArray(preset.plugins)).toBe(true);
-  });
-});

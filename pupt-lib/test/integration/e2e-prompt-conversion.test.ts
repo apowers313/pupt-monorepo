@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import type { PuptNode } from '../../src/types';
+import { PROPS } from '../../src/types/symbols';
 
 describe('End-to-End: .prompt file conversion', () => {
   describe('basic .prompt files', () => {
@@ -18,7 +19,7 @@ describe('End-to-End: .prompt file conversion', () => {
 
       const element = await createPromptFromSource(source, 'minimal.prompt');
 
-      expect(element.props.name).toBe('minimal');
+      expect((element[PROPS] as { name: string }).name).toBe('minimal');
     });
 
     it('should handle prompt with text content', async () => {
@@ -265,7 +266,7 @@ describe('End-to-End: .tsx file conversion', () => {
       const element = await createPromptFromSource(source, 'vars.tsx');
       const result = await render(element);
 
-      expect(element.props.name).toBe('Dynamic Prompt');
+      expect((element[PROPS] as { name: string }).name).toBe('Dynamic Prompt');
       expect(result.text).toContain('The sum is 6');
     });
 
@@ -350,7 +351,7 @@ describe('End-to-End: .tsx file conversion', () => {
       const element = await createPromptFromSource(source, 'destructure.tsx');
       const result = await render(element);
 
-      expect(element.props.name).toBe('test');
+      expect((element[PROPS] as { name: string }).name).toBe('test');
       expect(result.text).toContain('Version: 1');
       expect(result.text).toContain('Debug: true');
       expect(result.text).toContain('Extra: value');
@@ -423,7 +424,7 @@ describe('End-to-End: .tsx file conversion', () => {
       const element = await createPromptFromSource(source, 'types.tsx');
       const result = await render(element);
 
-      expect(element.props.name).toBe('typed-prompt');
+      expect((element[PROPS] as { name: string }).name).toBe('typed-prompt');
       expect(result.text).toContain('- Task 1');
       expect(result.text).toContain('- Task 2');
     });
@@ -645,7 +646,7 @@ describe('End-to-End: File-based prompts', () => {
     const element = await createPrompt(filePath);
     const result = await render(element);
 
-    expect(element.props.name).toBe('from-disk');
+    expect((element[PROPS] as { name: string }).name).toBe('from-disk');
     expect(result.text).toContain('File-loaded assistant');
   });
 
@@ -664,7 +665,7 @@ describe('End-to-End: File-based prompts', () => {
     const element = await createPrompt(filePath);
     const result = await render(element);
 
-    expect(element.props.name).toBe('tsx-from-disk');
+    expect((element[PROPS] as { name: string }).name).toBe('tsx-from-disk');
     expect(result.text).toContain('Version 1');
   });
 

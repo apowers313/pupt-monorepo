@@ -14,7 +14,7 @@ type PromptProps = z.infer<typeof promptSchema> & { children: PuptNode };
 export class Prompt extends Component<PromptProps> {
   static schema = promptSchema;
 
-  render({ children }: PromptProps, _context: RenderContext): PuptNode {
+  render({ children }: PromptProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     // Prompt is a container - just render children
     // Metadata is available for discovery, not rendered
     return children;

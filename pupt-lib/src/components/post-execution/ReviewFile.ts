@@ -12,7 +12,7 @@ type ReviewFileProps = z.infer<typeof reviewFileSchema>;
 export class ReviewFile extends Component<ReviewFileProps> {
   static schema = reviewFileSchema;
 
-  render({ file, editor }: ReviewFileProps, context: RenderContext): PuptNode {
+  render({ file, editor }: ReviewFileProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const action: ReviewFileAction = {
       type: 'reviewFile',
       file,

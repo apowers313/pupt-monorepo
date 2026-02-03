@@ -1,6 +1,7 @@
 // JSX Runtime for pupt-lib
 
-import type { PuptElement, PuptNode, ComponentType } from '../types';
+import type { PuptElement, PuptNode, ComponentType, DeferredRef } from '../types';
+import { TYPE, PROPS, CHILDREN, DEFERRED_REF } from '../types/symbols';
 
 /**
  * Fragment symbol for grouping elements without a wrapper
@@ -60,6 +61,93 @@ function validateType<P extends Record<string, unknown>>(
 }
 
 /**
+ * Reserved properties that should not create deferred refs.
+ * These are properties that have special meaning in JavaScript/TypeScript.
+ */
+const RESERVED_PROPS = new Set([
+  'then', 'catch', 'finally',  // Promise methods - important for async/await compatibility
+  'constructor', 'prototype', '__proto__',  // Object prototype properties
+  'toJSON', 'toString', 'valueOf',  // Common conversion methods
+  Symbol.toPrimitive,
+  Symbol.toStringTag,
+]);
+
+/**
+ * Create a deferred reference that tracks property access paths.
+ * Deferred refs are used to access resolved values at render time.
+ *
+ * @param element - The original PuptElement being referenced
+ * @param path - The property path to access on the resolved value
+ * @returns A Proxy-wrapped DeferredRef that supports chained property access
+ */
+function createDeferredRef(element: PuptElement, path: (string | number)[]): DeferredRef {
+  const ref: DeferredRef = {
+    [DEFERRED_REF]: true,
+    element,
+    path,
+  };
+
+  return new Proxy(ref, {
+    get(target, prop) {
+      // Allow access to internal DeferredRef properties (both symbol and string keys)
+      if (prop === DEFERRED_REF) {
+        return target[DEFERRED_REF];
+      }
+      if (prop === 'element') {
+        return target.element;
+      }
+      if (prop === 'path') {
+        return target.path;
+      }
+
+      // Extend path for chained property access
+      if (typeof prop === 'string') {
+        return createDeferredRef(element, [...path, prop]);
+      }
+
+      return undefined;
+    },
+    has(target, prop) {
+      // Support 'in' operator for isDeferredRef checks
+      if (prop === DEFERRED_REF) {
+        return true;
+      }
+      return prop in target;
+    },
+  }) as DeferredRef;
+}
+
+/**
+ * Wrap a PuptElement in a Proxy to intercept property access.
+ * Property access on the element creates a DeferredRef for later resolution.
+ *
+ * @param element - The PuptElement to wrap
+ * @returns A Proxy-wrapped element that creates DeferredRefs on property access
+ */
+function wrapWithProxy<P extends Record<string, unknown>>(element: PuptElement<P>): PuptElement<P> {
+  // We need to create the proxy first so we can reference it in deferred refs
+  const proxy: PuptElement<P> = new Proxy(element, {
+    get(target, prop) {
+      // Allow symbol access for internal properties
+      if (typeof prop === 'symbol') {
+        return target[prop as keyof typeof target];
+      }
+
+      // Reserved properties return undefined (don't create deferred refs)
+      if (RESERVED_PROPS.has(prop)) {
+        return undefined;
+      }
+
+      // Any other string property access creates a deferred reference
+      // Pass the proxy so deferred refs contain the full wrapped element
+      return createDeferredRef(proxy as PuptElement, [prop]);
+    },
+  });
+
+  return proxy;
+}
+
+/**
  * Create a JSX element with a single child.
  * Called by the JSX transform for elements with one child.
  *
@@ -72,11 +160,12 @@ export function jsx<P extends Record<string, unknown>>(
   props: P & { children?: PuptNode },
 ): PuptElement<P> {
   const { children, ...restProps } = props;
-  return {
-    type: validateType(type),
-    props: restProps as P,
-    children: normalizeChildren(children),
+  const element: PuptElement<P> = {
+    [TYPE]: validateType(type),
+    [PROPS]: restProps as P,
+    [CHILDREN]: normalizeChildren(children),
   };
+  return wrapWithProxy(element);
 }
 
 /**

@@ -22,9 +22,25 @@ export const askChoiceSchema = askBaseSchema.extend({
 export type ChoiceProps = z.infer<typeof askChoiceSchema> & { children?: PuptNode };
 
 // Named AskChoice for consistent Ask component naming
-export class AskChoice extends Component<ChoiceProps> {
+export class AskChoice extends Component<ChoiceProps, string> {
   static schema = askChoiceSchema;
-  render(props: ChoiceProps, context: RenderContext): PuptNode {
+
+  resolve(props: ChoiceProps, context: RenderContext): string {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return '';
+  }
+
+  render(props: ChoiceProps, resolvedValue: string | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -34,8 +50,6 @@ export class AskChoice extends Component<ChoiceProps> {
       options,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -57,13 +71,15 @@ export class AskChoice extends Component<ChoiceProps> {
       return '';
     }
 
-    const selectedValue = value ?? defaultValue;
-    if (selectedValue !== undefined) {
-      const selectedOption = options.find((opt) => opt.value === selectedValue);
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    if (actualValue) {
+      const selectedOption = options.find((opt) => opt.value === actualValue);
       if (selectedOption) {
         return selectedOption.label;
       }
-      return String(selectedValue);
+      return actualValue;
     }
 
     return `{${name}}`;

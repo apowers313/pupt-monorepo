@@ -16,7 +16,7 @@ export type OptionProps = z.infer<typeof askOptionSchema> & { children?: PuptNod
 // Named AskOption for consistent Ask component naming
 export class AskOption extends Component<OptionProps> {
   static schema = askOptionSchema;
-  render(_props: OptionProps, _context: RenderContext): PuptNode {
+  render(_props: OptionProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     // Options don't render directly - they're collected by parent Select
     return null;
   }

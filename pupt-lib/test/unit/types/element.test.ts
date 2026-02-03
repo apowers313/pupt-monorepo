@@ -1,40 +1,41 @@
 import { describe, it, expect } from 'vitest';
 import type { PuptElement, PuptNode, ComponentType } from '../../../src/types';
+import { TYPE, PROPS, CHILDREN, isPuptElement } from '../../../src';
 
 describe('PuptElement', () => {
-  it('should have required properties', () => {
+  it('should have required properties with symbols', () => {
     const element: PuptElement = {
-      type: 'div',
-      props: { className: 'test' },
-      children: ['Hello'],
+      [TYPE]: 'div',
+      [PROPS]: { className: 'test' },
+      [CHILDREN]: ['Hello'],
     };
 
-    expect(element.type).toBe('div');
-    expect(element.props.className).toBe('test');
-    expect(element.children).toEqual(['Hello']);
+    expect(element[TYPE]).toBe('div');
+    expect((element[PROPS] as { className: string }).className).toBe('test');
+    expect(element[CHILDREN]).toEqual(['Hello']);
   });
 
   it('should allow Component type', () => {
     const MockComponent = () => 'test';
     const element: PuptElement = {
-      type: MockComponent,
-      props: {},
-      children: [],
+      [TYPE]: MockComponent,
+      [PROPS]: {},
+      [CHILDREN]: [],
     };
 
-    expect(typeof element.type).toBe('function');
+    expect(typeof element[TYPE]).toBe('function');
   });
 
   it('should allow symbol type', () => {
     const fragmentSymbol = Symbol.for('pupt.Fragment');
     const element: PuptElement = {
-      type: fragmentSymbol,
-      props: {},
-      children: ['content'],
+      [TYPE]: fragmentSymbol,
+      [PROPS]: {},
+      [CHILDREN]: ['content'],
     };
 
-    expect(typeof element.type).toBe('symbol');
-    expect(element.children).toEqual(['content']);
+    expect(typeof element[TYPE]).toBe('symbol');
+    expect(element[CHILDREN]).toEqual(['content']);
   });
 });
 
@@ -65,12 +66,13 @@ describe('PuptNode', () => {
   });
 
   it('should accept element', () => {
-    const node: PuptNode = { type: 'span', props: {}, children: [] };
-    expect(node).toHaveProperty('type', 'span');
+    const node: PuptNode = { [TYPE]: 'span', [PROPS]: {}, [CHILDREN]: [] };
+    expect(isPuptElement(node)).toBe(true);
+    expect((node as PuptElement)[TYPE]).toBe('span');
   });
 
   it('should accept array of nodes', () => {
-    const nodes: PuptNode = ['hello', 42, { type: 'span', props: {}, children: [] }];
+    const nodes: PuptNode = ['hello', 42, { [TYPE]: 'span', [PROPS]: {}, [CHILDREN]: [] }];
     expect(Array.isArray(nodes)).toBe(true);
     expect(nodes).toHaveLength(3);
   });
@@ -80,5 +82,31 @@ describe('ComponentType', () => {
   it('should accept function component', () => {
     const FnComponent: ComponentType = (props) => `Hello ${props.name}`;
     expect(typeof FnComponent).toBe('function');
+  });
+});
+
+describe('isPuptElement', () => {
+  it('should return true for PuptElements', () => {
+    const element: PuptElement = {
+      [TYPE]: 'div',
+      [PROPS]: {},
+      [CHILDREN]: [],
+    };
+    expect(isPuptElement(element)).toBe(true);
+  });
+
+  it('should return false for plain objects', () => {
+    expect(isPuptElement({ type: 'div', props: {}, children: [] })).toBe(false);
+  });
+
+  it('should return false for null and undefined', () => {
+    expect(isPuptElement(null)).toBe(false);
+    expect(isPuptElement(undefined)).toBe(false);
+  });
+
+  it('should return false for primitives', () => {
+    expect(isPuptElement('string')).toBe(false);
+    expect(isPuptElement(42)).toBe(false);
+    expect(isPuptElement(true)).toBe(false);
   });
 });

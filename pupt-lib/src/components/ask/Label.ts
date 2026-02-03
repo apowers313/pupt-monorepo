@@ -15,7 +15,7 @@ export type LabelProps = z.infer<typeof askLabelSchema> & { children?: PuptNode 
 // Named AskLabel for consistent Ask component naming
 export class AskLabel extends Component<LabelProps> {
   static schema = askLabelSchema;
-  render(_props: LabelProps, _context: RenderContext): PuptNode {
+  render(_props: LabelProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     // Label components don't render anything directly
     // They're processed by the parent Rating component
     return null;

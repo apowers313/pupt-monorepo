@@ -4,7 +4,8 @@ import { Component } from '../../src/component';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';
 import { z } from 'zod';
-import type { PuptNode, RenderContext } from '../../src/types';
+import type { PuptNode, RenderContext, PuptElement } from '../../src/types';
+import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 
 /**
  * Get the type name from an element's type property.
@@ -16,6 +17,21 @@ function getTypeName(type: unknown): string {
   if (typeof type === 'function') return type.name;
   if (typeof type === 'symbol') return type.toString();
   return String(type);
+}
+
+// Helper to get props with proper typing
+function getProps(element: PuptElement): Record<string, unknown> {
+  return element[PROPS] as Record<string, unknown>;
+}
+
+// Helper to get children with proper typing
+function getChildren(element: PuptElement): PuptNode[] {
+  return element[CHILDREN];
+}
+
+// Helper to get type with proper typing
+function getType(element: PuptElement): unknown {
+  return element[TYPE];
 }
 
 describe('createPromptFromSource', () => {
@@ -31,8 +47,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.props.name).toBe('test');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getProps(element).name).toBe('test');
   });
 
   it('should handle simple JSX without imports', async () => {
@@ -42,8 +58,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(element.type).toBe('div');
-    expect(element.children).toContain('Hello World');
+    expect(getType(element)).toBe('div');
+    expect(getChildren(element)).toContain('Hello World');
   });
 
   it('should handle JSX with props', async () => {
@@ -53,9 +69,9 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(getTypeName(element.type)).toBe('Section');
-    expect(element.props.title).toBe('Test');
-    expect(element.props.priority).toBe(1);
+    expect(getTypeName(getType(element))).toBe('Section');
+    expect(getProps(element).title).toBe('Test');
+    expect(getProps(element).priority).toBe(1);
   });
 
   it('should handle nested JSX elements', async () => {
@@ -70,8 +86,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.children.length).toBe(2);
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getChildren(element).length).toBe(2);
   });
 
   it('should handle TypeScript syntax', async () => {
@@ -88,7 +104,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'typed.tsx');
 
-    expect(element.props.name).toBe('typed-test');
+    expect(getProps(element).name).toBe('typed-test');
   });
 
   it('should handle fragments', async () => {
@@ -104,7 +120,7 @@ describe('createPromptFromSource', () => {
     const element = await createPromptFromSource(source, 'test.tsx');
 
     // Fragment returns children array
-    expect(element.children.length).toBe(2);
+    expect(getChildren(element).length).toBe(2);
   });
 
   it('should handle control flow components', async () => {
@@ -120,9 +136,9 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.children.length).toBe(1);
-    expect(getTypeName(element.children[0].type)).toBe('If');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getChildren(element).length).toBe(1);
+    expect(getTypeName(getType(getChildren(element)[0] as PuptElement))).toBe('If');
   });
 
   it('should handle data components', async () => {
@@ -136,8 +152,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.tsx');
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(getTypeName(element.children[0].type)).toBe('Code');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getTypeName(getType(getChildren(element)[0] as PuptElement))).toBe('Code');
   });
 
   it('should auto-wrap raw JSX without export default', async () => {
@@ -149,8 +165,8 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.prompt');
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.props.name).toBe('auto-wrapped');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getProps(element).name).toBe('auto-wrapped');
   });
 
   it('should auto-wrap simple raw JSX', async () => {
@@ -158,7 +174,7 @@ describe('createPromptFromSource', () => {
 
     const element = await createPromptFromSource(source, 'test.prompt');
 
-    expect(getTypeName(element.type)).toBe('Task');
+    expect(getTypeName(getType(element))).toBe('Task');
   });
 
   it('should throw helpful error for undefined component (Ask.FooBar)', async () => {
@@ -211,10 +227,10 @@ describe('createPromptFromSource', () => {
       },
     });
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.children.length).toBe(2);
-    expect(getTypeName(element.children[0].type)).toBe('MyCustomHeader');
-    expect(element.children[0].props.title).toBe('Welcome');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getChildren(element).length).toBe(2);
+    expect(getTypeName(getType(getChildren(element)[0] as PuptElement))).toBe('MyCustomHeader');
+    expect(getProps(getChildren(element)[0] as PuptElement).title).toBe('Welcome');
   });
 
   it('should support multiple custom components', async () => {
@@ -247,9 +263,9 @@ describe('createPromptFromSource', () => {
       },
     });
 
-    expect(element.children.length).toBe(3);
-    expect(getTypeName(element.children[0].type)).toBe('CustomHeader');
-    expect(getTypeName(element.children[2].type)).toBe('CustomFooter');
+    expect(getChildren(element).length).toBe(3);
+    expect(getTypeName(getType(getChildren(element)[0] as PuptElement))).toBe('CustomHeader');
+    expect(getTypeName(getType(getChildren(element)[2] as PuptElement))).toBe('CustomFooter');
   });
 
   it('should clean up custom components global after successful evaluation', async () => {
@@ -332,7 +348,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(element.props.name).toBe('tsx-test');
+    expect(getProps(element).name).toBe('tsx-test');
   });
 
   it('should handle file with TypeScript types', async () => {
@@ -353,7 +369,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(element.props.name).toBe('typed-test');
+    expect(getProps(element).name).toBe('typed-test');
   });
 
   it('should handle file with inline function components', async () => {
@@ -373,7 +389,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(element.props.name).toBe('func-test');
+    expect(getProps(element).name).toBe('func-test');
   });
 
   it('should load and transform .prompt file (same as .tsx)', async () => {
@@ -390,7 +406,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(element.props.name).toBe('prompt-test');
+    expect(getProps(element).name).toBe('prompt-test');
   });
 
   it('should throw error for non-existent file', async () => {
@@ -405,7 +421,7 @@ describe('createPrompt', () => {
 
     const element = await createPrompt(filePath);
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element.props.name).toBe('raw-test');
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getProps(element).name).toBe('raw-test');
   });
 });

@@ -12,7 +12,7 @@ type DataProps = z.infer<typeof dataSchema> & { children: PuptNode };
 export class Data extends Component<DataProps> {
   static schema = dataSchema;
 
-  render({ name, format = 'text', children }: DataProps, _context: RenderContext): PuptNode {
+  render({ name, format = 'text', children }: DataProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return [
       `<data name="${name}" format="${format}">\n`,
       children,

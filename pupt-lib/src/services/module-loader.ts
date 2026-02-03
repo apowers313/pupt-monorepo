@@ -1,5 +1,7 @@
 import { isComponentClass } from '../component';
 import type { ComponentType, PuptElement } from '../types';
+import { isPuptElement } from '../types/element';
+import { PROPS } from '../types/symbols';
 
 // Check if we're in Node.js environment
 const isNode = typeof process !== 'undefined' && process.versions?.node;
@@ -176,15 +178,14 @@ export class ModuleLoader {
    * Check if a value is a PuptElement with a name prop (indicates a Prompt)
    */
   private isPromptElement(value: unknown): boolean {
+    if (!isPuptElement(value)) {
+      return false;
+    }
+    const props = (value as PuptElement)[PROPS];
     return (
-      typeof value === 'object' &&
-      value !== null &&
-      'type' in value &&
-      'props' in value &&
-      'children' in value &&
-      (value as PuptElement).props !== null &&
-      typeof (value as PuptElement).props === 'object' &&
-      'name' in (value as PuptElement).props
+      props !== null &&
+      typeof props === 'object' &&
+      'name' in props
     );
   }
 

@@ -13,7 +13,7 @@ type FormatProps = z.infer<typeof formatSchema> & { children?: PuptNode };
 export class Format extends Component<FormatProps> {
   static schema = formatSchema;
 
-  render({ type, language, delimiter = 'xml', children }: FormatProps, _context: RenderContext): PuptNode {
+  render({ type, language, delimiter = 'xml', children }: FormatProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     // Build format prefix if type is specified

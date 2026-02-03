@@ -1,48 +1,49 @@
 import { describe, it, expect } from 'vitest';
 import { jsx, jsxs, Fragment } from '../../../src/jsx-runtime';
+import { TYPE, PROPS, CHILDREN } from '../../../src';
 
 describe('jsx()', () => {
   it('should create element with single child', () => {
     const element = jsx('div', { id: 'test', children: 'Hello' });
 
-    expect(element.type).toBe('div');
-    expect(element.props.id).toBe('test');
-    expect(element.children).toEqual(['Hello']);
+    expect(element[TYPE]).toBe('div');
+    expect((element[PROPS] as { id: string }).id).toBe('test');
+    expect(element[CHILDREN]).toEqual(['Hello']);
   });
 
   it('should handle null children', () => {
     const element = jsx('span', { children: null });
-    expect(element.children).toEqual([]);
+    expect(element[CHILDREN]).toEqual([]);
   });
 
   it('should handle undefined children', () => {
     const element = jsx('span', { children: undefined });
-    expect(element.children).toEqual([]);
+    expect(element[CHILDREN]).toEqual([]);
   });
 
   it('should handle no children prop', () => {
     const element = jsx('span', {});
-    expect(element.children).toEqual([]);
+    expect(element[CHILDREN]).toEqual([]);
   });
 
   it('should separate children from other props', () => {
     const element = jsx('div', { id: 'test', className: 'foo', children: 'Hello' });
 
-    expect(element.props).toEqual({ id: 'test', className: 'foo' });
-    expect(element.props).not.toHaveProperty('children');
+    expect(element[PROPS]).toEqual({ id: 'test', className: 'foo' });
+    expect(element[PROPS]).not.toHaveProperty('children');
   });
 
   it('should handle number children', () => {
     const element = jsx('span', { children: 42 });
-    expect(element.children).toEqual([42]);
+    expect(element[CHILDREN]).toEqual([42]);
   });
 
   it('should handle nested element as child', () => {
     const child = jsx('span', { children: 'nested' });
     const parent = jsx('div', { children: child });
 
-    expect(parent.children).toHaveLength(1);
-    expect(parent.children[0]).toEqual(child);
+    expect(parent[CHILDREN]).toHaveLength(1);
+    expect(parent[CHILDREN][0]).toEqual(child);
   });
 });
 
@@ -52,7 +53,7 @@ describe('jsxs()', () => {
       children: ['Hello', ' ', 'World'],
     });
 
-    expect(element.children).toEqual(['Hello', ' ', 'World']);
+    expect(element[CHILDREN]).toEqual(['Hello', ' ', 'World']);
   });
 
   it('should flatten nested arrays', () => {
@@ -60,7 +61,7 @@ describe('jsxs()', () => {
       children: ['A', ['B', 'C'], 'D'],
     });
 
-    expect(element.children).toEqual(['A', 'B', 'C', 'D']);
+    expect(element[CHILDREN]).toEqual(['A', 'B', 'C', 'D']);
   });
 
   it('should filter out falsy values except 0', () => {
@@ -69,7 +70,7 @@ describe('jsxs()', () => {
     });
 
     // 0 should be kept, other falsy values filtered
-    expect(element.children).toEqual(['A', 'B', 'C', 'D', 0]);
+    expect(element[CHILDREN]).toEqual(['A', 'B', 'C', 'D', 0]);
   });
 
   it('should handle deeply nested arrays', () => {
@@ -77,7 +78,7 @@ describe('jsxs()', () => {
       children: ['A', [['B', ['C']]], 'D'],
     });
 
-    expect(element.children).toEqual(['A', 'B', 'C', 'D']);
+    expect(element[CHILDREN]).toEqual(['A', 'B', 'C', 'D']);
   });
 });
 
@@ -92,13 +93,13 @@ describe('Fragment', () => {
 
   it('should work as element type', () => {
     const element = jsx(Fragment, { children: 'content' });
-    expect(element.type).toBe(Fragment);
-    expect(element.children).toEqual(['content']);
+    expect(element[TYPE]).toBe(Fragment);
+    expect(element[CHILDREN]).toEqual(['content']);
   });
 
   it('should work with multiple children', () => {
     const element = jsxs(Fragment, { children: ['a', 'b', 'c'] });
-    expect(element.type).toBe(Fragment);
-    expect(element.children).toEqual(['a', 'b', 'c']);
+    expect(element[TYPE]).toBe(Fragment);
+    expect(element[CHILDREN]).toEqual(['a', 'b', 'c']);
   });
 });

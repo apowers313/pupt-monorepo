@@ -71,7 +71,7 @@ function getBasename(filePath: string): string {
 export class File extends Component<FileProps> {
   static schema = fileSchema;
 
-  render({ path, language, encoding = 'utf-8' }: FileProps, _context: RenderContext): PuptNode {
+  render({ path, language, encoding = 'utf-8' }: FileProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     // File reading is not available in browsers
     if (isBrowser) {
       return `[Error: File component is not available in browser environments. Path: ${path}]`;

@@ -12,9 +12,25 @@ export const askPathSchema = askBaseSchema.extend({
 export type PathProps = z.infer<typeof askPathSchema> & { children?: PuptNode };
 
 // Named AskPath for consistent Ask component naming
-export class AskPath extends Component<PathProps> {
+export class AskPath extends Component<PathProps, string> {
   static schema = askPathSchema;
-  render(props: PathProps, context: RenderContext): PuptNode {
+
+  resolve(props: PathProps, context: RenderContext): string {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return `{${name}}`;
+  }
+
+  render(props: PathProps, resolvedValue: string | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -25,8 +41,6 @@ export class AskPath extends Component<PathProps> {
       mustBeDirectory = false,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -45,14 +59,7 @@ export class AskPath extends Component<PathProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      return String(value);
-    }
-
-    if (defaultValue !== undefined) {
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    return resolvedValue ?? this.resolve(props, context);
   }
 }

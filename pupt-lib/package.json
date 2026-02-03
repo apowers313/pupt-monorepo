@@ -46,10 +46,6 @@
     "./jsx-dev-runtime": {
       "types": "./dist/jsx-runtime/jsx-dev-runtime.d.ts",
       "import": "./dist/jsx-runtime/jsx-dev-runtime.js"
-    },
-    "./babel-preset": {
-      "types": "./dist/babel/preset.d.ts",
-      "import": "./dist/babel/preset.js"
     }
   },
   "scripts": {
@@ -79,26 +75,7 @@
     "minisearch": "^7.2.0",
     "zod": "^3.22.0"
   },
-  "peerDependencies": {
-    "@babel/core": "^7.28.0",
-    "@babel/plugin-transform-react-jsx": "^7.28.0",
-    "@babel/preset-typescript": "^7.28.0"
-  },
-  "peerDependenciesMeta": {
-    "@babel/core": {
-      "optional": true
-    },
-    "@babel/plugin-transform-react-jsx": {
-      "optional": true
-    },
-    "@babel/preset-typescript": {
-      "optional": true
-    }
-  },
   "devDependencies": {
-    "@babel/core": "^7.28.6",
-    "@babel/plugin-transform-react-jsx": "^7.28.6",
-    "@babel/preset-typescript": "^7.28.5",
     "@commitlint/cli": "^19.7.1",
     "@commitlint/config-conventional": "^19.7.1",
     "@eslint/js": "^9.19.0",

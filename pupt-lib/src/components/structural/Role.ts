@@ -13,7 +13,7 @@ type RoleProps = z.infer<typeof roleSchema> & { children: PuptNode };
 export class Role extends Component<RoleProps> {
   static schema = roleSchema;
 
-  render({ delimiter = 'xml', children }: RoleProps, _context: RenderContext): PuptNode {
+  render({ delimiter = 'xml', children }: RoleProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const childContent = Array.isArray(children) ? children : children;
 
     switch (delimiter) {

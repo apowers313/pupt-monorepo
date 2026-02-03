@@ -8,9 +8,6 @@
     "@semantic-release/npm",
     "@semantic-release/release-notes-generator",
     "conventional-changelog-conventionalcommits",
-    "@babel/plugin-transform-react-jsx",
-    "@babel/preset-typescript",
-    "@babel/core",
     "pupt"
   ],
   "ignoreExportsUsedInFile": true,

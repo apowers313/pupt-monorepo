@@ -18,6 +18,7 @@ import { Examples } from '../../src/components/examples/Examples';
 import { Code } from '../../src/components/data/Code';
 import { Steps } from '../../src/components/reasoning/Steps';
 import { Step } from '../../src/components/reasoning/Step';
+import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 
 describe('Browser: render', () => {
   it('should render a simple prompt', async () => {
@@ -97,10 +98,9 @@ describe('Browser: jsx-runtime', () => {
   it('should create elements with jsx()', () => {
     const element = jsx('div', { id: 'test', children: 'content' });
 
-    expect(element).toHaveProperty('type', 'div');
-    expect(element).toHaveProperty('props');
-    expect(element.props).toHaveProperty('id', 'test');
-    expect(element).toHaveProperty('children');
+    expect(element[TYPE]).toBe('div');
+    expect(element[PROPS]).toEqual({ id: 'test' });
+    expect(element[CHILDREN]).toEqual(['content']);
   });
 
   it('should handle array children', () => {
@@ -108,7 +108,7 @@ describe('Browser: jsx-runtime', () => {
       children: ['a', 'b', 'c'],
     });
 
-    expect(element.children).toEqual(['a', 'b', 'c']);
+    expect(element[CHILDREN]).toEqual(['a', 'b', 'c']);
   });
 
   it('should handle null and undefined children', () => {
@@ -117,9 +117,9 @@ describe('Browser: jsx-runtime', () => {
     });
 
     // The jsx runtime filters out null/undefined, keeping only valid children
-    expect(element.children).toContain('text');
+    expect(element[CHILDREN]).toContain('text');
     // Children array length depends on implementation - just verify text is present
-    expect(element.children.filter((c: unknown) => c === 'text')).toHaveLength(1);
+    expect(element[CHILDREN].filter((c: unknown) => c === 'text')).toHaveLength(1);
   });
 });
 
@@ -202,10 +202,10 @@ describe('Browser: .prompt file transformation', () => {
       );
     `;
 
-    const element = await createPromptFromSourceBrowser(source, 'test.prompt') as { type: unknown; props: { name: string } };
+    const element = await createPromptFromSourceBrowser(source, 'test.prompt') as Record<symbol, unknown>;
 
-    expect(getTypeName(element.type)).toBe('Prompt');
-    expect(element).toHaveProperty('props.name', 'browser-test');
+    expect(getTypeName(element[TYPE])).toBe('Prompt');
+    expect((element[PROPS] as { name: string }).name).toBe('browser-test');
   });
 
   it('should handle TypeScript syntax in browser', async () => {
@@ -220,9 +220,9 @@ describe('Browser: .prompt file transformation', () => {
       );
     `;
 
-    const element = await createPromptFromSourceBrowser(source, 'typed.tsx') as { props: { name: string } };
+    const element = await createPromptFromSourceBrowser(source, 'typed.tsx') as Record<symbol, unknown>;
 
-    expect(element).toHaveProperty('props.name', 'typed-browser-test');
+    expect((element[PROPS] as { name: string }).name).toBe('typed-browser-test');
   });
 
   it('should transform and render .prompt source in browser', async () => {

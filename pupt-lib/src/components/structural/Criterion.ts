@@ -10,7 +10,7 @@ type CriterionProps = z.infer<typeof criterionSchema> & { children: PuptNode };
 export class Criterion extends Component<CriterionProps> {
   static schema = criterionSchema;
 
-  render({ children }: CriterionProps, _context: RenderContext): PuptNode {
+  render({ children }: CriterionProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return ['- ', children, '\n'];
   }
 }

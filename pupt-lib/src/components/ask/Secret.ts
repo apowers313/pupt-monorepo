@@ -11,9 +11,25 @@ export const askSecretSchema = askBaseSchema.extend({
 export type SecretProps = z.infer<typeof askSecretSchema> & { children?: PuptNode };
 
 // Named AskSecret for consistent Ask component naming
-export class AskSecret extends Component<SecretProps> {
+export class AskSecret extends Component<SecretProps, string> {
   static schema = askSecretSchema;
-  render(props: SecretProps, context: RenderContext): PuptNode {
+
+  resolve(props: SecretProps, context: RenderContext): string {
+    const { name, default: defaultValue } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      return String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return `{${name}}`;
+  }
+
+  render(props: SecretProps, resolvedValue: string | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -22,8 +38,6 @@ export class AskSecret extends Component<SecretProps> {
       default: defaultValue,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -43,14 +57,7 @@ export class AskSecret extends Component<SecretProps> {
 
     // Note: In real usage, you may want to mask or omit the value
     // For now, we render it (the consuming application should handle masking in logs)
-    if (value !== undefined) {
-      return String(value);
-    }
-
-    if (defaultValue !== undefined) {
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    return resolvedValue ?? this.resolve(props, context);
   }
 }

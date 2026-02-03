@@ -9,7 +9,7 @@ type ExampleOutputProps = z.infer<typeof exampleOutputSchema> & { children: Pupt
 export class ExampleOutput extends Component<ExampleOutputProps> {
   static schema = exampleOutputSchema;
 
-  render({ children }: ExampleOutputProps, _context: RenderContext): PuptNode {
+  render({ children }: ExampleOutputProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     return ['<output>\n', children, '\n</output>'];
   }
 }

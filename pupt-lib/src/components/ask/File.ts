@@ -13,9 +13,28 @@ export const askFileSchema = askBaseSchema.extend({
 
 export type FileProps = z.infer<typeof askFileSchema> & { children?: PuptNode };
 
-export class AskFile extends Component<FileProps> {
+export class AskFile extends Component<FileProps, string | string[]> {
   static schema = askFileSchema;
-  render(props: FileProps, context: RenderContext): PuptNode {
+
+  resolve(props: FileProps, context: RenderContext): string | string[] {
+    const { name, default: defaultValue, multiple = false } = props;
+    const value = context.inputs.get(name);
+
+    if (value !== undefined) {
+      if (multiple && Array.isArray(value)) {
+        return value.map(String);
+      }
+      return Array.isArray(value) ? value.map(String) : String(value);
+    }
+
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+
+    return multiple ? [] : '';
+  }
+
+  render(props: FileProps, resolvedValue: string | string[] | undefined, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -28,8 +47,6 @@ export class AskFile extends Component<FileProps> {
       includeContents = false,
       silent = false,
     } = props;
-
-    const value = context.inputs.get(name);
 
     const requirement: InputRequirement = {
       name,
@@ -50,20 +67,16 @@ export class AskFile extends Component<FileProps> {
       return '';
     }
 
-    if (value !== undefined) {
-      if (Array.isArray(value)) {
-        return value.join(', ');
+    // Get actual value - from resolvedValue if available, otherwise compute it
+    const actualValue = resolvedValue ?? this.resolve(props, context);
+
+    if (Array.isArray(actualValue)) {
+      if (actualValue.length === 0) {
+        return `{${name}}`;
       }
-      return String(value);
+      return actualValue.join(', ');
     }
 
-    if (defaultValue !== undefined) {
-      if (Array.isArray(defaultValue)) {
-        return defaultValue.join(', ');
-      }
-      return String(defaultValue);
-    }
-
-    return `{${name}}`;
+    return actualValue || `{${name}}`;
   }
 }

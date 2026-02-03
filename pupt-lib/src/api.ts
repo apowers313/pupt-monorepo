@@ -6,6 +6,8 @@ import type {
   RenderResult,
   PuptElement,
 } from './types';
+import { isPuptElement } from './types/element';
+import { PROPS } from './types/symbols';
 import { createSearchEngine, type SearchEngine } from './services/search-engine';
 import { render } from './render';
 import { createInputIterator, type InputIterator } from './services/input-iterator';
@@ -96,7 +98,7 @@ export class Pupt {
         for (const [, value] of Object.entries(moduleExports)) {
           if (this.isPromptElement(value)) {
             const element = value as PuptElement;
-            const props = element.props as {
+            const props = element[PROPS] as {
               name: string;
               description?: string;
               tags?: string[];
@@ -136,15 +138,14 @@ export class Pupt {
   }
 
   private isPromptElement(value: unknown): boolean {
+    if (!isPuptElement(value)) {
+      return false;
+    }
+    const props = (value as PuptElement)[PROPS];
     return (
-      typeof value === 'object' &&
-      value !== null &&
-      'type' in value &&
-      'props' in value &&
-      'children' in value &&
-      (value as PuptElement).props !== null &&
-      typeof (value as PuptElement).props === 'object' &&
-      'name' in (value as PuptElement).props
+      props !== null &&
+      typeof props === 'object' &&
+      'name' in props
     );
   }
 

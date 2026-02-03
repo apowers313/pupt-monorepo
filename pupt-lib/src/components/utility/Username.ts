@@ -9,7 +9,7 @@ type UsernameProps = z.infer<typeof usernameSchema>;
 export class Username extends Component<UsernameProps> {
   static schema = usernameSchema;
 
-  render(_props: UsernameProps, context: RenderContext): PuptNode {
+  render(_props: UsernameProps, _resolvedValue: void, context: RenderContext): PuptNode {
     // Use the username from runtime config (already handles browser/Node detection)
     return context.env.runtime.username ?? 'anonymous';
   }

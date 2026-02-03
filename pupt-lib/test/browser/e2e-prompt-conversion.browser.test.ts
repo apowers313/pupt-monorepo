@@ -18,6 +18,7 @@ import { Steps } from '../../src/components/reasoning/Steps';
 import { Step } from '../../src/components/reasoning/Step';
 import { Example } from '../../src/components/examples/Example';
 import { Examples } from '../../src/components/examples/Examples';
+import { PROPS } from '../../src/types/symbols';
 import { ExampleInput } from '../../src/components/examples/ExampleInput';
 import { ExampleOutput } from '../../src/components/examples/ExampleOutput';
 
@@ -299,7 +300,7 @@ describe('Browser E2E: Complex JavaScript patterns', () => {
     const element = await createPromptFromSourceBrowser(source, 'destructure.tsx') as { props: { name: string } };
     const result = await render(element as Parameters<typeof render>[0]);
 
-    expect(element.props.name).toBe('BrowserTest');
+    expect((element[PROPS] as { name: string }).name).toBe('BrowserTest');
     expect(result.text).toContain('Version: 2');
     expect(result.text).toContain('Debug: true');
   });
@@ -388,7 +389,7 @@ describe('Browser E2E: TypeScript features', () => {
     const element = await createPromptFromSourceBrowser(source, 'typescript.tsx') as { props: { name: string } };
     const result = await render(element as Parameters<typeof render>[0]);
 
-    expect(element.props.name).toBe('TypedBrowserTest');
+    expect((element[PROPS] as { name: string }).name).toBe('TypedBrowserTest');
     expect(result.text).toContain('item1, item2');
   });
 
