@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/apowers313/pupt-lib/compare/v1.2.1...v1.2.2) (2026-02-04)
+
+
+### Bug Fixes
+
+* child and input rendering ([f1df5e4](https://github.com/apowers313/pupt-lib/commit/f1df5e4f0f21a695c8b7a4c4ebb0da4b907d8756))
+
 ## [1.2.1](https://github.com/apowers313/pupt-lib/compare/v1.2.0...v1.2.1) (2026-02-03)
 
 
