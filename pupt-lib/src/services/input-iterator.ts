@@ -3,6 +3,7 @@ import { Fragment } from '../jsx-runtime';
 import { isComponentClass, Component } from '../component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
 import { TYPE, PROPS, CHILDREN } from '../types/symbols';
+import { isPuptElement, isDeferredRef } from '../types/element';
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
@@ -208,6 +209,92 @@ export function createInputIterator(
     return reqs.length; // All filled
   }
 
+  /**
+   * Follow a property path on an object to retrieve a nested value.
+   * Used for resolving deferred references like {user.name}.
+   *
+   * @param obj - The object to traverse
+   * @param path - Array of property keys/indices to follow
+   * @returns The value at the path, or undefined if not found
+   */
+  function followPath(obj: unknown, path: (string | number)[]): unknown {
+    return path.reduce((current, key) => {
+      if (current == null) return undefined;
+      return (current as Record<string | number, unknown>)[key];
+    }, obj);
+  }
+
+  /**
+   * Resolve a single prop value by looking up element references in the values map.
+   * For the input iterator, we look up collected/default values instead of rendered values.
+   *
+   * @param value - The prop value to resolve
+   * @returns The resolved value
+   */
+  function resolveIteratorPropValue(value: unknown): unknown {
+    if (isPuptElement(value)) {
+      // Direct element reference - look up in values map or get default
+      const elementProps = value[PROPS] as Record<string, unknown>;
+      const elementName = elementProps.name as string | undefined;
+      if (elementName && values.has(elementName)) {
+        return values.get(elementName);
+      }
+      // Fall back to default value if available
+      if (elementProps.default !== undefined) {
+        return elementProps.default;
+      }
+      // Return undefined if no value and no default
+      return undefined;
+    }
+
+    if (isDeferredRef(value)) {
+      // Deferred reference - get element's value, then follow path
+      const elementProps = value.element[PROPS] as Record<string, unknown>;
+      const elementName = elementProps.name as string | undefined;
+      let elementValue: unknown;
+      if (elementName && values.has(elementName)) {
+        elementValue = values.get(elementName);
+      } else if (elementProps.default !== undefined) {
+        elementValue = elementProps.default;
+      }
+      return followPath(elementValue, value.path);
+    }
+
+    if (Array.isArray(value)) {
+      // Recursively resolve array elements
+      return value.map(item => resolveIteratorPropValue(item));
+    }
+
+    if (value !== null && typeof value === 'object' && !isPuptElement(value) && !isDeferredRef(value)) {
+      // Recursively resolve object properties
+      const resolved: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value)) {
+        resolved[key] = resolveIteratorPropValue(val);
+      }
+      return resolved;
+    }
+
+    // Primitive value - return as-is
+    return value;
+  }
+
+  /**
+   * Resolve all props by looking up element references in the values map.
+   *
+   * @param props - The props object to resolve
+   * @returns The props with element references replaced by their values
+   */
+  function resolveIteratorProps(props: Record<string, unknown>): Record<string, unknown> {
+    if (props == null) {
+      return {};
+    }
+    const resolved: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(props)) {
+      resolved[key] = resolveIteratorPropValue(value);
+    }
+    return resolved;
+  }
+
   async function walkNode(
     node: PuptNode,
     context: RenderContext & { __requirements: InputRequirement[] },
@@ -243,14 +330,26 @@ export function createInputIterator(
 
     // Component class - render it to collect requirements
     if (isComponentClass(type)) {
+      // Walk children directly to detect Ask components.
+      // This handles cases where the component doesn't return its children in render output.
+      // (Fix for GitHub issue #14)
+      if (children && children.length > 0) {
+        for (const child of children) {
+          await walkNode(child, context);
+        }
+      }
+
       const instance = new (type as new () => Component)();
+      // Resolve element props to their values before passing to render()
+      // This ensures components receive primitive values instead of PuptElement objects
+      const resolvedProps = resolveIteratorProps(props as Record<string, unknown>);
       // Pass undefined as resolvedValue since we're only collecting requirements
-      const renderResult = instance.render!({ ...props, children }, undefined as never, context);
+      const renderResult = instance.render!({ ...resolvedProps, children }, undefined as never, context);
 
       // Handle both sync and async render methods
       const result = renderResult instanceof Promise ? await renderResult : renderResult;
 
-      // If the result is not primitive, walk it for more Ask components
+      // Still walk the render result for Ask components in the rendered output
       if (result !== null && typeof result === 'object') {
         await walkNode(result, context);
       }
@@ -259,12 +358,24 @@ export function createInputIterator(
 
     // Function component
     if (typeof type === 'function' && !isComponentClass(type)) {
+      // Walk children directly to detect Ask components.
+      // This handles cases where the component doesn't return its children in render output.
+      // (Fix for GitHub issue #14)
+      if (children && children.length > 0) {
+        for (const child of children) {
+          await walkNode(child, context);
+        }
+      }
+
       const fn = type as FunctionComponent;
-      const renderResult = fn({ ...props, children });
+      // Resolve element props to their values before passing to render()
+      const resolvedProps = resolveIteratorProps(props as Record<string, unknown>);
+      const renderResult = fn({ ...resolvedProps, children });
 
       // Handle both sync and async function components
       const result = renderResult instanceof Promise ? await renderResult : renderResult;
 
+      // Still walk the render result for Ask components in the rendered output
       if (result !== null && typeof result === 'object') {
         await walkNode(result, context);
       }

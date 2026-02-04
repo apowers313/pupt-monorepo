@@ -1038,3 +1038,220 @@ describe('InputIterator path validation (Node.js)', () => {
     }
   });
 });
+
+describe('InputIterator custom component children (Issue #14)', () => {
+  it('should detect Ask components in custom component children even when render returns non-children', async () => {
+    // This test reproduces the issue described in GitHub issue #14:
+    // When a custom component's render() method returns something other than its children
+    // (e.g., a computed string), Ask components passed as children should still be detected.
+
+    const { Component } = await import('../../../src/component');
+
+    // Custom component that processes children but returns a computed string, not the children
+    class DataProcessor extends Component<{ children?: unknown }> {
+      render({ children }: { children?: unknown }) {
+        // This component doesn't return its children in the render output.
+        // It just returns a computed string.
+        // The bug: Ask components in children are never detected.
+        return `Processed ${Array.isArray(children) ? children.length : 0} inputs`;
+      }
+    }
+
+    // Create an element tree where Ask.Text is a child of the custom component
+    const element = jsx(DataProcessor, {
+      children: [
+        jsx(Ask.Text, { name: 'username', label: 'Username', default: 'default_user' }),
+        jsx(Ask.Number, { name: 'count', label: 'Count', default: 42 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    await iterator.start();
+
+    // Bug: Without the fix, isDone() would be true here because the Ask components
+    // were never detected (they're in the children, but render() returns a string)
+    expect(iterator.isDone()).toBe(false);
+    expect(iterator.current()?.name).toBe('username');
+
+    await iterator.submit('testuser');
+    await iterator.advance();
+
+    expect(iterator.current()?.name).toBe('count');
+    await iterator.submit(100);
+    await iterator.advance();
+
+    expect(iterator.isDone()).toBe(true);
+
+    const values = iterator.getValues();
+    expect(values.get('username')).toBe('testuser');
+    expect(values.get('count')).toBe(100);
+  });
+
+  it('should detect Ask components in nested custom component children', async () => {
+    const { Component } = await import('../../../src/component');
+
+    // Wrapper component that doesn't return children
+    class Wrapper extends Component<{ children?: unknown }> {
+      render() {
+        return 'Wrapper output';
+      }
+    }
+
+    // Nested structure: Wrapper > Fragment > Ask.Text
+    const element = jsx(Wrapper, {
+      children: jsx(Fragment, {
+        children: [
+          jsx(Ask.Text, { name: 'nested_input', label: 'Nested', default: 'nested_default' }),
+        ],
+      }),
+    });
+
+    const iterator = createInputIterator(element);
+    await iterator.start();
+
+    expect(iterator.isDone()).toBe(false);
+    expect(iterator.current()?.name).toBe('nested_input');
+  });
+
+  it('should detect Ask components in function component children when render returns non-children', async () => {
+    // Function component that doesn't return its children
+    const FunctionProcessor = ({ children }: { children?: unknown }) => {
+      return `Function processed ${Array.isArray(children) ? children.length : 0} items`;
+    };
+
+    const element = jsx(FunctionProcessor, {
+      children: [
+        jsx(Ask.Text, { name: 'func_input', label: 'Func Input', default: 'func_default' }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    await iterator.start();
+
+    expect(iterator.isDone()).toBe(false);
+    expect(iterator.current()?.name).toBe('func_input');
+  });
+
+  it('should work in non-interactive mode with custom component children', async () => {
+    const { Component } = await import('../../../src/component');
+
+    class DataFetcher extends Component<{ children?: unknown }> {
+      render() {
+        // Returns a string, not children
+        return 'Fetched data result';
+      }
+    }
+
+    const element = jsx(DataFetcher, {
+      children: [
+        jsx(Ask.Text, { name: 'api_key', label: 'API Key', default: 'default_key' }),
+        jsx(Ask.Number, { name: 'timeout', label: 'Timeout', default: 30 }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    // Should have collected the default values from the Ask components in children
+    expect(values.get('api_key')).toBe('default_key');
+    expect(values.get('timeout')).toBe(30);
+  });
+});
+
+describe('InputIterator element prop resolution (Issue #13)', () => {
+  it('should resolve element props to their values when passed to component render()', async () => {
+    // This test reproduces the issue described in GitHub issue #13:
+    // When a component receives another component (e.g., an Ask.Text element) as a prop value,
+    // the receiving component should get the resolved value, not the raw PuptElement object.
+
+    // Import Component to create a custom component
+    const { Component } = await import('../../../src/component');
+
+    // Create a custom component that uses a prop value in a template string
+    // This will fail with "Cannot convert object to primitive value" if the prop
+    // is a raw PuptElement instead of the resolved string value.
+    class GreetingComponent extends Component<{ name: string }> {
+      render({ name }: { name: string }) {
+        // If 'name' is a PuptElement object instead of a string,
+        // this template literal will throw "Cannot convert object to primitive value"
+        return `Hello, ${name}!`;
+      }
+    }
+
+    // Create an element tree where Ask.Text value is passed to GreetingComponent
+    const nameInput = jsx(Ask.Text, { name: 'username', label: 'Username', default: 'World' });
+    const element = jsx(Fragment, {
+      children: [
+        nameInput,
+        jsx(GreetingComponent, { name: nameInput }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    await iterator.start();
+
+    // Submit a value for the Ask.Text input
+    await iterator.submit('Alice');
+    await iterator.advance();
+
+    // The iterator should complete without throwing
+    // If the bug exists, it would have thrown "Cannot convert object to primitive value"
+    expect(iterator.isDone()).toBe(true);
+
+    // The collected values should contain the submitted value
+    const values = iterator.getValues();
+    expect(values.get('username')).toBe('Alice');
+  });
+
+  it('should resolve element props using default value when walking for requirements', async () => {
+    const { Component } = await import('../../../src/component');
+
+    // Component that would fail if it receives an object instead of string
+    class DisplayComponent extends Component<{ text: string }> {
+      render({ text }: { text: string }) {
+        return `Display: ${text}`;
+      }
+    }
+
+    // Create tree with default value
+    const textInput = jsx(Ask.Text, { name: 'message', label: 'Message', default: 'default text' });
+    const element = jsx(Fragment, {
+      children: [
+        textInput,
+        jsx(DisplayComponent, { text: textInput }),
+      ],
+    });
+
+    // Run non-interactively (uses defaults)
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('message')).toBe('default text');
+  });
+
+  it('should handle components that access element props in async render', async () => {
+    const { Component } = await import('../../../src/component');
+
+    // Async component that uses prop value
+    class AsyncGreeting extends Component<{ name: string }> {
+      async render({ name }: { name: string }) {
+        // Simulate async work
+        await Promise.resolve();
+        return `Async hello, ${name}!`;
+      }
+    }
+
+    const nameInput = jsx(Ask.Text, { name: 'user', label: 'User', default: 'Test' });
+    const element = jsx(Fragment, {
+      children: [
+        nameInput,
+        jsx(AsyncGreeting, { name: nameInput }),
+      ],
+    });
+
+    const iterator = createInputIterator(element);
+    const values = await iterator.runNonInteractive();
+
+    expect(values.get('user')).toBe('Test');
+  });
+});
