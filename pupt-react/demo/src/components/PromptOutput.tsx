@@ -100,11 +100,9 @@ export function PromptOutput() {
             />
           )}
 
-          {output && (
-            <ScrollArea flex={1}>
-              <Code block>{output}</Code>
-            </ScrollArea>
-          )}
+          <ScrollArea flex={1} data-testid="rendered-output">
+            {output && <Code block>{output}</Code>}
+          </ScrollArea>
         </Stack>
       )}
     </PromptRenderer>

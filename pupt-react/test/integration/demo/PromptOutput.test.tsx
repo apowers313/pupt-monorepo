@@ -75,10 +75,9 @@ describe("PromptOutput", () => {
   });
 
   it("should copy output to clipboard", async () => {
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: { writeText },
-    });
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
 
     renderWithProviders();
     await waitFor(
@@ -94,8 +93,10 @@ describe("PromptOutput", () => {
     copyButton.click();
 
     await waitFor(() => {
-      expect(writeText).toHaveBeenCalled();
+      expect(writeTextSpy).toHaveBeenCalled();
     });
+
+    writeTextSpy.mockRestore();
   });
 
   it("should show error for invalid source", async () => {

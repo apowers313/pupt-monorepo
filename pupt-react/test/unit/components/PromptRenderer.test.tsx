@@ -141,11 +141,10 @@ describe("PromptRenderer", () => {
   it("should provide clipboard copy functionality", async () => {
     let capturedProps: PromptRendererRenderProps | null = null;
 
-    // Mock clipboard API
-    const writeText = vi.fn().mockResolvedValue(undefined);
-    Object.assign(navigator, {
-      clipboard: { writeText },
-    });
+    // Mock clipboard API using spyOn
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
 
     render(
       <PuptProvider>
@@ -167,18 +166,19 @@ describe("PromptRenderer", () => {
     await act(async () => {
       await capturedProps!.copyToClipboard();
     });
-    expect(writeText).toHaveBeenCalledWith(capturedProps!.output);
+    expect(writeTextSpy).toHaveBeenCalledWith(capturedProps!.output);
     expect(capturedProps!.isCopied).toBe(true);
+
+    writeTextSpy.mockRestore();
   });
 
   it("should handle clipboard API failure gracefully", async () => {
     let capturedProps: PromptRendererRenderProps | null = null;
 
-    // Mock clipboard API to fail
-    const writeText = vi.fn().mockRejectedValue(new Error("Clipboard unavailable"));
-    Object.assign(navigator, {
-      clipboard: { writeText },
-    });
+    // Mock clipboard API to fail using spyOn
+    const writeTextSpy = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockRejectedValue(new Error("Clipboard unavailable"));
 
     render(
       <PuptProvider>
@@ -202,6 +202,8 @@ describe("PromptRenderer", () => {
     });
     // isCopied should remain false since clipboard failed
     expect(capturedProps!.isCopied).toBe(false);
+
+    writeTextSpy.mockRestore();
   });
 
   it("should provide manual render function", async () => {

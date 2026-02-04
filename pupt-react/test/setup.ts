@@ -10,9 +10,9 @@ import type { PuptElement, PuptNode } from "pupt-lib";
 
 // Define symbol constants for creating mock elements
 // Must match the symbols used in pupt-lib
-const TYPE = Symbol.for('pupt.type');
-const PROPS = Symbol.for('pupt.props');
-const CHILDREN = Symbol.for('pupt.children');
+const TYPE = Symbol.for("pupt.type");
+const PROPS = Symbol.for("pupt.props");
+const CHILDREN = Symbol.for("pupt.children");
 
 /**
  * Helper to create a proper mock PuptElement with symbol keys
@@ -29,18 +29,7 @@ function createMockElement(
   } as PuptElement;
 }
 
-// Mock URL.createObjectURL and URL.revokeObjectURL for jsdom environment
-// pupt-lib 1.1.1 uses Blob URLs for module evaluation which jsdom doesn't fully support
-let blobUrlCounter = 0;
-
-// Always set up the mocks (jsdom may have partial implementations)
-URL.createObjectURL = vi.fn(() => {
-  return `blob:mock-${++blobUrlCounter}`;
-});
-
-URL.revokeObjectURL = vi.fn();
-
-// Mock createPromptFromSource globally since jsdom/vitest doesn't support blob: URL imports
+// Mock createPromptFromSource globally since blob: URL imports have issues in test environment
 // This mock parses source patterns and returns appropriate mock elements
 vi.mock("pupt-lib", async (importOriginal) => {
   const actual = await importOriginal<typeof import("pupt-lib")>();
@@ -65,19 +54,19 @@ vi.mock("pupt-lib", async (importOriginal) => {
       const children = el[CHILDREN] as PuptNode[];
 
       // Check if this is an Ask component
-      if (type.startsWith('Ask.')) {
-        const askType = type.replace('Ask.', '').toLowerCase();
+      if (type.startsWith("Ask.")) {
+        const askType = type.replace("Ask.", "").toLowerCase();
         requirements.push({
           name: props.name as string,
           label: props.label as string,
-          type: askType === 'text' ? 'string' : askType,
+          type: askType === "text" ? "string" : askType,
           required: props.required as boolean | undefined,
         });
       }
 
       // Traverse children
       for (const child of children) {
-        if (child && typeof child === 'object' && TYPE in child) {
+        if (child && typeof child === "object" && TYPE in child) {
           traverse(child as PuptElement);
         }
       }
@@ -96,9 +85,15 @@ vi.mock("pupt-lib", async (importOriginal) => {
     return {
       start: vi.fn(),
       current: vi.fn(() => requirements[currentIndex] || null),
-      advance: vi.fn(() => { currentIndex++; }),
-      previous: vi.fn(() => { if (currentIndex > 0) currentIndex--; }),
-      goTo: vi.fn((idx: number) => { currentIndex = idx; }),
+      advance: vi.fn(() => {
+        currentIndex++;
+      }),
+      previous: vi.fn(() => {
+        if (currentIndex > 0) currentIndex--;
+      }),
+      goTo: vi.fn((idx: number) => {
+        currentIndex = idx;
+      }),
       submit: vi.fn((value: unknown) => {
         const req = requirements[currentIndex];
         if (req) {
@@ -109,22 +104,30 @@ vi.mock("pupt-lib", async (importOriginal) => {
       }),
       isDone: vi.fn(() => currentIndex >= requirements.length),
       inputs: vi.fn(() => inputs),
-      reset: vi.fn(() => { currentIndex = 0; inputs.clear(); }),
+      reset: vi.fn(() => {
+        currentIndex = 0;
+        inputs.clear();
+      }),
       getAllRequirements: vi.fn(() => requirements),
-      setValue: vi.fn((name: string, value: unknown) => { inputs.set(name, value); }),
+      setValue: vi.fn((name: string, value: unknown) => {
+        inputs.set(name, value);
+      }),
       getValue: vi.fn((name: string) => inputs.get(name)),
       currentIndex: vi.fn(() => currentIndex),
     };
   }
 
   // Helper to render mock elements to text
-  function renderMockElement(element: PuptElement, inputs?: Map<string, unknown>): string {
+  function renderMockElement(
+    element: PuptElement,
+    inputs?: Map<string, unknown>
+  ): string {
     const type = element[TYPE] as string;
     const props = element[PROPS] as Record<string, unknown>;
     const children = element[CHILDREN] as PuptNode[];
 
     // Handle Ask components - return placeholder or input value
-    if (type.startsWith('Ask.')) {
+    if (type.startsWith("Ask.")) {
       const name = props.name as string;
       if (inputs && inputs.has(name)) {
         return String(inputs.get(name));
@@ -135,58 +138,87 @@ vi.mock("pupt-lib", async (importOriginal) => {
     // Handle text children
     const childText = children
       .map((child) => {
-        if (typeof child === 'string') return child;
-        if (typeof child === 'number') return String(child);
-        if (child && typeof child === 'object' && TYPE in child) {
+        if (typeof child === "string") return child;
+        if (typeof child === "number") return String(child);
+        if (child && typeof child === "object" && TYPE in child) {
           return renderMockElement(child as PuptElement, inputs);
         }
-        return '';
+        return "";
       })
-      .join('');
+      .join("");
 
     // Wrap in tags based on type
-    if (type === 'Prompt') {
+    if (type === "Prompt") {
       return childText;
     }
-    const tagName = type.toLowerCase().replace('.', '-');
+    const tagName = type.toLowerCase().replace(".", "-");
     return `<${tagName}>${childText}</${tagName}>`;
   }
 
   return {
     ...actual,
     // Mock render to produce text output from mock elements
-    render: vi.fn((element: PuptElement, options?: { inputs?: Map<string, unknown> }) => {
-      const inputs = options?.inputs;
-      const text = renderMockElement(element, inputs);
-      return Promise.resolve({ ok: true, text, postExecution: [] });
-    }),
+    render: vi.fn(
+      (element: PuptElement, options?: { inputs?: Map<string, unknown> }) => {
+        const inputs = options?.inputs;
+        const text = renderMockElement(element, inputs);
+        return Promise.resolve({ ok: true, text, postExecution: [] });
+      }
+    ),
     createPromptFromSource: vi.fn((source: string): Promise<PuptElement> => {
       // Parse common patterns in test source code
       if (source.includes("Ask.Text") && source.includes("Ask.Number")) {
         return Promise.resolve(
           createMockElement("Prompt", { name: "test" }, [
-            createMockElement("Ask.Text", { name: "firstName", label: "First name", required: true }, []),
-            createMockElement("Ask.Text", { name: "lastName", label: "Last name" }, []),
-            createMockElement("Ask.Number", { name: "age", label: "Your age", min: 0, max: 150 }, []),
+            createMockElement(
+              "Ask.Text",
+              { name: "firstName", label: "First name", required: true },
+              []
+            ),
+            createMockElement(
+              "Ask.Text",
+              { name: "lastName", label: "Last name" },
+              []
+            ),
+            createMockElement(
+              "Ask.Number",
+              { name: "age", label: "Your age", min: 0, max: 150 },
+              []
+            ),
           ])
         );
       }
-      if (source.includes("Ask.Text") && source.includes("firstName") && source.includes("lastName")) {
+      if (
+        source.includes("Ask.Text") &&
+        source.includes("firstName") &&
+        source.includes("lastName")
+      ) {
         return Promise.resolve(
           createMockElement("Prompt", { name: "test" }, [
-            createMockElement("Ask.Text", { name: "firstName", label: "First name", required: true }, []),
-            createMockElement("Ask.Text", { name: "lastName", label: "Last name" }, []),
+            createMockElement(
+              "Ask.Text",
+              { name: "firstName", label: "First name", required: true },
+              []
+            ),
+            createMockElement(
+              "Ask.Text",
+              { name: "lastName", label: "Last name" },
+              []
+            ),
           ])
         );
       }
       if (source.includes("Ask.Text")) {
         // Extract Ask.Text component attributes from source
-        const askMatch = source.match(/<Ask\.Text\s+name="([^"]+)"\s+label="([^"]+)"[^>]*\/>/);
+        const askMatch = source.match(
+          /<Ask\.Text\s+name="([^"]+)"\s+label="([^"]+)"[^>]*\/>/
+        );
         const name = askMatch ? askMatch[1] : "name";
         const label = askMatch ? askMatch[2] : "Your name";
 
         // Check if Ask.Text is inside Task (inline)
-        const isInlineAsk = source.includes("<Task>") && source.includes("Ask.Text");
+        const isInlineAsk =
+          source.includes("<Task>") && source.includes("Ask.Text");
         if (isInlineAsk) {
           // Extract Task content around Ask.Text
           return Promise.resolve(
@@ -217,7 +249,9 @@ vi.mock("pupt-lib", async (importOriginal) => {
         ])
       );
     }),
-    createInputIterator: vi.fn((element: PuptElement) => createMockInputIterator(element)),
+    createInputIterator: vi.fn((element: PuptElement) =>
+      createMockInputIterator(element)
+    ),
   };
 });
 

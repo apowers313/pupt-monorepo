@@ -6,9 +6,16 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
-    environment: "jsdom",
     setupFiles: ["./test/setup.ts"],
     include: ["test/**/*.test.{ts,tsx}"],
+    browser: {
+      enabled: true,
+      headless: true,
+      provider: "playwright",
+      instances: [{ browser: "chromium" }],
+      // Disable file parallelism to prevent race conditions
+      fileParallelism: false,
+    },
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
