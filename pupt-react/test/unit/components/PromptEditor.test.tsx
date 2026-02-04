@@ -134,7 +134,7 @@ describe("PromptEditor", () => {
 
     render(
       <PuptProvider>
-        <PromptEditor defaultValue="<<<invalid jsx>>>" debounce={0}>
+        <PromptEditor defaultValue="<InvalidJSX />" debounce={0}>
           {(props) => {
             capturedProps = props;
             return <textarea {...props.inputProps} />;

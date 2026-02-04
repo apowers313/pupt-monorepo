@@ -126,7 +126,7 @@ describe("PromptRenderer", () => {
 
     render(
       <PuptProvider>
-        <PromptRenderer source="<<<invalid>>>" autoRender>
+        <PromptRenderer source="<InvalidJSX />" autoRender>
           {(props) => {
             capturedProps = props;
             return <div>{props.error?.message ?? "no error"}</div>;

@@ -54,6 +54,8 @@ function createElementWithNoAsks(): PuptElement {
 }
 
 // Helper to create a mock iterator for tests
+// Note: submit() should NOT increment currentIndex because extractInputRequirements
+// calls both submit() and advance() - advance() handles the increment
 function createMockIterator(requirements: { name: string; label: string; type: string }[]) {
   let currentIndex = 0;
   const inputs = new Map<string, unknown>();
@@ -76,7 +78,7 @@ function createMockIterator(requirements: { name: string; label: string; type: s
           return Promise.resolve({ valid: false, errors: ["Expected a number"] });
         }
         inputs.set(req.name, value);
-        currentIndex++;
+        // Don't increment here - advance() is called separately by extractInputRequirements
       }
       return Promise.resolve({ valid: true, errors: [] });
     }),
