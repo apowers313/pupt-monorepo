@@ -28,7 +28,7 @@
     "dev": "vite",
     "dev:demo": "npx servherd start -n pupt-react-demo -t demo -e HTTPS_CERT={{httpsCert}} -e HTTPS_KEY={{httpsKey}} -- vite --config demo/vite.config.ts --port {{port}} --host {{hostname}}",
     "build:demo": "vite build --config demo/vite.config.ts",
-    "lint": "eslint . --max-warnings 0",
+    "lint": "eslint . --max-warnings 0 && tsc --noEmit",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -45,11 +45,12 @@
     }
   },
   "peerDependencies": {
-    "pupt-lib": "file:../pupt-lib",
+    "pupt-lib": "^1.2.1",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
+    "pupt-lib": "^1.2.1",
     "@commitlint/cli": "^20.3.1",
     "@commitlint/config-conventional": "^20.3.1",
     "@eslint/js": "^9.39.2",
