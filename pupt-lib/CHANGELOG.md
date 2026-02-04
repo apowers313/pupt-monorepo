@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/apowers313/pupt-lib/compare/v1.2.0...v1.2.1) (2026-02-03)
+
+
+### Bug Fixes
+
+* make component export schemas optional, as originally intended ([0b5346a](https://github.com/apowers313/pupt-lib/commit/0b5346a1b758bc9d61461cd641b13f17586bc47d))
+
 # [1.2.0](https://github.com/apowers313/pupt-lib/compare/v1.1.8...v1.2.0) (2026-02-03)
 
 
