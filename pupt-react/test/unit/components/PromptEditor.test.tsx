@@ -177,4 +177,61 @@ describe("PromptEditor", () => {
     // The key assertion is that we didn't get multiple transforms for rapid changes
     expect(transformCount).toBeLessThanOrEqual(1);
   });
+
+  it("should handle empty source by clearing element and error", async () => {
+    vi.useRealTimers();
+    let capturedProps: PromptEditorRenderProps | null = null;
+
+    render(
+      <PuptProvider>
+        <PromptEditor
+          defaultValue={`export default <Prompt name="test"><Task>Hello</Task></Prompt>`}
+          debounce={0}
+        >
+          {(props) => {
+            capturedProps = props;
+            return <textarea {...props.inputProps} />;
+          }}
+        </PromptEditor>
+      </PuptProvider>
+    );
+
+    // Wait for initial transformation
+    await waitFor(() => expect(capturedProps!.element).not.toBeNull());
+
+    // Clear the source to empty
+    act(() => {
+      capturedProps!.setValue("");
+    });
+
+    // Should clear element and error, not be transforming
+    await waitFor(() => {
+      expect(capturedProps!.element).toBeNull();
+      expect(capturedProps!.error).toBeNull();
+      expect(capturedProps!.isTransforming).toBe(false);
+    });
+  });
+
+  it("should handle whitespace-only source as empty", async () => {
+    vi.useRealTimers();
+    let capturedProps: PromptEditorRenderProps | null = null;
+
+    render(
+      <PuptProvider>
+        <PromptEditor defaultValue="   " debounce={0}>
+          {(props) => {
+            capturedProps = props;
+            return <textarea {...props.inputProps} />;
+          }}
+        </PromptEditor>
+      </PuptProvider>
+    );
+
+    // Give it a moment
+    await waitFor(() => {
+      expect(capturedProps!.element).toBeNull();
+      expect(capturedProps!.error).toBeNull();
+      expect(capturedProps!.isTransforming).toBe(false);
+    });
+  });
 });

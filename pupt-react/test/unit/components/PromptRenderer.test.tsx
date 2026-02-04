@@ -171,6 +171,39 @@ describe("PromptRenderer", () => {
     expect(capturedProps!.isCopied).toBe(true);
   });
 
+  it("should handle clipboard API failure gracefully", async () => {
+    let capturedProps: PromptRendererRenderProps | null = null;
+
+    // Mock clipboard API to fail
+    const writeText = vi.fn().mockRejectedValue(new Error("Clipboard unavailable"));
+    Object.assign(navigator, {
+      clipboard: { writeText },
+    });
+
+    render(
+      <PuptProvider>
+        <PromptRenderer
+          source={`export default <Prompt name="test"><Task>Copy me</Task></Prompt>`}
+          autoRender
+        >
+          {(props) => {
+            capturedProps = props;
+            return <button onClick={props.copyToClipboard}>Copy</button>;
+          }}
+        </PromptRenderer>
+      </PuptProvider>
+    );
+
+    await waitFor(() => expect(capturedProps!.output).not.toBeNull());
+
+    // Click copy - should not throw
+    await act(async () => {
+      await capturedProps!.copyToClipboard();
+    });
+    // isCopied should remain false since clipboard failed
+    expect(capturedProps!.isCopied).toBe(false);
+  });
+
   it("should provide manual render function", async () => {
     let capturedProps: PromptRendererRenderProps | null = null;
 

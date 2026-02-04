@@ -246,6 +246,31 @@ describe("AskHandler", () => {
     });
   });
 
+  describe("initialValues", () => {
+    it("should accept initial values for inputs", async () => {
+      const element = await createElementWithAsks();
+      let capturedProps: AskHandlerRenderProps | null = null;
+
+      const initialValues = new Map<string, unknown>([
+        ["firstName", "Jane"],
+      ]);
+
+      render(
+        <PuptProvider>
+          <AskHandler element={element} initialValues={initialValues}>
+            {(props) => {
+              capturedProps = props;
+              return <div />;
+            }}
+          </AskHandler>
+        </PuptProvider>
+      );
+
+      await waitFor(() => expect(capturedProps!.totalInputs).toBe(2));
+      expect(capturedProps!.values.get("firstName")).toBe("Jane");
+    });
+  });
+
   describe("navigation", () => {
     it("should support previous navigation", async () => {
       const element = await createElementWithAsks();
