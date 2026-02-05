@@ -18,7 +18,39 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading state shown while JS bundle downloads - replaced when React mounts -->
+      <style>
+        .initial-loader {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100vh;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          color: #666;
+        }
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #e0e0e0;
+          border-top-color: #228be6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .initial-loader p {
+          margin-top: 16px;
+          font-size: 14px;
+        }
+      </style>
+      <div class="initial-loader">
+        <div class="spinner"></div>
+        <p>Loading pupt-react Demo...</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

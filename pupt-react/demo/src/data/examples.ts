@@ -147,12 +147,13 @@ Repos: \${user.public_repos} | Followers: \${user.followers}\`;
   }
 }
 
-// The Ask.Text with name="username" is hoisted to: const username = <Ask.Text ... />
-// This allows {username} to be used as a prop value for GitHubUserInfo
+// Ask.Text with name="username" creates a variable that can be referenced as {username}
+// The {username} variable is passed as a prop to GitHubUserInfo
 export default (
   <Prompt name="github-profile">
-    <Ask.Text name="username" label="GitHub username" default="octocat" />
-    <Task>Write a professional summary for this GitHub user's profile.</Task>
+    <Task>
+      Write a professional summary for <Ask.Text name="username" label="GitHub username" default="octocat" />'s GitHub profile.
+    </Task>
     <Context>
       <GitHubUserInfo username={username} />
     </Context>
@@ -161,7 +162,7 @@ export default (
 );`,
   },
   {
-    name: "Ask as Child (.tsx)",
+    name: "GitHub API with Child Prompt (.tsx)",
     description: "Component that uses Ask.Text child for input",
     format: "jsx",
     source: `import { Prompt, Task, Context, Constraint, Component, Ask } from 'pupt-lib';
@@ -234,8 +235,8 @@ export default (
       <Ask.Option value="manager">Engineering Manager</Ask.Option>
       <Ask.Option value="student">Student</Ask.Option>
     </Ask.Select>
-    <Ask.Confirm name="includeCode" label="Include code examples?" />
-    <Ask.Confirm name="senior" label="Senior-level audience?" />
+    <Ask.Confirm name="includeCode" label="Include code examples?" silent />
+    <Ask.Confirm name="senior" label="Senior-level audience?" silent />
   </Context>
   <If when="=includeCode">
     <Constraint>Include code examples in TypeScript.</Constraint>
