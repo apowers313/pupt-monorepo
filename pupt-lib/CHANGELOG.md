@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/apowers313/pupt-lib/compare/v1.2.3...v1.2.4) (2026-02-06)
+
+
+### Bug Fixes
+
+* bundle dependencies in build ([37b14bb](https://github.com/apowers313/pupt-lib/commit/37b14bb469cf85f8aca3ed0b364506c1deab3929))
+
 ## [1.2.3](https://github.com/apowers313/pupt-lib/compare/v1.2.2...v1.2.3) (2026-02-06)
 
 
