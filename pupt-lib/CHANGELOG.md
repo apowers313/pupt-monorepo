@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/apowers313/pupt-lib/compare/v1.2.2...v1.2.3) (2026-02-06)
+
+
+### Bug Fixes
+
+* add trailing newline to structural components and default AskConfirm to false ([bf5c009](https://github.com/apowers313/pupt-lib/commit/bf5c009c86420fa42872c24ede14964cce2c2826)), closes [#15](https://github.com/apowers313/pupt-lib/issues/15)
+
 ## [1.2.2](https://github.com/apowers313/pupt-lib/compare/v1.2.1...v1.2.2) (2026-02-04)
 
 
