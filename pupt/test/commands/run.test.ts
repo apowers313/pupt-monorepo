@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runCommand, parseRunArgs, RunOptions } from '../../src/commands/run.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
-import { PromptManager } from '../../src/prompts/prompt-manager.js';
+import { PuptService } from '../../src/services/pupt-service.js';
+import { collectInputs } from '../../src/services/input-collector.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
-import { TemplateEngine } from '../../src/template/template-engine.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { spawn } from 'child_process';
 import chalk from 'chalk';
@@ -11,9 +11,9 @@ import { confirm } from '@inquirer/prompts';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
-vi.mock('../../src/prompts/prompt-manager.js');
+vi.mock('../../src/services/pupt-service.js');
+vi.mock('../../src/services/input-collector.js');
 vi.mock('../../src/ui/interactive-search.js');
-vi.mock('../../src/template/template-engine.js');
 vi.mock('../../src/history/history-manager.js');
 vi.mock('../../src/utils/logger.js');
 vi.mock('child_process', () => ({
@@ -26,6 +26,41 @@ vi.mock('util', () => ({
 vi.mock('@inquirer/prompts', () => ({
   confirm: vi.fn()
 }));
+
+function createMockDiscoveredPrompt(overrides: Record<string, any> = {}) {
+  return {
+    name: 'test',
+    description: '',
+    tags: [],
+    library: '',
+    element: {} as any,
+    render: vi.fn().mockReturnValue({ text: overrides.renderedText ?? 'processed content', postExecution: [] }),
+    getInputIterator: vi.fn().mockReturnValue({
+      start: vi.fn(),
+      current: vi.fn().mockReturnValue(null),
+      submit: vi.fn(),
+      advance: vi.fn(),
+      isDone: vi.fn().mockReturnValue(true),
+      getValues: vi.fn().mockReturnValue(new Map()),
+    }),
+    ...overrides,
+  };
+}
+
+function setupPuptServiceMock(mockPrompts: any[], mockDiscoveredPrompt?: any) {
+  const dp = mockDiscoveredPrompt || createMockDiscoveredPrompt();
+  const adaptedPrompts = mockPrompts.map(p => ({ ...p, _source: dp }));
+  vi.mocked(PuptService).mockImplementation(() => ({
+    init: vi.fn().mockResolvedValue(undefined),
+    getPromptsAsAdapted: vi.fn().mockReturnValue(adaptedPrompts),
+    findPrompt: vi.fn().mockReturnValue(dp),
+    getPrompts: vi.fn().mockReturnValue([]),
+    getPrompt: vi.fn(),
+    getPromptPath: vi.fn(),
+  } as any));
+  vi.mocked(collectInputs).mockResolvedValue(new Map());
+  return { dp, adaptedPrompts };
+}
 
 describe('Run Command', () => {
   let loggerLogSpy: any;
@@ -133,22 +168,13 @@ describe('Run Command', () => {
         filepath: undefined
       });
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello World' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello World'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -156,9 +182,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['echo'], {});
-      
+
       expect(spawn).toHaveBeenCalledWith('echo', [], expect.any(Object));
     });
 
@@ -166,7 +192,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts'],
@@ -175,23 +201,14 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -199,7 +216,7 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand([], {});
 
       expect(spawn).toHaveBeenCalledWith('claude', ['--model', 'sonnet', 'Hello'], expect.any(Object));
@@ -209,7 +226,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts'],
@@ -218,23 +235,14 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -242,9 +250,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['cat'], {});
-      
+
       expect(spawn).toHaveBeenCalledWith('cat', [], expect.any(Object));
     });
 
@@ -252,30 +260,21 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -283,9 +282,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['npm', 'run', 'test', '--', '--coverage'], {});
-      
+
       expect(spawn).toHaveBeenCalledWith('npm', ['run', 'test', '--coverage'], expect.any(Object));
     });
   });
@@ -295,28 +294,19 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello World' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts']
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello World' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
-      } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello World'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
     });
 
@@ -421,27 +411,18 @@ describe('Run Command', () => {
         filepath: undefined
       });
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSavePrompt = vi.fn().mockResolvedValue('history-file.json');
       vi.mocked(HistoryManager).mockImplementation(() => ({
         savePrompt: mockSavePrompt
       } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -449,9 +430,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['echo'], {});
-      
+
       expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello',
@@ -467,7 +448,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts']
@@ -475,23 +456,14 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -499,9 +471,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['echo'], {});
-      
+
       expect(HistoryManager).not.toHaveBeenCalled();
     });
 
@@ -509,7 +481,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Empty Prompt', path: '/prompts/empty.md', content: '{{!-- Just a comment --}}' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts'],
@@ -517,23 +489,14 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: '' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue(''), // Empty result
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -541,9 +504,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['echo'], {});
-      
+
       expect(HistoryManager).not.toHaveBeenCalled();
     });
 
@@ -551,7 +514,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Whitespace Prompt', path: '/prompts/whitespace.md', content: '   \n\t   ' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts'],
@@ -559,23 +522,14 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: '   \n\t   ' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('   \n\t   '), // Only whitespace
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -583,9 +537,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand(['echo'], {});
-      
+
       expect(HistoryManager).not.toHaveBeenCalled();
     });
   });
@@ -613,10 +567,8 @@ describe('Run Command', () => {
         filepath: undefined
       });
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue([])
-      } as any));
-      
+      setupPuptServiceMock([]);
+
       await expect(runCommand(['echo'], {})).rejects.toThrow('No prompts found');
     });
   });
@@ -626,21 +578,12 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
-      } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
     });
 
@@ -780,9 +723,9 @@ describe('Run Command', () => {
       expect(mockSpawn.stdin.write).toHaveBeenCalledWith('Hello World');
       
       // Should not prompt for variables
-      expect(PromptManager).not.toHaveBeenCalled();
+      expect(PuptService).not.toHaveBeenCalled();
       expect(InteractiveSearch).not.toHaveBeenCalled();
-      expect(TemplateEngine).not.toHaveBeenCalled();
+      expect(collectInputs).not.toHaveBeenCalled();
     });
 
     it('should show helpful output when using history', async () => {
@@ -880,22 +823,13 @@ describe('Run Command', () => {
         savePrompt: mockSavePrompt
       } as any));
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello world' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello world'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map([['name', 'world']])),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -903,20 +837,20 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       // Mock process.exit to prevent test from actually exiting
       const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
         // Don't throw, just return undefined
         return undefined as never;
       });
-      
+
       await runCommand([], {});
-      
+
       // Verify history WAS saved despite non-zero exit code
       expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
         templateContent: 'Hello {{name}}',
-        variables: new Map([['name', 'world']]),
+        variables: new Map(),
         finalPrompt: 'Hello world',
         title: 'Test Prompt',
         reviewFiles: [],
@@ -948,22 +882,13 @@ describe('Run Command', () => {
         savePrompt: mockSavePrompt
       } as any));
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -975,9 +900,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await expect(runCommand([], {})).rejects.toThrow('not found');
-      
+
       // Verify history WAS saved even though spawn failed
       expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',
@@ -994,7 +919,7 @@ describe('Run Command', () => {
       const mockPrompts = [
         { title: 'Test Prompt', path: '/prompts/test.md', content: 'Hello' }
       ];
-      
+
       vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
         config: {
           promptDirs: ['./.prompts'],
@@ -1003,28 +928,19 @@ describe('Run Command', () => {
         } as any,
         filepath: undefined
       });
-      
+
       const mockSavePrompt = vi.fn().mockResolvedValue('history-file.json');
       vi.mocked(HistoryManager).mockImplementation(() => ({
         savePrompt: mockSavePrompt
       } as any));
-      
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
-      } as any));
-      
+
+      const dp = createMockDiscoveredPrompt({ renderedText: 'Hello' });
+      setupPuptServiceMock(mockPrompts, dp);
+
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
-        selectPrompt: vi.fn().mockResolvedValue(mockPrompts[0])
+        selectPrompt: vi.fn().mockResolvedValue({ ...mockPrompts[0], _source: dp })
       } as any));
-      
-      vi.mocked(TemplateEngine).mockImplementation(() => ({
-        processTemplate: vi.fn().mockResolvedValue('Hello'),
-        getContext: vi.fn().mockReturnValue({
-          getMaskedValues: vi.fn().mockReturnValue(new Map()),
-          getVariablesByType: vi.fn().mockReturnValue([])
-        })
-      } as any));
-      
+
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
@@ -1032,9 +948,9 @@ describe('Run Command', () => {
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
-      
+
       await runCommand([], {});
-      
+
       // Verify history WAS saved
       expect(mockSavePrompt).toHaveBeenCalledWith(expect.objectContaining({
         templatePath: '/prompts/test.md',

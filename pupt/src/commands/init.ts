@@ -1,7 +1,6 @@
 import { input, confirm, select } from '@inquirer/prompts';
 import fs from 'fs-extra';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
 import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
@@ -32,7 +31,6 @@ export async function initCommand(): Promise<void> {
 
   let historyDir: string | undefined;
   let annotationDir: string | undefined;
-  let autoAnnotateConfig: { enabled: boolean; analysisPrompt?: string } | undefined;
 
   if (enableHistory) {
     historyDir = await input({
@@ -50,68 +48,28 @@ export async function initCommand(): Promise<void> {
         message: 'Where should annotations be stored?',
         default: './.pthistory'
       });
-
-      // Ask about auto-annotation
-      const enableAutoAnnotate = await confirm({
-        message: 'Enable automatic annotation after prompt execution?',
-        default: false
-      });
-
-      if (enableAutoAnnotate) {
-        const useDefaultPrompt = await confirm({
-          message: 'Use the default prompt template for auto-annotation?',
-          default: true
-        });
-
-        if (useDefaultPrompt) {
-          autoAnnotateConfig = {
-            enabled: true,
-            analysisPrompt: 'analyze-execution'
-          };
-        } else {
-          const customPrompt = await input({
-            message: 'Enter the name of your custom analysis prompt:',
-            default: 'analyze-execution'
-          });
-          autoAnnotateConfig = {
-            enabled: true,
-            analysisPrompt: customPrompt
-          };
-        }
-      }
     }
   }
 
+  // Ask about output capture
+  const enableOutputCapture = await confirm({
+    message: 'Capture command output?',
+    default: true
+  });
+
   // Create directories
+  const outputCaptureDir = enableOutputCapture ? (historyDir || '.pt-output') : undefined;
   const dirsToCreate = [promptDir];
   if (historyDir) dirsToCreate.push(historyDir);
   if (annotationDir && annotationDir !== historyDir) dirsToCreate.push(annotationDir);
+  if (outputCaptureDir && outputCaptureDir !== historyDir) dirsToCreate.push(outputCaptureDir);
 
   for (const dir of dirsToCreate) {
     if (!dir) continue; // Skip undefined or empty directories
-    const resolvedDir = dir.startsWith('~') 
+    const resolvedDir = dir.startsWith('~')
       ? path.join(process.env.HOME || '', dir.slice(2))
       : path.resolve(dir);
     await fs.ensureDir(resolvedDir);
-  }
-
-  // Copy default analyze-execution prompt if using default auto-annotation
-  if (autoAnnotateConfig?.enabled && autoAnnotateConfig.analysisPrompt === 'analyze-execution') {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-    const sourcePromptPath = path.join(__dirname, '../../prompts/analyze-execution.md');
-    const targetPromptPath = path.join(
-      promptDir.startsWith('~') 
-        ? path.join(process.env.HOME || '', promptDir.slice(2))
-        : path.resolve(promptDir),
-      'analyze-execution.md'
-    );
-    
-    // Only copy if the target doesn't already exist
-    if (!await fs.pathExists(targetPromptPath) && await fs.pathExists(sourcePromptPath)) {
-      await fs.copy(sourcePromptPath, targetPromptPath);
-      logger.log(chalk.gray('✓ Copied default auto-annotation prompt template'));
-    }
   }
 
   // Detect installed tools and prompt for default command
@@ -156,11 +114,16 @@ export async function initCommand(): Promise<void> {
     promptDirs: [promptDir],
     ...(historyDir && { historyDir }),
     ...(annotationDir && { annotationDir }),
-    ...(autoAnnotateConfig && { autoAnnotate: autoAnnotateConfig }),
     ...(defaultCmd && { defaultCmd }),
     ...(defaultCmdArgs && defaultCmdArgs.length > 0 && { defaultCmdArgs }),
     ...(defaultCmdOptions && Object.keys(defaultCmdOptions).length > 0 && { defaultCmdOptions }),
-    autoRun // Always set autoRun based on tool selection
+    autoRun, // Always set autoRun based on tool selection
+    outputCapture: {
+      enabled: enableOutputCapture,
+      directory: outputCaptureDir || '.pt-output',
+      maxSizeMB: 50,
+      retentionDays: 30
+    }
   };
 
   // Save config
@@ -180,6 +143,12 @@ export async function initCommand(): Promise<void> {
       entriesToIgnore.push(normalizedHistoryDir);
     }
     
+    // Add output capture directory if it's local and different from history dir
+    if (outputCaptureDir && outputCaptureDir !== historyDir && !path.isAbsolute(outputCaptureDir) && !outputCaptureDir.startsWith('~')) {
+      const normalizedOutputDir = outputCaptureDir.replace(/^\.\//, '');
+      entriesToIgnore.push(normalizedOutputDir);
+    }
+
     // Add git prompts directory
     const gitPromptDir = config.gitPromptDir || DEFAULT_CONFIG.gitPromptDir || '.git-prompts';
     entriesToIgnore.push(gitPromptDir);

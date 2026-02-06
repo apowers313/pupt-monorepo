@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { logger } from '../utils/logger.js';
 import { migrateAnnotationsToJson } from '../utils/annotation-migration.js';
 import { findProjectRoot } from '../utils/project-root.js';
+import { contractPath, warnAboutNonPortablePaths } from '../utils/path-utils.js';
 
 interface ConfigResult {
   config: Config;
@@ -108,6 +109,16 @@ export class ConfigManager {
     // Validate the loaded config
     this.validateConfig(result.config);
 
+    // Warn about non-portable absolute paths in the config
+    const cfg = result.config as Config;
+    const allPaths: (string | undefined)[] = [
+      ...(cfg.promptDirs || []),
+      cfg.historyDir,
+      cfg.annotationDir,
+      cfg.gitPromptDir,
+    ];
+    warnAboutNonPortablePaths(allPaths, result.filepath);
+
     // Check if migration is needed
     const migrated = await this.migrateConfig(result.config, result.filepath);
 
@@ -132,53 +143,6 @@ export class ConfigManager {
       configDir: configDir
     };
   }
-
-  /* private static formatValidationError(issue: z.ZodIssue): string {
-    // Handle specific type validation errors
-    if (issue.code === 'invalid_type') {
-      const fieldName = issue.path[issue.path.length - 1];
-      const expectedType = issue.expected;
-      let typeDescription = expectedType;
-      
-      // Map Zod types to user-friendly descriptions
-      if (expectedType === 'string') {
-        typeDescription = 'a string';
-      } else if (expectedType === 'array') {
-        typeDescription = 'an array';
-      } else if (expectedType === 'boolean') {
-        typeDescription = 'a boolean';
-      } else if (expectedType === 'object') {
-        typeDescription = 'an object';
-      }
-      
-      return `'${fieldName}' must be ${typeDescription}`;
-    }
-    
-    // Handle union validation messages
-    if (issue.code === 'invalid_union' && issue.path && issue.path.length > 0) {
-      const fieldName = issue.path[issue.path.length - 1];
-      // Try to infer the expected type from the field name
-      if (fieldName === 'historyDir' || fieldName === 'annotationDir' || fieldName === 'gitPromptDir') {
-        return `'${fieldName}' must be a string`;
-      } else if (fieldName === 'autoReview' || fieldName === 'autoRun') {
-        return `'${fieldName}' must be a boolean`;
-      } else if (fieldName === 'handlebarsExtensions' || fieldName === 'defaultCmdArgs') {
-        return `'${fieldName}' must be an array`;
-      } else if (fieldName === 'defaultCmdOptions') {
-        return `'${fieldName}' must be an object`;
-      }
-    }
-    
-    // Handle enum validation for handlebarsExtensions type field
-    if (issue.code === 'invalid_enum_value' && issue.path && issue.path.length >= 2) {
-      const fieldPath = issue.path;
-      if (fieldPath[0] === 'handlebarsExtensions' && fieldPath[2] === 'type') {
-        return "handlebarsExtension type must be 'inline' or 'file'";
-      }
-    }
-    
-    return issue.message;
-  } */
 
   private static validateConfig(config: unknown): void {
     // First validate that it's a valid config file format (any version)
@@ -333,10 +297,6 @@ export class ConfigManager {
         merged.gitPromptDir = config.gitPromptDir;
       }
 
-      if (config.handlebarsExtensions) {
-        merged.handlebarsExtensions = config.handlebarsExtensions;
-      }
-
       // Also merge legacy fields if present (will be migrated later)
       if (config.codingTool) {
         merged.codingTool = config.codingTool;
@@ -362,12 +322,20 @@ export class ConfigManager {
         merged.outputCapture = config.outputCapture;
       }
 
-      if (config.autoAnnotate) {
-        merged.autoAnnotate = config.autoAnnotate;
-      }
-
       if (config.logLevel) {
         merged.logLevel = config.logLevel;
+      }
+
+      // Merge environment configuration (deep merge)
+      if (config.environment) {
+        merged.environment = {
+          ...merged.environment,
+          ...config.environment,
+          llm: { ...merged.environment?.llm, ...config.environment.llm },
+          output: { ...merged.environment?.output, ...config.environment.output },
+          code: { ...merged.environment?.code, ...config.environment.code },
+          user: { ...merged.environment?.user, ...config.environment.user },
+        };
       }
     }
 
@@ -388,9 +356,6 @@ export class ConfigManager {
     }
     if (!merged.gitPromptDir && DEFAULT_CONFIG.gitPromptDir) {
       merged.gitPromptDir = DEFAULT_CONFIG.gitPromptDir;
-    }
-    if (!merged.handlebarsExtensions && DEFAULT_CONFIG.handlebarsExtensions) {
-      merged.handlebarsExtensions = DEFAULT_CONFIG.handlebarsExtensions;
     }
     if (!merged.version && DEFAULT_CONFIG.version) {
       merged.version = DEFAULT_CONFIG.version;
@@ -431,16 +396,6 @@ export class ConfigManager {
           expanded.helpers[name].path = this.expandPath(helper.path, configDir);
         }
       }
-    }
-
-    // Expand handlebars extension paths
-    if (config.handlebarsExtensions) {
-      expanded.handlebarsExtensions = config.handlebarsExtensions.map(ext => {
-        if (ext.type === 'file' && ext.path) {
-          return { ...ext, path: this.expandPath(ext.path, configDir) };
-        }
-        return ext;
-      });
     }
 
     // Expand output capture directory
@@ -496,5 +451,62 @@ export class ConfigManager {
 
     // Otherwise resolve from current working directory
     return path.resolve(filepath);
+  }
+
+  /**
+   * Contract paths in a config to portable format for saving.
+   * Converts absolute paths to ${projectRoot}/..., ~/..., or relative paths.
+   *
+   * @param config - The config with potentially expanded paths
+   * @param configDir - Directory where config file is located (for determining project root)
+   * @returns Config with paths contracted to portable format
+   */
+  static contractPaths(config: Config, configDir?: string): Config {
+    const contracted = { ...config };
+    const options = { configDir: configDir || process.cwd(), warnOnAbsolute: true };
+
+    // Contract prompt directories
+    if (config.promptDirs) {
+      contracted.promptDirs = config.promptDirs.map(dir => {
+        const result = contractPath(dir, options);
+        return result.path;
+      });
+    }
+
+    // Contract history directory
+    if (config.historyDir) {
+      contracted.historyDir = contractPath(config.historyDir, options).path;
+    }
+
+    // Contract annotation directory
+    if (config.annotationDir) {
+      contracted.annotationDir = contractPath(config.annotationDir, options).path;
+    }
+
+    // Contract git prompt directory
+    if (config.gitPromptDir) {
+      contracted.gitPromptDir = contractPath(config.gitPromptDir, options).path;
+    }
+
+    // Contract helper paths
+    if (config.helpers) {
+      contracted.helpers = {};
+      for (const [name, helper] of Object.entries(config.helpers)) {
+        contracted.helpers[name] = { ...helper };
+        if (helper.type === 'file' && helper.path) {
+          contracted.helpers[name].path = contractPath(helper.path, options).path;
+        }
+      }
+    }
+
+    // Contract output capture directory
+    if (config.outputCapture && config.outputCapture.directory) {
+      contracted.outputCapture = {
+        ...config.outputCapture,
+        directory: contractPath(config.outputCapture.directory, options).path
+      };
+    }
+
+    return contracted;
   }
 }

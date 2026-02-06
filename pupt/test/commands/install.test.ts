@@ -24,7 +24,18 @@ import { ConfigManager } from '../../src/config/config-manager.js';
 import simpleGit from 'simple-git';
 
 vi.mock('fs/promises');
-vi.mock('../../src/config/config-manager.js');
+vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
+  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  return {
+    ...original,
+    ConfigManager: {
+      ...original.ConfigManager,
+      load: vi.fn(),
+      // Keep the real contractPaths implementation
+      contractPaths: original.ConfigManager.contractPaths
+    }
+  };
+});
 vi.mock('fs-extra');
 
 vi.mock('../../src/utils/logger.js');
@@ -423,7 +434,7 @@ describe('Install Command', () => {
     describe('detectPackageManager', () => {
       it('should detect pnpm when pnpm-lock.yaml exists', async () => {
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'pnpm-lock.yaml') {
+          if (String(filePath).endsWith('pnpm-lock.yaml')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -435,7 +446,7 @@ describe('Install Command', () => {
 
       it('should detect yarn when yarn.lock exists', async () => {
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'yarn.lock') {
+          if (String(filePath).endsWith('yarn.lock')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -447,7 +458,7 @@ describe('Install Command', () => {
 
       it('should default to npm when package-lock.json exists', async () => {
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'package-lock.json') {
+          if (String(filePath).endsWith('package-lock.json')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -466,7 +477,29 @@ describe('Install Command', () => {
 
       it('should prefer pnpm over yarn when both lock files exist', async () => {
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'pnpm-lock.yaml' || filePath === 'yarn.lock') {
+          const file = String(filePath);
+          if (file.endsWith('pnpm-lock.yaml') || file.endsWith('yarn.lock')) {
+            return undefined;
+          }
+          throw new Error('ENOENT');
+        });
+
+        const result = await detectPackageManager();
+        expect(result).toBe('pnpm');
+      });
+
+      it('should find lock file in parent directory (monorepo support)', async () => {
+        // Simulate: cwd is /project/packages/app, pnpm-lock.yaml is in /project
+        const cwd = process.cwd();
+        vi.mocked(fs.access).mockImplementation(async (filePath) => {
+          const file = String(filePath);
+          // Only return success for pnpm-lock.yaml in a parent directory
+          if (file.endsWith('pnpm-lock.yaml') && !file.startsWith(cwd + path.sep)) {
+            return undefined;
+          }
+          // Also allow if it's exactly at cwd parent level
+          const parentDir = path.dirname(cwd);
+          if (file === path.join(parentDir, 'pnpm-lock.yaml')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -529,7 +562,8 @@ describe('Install Command', () => {
 
         // Mock: package.json exists, but no lock files
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'package.json') {
+          const file = String(filePath);
+          if (file === 'package.json' || file.endsWith('package.json')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -548,7 +582,8 @@ describe('Install Command', () => {
 
         // Mock: package.json and pnpm-lock.yaml exist
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'package.json' || filePath === 'pnpm-lock.yaml') {
+          const file = String(filePath);
+          if (file === 'package.json' || file.endsWith('pnpm-lock.yaml')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -567,7 +602,8 @@ describe('Install Command', () => {
 
         // Mock: package.json and yarn.lock exist
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'package.json' || filePath === 'yarn.lock') {
+          const file = String(filePath);
+          if (file === 'package.json' || file.endsWith('yarn.lock')) {
             return undefined;
           }
           throw new Error('ENOENT');
@@ -688,7 +724,8 @@ describe('Install Command', () => {
 
         // Mock: package.json exists, but no lock files
         vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (filePath === 'package.json') {
+          const file = String(filePath);
+          if (file === 'package.json' || file.endsWith('package.json')) {
             return undefined;
           }
           throw new Error('ENOENT');

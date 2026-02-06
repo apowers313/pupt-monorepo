@@ -51,17 +51,6 @@ Here's a complete configuration example with all available options:
     "maxSizeMB": 10,
     "retentionDays": 30
   },
-  "autoAnnotate": {
-    "enabled": false,
-    "analysisPrompt": "Analyze this execution and provide insights...",
-    "fallbackRules": [
-      {
-        "pattern": "error|fail|exception",
-        "status": "failure"
-      }
-    ]
-  },
-  "handlebarsExtensions": [],
   "helpers": {
     "header": {
       "type": "inline",
@@ -164,22 +153,7 @@ Annotations include:
   - `maxSizeMB`: Maximum file size limit
   - `retentionDays`: How long to keep outputs
 
-#### `autoAnnotate`
-- **Type**: `object`
-- **Description**: Automatic annotation based on output patterns
-- **Properties**:
-  - `enabled`: Enable auto-annotation
-  - `triggers`: (Optional) Array of prompt names that trigger annotation. If omitted or empty, all prompts will trigger auto-annotation when enabled
-  - `analysisPrompt`: Prompt for AI analysis
-  - `fallbackRules`: Pattern-based rules for status detection
-
 ### Template Extensions
-
-#### `handlebarsExtensions`
-- **Type**: `string[]`
-- **Default**: `[]`
-- **Description**: Paths to custom Handlebars helpers
-- **Example**: `["./helpers/custom.js", "~/.pt/helpers/"]`
 
 #### `helpers`
 - **Type**: `object`
@@ -266,13 +240,6 @@ module.exports = {
     }
   },
   
-  handlebarsExtensions: ['./helpers/math.js', './helpers/format.js'],
-  
-  autoAnnotate: {
-    enabled: true,
-    triggers: ['claude', 'fix-errors'],
-    analysisPrompt: 'analyze-execution'
-  }
 }
 ```
 

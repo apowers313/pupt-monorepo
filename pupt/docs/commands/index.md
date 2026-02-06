@@ -18,6 +18,7 @@ pt [command] [options] [arguments]
 |---------|---------|---------------|
 | [`pt`](/commands/pt) | Interactive prompt selection and generation | `pt` |
 | [`pt init`](/commands/init) | Initialize PUPT configuration | `pt init` |
+| [`pt config`](/commands/config) | View or modify configuration | `pt config --fix-paths` |
 | [`pt add`](/commands/add) | Create a new prompt file | `pt add my-prompt.md` |
 | [`pt edit`](/commands/edit) | Edit existing prompts | `pt edit` |
 | [`pt run`](/commands/run) | Execute prompts with AI tools | `pt run claude` |

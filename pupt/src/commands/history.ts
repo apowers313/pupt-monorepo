@@ -5,7 +5,6 @@ import { HistoryEntry } from '../types/history.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { IssueIdentified } from '../types/annotations.js';
-import Handlebars from 'handlebars';
 import path from 'node:path';
 import fs from 'fs-extra';
 import { getGitInfo } from '../utils/git-info.js';
@@ -278,8 +277,9 @@ function formatDate(timestamp: string): string {
 
 function processSummaryTemplate(summary: string, variables: Record<string, unknown>): string {
   try {
-    const template = Handlebars.compile(summary);
-    return template(variables);
+    return summary.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
+      return variables[key] !== undefined ? String(variables[key]) : `{{${key}}}`;
+    });
   } catch {
     // If template processing fails, return the raw summary
     return summary;
@@ -338,25 +338,24 @@ function formatVariables(variables: Record<string, unknown>): string[] {
 function createAutoSummary(entry: HistoryEntry): string {
   // Account for 3 spaces of indentation in the display
   const maxSummaryLength = 77; // 80 - 3 spaces
-  
+
   let summary: string;
-  
-  // If there's a summary field, use it
-  if (entry.summary) {
+
+  // First, try to show the most relevant user inputs (variables)
+  // This is what users care about most - the parameters they passed in
+  const varDisplay = formatVariables(entry.variables);
+
+  if (varDisplay.length > 0) {
+    // Show up to 2 variables in a concise format
+    summary = varDisplay.slice(0, 2).join(', ');
+  } else if (entry.summary) {
+    // Fall back to summary field if no variables
     summary = processSummaryTemplate(entry.summary, entry.variables);
   } else {
-    // Otherwise, show the most relevant user inputs
-    const varDisplay = formatVariables(entry.variables);
-    
-    if (varDisplay.length > 0) {
-      // Show up to 2 variables in a concise format
-      summary = varDisplay.slice(0, 2).join(', ');
-    } else {
-      // Fall back to showing a truncated version of the prompt
-      summary = entry.finalPrompt.split('\n')[0].trim();
-    }
+    // Last resort: show a truncated version of the prompt
+    summary = entry.finalPrompt.split('\n')[0].trim();
   }
-  
+
   // Ensure consistent truncation for alignment
   if (summary.length > maxSummaryLength) {
     return summary.substring(0, maxSummaryLength - 3) + '...';

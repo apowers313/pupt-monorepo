@@ -1,69 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { execSync } from 'child_process';
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import * as os from 'os';
+import { E2eTestEnvironment } from './e2e-env.js';
 
 describe('pt CLI E2E', () => {
-  const testDir = path.join(os.tmpdir(), 'pt-e2e-test');
-  const promptsDir = path.join(testDir, '.prompts');
-  const cliPath = path.join(__dirname, '../../dist/cli.js');
-  
+  let env: E2eTestEnvironment;
+
   beforeEach(async () => {
-    await fs.ensureDir(promptsDir);
-    process.chdir(testDir);
-    
-    // Create test config
-    await fs.writeJson('.pt-config.json', {
-      promptDirs: ['./.prompts']
-    });
-    
-    // Create test prompt
-    const promptContent = `---
-title: Test Prompt
-tags: [test]
----
-Hello {{input "name" "Your name?"}}!
-Today is {{date}}.`;
-    
-    await fs.writeFile(path.join(promptsDir, 'test.md'), promptContent);
+    env = await E2eTestEnvironment.create();
   });
-  
+
   afterEach(async () => {
-    // On Windows, files might still be in use, so retry removal
-    const maxRetries = 3;
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        await fs.remove(testDir);
-        break;
-      } catch (error: any) {
-        if (error.code === 'EBUSY' && i < maxRetries - 1) {
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } else {
-          // Ignore the error on the last attempt - CI will clean up temp files
-          if (error.code !== 'EBUSY') throw error;
-        }
-      }
-    }
+    await env.cleanup();
   });
-  
+
   it('should display help', () => {
-    const output = execSync(`node ${cliPath} --help`, {
-      cwd: testDir,
-      encoding: 'utf-8'
-    });
-    
-    expect(output).toContain('Usage:');
-    expect(output).toContain('Commands:');
+    const result = env.exec('--help');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Usage:');
+    expect(result.stdout).toContain('Commands:');
   });
-  
+
   it('should display version', () => {
-    const output = execSync(`node ${cliPath} --version`, {
-      cwd: testDir,
-      encoding: 'utf-8'
-    });
-    
-    expect(output).toMatch(/\d+\.\d+\.\d+/);
+    const result = env.exec('--version');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
   });
 });

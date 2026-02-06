@@ -15,7 +15,7 @@ export class SearchEngine {
     this.prompts = prompts;
 
     this.miniSearch = new MiniSearch<SearchablePrompt>({
-      fields: ['title', 'tags', 'content'],
+      fields: ['title', 'filename', 'tags', 'content'], // filename allows searching by kebab-case name
       storeFields: [
         'path',
         'relativePath',
@@ -50,6 +50,7 @@ export class SearchEngine {
     const searchResults = this.miniSearch.search(query, {
       boost: {
         title: 3,
+        filename: 3, // Same weight as title for kebab-case name matching
         tags: 2,
         content: 1,
       },

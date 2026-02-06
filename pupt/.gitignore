@@ -16,12 +16,22 @@ coverage/
 .ptrc.json.backup
 .git-prompts
 .pthistory
-.pt-config.json.backup
+.pt-config.json.backup*
 
 # wtt worktrees
 .worktrees/
+
+# Generated review output
+review.json
+
+# Temporary files
+tmp/
 
 # VitePress
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 docs/.vitepress/.temp/
+
+
+# PUPT
+.pt-config.json.backup

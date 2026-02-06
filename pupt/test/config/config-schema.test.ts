@@ -132,22 +132,6 @@ describe('Config Schema Validation', () => {
       expect(loaded.gitPromptDir).toBe(path.join(testDir, '.my-git-prompts'));
     });
 
-    it('should accept valid handlebarsExtensions field', async () => {
-      const config = {
-        promptDirs: ['./.prompts'],
-        handlebarsExtensions: [
-          { type: 'inline', value: 'Handlebars.registerHelper("upper", s => s.toUpperCase());' },
-          { type: 'file', path: './extensions/my-helpers.js' }
-        ]
-      };
-      await fs.writeJson(configPath, config);
-      
-      const loaded = await ConfigManager.load();
-      expect(loaded.handlebarsExtensions).toEqual([
-        { type: 'inline', value: 'Handlebars.registerHelper("upper", s => s.toUpperCase());' },
-        { type: 'file', path: path.resolve('./extensions/my-helpers.js') }
-      ]);
-    });
   });
 
   describe('backward compatibility', () => {
@@ -172,7 +156,6 @@ describe('Config Schema Validation', () => {
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
       expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
     it('should preserve existing fields when loading old configs', async () => {
@@ -239,27 +222,6 @@ describe('Config Schema Validation', () => {
       await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'autoRun' must be Expected boolean, received number (found: string)");
     });
 
-    it('should reject invalid handlebarsExtensions type', async () => {
-      const config = {
-        promptDirs: ['./.prompts'],
-        handlebarsExtensions: 'not-an-array' // should be array
-      };
-      await fs.writeJson(configPath, config);
-      
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions' must be Expected array, received string (found: string)");
-    });
-
-    it('should reject invalid handlebarsExtension item', async () => {
-      const config = {
-        promptDirs: ['./.prompts'],
-        handlebarsExtensions: [
-          { type: 'invalid-type' } // type should be 'inline' or 'file'
-        ]
-      };
-      await fs.writeJson(configPath, config);
-      
-      await expect(ConfigManager.load()).rejects.toThrow("Configuration error: 'handlebarsExtensions.0.type' must be Invalid enum value. Expected 'inline' | 'file', received 'invalid-type' (found: string)");
-    });
   });
 
   describe('default values', () => {
@@ -272,11 +234,10 @@ describe('Config Schema Validation', () => {
       expect(loaded.defaultCmd).toBeUndefined();
       expect(loaded.defaultCmdArgs).toBeUndefined();
       expect(loaded.defaultCmdOptions).toBeUndefined();
-      expect(loaded.version).toBe('4.0.0');
+      expect(loaded.version).toBe('6.0.0');
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
       expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(loaded.handlebarsExtensions).toEqual([]);
     });
 
     it('should not override existing values with defaults', async () => {
@@ -345,7 +306,7 @@ describe('Config Migration', () => {
     await fs.writeJson(configPath, oldConfig);
     
     const loaded = await ConfigManager.load();
-    expect(loaded.version).toBe('4.0.0');
+    expect(loaded.version).toBe('6.0.0');
   });
 
   it('should add version to configs without it', async () => {
@@ -357,7 +318,7 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('4.0.0');
+    expect(saved.version).toBe('6.0.0');
   });
 
   it('should migrate old field names to new ones', async () => {
@@ -400,7 +361,6 @@ describe('Config Migration', () => {
     expect(loaded.autoRun).toBe(false);
     // Just compare the paths directly - they should both be resolved the same way
     expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-    expect(loaded.handlebarsExtensions).toEqual([]);
   });
 
   it('should preserve existing fields during migration', async () => {
@@ -422,15 +382,15 @@ describe('Config Migration', () => {
   it('should not migrate configs already at current version', async () => {
     const currentConfig = {
       promptDirs: ['./.prompts'],
-      version: '4.0.0',
+      version: '5.0.0',
       defaultCmd: 'my-tool'
     };
     await fs.writeJson(configPath, currentConfig);
-    
+
     const loaded = await ConfigManager.load();
-    
+
     expect(loaded.defaultCmd).toBe('my-tool'); // not overridden
-    expect(loaded.version).toBe('4.0.0');
+    expect(loaded.version).toBe('6.0.0');
   });
 
   it('should save migrated config back to disk', async () => {
@@ -442,7 +402,7 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('4.0.0');
+    expect(saved.version).toBe('6.0.0');
     expect(saved.defaultCmd).toBe('claude');
     expect(saved.defaultCmdArgs).toEqual([]);
     expect(saved.defaultCmdOptions).toBeDefined();

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { spawn } from 'child_process';
 import { editCommand } from '../../src/commands/edit.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
-import { PromptManager } from '../../src/prompts/prompt-manager.js';
+import { PuptService } from '../../src/services/pupt-service.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 
 // Use vi.hoisted to ensure mocks are available before imports
@@ -22,7 +22,7 @@ vi.mock('util', () => ({
 }));
 
 vi.mock('../../src/config/config-manager.js');
-vi.mock('../../src/prompts/prompt-manager.js');
+vi.mock('../../src/services/pupt-service.js');
 vi.mock('../../src/ui/interactive-search.js');
 
 describe('Edit Command Regression Test', () => {
@@ -47,8 +47,13 @@ describe('Edit Command Regression Test', () => {
       promptDirs: ['./.prompts']
     } as any);
     
-    vi.mocked(PromptManager).mockImplementation(() => ({
-      discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+    vi.mocked(PuptService).mockImplementation(() => ({
+      init: vi.fn().mockResolvedValue(undefined),
+      getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+      findPrompt: vi.fn(),
+      getPrompts: vi.fn().mockReturnValue(mockPrompts),
+      getPrompt: vi.fn(),
+      getPromptPath: vi.fn(),
     } as any));
     
     vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -110,8 +115,13 @@ describe('Edit Command Regression Test', () => {
       promptDirs: ['./.prompts']
     } as any);
     
-    vi.mocked(PromptManager).mockImplementation(() => ({
-      discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+    vi.mocked(PuptService).mockImplementation(() => ({
+      init: vi.fn().mockResolvedValue(undefined),
+      getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+      findPrompt: vi.fn(),
+      getPrompts: vi.fn().mockReturnValue(mockPrompts),
+      getPrompt: vi.fn(),
+      getPromptPath: vi.fn(),
     } as any));
     
     vi.mocked(InteractiveSearch).mockImplementation(() => ({

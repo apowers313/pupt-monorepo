@@ -274,6 +274,22 @@ This is a CLI tool for managing AI prompts with template support, built with Typ
 - Always validate user input using the established schemas
 - Consider cross-platform compatibility for all file system operations
 
+## Filing Issues for pupt-lib
+
+If you find bugs or issues in `pupt-lib` (the underlying prompt library), file a GitHub issue at `apowers313/pupt-lib`. Each issue should include:
+
+1. **Description**: Clear summary of the problem
+2. **Reproduction Steps**: Step-by-step instructions to reproduce the issue, including sample code/prompts
+3. **Root Cause**: Analysis of why the bug is occurring (if known)
+4. **Proposed Fix**: Suggested solution or approach to fix the issue
+
+Example:
+```bash
+gh issue create --repo apowers313/pupt-lib --title "Brief description" --body "..."
+```
+
+File separate issues for separate bugs - don't combine unrelated problems into one issue.
+
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.

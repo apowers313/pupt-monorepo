@@ -147,7 +147,7 @@ export const errors = {
     category: ErrorCategory.USER_ERROR,
     suggestions: [
       { text: 'Create a new prompt interactively', command: 'pt add' },
-      { text: `Create a .md file in one of the directories` }
+      { text: `Create a .prompt file in one of the directories` }
     ],
     icon: '🔍'
   }),

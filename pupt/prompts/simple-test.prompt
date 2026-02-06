@@ -1,0 +1,8 @@
+{/* Converted from simple-test.md */}
+<Prompt name="simple-test" description="Simple Test" tags={[]}>
+  <Section>
+    # Simple Test
+
+    <Ask.Text name="message" label="Message:" default={"Hello from simple test"} />
+  </Section>
+</Prompt>

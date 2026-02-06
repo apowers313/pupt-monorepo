@@ -6,10 +6,8 @@ import { dirname, join } from 'node:path';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import { ConfigManager } from './config/config-manager.js';
-import { PromptManager } from './prompts/prompt-manager.js';
-import { InteractiveSearch } from './ui/interactive-search.js';
-import { TemplateEngine } from './template/template-engine.js';
 import { HistoryManager } from './history/history-manager.js';
+import { resolvePrompt } from './services/prompt-resolver.js';
 import { initCommand } from './commands/init.js';
 import { historyCommand } from './commands/history.js';
 import { addCommand } from './commands/add.js';
@@ -19,7 +17,8 @@ import { annotateCommand } from './commands/annotate.js';
 import { installCommand } from './commands/install.js';
 import { helpCommand } from './commands/help.js';
 import { reviewCommand } from './commands/review.js';
-import fs from 'fs-extra';
+import { configCommand } from './commands/config.js';
+import { findOldFormatPrompts, migratePromptFile } from './commands/migrate.js';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
 
@@ -29,7 +28,7 @@ const __dirname = dirname(__filename);
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
 // List of valid commands for suggestions
-const VALID_COMMANDS = ['init', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'review', 'help'];
+const VALID_COMMANDS = ['init', 'config', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'review', 'help'];
 
 // Calculate Levenshtein distance between two strings
 function levenshteinDistance(a: string, b: string): number {
@@ -128,8 +127,101 @@ async function checkAndMigrateOldConfig(): Promise<void> {
   }
 }
 
+async function checkAndMigrateOldPrompts(): Promise<void> {
+  // Skip in test environment or non-TTY mode
+  if (process.env.NODE_ENV === 'test' || !process.stdin.isTTY) {
+    return;
+  }
+
+  try {
+    // Load config to get prompt directories
+    const configResult = await ConfigManager.loadWithPath();
+    const config = configResult.config;
+
+    // Find old format prompts
+    const oldPrompts = await findOldFormatPrompts(config.promptDirs);
+
+    if (oldPrompts.length === 0) {
+      return;
+    }
+
+    logger.warn(chalk.yellow('\n⚠️  Found old format (.md) prompt file(s):'));
+    for (const prompt of oldPrompts) {
+      logger.warn(chalk.yellow(`   - ${prompt.relativePath}`));
+    }
+    logger.log('');
+
+    const { confirm, checkbox } = await import('@inquirer/prompts');
+    const shouldMigrate = await confirm({
+      message: 'Would you like to migrate these prompts to the new .prompt format?',
+      default: true
+    });
+
+    if (!shouldMigrate) {
+      logger.log(chalk.dim('Skipping migration. You can migrate later by editing the files manually.'));
+      return;
+    }
+
+    // Let user select which files to migrate
+    const choices = oldPrompts.map(p => ({
+      name: p.relativePath,
+      value: p,
+      checked: true,
+    }));
+
+    const filesToMigrate = await checkbox({
+      message: 'Select prompts to migrate:',
+      choices,
+    });
+
+    if (filesToMigrate.length === 0) {
+      logger.log(chalk.dim('No files selected.'));
+      return;
+    }
+
+    const keepBackup = await confirm({
+      message: 'Keep backup of original .md files?',
+      default: true
+    });
+
+    logger.log('');
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const prompt of filesToMigrate) {
+      const result = await migratePromptFile(prompt.path, { backup: keepBackup });
+
+      if (result.success) {
+        successCount++;
+        logger.log(chalk.green(`✓ ${prompt.relativePath} → ${path.basename(result.newPath)}`));
+      } else {
+        failCount++;
+        logger.log(chalk.red(`✗ ${prompt.relativePath}: ${result.error}`));
+      }
+    }
+
+    logger.log('');
+    if (successCount > 0) {
+      logger.log(chalk.green(`Migrated ${successCount} file(s).`));
+    }
+    if (failCount > 0) {
+      logger.log(chalk.red(`Failed to migrate ${failCount} file(s).`));
+    }
+    if (keepBackup && successCount > 0) {
+      logger.log(chalk.dim('Original files backed up with .bak extension.'));
+    }
+    logger.log('');
+  } catch {
+    // Silently ignore errors during migration check (e.g., no config file)
+  }
+}
+
 // Check for old config files before running commands
 await checkAndMigrateOldConfig();
+
+// Check for old format prompts
+await checkAndMigrateOldPrompts();
 
 program
   .name('pt')
@@ -151,34 +243,18 @@ program
       // Load configuration
       const configResult = await ConfigManager.loadWithPath();
       const config = configResult.config;
-      const configDir = configResult.filepath ? path.dirname(configResult.filepath) : undefined;
-      
-      // Ensure prompt directories exist
-      for (const dir of config.promptDirs) {
-        await fs.ensureDir(dir);
-      }
-
-      // Discover prompts
-      const promptManager = new PromptManager(config.promptDirs);
-      const prompts = await promptManager.discoverPrompts();
-
-      if (prompts.length === 0) {
-        throw errors.noPromptsFound(config.promptDirs);
-      }
-
-      // Interactive search to select prompt
-      const search = new InteractiveSearch();
-      const selected = await search.selectPrompt(prompts);
-
-      logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
-      logger.log(chalk.dim(`Location: ${selected.path}\n`));
 
       // Capture timestamp at start of prompt processing
       const startTimestamp = new Date();
 
-      // Process template
-      const engine = new TemplateEngine(config, configDir);
-      const result = await engine.processTemplate(selected.content, selected);
+      // Discover, select, collect inputs, and render
+      const resolved = await resolvePrompt({
+        promptDirs: config.promptDirs,
+        libraries: config.libraries,
+        startTimestamp,
+        environment: config.environment,
+      });
+      const result = resolved.text;
 
       // Display result
       logger.log(chalk.green('\n' + '='.repeat(60)));
@@ -186,39 +262,30 @@ program
       logger.log(chalk.green('='.repeat(60) + '\n'));
       logger.log(result);
       logger.log(chalk.green('\n' + '='.repeat(60)));
-      
+
       // Check if autoRun is enabled
       const willAutoRun = config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '';
-      
+
       // Save to history if configured and NOT autoRunning (autoRun saves its own history)
       if (config.historyDir && !willAutoRun) {
         const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
         await historyManager.savePrompt({
-          templatePath: selected.path,
-          templateContent: selected.content,
-          variables: engine.getContext().getMaskedValues(),
+          templatePath: resolved.templateInfo.templatePath,
+          templateContent: resolved.templateInfo.templateContent,
+          variables: resolved.templateInfo.variables,
           finalPrompt: result,
-          title: selected.title,
+          title: resolved.templateInfo.title,
           timestamp: startTimestamp
         });
         logger.log(chalk.dim(`\nSaved to history: ${config.historyDir}`));
       }
-      
+
       // Execute autoRun if enabled
       if (willAutoRun) {
         // Use the run command implementation
         await runCommand([], {
           prompt: result,
-          templateInfo: {
-            templatePath: selected.path,
-            templateContent: selected.content,
-            variables: engine.getContext().getMaskedValues(),
-            finalPrompt: result,
-            title: selected.title,
-            timestamp: startTimestamp,
-            summary: selected.summary,
-            reviewFiles: engine.getContext().getVariablesByType('reviewFile')
-          },
+          templateInfo: resolved.templateInfo,
           isAutoRun: true
         });
       }
@@ -239,6 +306,35 @@ program
   .action(async () => {
     try {
       await initCommand();
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Config command
+program
+  .command('config')
+  .description('Show or modify configuration')
+  .option('-s, --show', 'Show current configuration with resolved paths')
+  .option('--fix-paths', 'Convert absolute paths to portable format (${projectRoot}/...)')
+  .addHelpText('after', `
+Examples:
+  pt config                    # Show current configuration
+  pt config --show             # Same as above
+  pt config --fix-paths        # Convert absolute paths to portable format
+
+The --fix-paths option converts:
+  - Absolute paths under project root → \${projectRoot}/...
+  - Absolute paths under home → ~/...
+  - Relative paths (node_modules/...) → kept as-is
+`)
+  .action(async (options) => {
+    try {
+      await configCommand({
+        show: options.show,
+        fixPaths: options.fixPaths
+      });
     } catch (error) {
       displayError(error as Error);
       process.exit(1);

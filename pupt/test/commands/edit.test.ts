@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { editCommand } from '../../src/commands/edit.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
-import { PromptManager } from '../../src/prompts/prompt-manager.js';
+import { PuptService } from '../../src/services/pupt-service.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { spawn } from 'child_process';
 import { promisify } from 'util';
@@ -16,7 +16,7 @@ const { mockExecFileAsync } = vi.hoisted(() => {
 });
 
 vi.mock('../../src/config/config-manager.js');
-vi.mock('../../src/prompts/prompt-manager.js');
+vi.mock('../../src/services/pupt-service.js');
 vi.mock('../../src/ui/interactive-search.js');
 vi.mock('../../src/utils/logger.js');
 vi.mock('child_process', () => ({
@@ -55,10 +55,15 @@ describe('Edit Command', () => {
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue([])
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue([]),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
-      
+
       const result = editCommand();
       expect(result).toBeInstanceOf(Promise);
       
@@ -70,15 +75,20 @@ describe('Edit Command', () => {
   describe('prompt selection', () => {
     it('should use interactive search to select prompt', async () => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       const mockSelectPrompt = vi.fn().mockResolvedValue(mockPrompts[0]);
@@ -103,8 +113,13 @@ describe('Edit Command', () => {
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue([])
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue([]),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       await expect(editCommand()).rejects.toThrow('No prompts found');
@@ -112,15 +127,20 @@ describe('Edit Command', () => {
 
     it('should handle prompt selection cancellation', async () => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -134,15 +154,20 @@ describe('Edit Command', () => {
   describe('editor detection', () => {
     beforeEach(() => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -207,15 +232,20 @@ describe('Edit Command', () => {
 
     it('should show error when no editor found', async () => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -236,15 +266,20 @@ describe('Edit Command', () => {
   describe('editor launching', () => {
     beforeEach(() => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -334,15 +369,20 @@ describe('Edit Command', () => {
   describe('OS-specific fallbacks', () => {
     beforeEach(() => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -355,15 +395,20 @@ describe('Edit Command', () => {
 
     it('should include notepad on Windows', async () => {
       const mockPrompts = [
-        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test' }
+        { title: 'Test Prompt', path: '/prompts/test.md', content: '# Test', _source: undefined }
       ];
       
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts']
       } as any);
       
-      vi.mocked(PromptManager).mockImplementation(() => ({
-        discoverPrompts: vi.fn().mockResolvedValue(mockPrompts)
+      vi.mocked(PuptService).mockImplementation(() => ({
+        init: vi.fn().mockResolvedValue(undefined),
+        getPromptsAsAdapted: vi.fn().mockReturnValue(mockPrompts),
+        findPrompt: vi.fn(),
+        getPrompts: vi.fn().mockReturnValue([]),
+        getPrompt: vi.fn(),
+        getPromptPath: vi.fn(),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({

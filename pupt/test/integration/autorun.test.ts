@@ -14,13 +14,13 @@ describe('AutoRun Feature', () => {
     testDir = path.join(baseDir, 'deep', 'nested', 'test');
     await fs.ensureDir(testDir);
     cliPath = path.resolve('./dist/cli.js');
-    
-    // Create a simple prompt
+
+    // Create a simple prompt (.prompt JSX format)
     const promptDir = path.join(testDir, '.prompts');
     await fs.ensureDir(promptDir);
     await fs.writeFile(
-      path.join(promptDir, 'test.md'),
-      '---\ntitle: Test Prompt\n---\nThis is a test prompt'
+      path.join(promptDir, 'test.prompt'),
+      '<Prompt name="test" description="Test Prompt" tags={[]}>\n  <Task>This is a test prompt</Task>\n</Prompt>'
     );
   });
 
@@ -40,20 +40,20 @@ describe('AutoRun Feature', () => {
       defaultCmdArgs: ['{{prompt}}'],
       defaultCmdOptions: {} // Explicitly empty to override default
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Mock user selecting the prompt and answering no to continue option
     const mockInput = '\n\n'; // Select first prompt, then answer no to continue option
-    
+
     const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       cwd: testDir,
       env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
-    
-    expect(output).toContain('Processing: Test Prompt');
+
+    expect(output).toContain('Processing: Test Prompt'); // Uses description as human-friendly title
     expect(output).toContain('Running: echo');
     expect(output).toContain('This is a test prompt');
   });
@@ -67,19 +67,19 @@ describe('AutoRun Feature', () => {
       defaultCmd: 'echo',
       defaultCmdArgs: ['{{prompt}}']
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Mock user selecting the prompt
     const mockInput = '\n'; // Just press enter to select first prompt
-    
+
     const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       cwd: testDir,
       env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
-    
+
     expect(output).toContain('Generated Prompt:');
     expect(output).toContain('This is a test prompt');
     expect(output).not.toContain('Running: echo');
@@ -95,12 +95,12 @@ describe('AutoRun Feature', () => {
       defaultCmdArgs: ['{{prompt}}'],
       defaultCmdOptions: {} // Explicitly empty to override default
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt
-    
+
     try {
       execSync(`node ${cliPath}`, {
         input: mockInput,
@@ -132,16 +132,16 @@ describe('AutoRun Feature', () => {
       defaultCmd: 'echo',
       defaultCmdArgs: ['{{prompt}}']
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Run with explicit command - should not trigger autoRun
     const output = execSync(`node ${cliPath} history`, {
       encoding: 'utf-8',
       cwd: testDir,
       env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     }).toString();
-    
+
     expect(output).toContain('No history found');
     expect(output).not.toContain('Running: echo');
   });
@@ -162,13 +162,13 @@ describe('AutoRun Feature', () => {
         'Add newline?': '-e'
       }
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Mock user selecting the prompt and then answering no to option
     // Need extra newlines because of potential buffering
     const mockInput = '\n\n\n'; // Select prompt, answer no to option, extra newline
-    
+
     const output = execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
@@ -176,15 +176,15 @@ describe('AutoRun Feature', () => {
       env: { ...process.env, HOME: testDir, USERPROFILE: testDir },
       timeout: 10000 // 10 second timeout
     });
-    
-    expect(output).toContain('Processing: Test Prompt');
+
+    expect(output).toContain('Processing: test');
     expect(output).toContain('Running: echo -n');
     expect(output).toContain('This is a test prompt');
   });
 
   it('should save to history when autoRun executes', async () => {
     const historyDir = path.join(testDir, '.pthistory');
-    
+
     // Create config with autoRun and history enabled
     const config = {
       version: '3.0.0',
@@ -195,25 +195,25 @@ describe('AutoRun Feature', () => {
       defaultCmdArgs: ['{{prompt}}'],
       defaultCmdOptions: {} // Explicitly empty to override default
     };
-    
+
     await fs.writeJson(path.join(testDir, '.pt-config.json'), config);
-    
+
     // Mock user selecting the prompt
     const mockInput = '\n'; // Select first prompt
-    
+
     execSync(`node ${cliPath}`, {
       input: mockInput,
       encoding: 'utf-8',
       cwd: testDir,
       env: { ...process.env, HOME: testDir, USERPROFILE: testDir }
     });
-    
+
     // Check that history was saved
     const historyFiles = await fs.readdir(historyDir);
     expect(historyFiles.length).toBe(1);
-    
+
     const historyContent = await fs.readJson(path.join(historyDir, historyFiles[0]));
-    expect(historyContent.title).toBe('Test Prompt');
-    expect(historyContent.finalPrompt).toBe('This is a test prompt');
+    expect(historyContent.title).toBe('Test Prompt'); // Uses description as human-friendly title
+    expect(historyContent.finalPrompt).toContain('This is a test prompt');
   });
 });

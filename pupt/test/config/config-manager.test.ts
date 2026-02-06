@@ -255,10 +255,6 @@ version: "2.0.0"
             path: './helpers/custom.js'
           }
         },
-        handlebarsExtensions: [{
-          type: 'file',
-          path: './extensions/ext.js'
-        }],
         version: '3.0.0'
       });
 
@@ -271,7 +267,6 @@ version: "2.0.0"
       
       // Paths should be resolved relative to config file
       expect(config.helpers?.myHelper.path).toBe(path.join(testDir, 'helpers/custom.js'));
-      expect(config.handlebarsExtensions?.[0].path).toBe(path.join(testDir, 'extensions/ext.js'));
     });
 
     it('should handle mixed relative and absolute paths', async () => {

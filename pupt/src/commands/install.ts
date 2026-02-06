@@ -11,7 +11,9 @@ import { cosmiconfig } from 'cosmiconfig';
 
 async function saveConfig(config: Config): Promise<void> {
   const configPath = path.join(process.cwd(), '.pt-config.json');
-  await fs2.writeJson(configPath, config, { spaces: 2 });
+  // Contract paths to portable format before saving
+  const portableConfig = ConfigManager.contractPaths(config, process.cwd());
+  await fs2.writeJson(configPath, portableConfig, { spaces: 2 });
 }
 
 async function loadConfigFromDirectory(dir: string): Promise<string[] | undefined> {
@@ -258,24 +260,43 @@ const PACKAGE_MANAGER_CONFIGS: Record<PackageManager, PackageManagerConfig> = {
   npm: { command: 'npm', installArgs: ['install', '--save-dev'] },
 };
 
-// Detect package manager by checking for lock files
+// Helper to check if a file exists
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Detect package manager by checking for lock files, searching up the directory tree
 export async function detectPackageManager(): Promise<PackageManager> {
-  // Check in order of specificity
-  try {
-    await fs.access('pnpm-lock.yaml');
-    return 'pnpm';
-  } catch {
-    // Not pnpm
+  let currentDir = process.cwd();
+  const root = path.parse(currentDir).root;
+
+  // Search up the directory tree for lock files
+  while (currentDir !== root) {
+    // Check in order of specificity: pnpm > yarn > npm
+    if (await fileExists(path.join(currentDir, 'pnpm-lock.yaml'))) {
+      return 'pnpm';
+    }
+    if (await fileExists(path.join(currentDir, 'yarn.lock'))) {
+      return 'yarn';
+    }
+    if (await fileExists(path.join(currentDir, 'package-lock.json'))) {
+      return 'npm';
+    }
+
+    // Move up one directory
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      break; // Reached root
+    }
+    currentDir = parentDir;
   }
 
-  try {
-    await fs.access('yarn.lock');
-    return 'yarn';
-  } catch {
-    // Not yarn
-  }
-
-  // Default to npm (works with package-lock.json or no lock file)
+  // Default to npm if no lock file found
   return 'npm';
 }
 

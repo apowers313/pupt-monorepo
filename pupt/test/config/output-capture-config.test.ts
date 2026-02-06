@@ -90,59 +90,6 @@ describe('Output Capture Configuration', () => {
       }
     });
 
-    it('should validate auto-annotation settings', () => {
-      const config = {
-        promptDirs: ['./prompts'],
-        version: '4.0.0',
-        autoAnnotate: {
-          enabled: true,
-          triggers: ['claude', 'ai-assistant'],
-          analysisPrompt: 'analyze-execution'
-        }
-      };
-      
-      const result = ConfigSchema.safeParse(config);
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.autoAnnotate).toBeDefined();
-        expect(result.data.autoAnnotate?.enabled).toBe(true);
-        expect(result.data.autoAnnotate?.triggers).toEqual(['claude', 'ai-assistant']);
-      }
-    });
-
-    it('should reject invalid auto-annotation settings', () => {
-      const invalidConfigs = [
-        {
-          promptDirs: ['./prompts'],
-          autoAnnotate: {
-            enabled: true,
-            triggers: 'claude', // Should be array
-            analysisPrompt: 'analyze'
-          }
-        },
-        {
-          promptDirs: ['./prompts'],
-          autoAnnotate: {
-            enabled: 'yes', // Should be boolean
-            triggers: ['claude'],
-            analysisPrompt: 'analyze'
-          }
-        },
-        {
-          promptDirs: ['./prompts'],
-          autoAnnotate: {
-            enabled: true,
-            triggers: ['claude']
-            // Missing required analysisPrompt
-          }
-        }
-      ];
-
-      invalidConfigs.forEach(config => {
-        const result = ConfigSchema.safeParse(config);
-        expect(result.success).toBe(false);
-      });
-    });
   });
 
   describe('default values', () => {

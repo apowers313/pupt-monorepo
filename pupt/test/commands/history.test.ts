@@ -195,8 +195,10 @@ describe('History Command', () => {
   });
 
   describe('summary display', () => {
-    it('should display summary field when available', async () => {
-      const entryWithSummary = {
+    it('should display variables over summary when both exist', async () => {
+      // When both variables and summary exist, variables take priority
+      // because users want to see the actual parameters they passed in
+      const entryWithSummaryAndVars = {
         timestamp: '2024-01-16T14:30:00.000Z',
         templatePath: '/templates/test.md',
         finalPrompt: '**Role & Context**: You are a versatile AI assistant...\n\n**Objective**: Create a test',
@@ -212,15 +214,46 @@ describe('History Command', () => {
       } as any);
 
       vi.mocked(HistoryManager).mockImplementation(() => ({
-        listHistory: vi.fn().mockResolvedValue([entryWithSummary]),
+        listHistory: vi.fn().mockResolvedValue([entryWithSummaryAndVars]),
         getTotalCount: vi.fn().mockResolvedValue(1)
       } as any));
 
       await historyCommand({ allDir: true });
 
-      // Should show processed summary with variable substitution
+      // Should show variables, not the processed summary
+      const calls = loggerSpy.mock.calls.map(call => call[0]);
+      const hasVariables = calls.some(call =>
+        call.includes('design: "design.md"') && call.includes('plan: "plan.md"')
+      );
+      expect(hasVariables).toBe(true);
+    });
+
+    it('should display summary when no variables exist', async () => {
+      const entryWithOnlySummary = {
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/templates/test.md',
+        finalPrompt: '**Role & Context**: You are a versatile AI assistant...\n\n**Objective**: Create a test',
+        title: 'Test Prompt',
+        summary: 'Generate a basic test file',
+        templateContent: 'template',
+        variables: {} // No variables
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([entryWithOnlySummary]),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      // Should show summary since there are no variables
       expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Create a plan from design.md and write it to plan.md')
+        expect.stringContaining('Generate a basic test file')
       );
     });
 

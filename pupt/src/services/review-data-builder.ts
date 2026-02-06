@@ -1,5 +1,5 @@
 import { HistoryManager } from '../history/history-manager.js';
-import { PromptManager } from '../prompts/prompt-manager.js';
+import { PuptService } from './pupt-service.js';
 import type { Config } from '../types/config.js';
 import type { HistoryEntry } from '../types/history.js';
 import type { ParsedAnnotation, AnnotationMetadata } from '../types/annotations.js';
@@ -20,12 +20,12 @@ import type { EnhancedHistoryEntry } from '../types/history.js';
 
 export class ReviewDataBuilder {
   private historyManager: HistoryManager;
-  private promptManager: PromptManager;
+  private puptService: PuptService;
   private annotationAnalyzer: AnnotationAnalyzer;
 
   constructor(private config: Config) {
     this.historyManager = new HistoryManager(config.historyDir || './history', config.annotationDir);
-    this.promptManager = new PromptManager(config.promptDirs || ['./prompts']);
+    this.puptService = new PuptService({ promptDirs: config.promptDirs || ['./prompts'], libraries: config.libraries, environment: config.environment });
     this.annotationAnalyzer = new AnnotationAnalyzer();
   }
 
@@ -145,19 +145,22 @@ export class ReviewDataBuilder {
     // let promptMetadata = {};
     
     try {
-      const prompts = await this.promptManager.discoverPrompts();
-      const prompt = prompts.find(p => path.basename(p.path, '.md') === promptName);
+      await this.puptService.init();
+      const prompts = this.puptService.getPromptsAsAdapted();
+      const prompt = prompts.find(p => {
+        const ext = path.extname(p.path);
+        return path.basename(p.path, ext) === promptName;
+      });
       if (prompt) {
         promptContent = prompt.content;
         promptPath = prompt.path;
-        // promptMetadata = prompt.frontmatter || {};
       } else {
         // Prompt file might have been deleted
-        promptPath = entries[0]?.templatePath || `prompts/${promptName}.md`;
+        promptPath = entries[0]?.templatePath || `prompts/${promptName}.prompt`;
       }
     } catch {
       // Prompt file might have been deleted
-      promptPath = entries[0]?.templatePath || `prompts/${promptName}.md`;
+      promptPath = entries[0]?.templatePath || `prompts/${promptName}.prompt`;
     }
 
     // Get last modified time
@@ -206,7 +209,8 @@ export class ReviewDataBuilder {
   private extractPromptName(entry: HistoryEntry): string {
     // Extract prompt name from template path
     if (entry.templatePath) {
-      return path.basename(entry.templatePath, '.md');
+      const ext = path.extname(entry.templatePath);
+      return path.basename(entry.templatePath, ext);
     }
     // Fallback to extracting from filename if template path not available
     const match = entry.filename.match(/history_.*?_(.+)\.json$/);

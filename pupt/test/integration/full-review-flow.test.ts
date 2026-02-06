@@ -7,8 +7,6 @@ import { HistoryManager } from '../../src/history/history-manager.js';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import { PatternDetector } from '../../src/services/pattern-detector.js';
-import { AutoAnnotationService } from '../../src/services/auto-annotation-service.js';
-import { PromptManager } from '../../src/prompts/prompt-manager.js';
 import type { Config } from '../../src/types/index.js';
 import type { EnhancedHistoryEntry } from '../../src/types/history.js';
 
@@ -43,11 +41,6 @@ describe('Full Review Flow Integration', () => {
           maxSizeMB: 10,
           retentionDays: 7
         },
-        autoAnnotate: {
-          enabled: true,
-          triggers: ['echo'],
-          analysisPrompt: 'analyze-execution',
-        }
       };
 
       await fs.ensureDir('.prompts');
@@ -119,11 +112,7 @@ Completed with errors.`;
         finalPrompt: 'Execute this test: test scenario'
       });
 
-      // Step 2: Auto-annotation (using fallback rules since we're not running actual AI)
-      const promptManager = new PromptManager(config.promptDirs!);
-      const autoAnnotationService = new AutoAnnotationService(config, promptManager, historyManager);
-      
-      // Simulate auto-annotation with fallback rules
+      // Step 2: Simulate annotation data
       const annotationData = {
         historyFile: path.basename(historyFile),
         timestamp: new Date().toISOString(),
@@ -234,11 +223,6 @@ Completed with errors.`;
           maxSizeMB: 10,
           retentionDays: 7
         },
-        autoAnnotate: {
-          enabled: true,
-          triggers: ['claude'],
-          analysisPrompt: 'analyze-execution'
-        }
       };
 
       await fs.ensureDir('.prompts');
@@ -258,9 +242,8 @@ Analyze this execution output and return JSON with status, issues, etc.
 Output file: {{outputFile}}`;
       await fs.writeFile('.prompts/analyze-execution.md', analysisPromptContent);
 
-      // Would use mockRunCommand to simulate AI analysis
-      // In real implementation, AutoAnnotationService would run the analysis prompt
-      expect(config.autoAnnotate!.analysisPrompt).toBe('analyze-execution');
+      // Analysis prompt exists but auto-annotation service has been removed
+      expect(config.defaultCmd).toBe('claude');
     });
 
     it('should produce actionable recommendations from review data', async () => {
@@ -275,11 +258,6 @@ Output file: {{outputFile}}`;
           enabled: true,
           directory: './.pt-output'
         },
-        autoAnnotate: {
-          enabled: false,
-          triggers: [],
-          analysisPrompt: 'analyze-execution'
-        }
       };
 
       await fs.ensureDir('.prompts');

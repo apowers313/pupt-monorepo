@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
-import { PromptManager } from '../../src/prompts/prompt-manager.js';
+import { PuptService } from '../../src/services/pupt-service.js';
 import type { Config } from '../../src/types/config.js';
 import type { HistoryEntry } from '../../src/types/history.js';
 import type { ParsedAnnotation } from '../../src/types/annotations.js';
@@ -9,14 +9,14 @@ import path from 'path';
 import fs from 'fs-extra';
 
 vi.mock('../../src/history/history-manager.js');
-vi.mock('../../src/prompts/prompt-manager.js');
+vi.mock('../../src/services/pupt-service.js');
 vi.mock('fs-extra');
 
 describe('ReviewDataBuilder', () => {
   let reviewDataBuilder: ReviewDataBuilder;
   let mockConfig: Config;
   let mockHistoryManager: any;
-  let mockPromptManager: any;
+  let mockPuptService: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -42,12 +42,17 @@ describe('ReviewDataBuilder', () => {
       loadHistory: vi.fn()
     };
 
-    mockPromptManager = {
-      discoverPrompts: vi.fn()
+    mockPuptService = {
+      init: vi.fn().mockResolvedValue(undefined),
+      getPromptsAsAdapted: vi.fn().mockReturnValue([]),
+      findPrompt: vi.fn(),
+      getPrompts: vi.fn().mockReturnValue([]),
+      getPrompt: vi.fn(),
+      getPromptPath: vi.fn(),
     };
 
     vi.mocked(HistoryManager).mockReturnValue(mockHistoryManager);
-    vi.mocked(PromptManager).mockReturnValue(mockPromptManager);
+    vi.mocked(PuptService).mockImplementation(() => mockPuptService as any);
 
     reviewDataBuilder = new ReviewDataBuilder(mockConfig);
   });
@@ -131,7 +136,7 @@ This is a test prompt.`;
         }
         return Promise.resolve({});
       });
-      mockPromptManager.discoverPrompts.mockResolvedValue([{
+      mockPuptService.getPromptsAsAdapted.mockReturnValue([{
         filename: 'test-prompt.md',
         path: 'prompts/test-prompt.md',
         relativePath: 'test-prompt.md',
@@ -242,7 +247,7 @@ This is a test prompt.`;
         }
         return Promise.resolve({});
       });
-      mockPromptManager.discoverPrompts.mockResolvedValue([{
+      mockPuptService.getPromptsAsAdapted.mockReturnValue([{
         filename: 'test-prompt.md',
         path: 'prompts/test-prompt.md',
         relativePath: 'test-prompt.md',
@@ -336,10 +341,8 @@ This is a test prompt.`;
         }
         return Promise.resolve({});
       });
-      mockPromptManager.discoverPrompts.mockImplementation(async () => {
-        // Return all prompts that might be requested
-        const allPrompts = ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'];
-        return allPrompts.map(name => ({
+      mockPuptService.getPromptsAsAdapted.mockReturnValue(
+        ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'].map(name => ({
           filename: `${name}.md`,
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
@@ -347,8 +350,8 @@ This is a test prompt.`;
           tags: [],
           content: `# ${name}`,
           frontmatter: {}
-        }));
-      });
+        }))
+      );
 
       const result = await reviewDataBuilder.buildReviewData({});
 
@@ -390,11 +393,9 @@ This is a test prompt.`;
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation(() => Promise.resolve(''));
-      mockPromptManager.discoverPrompts.mockImplementation(async () => {
-        // Return all prompts that might be requested
-        const allPrompts = ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'];
-        return allPrompts.map(name => ({
+      vi.mocked(fs.readFile).mockResolvedValue('');
+      mockPuptService.getPromptsAsAdapted.mockReturnValue(
+        ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'].map(name => ({
           filename: `${name}.md`,
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
@@ -402,8 +403,8 @@ This is a test prompt.`;
           tags: [],
           content: `# ${name}`,
           frontmatter: {}
-        }));
-      });
+        }))
+      );
 
       const result = await reviewDataBuilder.buildReviewData({ since: '3d' });
 
@@ -437,8 +438,8 @@ This is a test prompt.`;
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation(() => Promise.resolve('')); // No annotations
-      mockPromptManager.discoverPrompts.mockResolvedValue([{
+      vi.mocked(fs.readFile).mockResolvedValue(''); // No annotations
+      mockPuptService.getPromptsAsAdapted.mockReturnValue([{
         filename: 'test.md',
         path: 'prompts/test.md',
         relativePath: 'test.md',
@@ -478,8 +479,8 @@ This is a test prompt.`;
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation(() => Promise.resolve(''));
-      mockPromptManager.discoverPrompts.mockResolvedValue([]);
+      vi.mocked(fs.readFile).mockResolvedValue('');
+      mockPuptService.getPromptsAsAdapted.mockReturnValue([]);
 
       const result = await reviewDataBuilder.buildReviewData({});
 
@@ -524,11 +525,9 @@ This is a test prompt.`;
         }
         return Promise.resolve([] as any);
       });
-      vi.mocked(fs.readFile).mockImplementation(() => Promise.resolve(''));
-      mockPromptManager.discoverPrompts.mockImplementation(async () => {
-        // Return all prompts that might be requested
-        const allPrompts = ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'];
-        return allPrompts.map(name => ({
+      vi.mocked(fs.readFile).mockResolvedValue('');
+      mockPuptService.getPromptsAsAdapted.mockReturnValue(
+        ['prompt1', 'prompt2', 'old', 'recent', 'test', 'deleted'].map(name => ({
           filename: `${name}.md`,
           path: `prompts/${name}.md`,
           relativePath: `${name}.md`,
@@ -536,8 +535,8 @@ This is a test prompt.`;
           tags: [],
           content: `# ${name}`,
           frontmatter: {}
-        }));
-      });
+        }))
+      );
 
       const result = await reviewDataBuilder.buildReviewData({ promptName: 'prompt1' });
 

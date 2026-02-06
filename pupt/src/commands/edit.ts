@@ -1,5 +1,5 @@
 import { ConfigManager } from '../config/config-manager.js';
-import { PromptManager } from '../prompts/prompt-manager.js';
+import { PuptService } from '../services/pupt-service.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
@@ -7,10 +7,11 @@ import { errors } from '../utils/errors.js';
 export async function editCommand(): Promise<void> {
   // Load configuration
   const config = await ConfigManager.load();
-  
+
   // Discover prompts
-  const promptManager = new PromptManager(config.promptDirs);
-  const prompts = await promptManager.discoverPrompts();
+  const puptService = new PuptService({ promptDirs: config.promptDirs, libraries: config.libraries, environment: config.environment });
+  await puptService.init();
+  const prompts = puptService.getPromptsAsAdapted();
   
   if (prompts.length === 0) {
     throw errors.noPromptsFound(config.promptDirs);

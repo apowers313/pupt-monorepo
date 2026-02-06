@@ -1,8 +1,6 @@
 import { ConfigManager } from '../config/config-manager.js';
-import { PromptManager } from '../prompts/prompt-manager.js';
-import { InteractiveSearch } from '../ui/interactive-search.js';
-import { TemplateEngine } from '../template/template-engine.js';
 import { HistoryManager } from '../history/history-manager.js';
+import { resolvePrompt } from '../services/prompt-resolver.js';
 import { spawn } from 'node:child_process';
 import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
@@ -12,10 +10,8 @@ import * as path from 'node:path';
 import { pathExists } from 'fs-extra';
 import { editorLauncher } from '../utils/editor.js';
 import { OutputCaptureService } from '../services/output-capture-service.js';
-import { AutoAnnotationService } from '../services/auto-annotation-service.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
-import type { EnhancedHistoryEntry } from '../types/history.js';
 import crypto from 'node:crypto';
 
 export interface RunOptions {
@@ -81,8 +77,6 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   // Load configuration
   const configResult = await ConfigManager.loadWithPath();
   const config = configResult.config;
-  const configDir = configResult.filepath ? path.dirname(configResult.filepath) : undefined;
-  
   
   // Parse arguments
   const { tool, toolArgs, extraArgs } = parseRunArgs(args);
@@ -162,49 +156,17 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       rerunFrom: historyEntry.filename
     };
   } else {
-    // Normal flow - discover and process prompts
-    const promptManager = new PromptManager(config.promptDirs);
-    let selected;
-    
-    if (options.promptName) {
-      // Find specific prompt by name
-      const prompt = await promptManager.findPrompt(options.promptName);
-      if (!prompt) {
-        throw errors.promptNotFound(options.promptName);
-      }
-      selected = prompt;
-      logger.log(chalk.blue(`\nUsing prompt: ${selected.title}`));
-      logger.log(chalk.dim(`Location: ${selected.path}\n`));
-    } else {
-      // Interactive search
-      const prompts = await promptManager.discoverPrompts();
-      
-      if (prompts.length === 0) {
-        throw errors.noPromptsFound(config.promptDirs);
-      }
-      
-      const search = new InteractiveSearch();
-      selected = await search.selectPrompt(prompts);
-      
-      logger.log(chalk.blue(`\nProcessing: ${selected.title}`));
-      logger.log(chalk.dim(`Location: ${selected.path}\n`));
-    }
-    
-    // Process template
-    const engine = new TemplateEngine(config, configDir, options.noInteractive);
-    promptResult = await engine.processTemplate(selected.content, selected);
-    
-    // Store template info for history saving after successful execution
-    templateInfo = {
-      templatePath: selected.path,
-      templateContent: selected.content,
-      variables: engine.getContext().getMaskedValues(),
-      finalPrompt: promptResult,
-      title: selected.title,
-      timestamp: startTimestamp,
-      summary: selected.summary,
-      reviewFiles: engine.getContext().getVariablesByType('reviewFile')
-    };
+    // Normal flow - discover, select, collect inputs, render
+    const resolved = await resolvePrompt({
+      promptDirs: config.promptDirs,
+      libraries: config.libraries,
+      promptName: options.promptName,
+      noInteractive: options.noInteractive,
+      startTimestamp,
+      environment: config.environment,
+    });
+    promptResult = resolved.text;
+    templateInfo = resolved.templateInfo;
   }
   
   // Handle coding tool options - always prompt when using default tool with options configured
@@ -264,7 +226,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     // Save to history regardless of exit code
     if (config.historyDir && templateInfo && promptResult.trim().length > 0) {
       const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
-      const historyFilename = await historyManager.savePrompt({
+      await historyManager.savePrompt({
         ...templateInfo,
         outputFile,
         outputSize,
@@ -277,42 +239,6 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
         }
       });
 
-      // Trigger auto-annotation if configured
-      if (config.autoAnnotate?.enabled && historyFilename) {
-        const promptManager = new PromptManager(config.promptDirs || []);
-        const autoAnnotationService = new AutoAnnotationService(config, promptManager, historyManager);
-        
-        // Extract prompt name from template path
-        const promptName = path.basename(templateInfo.templatePath, path.extname(templateInfo.templatePath));
-        
-        if (autoAnnotationService.shouldAutoAnnotate(promptName)) {
-          // Create enhanced history entry for auto-annotation
-          const enhancedEntry: EnhancedHistoryEntry = {
-            timestamp: startTimestamp.toISOString(),
-            templatePath: templateInfo.templatePath,
-            templateContent: templateInfo.templateContent,
-            variables: Object.fromEntries(templateInfo.variables),
-            finalPrompt: templateInfo.finalPrompt,
-            title: templateInfo.title,
-            summary: templateInfo.summary,
-            filename: historyFilename,
-            execution: {
-              start_time: startTimestamp.toISOString(),
-              end_time: new Date().toISOString(),
-              duration: `${executionTime}ms`,
-              exit_code: exitCode,
-              command: `${finalTool} ${finalArgs.join(' ')}`,
-              output_file: outputFile,
-              output_size: outputSize,
-            },
-          };
-
-          // Run auto-annotation asynchronously
-          autoAnnotationService.analyzeExecution(enhancedEntry).catch(error => {
-            logger.warn('Auto-annotation failed: ' + (error instanceof Error ? error.message : String(error)));
-          });
-        }
-      }
     }
     
     // Handle post-run file reviews

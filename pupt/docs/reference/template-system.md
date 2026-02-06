@@ -340,8 +340,7 @@ module.exports = {
       type: 'inline',
       value: '&lbrace;&lbrace;uppercase text&rbrace;&rbrace;'
     }
-  },
-  handlebarsExtensions: ['./helpers/custom.js']
+  }
 }
 ```
 

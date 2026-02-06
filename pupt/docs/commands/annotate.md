@@ -179,30 +179,6 @@ pt history --status failure --format markdown > lessons-learned.md
 cat team-annotations.json | pt annotate --import
 ```
 
-## Auto-annotation
-
-Configure automatic annotation based on patterns:
-
-```json
-{
-  "autoAnnotate": {
-    "enabled": true,
-    "rules": [
-      {
-        "pattern": "Error: 401",
-        "status": "failure",
-        "tags": ["auth-error"],
-        "note": "Authentication failed"
-      },
-      {
-        "pattern": "Successfully generated",
-        "status": "success"
-      }
-    ]
-  }
-}
-```
-
 ## Common Workflows
 
 ### Post-Execution Review

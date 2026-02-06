@@ -2,11 +2,9 @@ import { input, select, confirm } from '@inquirer/prompts';
 import { ConfigManager } from '../config/config-manager.js';
 import fs from 'fs-extra';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
 import chalk from 'chalk';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
-import { DateFormats } from '../utils/date-formatter.js';
 import { logger } from '../utils/logger.js';
 
 export async function addCommand(): Promise<void> {
@@ -48,25 +46,23 @@ export async function addCommand(): Promise<void> {
     });
   }
 
-  // Get author info from git
-  const author = getGitAuthor();
-  
+  const ext = '.prompt';
+
   // Generate filename
-  const filename = await generateFilename(title, targetDir);
+  const filename = await generateFilename(title, targetDir, ext);
   const filepath = path.join(targetDir, filename);
 
-  // Create prompt content
-  const date = new Date();
-  const dateStr = DateFormats.YYYYMMDD(date);
-  
-  const content = `---
-title: ${title}
-author: ${author}
-creationDate: ${dateStr}
-tags: [${tags.join(', ')}]
----
+  // Escape JSX string values (double quotes)
+  const escapedTitle = title.replace(/"/g, '\\"');
+  const tagsJsx = tags.length > 0
+    ? `tags={[${tags.map(t => `"${t.replace(/"/g, '\\"')}"`).join(', ')}]}`
+    : '';
 
-{{!-- Add your prompt content here --}}
+  const content = `<Prompt name="${escapedTitle}" description="" ${tagsJsx}>
+  <Task>
+    {/* Add your prompt content here */}
+  </Task>
+</Prompt>
 `;
 
   // Write file
@@ -92,36 +88,7 @@ tags: [${tags.join(', ')}]
   }
 }
 
-function getGitAuthor(): string {
-  try {
-    let name = '';
-    let email = '';
-    
-    try {
-      name = execSync('git config user.name', { encoding: 'utf8' }).trim();
-    } catch {
-      // name not configured
-    }
-    
-    try {
-      email = execSync('git config user.email', { encoding: 'utf8' }).trim();
-    } catch {
-      // email not configured
-    }
-    
-    if (name && email) {
-      return `${name} <${email}>`;
-    } else if (name) {
-      return name;
-    } else {
-      return 'unknown';
-    }
-  } catch {
-    return 'unknown';
-  }
-}
-
-async function generateFilename(title: string, directory: string): Promise<string> {
+async function generateFilename(title: string, directory: string, ext: string = '.prompt'): Promise<string> {
   // Convert to kebab-case and remove special characters
   const base = title
     .toLowerCase()
@@ -134,12 +101,12 @@ async function generateFilename(title: string, directory: string): Promise<strin
     .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 
   // Start with base filename
-  let filename = `${base}.md`;
+  let filename = `${base}${ext}`;
   let counter = 1;
 
   // Check for existing files and increment if needed
   while (await fs.pathExists(path.join(directory, filename))) {
-    filename = `${base}-${counter}.md`;
+    filename = `${base}-${counter}${ext}`;
     counter++;
   }
 

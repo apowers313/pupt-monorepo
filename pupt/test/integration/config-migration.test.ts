@@ -51,12 +51,11 @@ describe('Config Migration Integration', () => {
         'Continue with last session?': '--continue',
         'Enable web search?': '--web'
       });
-      expect(config.version).toBe('4.0.0');
+      expect(config.version).toBe('6.0.0');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(config.handlebarsExtensions).toEqual([]);
-      
+
       // Check that old fields are removed from runtime config
       expect(config.codingTool).toBeUndefined();
       expect(config.codingToolArgs).toBeUndefined();
@@ -74,8 +73,8 @@ describe('Config Migration Integration', () => {
       expect(savedConfig.defaultCmd).toBe('claude');
       expect(savedConfig.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
       expect(savedConfig.defaultCmdOptions).toBeDefined();
-      expect(savedConfig.version).toBe('4.0.0');
-      
+      expect(savedConfig.version).toBe('6.0.0');
+
       // Check that backup was created
       const backupPath = '.pt-config.json.backup';
       expect(await fs.pathExists(backupPath)).toBe(true);
@@ -103,7 +102,7 @@ describe('Config Migration Integration', () => {
       // Second load (should not re-migrate)
       config = await ConfigManager.load();
       expect(config.defaultCmd).toBe('gpt');
-      expect(config.version).toBe('4.0.0');
+      expect(config.version).toBe('6.0.0');
       
       // Verify only one backup exists
       const backupPath = '.pt-config.json.backup';
@@ -181,14 +180,11 @@ describe('Config Migration Integration', () => {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
-        version: '4.0.0',
+        version: '6.0.0',
+        libraries: [],
         outputCapture: {
           enabled: false
         },
-        autoAnnotate: {
-          enabled: false,
-          analysisPrompt: 'analyze-execution'
-        }
       };
 
       await fs.writeJson('.pt-config.json', newConfig);
@@ -247,8 +243,7 @@ codingToolOptions:
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(config.handlebarsExtensions).toEqual([]);
-      expect(config.version).toBe('4.0.0');
+      expect(config.version).toBe('6.0.0');
     });
   });
 
@@ -281,17 +276,16 @@ codingToolOptions:
         version: '3.0.0',
         autoReview: true,
         autoRun: false,
-        gitPromptDir: '.git-prompts',
-        handlebarsExtensions: []
+        gitPromptDir: '.git-prompts'
       };
       
       await fs.writeJson('.pt-config.json', v3Config);
       
       const config = await ConfigManager.load();
       
-      // Should update version to 4.0.0
-      expect(config.version).toBe('4.0.0');
-      
+      // Should update version to 5.0.0 (migrates through v4 to v5)
+      expect(config.version).toBe('6.0.0');
+
       // Should have output capture defaults
       expect(config.outputCapture).toEqual({
         enabled: false,
@@ -300,13 +294,9 @@ codingToolOptions:
         retentionDays: 30
       });
       
-      // Should have auto-annotation defaults
-      expect(config.autoAnnotate).toEqual({
-        enabled: false,
-        triggers: ['claude', 'ai', 'assistant'],
-        analysisPrompt: 'analyze-execution'
-      });
-      
+      // autoAnnotate should be removed during migration
+      expect(config.autoAnnotate).toBeUndefined();
+
       // Existing fields should be preserved
       expect(config.promptDirs).toContain(path.resolve('./.prompts'));
       expect(config.defaultCmd).toBe('claude');
@@ -330,9 +320,9 @@ codingToolOptions:
       await fs.writeJson('.pt-config.json', v3ConfigWithOutputCapture);
       
       const config = await ConfigManager.load();
-      
-      expect(config.version).toBe('4.0.0');
-      
+
+      expect(config.version).toBe('6.0.0');
+
       // Should preserve user's output capture settings
       expect(config.outputCapture).toEqual({
         enabled: true,
@@ -360,7 +350,7 @@ codingToolOptions:
       expect(backup.version).toBe('3.0.0');
     });
 
-    it('should not re-migrate v4 configs', async () => {
+    it('should migrate v4 configs to v5', async () => {
       const v4Config = {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
@@ -375,18 +365,19 @@ codingToolOptions:
           analysisPrompt: 'analyze'
         }
       };
-      
+
       await fs.writeJson('.pt-config.json', v4Config);
-      
+
       const config = await ConfigManager.load();
-      
-      // Should not create backup for already migrated config
-      expect(await fs.pathExists('.pt-config.json.backup')).toBe(false);
-      
-      // Config should remain unchanged
-      expect(config.version).toBe('4.0.0');
+
+      // Should migrate v4 to v5
+      expect(config.version).toBe('6.0.0');
+      expect(config.libraries).toEqual([]);
+
+      // Existing fields should be preserved
       expect(config.outputCapture?.enabled).toBe(true);
-      expect(config.autoAnnotate?.enabled).toBe(true);
+      // autoAnnotate is removed during migration
+      expect(config.autoAnnotate).toBeUndefined();
     });
 
     it('should handle partial v3 configs correctly', async () => {
@@ -400,9 +391,10 @@ codingToolOptions:
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('4.0.0');
+      expect(config.version).toBe('6.0.0');
       expect(config.outputCapture).toBeDefined();
-      expect(config.autoAnnotate).toBeDefined();
+      // autoAnnotate is removed during migration
+      expect(config.autoAnnotate).toBeUndefined();
 
       // V3 migration doesn't add defaultCmd if it's missing, only renames codingTool
       // So defaultCmd will be undefined for partial configs
@@ -421,17 +413,16 @@ codingToolOptions:
         autoReview: true,
         autoRun: true,
         gitPromptDir: '/home/user/project/.git-prompts',
-        handlebarsExtensions: [],
         version: '4.0.0'
-        // Missing outputCapture and autoAnnotate
+        // Missing outputCapture
       };
 
       await fs.writeJson('.pt-config.json', incompleteV4Config);
 
       const config = await ConfigManager.load();
 
-      // Should still be v4.0.0
-      expect(config.version).toBe('4.0.0');
+      // Should be migrated to v5.0.0
+      expect(config.version).toBe('6.0.0');
 
       // Should add missing v4 fields with defaults
       expect(config.outputCapture).toBeDefined();
@@ -442,12 +433,8 @@ codingToolOptions:
         retentionDays: 30
       });
 
-      expect(config.autoAnnotate).toBeDefined();
-      expect(config.autoAnnotate).toEqual({
-        enabled: false,
-        triggers: ['claude', 'ai', 'assistant'],
-        analysisPrompt: 'analyze-execution'
-      });
+      // autoAnnotate is removed during migration
+      expect(config.autoAnnotate).toBeUndefined();
 
       // Existing fields should be preserved
       expect(config.autoReview).toBe(true);

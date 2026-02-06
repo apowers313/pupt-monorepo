@@ -119,7 +119,7 @@ describe('Add Command', () => {
 
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const content = writeCall[1] as string;
-      expect(content).toContain('author: unknown');
+      expect(content).toContain('<Prompt');
     });
 
     it('should handle unconfigured git user', async () => {
@@ -143,7 +143,7 @@ describe('Add Command', () => {
 
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const content = writeCall[1] as string;
-      expect(content).toContain('author: unknown');
+      expect(content).toContain('<Prompt');
     });
   });
 
@@ -171,7 +171,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('my-awesome-prompt.md'),
+        expect.stringContaining('my-awesome-prompt.prompt'),
         expect.any(String)
       );
     });
@@ -185,7 +185,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('test-prompt.md'),
+        expect.stringContaining('test-prompt.prompt'),
         expect.any(String)
       );
     });
@@ -199,7 +199,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('cafe-munchen.md'),
+        expect.stringContaining('cafe-munchen.prompt'),
         expect.any(String)
       );
     });
@@ -210,14 +210,14 @@ describe('Add Command', () => {
         .mockResolvedValueOnce(''); // tags
       // Ensure we have enough mock values for all potential calls
       vi.mocked(fs.pathExists)
-        .mockResolvedValueOnce(true)  // existing-prompt.md exists
-        .mockResolvedValueOnce(false) // existing-prompt-1.md doesn't exist
+        .mockResolvedValueOnce(true)  // existing-prompt.prompt exists
+        .mockResolvedValueOnce(false) // existing-prompt-1.prompt doesn't exist
         .mockResolvedValue(false); // Any additional calls return false
 
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('existing-prompt-1.md'),
+        expect.stringContaining('existing-prompt-1.prompt'),
         expect.any(String)
       );
     });
@@ -236,7 +236,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('popular-prompt-3.md'),
+        expect.stringContaining('popular-prompt-3.prompt'),
         expect.any(String)
       );
     });
@@ -258,7 +258,7 @@ describe('Add Command', () => {
       vi.mocked(confirm).mockResolvedValue(false);
     });
 
-    it('should generate correct frontmatter', async () => {
+    it('should generate correct JSX prompt', async () => {
       vi.mocked(input)
         .mockResolvedValueOnce('API Documentation')
         .mockResolvedValueOnce('api, docs, typescript');
@@ -267,31 +267,24 @@ describe('Add Command', () => {
 
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const content = writeCall[1] as string;
-      
-      expect(content).toContain('---');
-      expect(content).toContain('title: API Documentation');
-      expect(content).toContain('author:'); // Generic check - git mock issues
-      expect(content).toContain('creationDate:');
-      expect(content).toContain('tags: [api, docs, typescript]');
+
+      expect(content).toContain('<Prompt');
+      expect(content).toContain('name="API Documentation"');
+      expect(content).toContain('tags={["api", "docs", "typescript"]}');
+      expect(content).toContain('<Task>');
     });
 
-    it('should format date as YYYYMMDD', async () => {
-      const mockDate = new Date('2024-01-15T10:30:00.000Z');
-      vi.setSystemTime(mockDate);
-      
-      try {
-        vi.mocked(input)
-          .mockResolvedValueOnce('Test Prompt')
-          .mockResolvedValueOnce('');
+    it('should generate valid JSX structure', async () => {
+      vi.mocked(input)
+        .mockResolvedValueOnce('Test Prompt')
+        .mockResolvedValueOnce('');
 
-        await addCommand();
+      await addCommand();
 
-        const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
-        const content = writeCall[1] as string;
-        expect(content).toContain('creationDate: 20240115');
-      } finally {
-        vi.useRealTimers();
-      }
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const content = writeCall[1] as string;
+      expect(content).toContain('<Prompt');
+      expect(content).toContain('</Prompt>');
     });
 
     it('should handle empty tags', async () => {
@@ -303,7 +296,8 @@ describe('Add Command', () => {
 
       const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
       const content = writeCall[1] as string;
-      expect(content).toContain('tags: []');
+      expect(content).toContain('<Prompt');
+      expect(content).not.toContain('tags={');
     });
 
     it('should create file in selected directory', async () => {
@@ -319,7 +313,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining(path.join('./custom', 'custom-prompt.md')),
+        expect.stringContaining(path.join('./custom', 'custom-prompt.prompt')),
         expect.any(String)
       );
     });
@@ -332,7 +326,7 @@ describe('Add Command', () => {
       await addCommand();
 
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining(`Created prompt: ${path.join('.prompts', 'success-test.md')}`)
+        expect.stringContaining(`Created prompt: ${path.join('.prompts', 'success-test.prompt')}`)
       );
     });
   });

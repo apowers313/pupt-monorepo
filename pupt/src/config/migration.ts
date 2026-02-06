@@ -51,7 +51,7 @@ export const migrations: ConfigMigration[] = [
       migrated.autoReview = migrated.autoReview ?? true;
       migrated.autoRun = migrated.autoRun ?? false;
       migrated.gitPromptDir = migrated.gitPromptDir ?? '.git-prompts';
-      migrated.handlebarsExtensions = migrated.handlebarsExtensions ?? [];
+      delete migrated.handlebarsExtensions;
       
       // Set defaults for renamed fields if they don't exist
       migrated.defaultCmd = migrated.defaultCmd ?? 'claude';
@@ -89,19 +89,57 @@ export const migrations: ConfigMigration[] = [
         };
       }
       
-      // Add auto-annotation defaults if not present
-      if (!migrated.autoAnnotate) {
-        migrated.autoAnnotate = {
-          enabled: false,
-          triggers: ['claude', 'ai', 'assistant'],
-          analysisPrompt: 'analyze-execution'
-        };
-      }
-      
+      // Remove auto-annotation config (feature removed)
+      delete migrated.autoAnnotate;
+
       // Preserve v3 defaults if not set
       migrated.autoReview = migrated.autoReview ?? true;
       migrated.autoRun = migrated.autoRun ?? false;
-      
+
+      return migrated;
+    }
+  },
+  {
+    version: '5.0.0',
+    migrate: (config) => {
+      const migrated = { ...config };
+
+      // Update version
+      migrated.version = '5.0.0';
+
+      // Remove deprecated features
+      delete migrated.autoAnnotate;
+      delete migrated.handlebarsExtensions;
+
+      // Add pupt-lib integration defaults
+      migrated.libraries = migrated.libraries ?? [];
+
+      return migrated;
+    }
+  },
+  {
+    version: '6.0.0',
+    migrate: (config) => {
+      const migrated = { ...config };
+
+      // Update version
+      migrated.version = '6.0.0';
+
+      // Migrate targetLlm to environment.llm.provider
+      if ('targetLlm' in config && config.targetLlm) {
+        const existingEnv = (migrated.environment as Record<string, unknown>) ?? {};
+        const existingLlm = (existingEnv.llm as Record<string, unknown>) ?? {};
+
+        migrated.environment = {
+          ...existingEnv,
+          llm: {
+            ...existingLlm,
+            provider: existingLlm.provider ?? config.targetLlm,
+          }
+        };
+        delete migrated.targetLlm;
+      }
+
       return migrated;
     }
   }
@@ -122,9 +160,19 @@ export const migrateConfig = Object.assign(
 
     // Apply v4 migration if version is old OR if required v4 fields are missing
     if (!migrated.version || migrated.version < '4.0.0' ||
-        (migrated.version === '4.0.0' && (!migrated.outputCapture || !migrated.autoAnnotate))) {
+        (migrated.version === '4.0.0' && !migrated.outputCapture)) {
       // Apply v4 migration
       migrated = migrations[1].migrate(migrated);
+    }
+
+    // Apply v5 migration if version is old
+    if (!migrated.version || migrated.version < '5.0.0') {
+      migrated = migrations[2].migrate(migrated);
+    }
+
+    // Apply v6 migration if version is old or targetLlm exists
+    if (!migrated.version || migrated.version < '6.0.0' || 'targetLlm' in migrated) {
+      migrated = migrations[3].migrate(migrated);
     }
 
     return migrated as unknown as Config;
@@ -141,15 +189,13 @@ export const migrateConfig = Object.assign(
         return true;
       }
 
-      // Check if version is missing or old
-      if (!config.version || config.version !== '4.0.0') {
+      // Check if targetLlm exists (should be migrated to environment.llm.provider)
+      if ('targetLlm' in config) {
         return true;
       }
 
-      // Check if v4.0.0 config is missing required v4 fields
-      // This handles cases where a config was manually edited or created
-      // before these fields were added to the v4 migration
-      if (config.version === '4.0.0' && (!config.outputCapture || !config.autoAnnotate)) {
+      // Check if version is missing or old
+      if (!config.version || config.version < '6.0.0') {
         return true;
       }
 

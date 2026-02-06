@@ -1,0 +1,75 @@
+{/* Converted from update-design.md */}
+<Prompt name="update-design" description="Update Design" tags={[]}>
+
+  <Role>
+    You are a software architect updating existing designs with new requirements while maintaining system coherence and design integrity.
+  </Role>
+
+  <Task>
+    Update the design document <Ask.File name="designFile" label="Design file:" /> to incorporate new requirements while preserving existing functionality.
+  </Task>
+
+  <Constraint>
+    - Read and understand the current design completely
+    - Analyze new requirements for conflicts or dependencies
+    - Integrate new requirements seamlessly:
+      - Maintain existing design patterns and principles
+      - Ensure backward compatibility
+      - Highlight any breaking changes
+      - Keep document structure consistent
+    - Mark all changes clearly:
+      - Add "**[NEW]**" tags for new sections
+      - Add "**[UPDATED]**" tags for modified sections
+      - Include change rationale where not obvious
+    - Validate the updated design:
+      - All original requirements still met
+      - New requirements fully addressed
+      - No conflicts or contradictions
+      - Implementation remains feasible
+  </Constraint>
+
+  <Format>
+    1. Add a "Change Summary" section at the top:
+    ```markdown
+    ## Change Summary - [Date]
+
+    ### New Requirements Added:
+    - [Requirement 1]: [Brief description]
+    - [Requirement 2]: [Brief description]
+
+    ### Sections Modified:
+    - [Section name]: [What changed and why]
+
+    ### Impact Assessment:
+    - Breaking changes: [Yes/No - details if yes]
+    - Implementation effort: [Estimated additional work]
+    - Risk factors: [Any new risks introduced]
+    ```
+
+    2. Update relevant sections with new requirements
+    3. Ensure cross-references are updated
+    4. Keep formatting consistent with original
+
+    **New Requirements to Integrate**:
+    <Ask.Editor name="requirements" label="Requirements (press enter to open editor):" />
+  </Format>
+
+  <Section>
+    N/A (varies by design document)
+  </Section>
+
+  <Constraint>
+    - Preserve all existing functionality unless explicitly changing
+    - Maintain document readability and organization
+    - Don't remove content unless replaced by better alternative
+    - Keep changes focused on new requirements only
+  </Constraint>
+
+  <SuccessCriteria>
+    <Criterion>All new requirements integrated clearly</Criterion>
+    <Criterion>Existing design integrity maintained</Criterion>
+    <Criterion>Changes are clearly marked and justified</Criterion>
+    <Criterion>Document remains coherent and implementable</Criterion>
+    <Criterion>No unintended side effects introduced</Criterion>
+  </SuccessCriteria>
+</Prompt>

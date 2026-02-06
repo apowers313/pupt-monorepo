@@ -20,7 +20,18 @@ vi.mock('simple-git', () => ({
 }));
 
 // Mock ConfigManager to use test configs
-vi.mock('../../src/config/config-manager.js');
+vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
+  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  return {
+    ...original,
+    ConfigManager: {
+      ...original.ConfigManager,
+      load: vi.fn(),
+      // Keep the real contractPaths implementation
+      contractPaths: original.ConfigManager.contractPaths
+    }
+  };
+});
 
 vi.mock('../../src/utils/logger.js');
 describe('NPM Installation Integration Tests', () => {
