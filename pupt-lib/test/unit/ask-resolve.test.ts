@@ -3,6 +3,8 @@ import { render, Component, If } from '../../src';
 import { jsx, Fragment } from '../../src/jsx-runtime';
 import { z } from 'zod';
 import { AskText, AskNumber, AskSelect, AskConfirm, AskMultiSelect, AskRating, AskEditor, AskFile, AskPath, AskDate, AskSecret, AskChoice, AskReviewFile } from '../../src/components/ask';
+import { COMPONENT_MARKER, isComponentClass } from '../../src/component';
+import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 
 describe('Ask components with resolve()', () => {
   describe('Ask.Text', () => {
@@ -334,5 +336,78 @@ describe('Ask components with resolve()', () => {
       });
       expect(result.text).toContain('Selected: 2 items');
     });
+  });
+});
+
+describe('Dual-package resilience (issue #16 comment)', () => {
+  it('COMPONENT_MARKER should be a global registry symbol', () => {
+    // COMPONENT_MARKER must use Symbol.for() so it works across multiple copies
+    // of pupt-lib loaded in the same runtime (e.g., via import maps in browser).
+    // A local Symbol("component") would be unique per module instance, breaking
+    // isComponentClass checks across copies.
+    expect(COMPONENT_MARKER).toBe(Symbol.for('pupt-lib:component:v1'));
+  });
+
+  it('isComponentClass should recognize a "foreign" component using the global marker', () => {
+    // Simulate a component class from a different copy of pupt-lib.
+    // It uses Symbol.for() to get the same global marker symbol.
+    class ForeignComponent {
+      static [Symbol.for('pupt-lib:component:v1')] = true;
+    }
+    expect(isComponentClass(ForeignComponent)).toBe(true);
+  });
+
+  it('seedAskDefaults should seed implicitDefault from a simulated foreign AskConfirm', async () => {
+    // Simulate a dual-package scenario: create an element tree manually using
+    // global symbols (as a "foreign" copy of pupt-lib would) with a component
+    // class that has implicitDefault but comes from a different module copy.
+    class ForeignAskConfirm {
+      static [Symbol.for('pupt-lib:component:v1')] = true;
+      static implicitDefault = false;
+      static schema = z.object({
+        name: z.string(),
+        label: z.string(),
+        silent: z.boolean().optional(),
+      }).passthrough();
+
+      resolve(props: { name: string; default?: boolean }, context: { inputs: Map<string, unknown> }): boolean {
+        const value = context.inputs.get(props.name);
+        if (value !== undefined) return Boolean(value);
+        return props.default ?? false;
+      }
+
+      render(): string {
+        return '';
+      }
+    }
+
+    // Build element tree using global symbols (simulating "foreign" copy)
+    const foreignAskElement = {
+      [TYPE]: ForeignAskConfirm,
+      [PROPS]: { name: 'includeCode', label: 'Include code?', silent: true },
+      [CHILDREN]: [],
+    };
+
+    const element = jsx(Fragment, {
+      children: [
+        foreignAskElement,
+        jsx(If, { when: '=includeCode', children: 'TRUTHY_BRANCH' }),
+        jsx(If, { when: '=NOT(includeCode)', children: 'FALSY_BRANCH' }),
+      ],
+    });
+
+    const result = await render(element, { inputs: new Map() });
+    // The foreign AskConfirm's implicitDefault (false) should be seeded,
+    // so the NOT(includeCode) branch should render.
+    expect(result.text).toContain('FALSY_BRANCH');
+    expect(result.text).not.toContain('TRUTHY_BRANCH');
+  });
+
+  it('element symbols (TYPE, PROPS, CHILDREN) should be global registry symbols', () => {
+    // These symbols must use Symbol.for() so elements created by one copy
+    // of pupt-lib can be processed by another copy.
+    expect(TYPE).toBe(Symbol.for('pupt.type'));
+    expect(PROPS).toBe(Symbol.for('pupt.props'));
+    expect(CHILDREN).toBe(Symbol.for('pupt.children'));
   });
 });
