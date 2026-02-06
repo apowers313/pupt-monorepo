@@ -31,7 +31,7 @@ export const OutputCaptureConfigSchema = z.object({
 // ============================================================================
 
 /** LLM configuration schema */
-export const LlmConfigSchema = z.object({
+const LlmConfigSchema = z.object({
   model: z.string().optional(),
   provider: z.string().optional(),
   maxTokens: z.number().positive().optional(),
@@ -39,25 +39,25 @@ export const LlmConfigSchema = z.object({
 });
 
 /** Output formatting configuration schema */
-export const OutputConfigSchema = z.object({
+const OutputConfigSchema = z.object({
   format: z.enum(['xml', 'markdown', 'json', 'text', 'unspecified']).optional(),
   trim: z.boolean().optional(),
   indent: z.string().optional(),
 });
 
 /** Code-related configuration schema */
-export const CodeConfigSchema = z.object({
+const CodeConfigSchema = z.object({
   language: z.string().optional(),
   highlight: z.boolean().optional(),
 });
 
 /** User context configuration schema */
-export const UserContextConfigSchema = z.object({
+const UserContextConfigSchema = z.object({
   editor: z.string().optional(),
 });
 
 /** Full environment configuration schema */
-export const EnvironmentConfigSchema = z.object({
+const EnvironmentConfigSchema = z.object({
   llm: LlmConfigSchema.optional(),
   output: OutputConfigSchema.optional(),
   code: CodeConfigSchema.optional(),

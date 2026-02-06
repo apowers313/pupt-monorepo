@@ -19,7 +19,6 @@
   "ignoreDependencies": [
     "@semantic-release/*",
     "@commitlint/config-conventional",
-    "gray-matter",
     "pino-pretty",
     "yaml"
   ],
