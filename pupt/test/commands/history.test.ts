@@ -696,6 +696,357 @@ describe('History Command', () => {
     });
   });
 
+  describe('--result option', () => {
+    it('should display entry with output file content', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: { name: 'Test' },
+        finalPrompt: 'Final prompt text',
+        title: 'Result Test',
+        filename: '20240115-abc.json',
+        execution: {
+          output_file: 'outputs/result.txt'
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      // Mock fs.readFile for the output file
+      const fsMock = await import('fs-extra');
+      vi.spyOn(fsMock.default, 'readFile').mockResolvedValue('Command output here' as any);
+
+      await historyCommand({ result: 5 });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.bold('\nHistory Entry #5:'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.cyan('\nCommand Output:'));
+      expect(loggerSpy).toHaveBeenCalledWith('Command output here');
+
+      vi.mocked(fsMock.default.readFile).mockRestore();
+    });
+
+    it('should show error for non-existent result entry', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(null),
+        getTotalCount: vi.fn().mockResolvedValue(5)
+      } as any));
+
+      await historyCommand({ result: 99 });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.red('History entry 99 not found'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.dim('Available entries: 1-5'));
+    });
+
+    it('should show message when no output file exists', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'No Output',
+        filename: '20240115-abc.json'
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      await historyCommand({ result: 3 });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.dim('\nNo output file associated with this entry'));
+    });
+
+    it('should handle output file read errors gracefully', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'Bad Output',
+        filename: '20240115-abc.json',
+        execution: {
+          output_file: 'outputs/missing.txt'
+        }
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      const fsMock = await import('fs-extra');
+      vi.spyOn(fsMock.default, 'readFile').mockRejectedValue(new Error('ENOENT'));
+
+      await historyCommand({ result: 3 });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.yellow('\nOutput file not found or inaccessible'));
+
+      vi.mocked(fsMock.default.readFile).mockRestore();
+    });
+
+    it('should show result entry with empty totalCount', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(null),
+        getTotalCount: vi.fn().mockResolvedValue(0)
+      } as any));
+
+      await historyCommand({ result: 1 });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.red('History entry 1 not found'));
+      // Should not show available entries when totalCount is 0
+      expect(loggerSpy).not.toHaveBeenCalledWith(expect.stringContaining('Available entries'));
+    });
+  });
+
+  describe('--entry with annotations', () => {
+    it('should display JSON annotations when requested', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'Annotated',
+        filename: '20240115-abc.json'
+      };
+
+      const jsonAnnotation = JSON.stringify({
+        status: 'success',
+        timestamp: '2024-01-15T11:00:00.000Z',
+        tags: ['test', 'review'],
+        notes: 'Everything worked well',
+        issues_identified: [
+          { severity: 'warning', category: 'performance', description: 'Slow query' }
+        ],
+        structured_outcome: {
+          tasks_completed: 3,
+          tasks_total: 5,
+          tests_run: 10,
+          tests_passed: 9,
+          execution_time: '45s'
+        }
+      });
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getAnnotationsForHistoryEntry: vi.fn().mockResolvedValue([jsonAnnotation]),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      await historyCommand({ entry: 1, annotations: true });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.cyan('\nAnnotations:'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Status: success'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Tags: test, review'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Everything worked well'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Slow query'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Tasks: 3/5'));
+      expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('Tests: 9/10 passed'));
+    });
+
+    it('should display legacy markdown annotations', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'Legacy',
+        filename: '20240115-abc.json'
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getAnnotationsForHistoryEntry: vi.fn().mockResolvedValue(['This is raw markdown annotation content']),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      await historyCommand({ entry: 1, annotations: true });
+
+      expect(loggerSpy).toHaveBeenCalledWith('This is raw markdown annotation content');
+    });
+
+    it('should show no annotations message when none exist', async () => {
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'No Annot',
+        filename: '20240115-abc.json'
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getAnnotationsForHistoryEntry: vi.fn().mockResolvedValue([]),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      await historyCommand({ entry: 1, annotations: true });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.dim('\nNo annotations found for this entry'));
+    });
+
+    it('should display multiple annotations with separators', async () => {
+      const annotation1 = JSON.stringify({ status: 'success', timestamp: '2024-01-15T11:00:00Z' });
+      const annotation2 = JSON.stringify({ status: 'failure', timestamp: '2024-01-15T12:00:00Z' });
+
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Prompt',
+        title: 'Multi Annot',
+        filename: '20240115-abc.json'
+      };
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getAnnotationsForHistoryEntry: vi.fn().mockResolvedValue([annotation1, annotation2]),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      await historyCommand({ entry: 1, annotations: true });
+
+      // Should show separator between annotations
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.gray('\n' + '-'.repeat(40) + '\n'));
+    });
+  });
+
+  describe('directory filtering', () => {
+    it('should filter by user-specified directory', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      const mockListHistory = vi.fn().mockResolvedValue([]);
+      const mockGetTotalCount = vi.fn().mockResolvedValue(0);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: mockListHistory,
+        getTotalCount: mockGetTotalCount
+      } as any));
+
+      await historyCommand({ dir: '/custom/git/dir' });
+
+      expect(mockGetTotalCount).toHaveBeenCalledWith(
+        expect.objectContaining({ gitDir: '/custom/git/dir', includeLegacy: false })
+      );
+    });
+
+    it('should show filtered empty message with directory info', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([]),
+        getTotalCount: vi.fn().mockResolvedValue(0)
+      } as any));
+
+      await historyCommand({ dir: '/my/project' });
+
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.yellow('📋 No history found for this directory'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.dim('\nFiltering by: /my/project'));
+    });
+
+    it('should filter by current git directory by default', async () => {
+      vi.mocked(gitInfo.getGitInfo).mockResolvedValue({ gitDir: '/default/git' });
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      const mockGetTotalCount = vi.fn().mockResolvedValue(0);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([]),
+        getTotalCount: mockGetTotalCount
+      } as any));
+
+      await historyCommand({});
+
+      expect(mockGetTotalCount).toHaveBeenCalledWith(
+        expect.objectContaining({ gitDir: '/default/git', includeLegacy: true })
+      );
+    });
+
+    it('should filter by cwd when no git directory is found', async () => {
+      vi.mocked(gitInfo.getGitInfo).mockResolvedValue({});
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+
+      const mockGetTotalCount = vi.fn().mockResolvedValue(0);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue([]),
+        getTotalCount: mockGetTotalCount
+      } as any));
+
+      await historyCommand({});
+
+      expect(mockGetTotalCount).toHaveBeenCalledWith(
+        expect.objectContaining({ workingDir: process.cwd(), includeLegacy: true })
+      );
+    });
+  });
+
   describe('formatting helpers', () => {
     it('should format dates correctly', async () => {
       const entries = [{
@@ -753,6 +1104,168 @@ describe('History Command', () => {
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('1.'));
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('2.'));
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('3.'));
+    });
+
+    it('should handle boolean variable values', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Bool Test',
+        templateContent: 'test',
+        variables: { verbose: true, dryRun: false }
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      const hasBoolean = calls.some((call: string) =>
+        call.includes('verbose: true') && call.includes('dryRun: false')
+      );
+      expect(hasBoolean).toBe(true);
+    });
+
+    it('should handle number variable values', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Num Test',
+        templateContent: 'test',
+        variables: { count: 42 }
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      const hasNumber = calls.some((call: string) => call.includes('count: 42'));
+      expect(hasNumber).toBe(true);
+    });
+
+    it('should handle array variable values', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Array Test',
+        templateContent: 'test',
+        variables: { tags: ['a', 'b', 'c'] }
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      const hasArray = calls.some((call: string) => call.includes('tags: [3 items]'));
+      expect(hasArray).toBe(true);
+    });
+
+    it('should handle object variable values', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Object Test',
+        templateContent: 'test',
+        variables: { config: { nested: true } }
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      const hasObject = calls.some((call: string) => call.includes('config: {...}'));
+      expect(hasObject).toBe(true);
+    });
+
+    it('should skip masked and empty variable values', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Masked Test',
+        templateContent: 'test',
+        variables: { visible: 'shown', masked: '***', empty: '', nil: null, undef: undefined }
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      const summaryLine = calls.find((call: string) => call.includes('visible: "shown"'));
+      expect(summaryLine).toBeDefined();
+      // Should not show masked/empty values
+      expect(calls.some((call: string) => call.includes('masked'))).toBe(false);
+    });
+
+    it('should process summary template with variables', async () => {
+      const entries = [{
+        timestamp: '2024-01-16T14:30:00.000Z',
+        templatePath: '/test.md',
+        finalPrompt: 'Test',
+        title: 'Summary Test',
+        summary: 'Process {{name}} for {{task}}',
+        templateContent: 'test',
+        variables: {} // No variables, so summary should be used
+      }];
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        historyDir: './.pthistory'
+      } as any);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: vi.fn().mockResolvedValue(entries),
+        getTotalCount: vi.fn().mockResolvedValue(1)
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      const calls = loggerSpy.mock.calls.map((call: any) => call[0]);
+      // Template vars not found should remain as-is
+      const hasSummary = calls.some((call: string) => call.includes('Process {{name}} for {{task}}'));
+      expect(hasSummary).toBe(true);
     });
 
     it('should maintain consistent numbering with limited entries', async () => {

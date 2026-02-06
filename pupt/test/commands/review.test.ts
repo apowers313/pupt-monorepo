@@ -292,6 +292,200 @@ describe('Review Command', () => {
     });
   });
 
+  describe('markdown report with annotations and patterns', () => {
+    it('should include user annotations in markdown report', async () => {
+      const mockReviewData: ReviewData = {
+        metadata: {
+          analysis_period: '30d',
+          total_prompts: 1,
+          total_executions: 3,
+          data_completeness: {
+            with_annotations: 100,
+            with_output_capture: 0,
+            with_environment_data: 0
+          }
+        },
+        prompts: [{
+          name: 'annotated-prompt',
+          path: 'prompts/annotated.md',
+          content: '# Annotated',
+          last_modified: '2025-08-16T10:00:00Z',
+          usage_statistics: {
+            total_runs: 3,
+            annotated_runs: 3,
+            success_rate: 0.66,
+            avg_duration: '2m',
+            last_used: '2025-08-16T15:00:00Z'
+          },
+          execution_outcomes: {
+            success: 2,
+            partial: 1,
+            failure: 0
+          },
+          environment_correlations: {},
+          captured_outputs: [],
+          user_annotations: [
+            {
+              timestamp: '2025-08-16T15:00:00Z',
+              status: 'success',
+              notes: 'Worked great, no issues found'
+            },
+            {
+              timestamp: '2025-08-16T12:00:00Z',
+              status: 'partial',
+              notes: 'Some tests failed but overall structure was good'
+            },
+            {
+              timestamp: '2025-08-16T10:00:00Z',
+              status: 'failure',
+              notes: null
+            }
+          ],
+          detected_patterns: [
+            {
+              pattern_type: 'verification_gap',
+              severity: 'medium',
+              frequency: 2,
+              description: 'Tests not verified'
+            }
+          ]
+        }],
+        cross_prompt_patterns: [
+          {
+            pattern: 'inconsistent_testing',
+            affected_prompts: ['annotated-prompt', 'other-prompt'],
+            total_occurrences: 5,
+            impact_assessment: 'Medium impact on reliability'
+          }
+        ]
+      };
+
+      mockReviewDataBuilder.buildReviewData.mockResolvedValue(mockReviewData);
+
+      await reviewCommand(undefined, { format: 'markdown' });
+
+      const output = loggerLogSpy.mock.calls.map((call: any[]) => call[0]).join('\n');
+
+      // Should include annotations section
+      expect(output).toContain('Recent Annotations');
+      expect(output).toContain('Worked great, no issues found');
+
+      // Should include detected patterns
+      expect(output).toContain('Detected Patterns');
+      expect(output).toContain('verification_gap');
+      expect(output).toContain('medium');
+
+      // Should include cross-prompt patterns
+      expect(output).toContain('Cross-Prompt Patterns');
+      expect(output).toContain('inconsistent_testing');
+      expect(output).toContain('Medium impact on reliability');
+    });
+
+    it('should truncate long annotation notes', async () => {
+      const longNote = 'A'.repeat(150);
+      const mockReviewData: ReviewData = {
+        metadata: {
+          analysis_period: '30d',
+          total_prompts: 1,
+          total_executions: 1,
+          data_completeness: {
+            with_annotations: 100,
+            with_output_capture: 0,
+            with_environment_data: 0
+          }
+        },
+        prompts: [{
+          name: 'long-notes',
+          path: 'prompts/long.md',
+          content: '# Long',
+          last_modified: '2025-08-16T10:00:00Z',
+          usage_statistics: {
+            total_runs: 1,
+            annotated_runs: 1,
+            success_rate: 1,
+            avg_duration: '1m',
+            last_used: '2025-08-16T15:00:00Z'
+          },
+          execution_outcomes: { success: 1, partial: 0, failure: 0 },
+          environment_correlations: {},
+          captured_outputs: [],
+          user_annotations: [{
+            timestamp: '2025-08-16T15:00:00Z',
+            status: 'success',
+            notes: longNote
+          }],
+          detected_patterns: []
+        }],
+        cross_prompt_patterns: []
+      };
+
+      mockReviewDataBuilder.buildReviewData.mockResolvedValue(mockReviewData);
+
+      await reviewCommand(undefined, { format: 'markdown' });
+
+      const output = loggerLogSpy.mock.calls.map((call: any[]) => call[0]).join('\n');
+      // Should truncate to 100 chars + '...'
+      expect(output).toContain('...');
+      expect(output).not.toContain(longNote);
+    });
+
+    it('should write JSON to file when --output is specified', async () => {
+      const mockReviewData: ReviewData = {
+        metadata: {
+          analysis_period: '30d',
+          total_prompts: 0,
+          total_executions: 0,
+          data_completeness: { with_annotations: 0, with_output_capture: 0, with_environment_data: 0 }
+        },
+        prompts: [],
+        cross_prompt_patterns: []
+      };
+
+      mockReviewDataBuilder.buildReviewData.mockResolvedValue(mockReviewData);
+
+      const fsMock = await import('fs-extra');
+      const writeFileSpy = vi.spyOn(fsMock.default, 'writeFile').mockResolvedValue();
+
+      await reviewCommand(undefined, { format: 'json', output: '/tmp/review.json' });
+
+      expect(writeFileSpy).toHaveBeenCalledWith(
+        '/tmp/review.json',
+        JSON.stringify(mockReviewData, null, 2)
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Review data written to'));
+
+      writeFileSpy.mockRestore();
+    });
+
+    it('should write markdown to file when --output is specified without format', async () => {
+      const mockReviewData: ReviewData = {
+        metadata: {
+          analysis_period: '30d',
+          total_prompts: 0,
+          total_executions: 0,
+          data_completeness: { with_annotations: 0, with_output_capture: 0, with_environment_data: 0 }
+        },
+        prompts: [],
+        cross_prompt_patterns: []
+      };
+
+      mockReviewDataBuilder.buildReviewData.mockResolvedValue(mockReviewData);
+
+      const fsMock = await import('fs-extra');
+      const writeFileSpy = vi.spyOn(fsMock.default, 'writeFile').mockResolvedValue();
+
+      await reviewCommand(undefined, { output: '/tmp/review.md' });
+
+      expect(writeFileSpy).toHaveBeenCalledWith(
+        '/tmp/review.md',
+        expect.stringContaining('# Prompt Review Report')
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('Review report written to'));
+
+      writeFileSpy.mockRestore();
+    });
+  });
+
   describe('error handling', () => {
     let processExitSpy: any;
 
@@ -362,6 +556,30 @@ describe('Review Command', () => {
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Error generating review:')
+      );
+    });
+
+    it('should show time filter hint when --since is used and error occurs', async () => {
+      mockReviewDataBuilder.buildReviewData.mockRejectedValue(
+        new Error('Invalid time format')
+      );
+
+      await expect(reviewCommand(undefined, { since: 'invalid' })).rejects.toThrow('process.exit called');
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Check that the time filter format is correct')
+      );
+    });
+
+    it('should show prompt name hint when promptName is specified and error occurs', async () => {
+      mockReviewDataBuilder.buildReviewData.mockRejectedValue(
+        new Error('Prompt not found')
+      );
+
+      await expect(reviewCommand('nonexistent', {})).rejects.toThrow('process.exit called');
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Verify that the prompt name exists')
       );
     });
   });

@@ -297,6 +297,163 @@ version: "2.0.0"
     });
   });
 
+  describe('checkForOldConfigFiles', () => {
+    it('should find old .ptrc config files', async () => {
+      await fs.writeFile(path.join(testDir, '.ptrc'), '{}');
+      await fs.writeFile(path.join(testDir, '.ptrc.json'), '{}');
+
+      const found = await ConfigManager.checkForOldConfigFiles(testDir);
+
+      expect(found).toHaveLength(2);
+      expect(found).toContain(path.join(testDir, '.ptrc'));
+      expect(found).toContain(path.join(testDir, '.ptrc.json'));
+    });
+
+    it('should return empty array when no old config files exist', async () => {
+      const found = await ConfigManager.checkForOldConfigFiles(testDir);
+      expect(found).toHaveLength(0);
+    });
+
+    it('should check all old patterns', async () => {
+      const patterns = ['.ptrc', '.ptrc.json', '.ptrc.yaml', '.ptrc.yml', '.ptrc.js', '.ptrc.cjs'];
+      for (const p of patterns) {
+        await fs.writeFile(path.join(testDir, p), '{}');
+      }
+
+      const found = await ConfigManager.checkForOldConfigFiles(testDir);
+      expect(found).toHaveLength(6);
+    });
+  });
+
+  describe('renameOldConfigFile', () => {
+    it('should rename .ptrc to .pt-config', async () => {
+      const oldPath = path.join(testDir, '.ptrc');
+      await fs.writeFile(oldPath, '{}');
+
+      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
+
+      expect(newPath).toBe(path.join(testDir, '.pt-config'));
+      expect(await fs.pathExists(newPath)).toBe(true);
+      expect(await fs.pathExists(oldPath)).toBe(false);
+    });
+
+    it('should rename .ptrc.json to .pt-config.json', async () => {
+      const oldPath = path.join(testDir, '.ptrc.json');
+      await fs.writeFile(oldPath, '{}');
+
+      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
+
+      expect(newPath).toBe(path.join(testDir, '.pt-config.json'));
+      expect(await fs.pathExists(newPath)).toBe(true);
+    });
+
+    it('should rename .ptrc.yaml to .pt-config.yaml', async () => {
+      const oldPath = path.join(testDir, '.ptrc.yaml');
+      await fs.writeFile(oldPath, 'version: "1.0.0"');
+
+      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
+      expect(newPath).toBe(path.join(testDir, '.pt-config.yaml'));
+    });
+
+    it('should throw error for unknown config pattern', async () => {
+      const unknownPath = path.join(testDir, '.ptrc.toml');
+      await expect(ConfigManager.renameOldConfigFile(unknownPath)).rejects.toThrow(
+        'Unknown config file pattern: .ptrc.toml'
+      );
+    });
+
+    it('should throw error when destination file already exists', async () => {
+      const oldPath = path.join(testDir, '.ptrc.json');
+      const newPath = path.join(testDir, '.pt-config.json');
+      await fs.writeFile(oldPath, '{}');
+      await fs.writeFile(newPath, '{}');
+
+      await expect(ConfigManager.renameOldConfigFile(oldPath)).rejects.toThrow(
+        'Cannot rename .ptrc.json to .pt-config.json: destination file already exists'
+      );
+    });
+  });
+
+  describe('contractPaths', () => {
+    it('should contract home directory paths to ~/', () => {
+      const config = {
+        promptDirs: [path.join(os.homedir(), 'prompts')],
+        historyDir: path.join(os.homedir(), '.pt/history'),
+      };
+
+      const contracted = ConfigManager.contractPaths(config as any, testDir);
+
+      expect(contracted.promptDirs[0]).toMatch(/^~\//);
+      expect(contracted.historyDir).toMatch(/^~\//);
+    });
+
+    it('should contract annotation directory', () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        annotationDir: path.join(os.homedir(), '.pt/annotations'),
+      };
+
+      const contracted = ConfigManager.contractPaths(config as any, testDir);
+      expect(contracted.annotationDir).toMatch(/^~\//);
+    });
+
+    it('should contract git prompt directory', () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        gitPromptDir: path.join(os.homedir(), '.git-prompts'),
+      };
+
+      const contracted = ConfigManager.contractPaths(config as any, testDir);
+      expect(contracted.gitPromptDir).toMatch(/^~\//);
+    });
+
+    it('should contract helper paths', () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        helpers: {
+          myHelper: {
+            type: 'file',
+            path: path.join(os.homedir(), 'helpers/custom.js'),
+          },
+          inlineHelper: {
+            type: 'inline',
+            value: 'return 42',
+          },
+        },
+      };
+
+      const contracted = ConfigManager.contractPaths(config as any, testDir);
+      expect(contracted.helpers?.myHelper.path).toMatch(/^~\//);
+      // Inline helper should not change
+      expect(contracted.helpers?.inlineHelper.value).toBe('return 42');
+    });
+
+    it('should contract output capture directory', () => {
+      const config = {
+        promptDirs: ['./prompts'],
+        outputCapture: {
+          enabled: true,
+          directory: path.join(os.homedir(), '.pt-output'),
+        },
+      };
+
+      const contracted = ConfigManager.contractPaths(config as any, testDir);
+      expect(contracted.outputCapture?.directory).toMatch(/^~\//);
+    });
+  });
+
+  describe('validation errors', () => {
+    it('should throw validation error for invalid config values', async () => {
+      // Write a config with an invalid value
+      await fs.writeJson('.pt-config.json', {
+        promptDirs: 'not-an-array', // Should be array
+        version: '3.0.0'
+      });
+
+      await expect(ConfigManager.load()).rejects.toThrow();
+    });
+  });
+
   describe('${projectRoot} variable expansion', () => {
     it('should expand ${projectRoot} in historyDir', async () => {
       // Create package.json as project marker

@@ -2,11 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import fs from 'fs-extra';
 import * as path from 'path';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('fs-extra');
 
 vi.mock('../../src/utils/platform.js', () => ({
   getUsername: vi.fn().mockReturnValue('testuser'),
+}));
+
+vi.mock('uuid', () => ({ v4: () => 'test-uuid-1234' }));
+
+vi.mock('../../src/utils/logger.js', () => ({
+  logger: { log: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }
 }));
 
 // Mock crypto.randomBytes
@@ -582,6 +589,497 @@ describe('HistoryManager', () => {
       const count = await manager.getTotalCount({
         gitDir: '/home/user/non-existent/.git'
       });
+      expect(count).toBe(0);
+    });
+  });
+
+  describe('savePrompt with filenameComponents', () => {
+    it('should use provided filenameComponents instead of generating new ones', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        filenameComponents: {
+          dateStr: '20240220',
+          timeStr: '143000',
+          randomSuffix: 'deadbeef',
+        },
+      };
+
+      const filename = await manager.savePrompt(options);
+
+      expect(filename).toBe('20240220-143000-deadbeef.json');
+      expect(vi.mocked(fs.writeJson)).toHaveBeenCalledWith(
+        path.join(testHistoryDir, '20240220-143000-deadbeef.json'),
+        expect.any(Object),
+        { spaces: 2 }
+      );
+    });
+  });
+
+  describe('savePrompt with execution metadata', () => {
+    it('should add execution object when outputFile is provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        outputFile: '/path/to/history/outputs/output.json',
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.execution).toBeDefined();
+      expect(entry.execution.output_file).toBe('outputs/output.json');
+    });
+
+    it('should add execution object when executionTime is provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        executionTime: 5000,
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.execution).toBeDefined();
+      expect(entry.execution.duration_ms).toBe(5000);
+    });
+
+    it('should add execution object when exitCode is provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        exitCode: 0,
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.execution).toBeDefined();
+      expect(entry.execution.exit_code).toBe(0);
+    });
+
+    it('should include all execution fields when all are provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        outputFile: '/path/to/history/outputs/output.json',
+        outputSize: 2048,
+        executionTime: 12345,
+        exitCode: 1,
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.execution).toEqual({
+        output_file: 'outputs/output.json',
+        output_size: 2048,
+        duration_ms: 12345,
+        exit_code: 1,
+      });
+    });
+
+    it('should not add execution object when none of the execution fields are provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.execution).toBeUndefined();
+    });
+  });
+
+  describe('savePrompt with rerunFrom', () => {
+    it('should add rerun field when rerunFrom is provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+        rerunFrom: '20240110-090000-abcd1234.json',
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.rerun).toBe('20240110-090000-abcd1234.json');
+    });
+
+    it('should not add rerun field when rerunFrom is not provided', async () => {
+      const options = {
+        templatePath: '/templates/test.md',
+        templateContent: 'Test prompt',
+        variables: new Map<string, unknown>(),
+        finalPrompt: 'Test prompt content',
+        title: 'Test',
+      };
+
+      await manager.savePrompt(options);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const entry = writeCall[1] as any;
+
+      expect(entry.rerun).toBeUndefined();
+    });
+  });
+
+  describe('getAnnotationsForHistoryEntry', () => {
+    const testAnnotationDir = '/path/to/annotations';
+    let annotationManager: HistoryManager;
+
+    beforeEach(() => {
+      annotationManager = new HistoryManager(testHistoryDir, testAnnotationDir);
+    });
+
+    it('should return annotations matching a history entry filename', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const mockAnnotationFiles = [
+        '20240115-100000-abc12345-annotation-uuid1.md',
+        '20240115-100000-abc12345-annotation-uuid2.json',
+        '20240116-100000-def12345-annotation-uuid3.json', // different entry
+        'unrelated-file.txt',
+      ];
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockResolvedValue(mockAnnotationFiles as any);
+      vi.mocked(fs.readFile).mockImplementation(async (filePath: any) => {
+        const filename = path.basename(filePath as string);
+        if (filename === '20240115-100000-abc12345-annotation-uuid1.md') {
+          return 'Annotation content 1';
+        } else if (filename === '20240115-100000-abc12345-annotation-uuid2.json') {
+          return '{"status":"success"}';
+        }
+        throw new Error('File not found');
+      });
+
+      const annotations = await annotationManager.getAnnotationsForHistoryEntry(historyEntry);
+
+      expect(annotations).toHaveLength(2);
+      expect(annotations[0]).toBe('Annotation content 1');
+      expect(annotations[1]).toBe('{"status":"success"}');
+    });
+
+    it('should return empty array when no annotationDir is configured', async () => {
+      const managerWithoutAnnotations = new HistoryManager(testHistoryDir);
+
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const annotations = await managerWithoutAnnotations.getAnnotationsForHistoryEntry(historyEntry);
+
+      expect(annotations).toEqual([]);
+      expect(vi.mocked(fs.readdir)).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when readdir throws ENOENT', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+
+      const annotations = await annotationManager.getAnnotationsForHistoryEntry(historyEntry);
+
+      expect(annotations).toEqual([]);
+    });
+
+    it('should return empty array when no annotation files match', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockResolvedValue([
+        '20240116-100000-def12345-annotation-uuid1.json',
+        'unrelated-file.txt',
+      ] as any);
+
+      const annotations = await annotationManager.getAnnotationsForHistoryEntry(historyEntry);
+
+      expect(annotations).toEqual([]);
+    });
+
+    it('should match both .md and .json annotation files', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const mockAnnotationFiles = [
+        '20240115-100000-abc12345-annotation-uuid1.md',
+        '20240115-100000-abc12345-annotation-uuid2.json',
+        '20240115-100000-abc12345-annotation-uuid3.yaml', // should be excluded
+      ];
+
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockResolvedValue(mockAnnotationFiles as any);
+      vi.mocked(fs.readFile).mockResolvedValue('annotation content' as any);
+
+      const annotations = await annotationManager.getAnnotationsForHistoryEntry(historyEntry);
+
+      // Only .md and .json should match, not .yaml
+      expect(annotations).toHaveLength(2);
+    });
+  });
+
+  describe('saveAnnotation', () => {
+    const testAnnotationDir = '/path/to/annotations';
+    let annotationManager: HistoryManager;
+
+    beforeEach(() => {
+      annotationManager = new HistoryManager(testHistoryDir, testAnnotationDir);
+    });
+
+    it('should save annotation JSON file to annotationDir', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const metadata = {
+        historyFile: '20240115-100000-abc12345.json',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'success' as const,
+        tags: ['build', 'test'],
+        auto_detected: true,
+      };
+
+      await annotationManager.saveAnnotation(historyEntry, metadata, 'Build passed');
+
+      expect(vi.mocked(fs.ensureDir)).toHaveBeenCalledWith(testAnnotationDir);
+      expect(vi.mocked(fs.writeJson)).toHaveBeenCalledWith(
+        path.join(testAnnotationDir, '20240115-100000-abc12345-annotation-test-uuid-1234.json'),
+        {
+          historyFile: '20240115-100000-abc12345.json',
+          timestamp: '2024-01-15T10:30:00.000Z',
+          status: 'success',
+          tags: ['build', 'test'],
+          auto_detected: true,
+          notes: 'Build passed',
+        },
+        { spaces: 2 }
+      );
+    });
+
+    it('should warn and return when no annotationDir is configured', async () => {
+      const managerWithoutAnnotations = new HistoryManager(testHistoryDir);
+
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const metadata = {
+        historyFile: '20240115-100000-abc12345.json',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'success' as const,
+        tags: [],
+      };
+
+      await managerWithoutAnnotations.saveAnnotation(historyEntry, metadata);
+
+      expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+        'Annotation directory not configured, skipping annotation save'
+      );
+      expect(vi.mocked(fs.writeJson)).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to timestamp-based filename when entry has no filename', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '', // empty filename
+      };
+
+      const metadata = {
+        historyFile: '',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'success' as const,
+        tags: [],
+      };
+
+      await annotationManager.saveAnnotation(historyEntry, metadata);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const filePath = writeCall[0] as string;
+      // When filename is empty (falsy), falls back to `${historyEntry.timestamp}.json`
+      // path.basename('2024-01-15T10:00:00.000Z.json', '.json') = '2024-01-15T10:00:00.000Z'
+      expect(filePath).toBe(
+        path.join(testAnnotationDir, '2024-01-15T10:00:00.000Z-annotation-test-uuid-1234.json')
+      );
+    });
+
+    it('should throw on write errors', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const metadata = {
+        historyFile: '20240115-100000-abc12345.json',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'failure' as const,
+        tags: [],
+      };
+
+      vi.mocked(fs.writeJson).mockRejectedValue(new Error('Disk full'));
+
+      await expect(annotationManager.saveAnnotation(historyEntry, metadata)).rejects.toThrow('Disk full');
+
+      expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to save annotation')
+      );
+    });
+
+    it('should use auto-generated notes when auto_detected is true and no notes provided', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const metadata = {
+        historyFile: '20240115-100000-abc12345.json',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'success' as const,
+        tags: [],
+        auto_detected: true,
+      };
+
+      await annotationManager.saveAnnotation(historyEntry, metadata);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const data = writeCall[1] as any;
+
+      expect(data.notes).toBe('Auto-generated annotation');
+    });
+
+    it('should use empty string for notes when not auto_detected and no notes provided', async () => {
+      const historyEntry = {
+        timestamp: '2024-01-15T10:00:00.000Z',
+        templatePath: '/templates/test.md',
+        templateContent: 'Test',
+        variables: {},
+        finalPrompt: 'Test prompt',
+        title: 'Test',
+        filename: '20240115-100000-abc12345.json',
+      };
+
+      const metadata = {
+        historyFile: '20240115-100000-abc12345.json',
+        timestamp: '2024-01-15T10:30:00.000Z',
+        status: 'success' as const,
+        tags: [],
+      };
+
+      await annotationManager.saveAnnotation(historyEntry, metadata);
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const data = writeCall[1] as any;
+
+      expect(data.notes).toBe('');
+    });
+  });
+
+  describe('getTotalCount ENOENT without filter', () => {
+    it('should return 0 when readdir throws ENOENT without filter', async () => {
+      vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
+      vi.mocked(fs.readdir).mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+
+      const count = await manager.getTotalCount();
+
       expect(count).toBe(0);
     });
   });

@@ -5,11 +5,16 @@ import path from 'path';
 import os from 'os';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { calculateActiveExecutionTime, extractUserInputLines } from '../../src/services/output-capture-service.js';
 
 const execAsync = promisify(exec);
 
 vi.mock('fs-extra');
 vi.mock('child_process');
+vi.mock('../../src/services/output-capture-service.js', () => ({
+  calculateActiveExecutionTime: vi.fn(),
+  extractUserInputLines: vi.fn(),
+}));
 
 describe('Enhanced History', () => {
   let historyDir: string;
@@ -163,5 +168,239 @@ describe('Enhanced History', () => {
     expect(historyEntry.environment.working_directory).toBe(process.cwd());
     expect(historyEntry.environment.node_version).toBe(process.version);
     expect(historyEntry.environment.os).toBe(process.platform);
+  });
+
+  describe('empty prompt handling', () => {
+    it('should return empty string without saving when finalPrompt is empty', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const result = await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: ''
+      });
+
+      expect(result).toBe('');
+      expect(fs.writeJson).not.toHaveBeenCalled();
+    });
+
+    it('should return empty string without saving when finalPrompt is whitespace only', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const result = await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: '   \n\t  '
+      });
+
+      expect(result).toBe('');
+      expect(fs.writeJson).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('savePrompt with executionTime but no JSON output file', () => {
+    it('should use executionTime as duration when no JSON outputFile is provided', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:30Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        executionTime: 5000
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution).toBeDefined();
+      expect(historyEntry.execution.duration).toBe('5000ms');
+    });
+
+    it('should use executionTime as duration when outputFile is not a JSON file', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:30Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        executionTime: 7500,
+        outputFile: '/tmp/output.txt'
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution.duration).toBe('7500ms');
+      expect(historyEntry.execution.output_file).toBe('/tmp/output.txt');
+    });
+  });
+
+  describe('savePrompt with JSON output file', () => {
+    it('should calculate active execution time and user input count from JSON file', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      vi.mocked(calculateActiveExecutionTime).mockResolvedValue(2_500_000_000n); // 2500ms in nanoseconds
+      vi.mocked(extractUserInputLines).mockResolvedValue(['yes', 'input1', 'input2']);
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:30Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        outputFile: '/tmp/output.json'
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(calculateActiveExecutionTime).toHaveBeenCalledWith('/tmp/output.json');
+      expect(extractUserInputLines).toHaveBeenCalledWith('/tmp/output.json');
+      expect(historyEntry.execution.active_time).toBe('2500ms');
+      expect(historyEntry.execution.user_input_count).toBe(3);
+      // duration should be computed from startTime/endTime, not overridden
+      expect(historyEntry.execution.duration).toBe('30s');
+    });
+
+    it('should fall back to executionTime when active time calculation fails', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      vi.mocked(calculateActiveExecutionTime).mockRejectedValue(new Error('File not found'));
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:30Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        executionTime: 4000,
+        outputFile: '/tmp/output.json'
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution.active_time).toBe('4000ms');
+      // duration stays as computed from startTime/endTime
+      expect(historyEntry.execution.duration).toBe('30s');
+    });
+
+    it('should have no active_time when calculation fails and no executionTime provided', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      vi.mocked(calculateActiveExecutionTime).mockRejectedValue(new Error('File not found'));
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:30Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        outputFile: '/tmp/output.json'
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution.active_time).toBeUndefined();
+      expect(historyEntry.execution.user_input_count).toBeUndefined();
+    });
+  });
+
+  describe('savePrompt with outputFile and outputSize', () => {
+    it('should include output_file and output_size in execution data', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:10Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime,
+        outputFile: '/tmp/my-output.txt',
+        outputSize: 4096
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution.output_file).toBe('/tmp/my-output.txt');
+      expect(historyEntry.execution.output_size).toBe(4096);
+    });
+
+    it('should not include output_file when not provided', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+
+      const startTime = new Date('2025-08-16T10:00:00Z');
+      const endTime = new Date('2025-08-16T10:00:10Z');
+
+      await historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output',
+        startTime,
+        endTime
+      });
+
+      const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
+      const historyEntry = writeCall[1] as any;
+
+      expect(historyEntry.execution.output_file).toBeUndefined();
+      expect(historyEntry.execution.output_size).toBeUndefined();
+    });
+  });
+
+  describe('savePrompt error handling', () => {
+    it('should throw a wrapped error when fs.writeJson fails', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      vi.mocked(fs.writeJson).mockRejectedValue(new Error('EACCES: permission denied'));
+
+      await expect(historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output'
+      })).rejects.toThrow('Failed to save prompt to history: EACCES: permission denied');
+    });
+
+    it('should wrap non-Error throws in the error message', async () => {
+      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      vi.mocked(fs.writeJson).mockRejectedValue('disk full');
+
+      await expect(historyManager.savePrompt({
+        templatePath: 'test-prompt',
+        templateContent: 'Prompt content',
+        variables: new Map(),
+        finalPrompt: 'Generated output'
+      })).rejects.toThrow('Failed to save prompt to history: disk full');
+    });
   });
 });

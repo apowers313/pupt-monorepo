@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execSync, spawn } from 'node:child_process';
 import { input, select, confirm } from '@inquirer/prompts';
 import { logger } from '../../src/utils/logger.js';
+import { editorLauncher } from '../../src/utils/editor.js';
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
 vi.mock('node:child_process', () => ({
@@ -392,6 +393,205 @@ describe('Add Command', () => {
       vi.mocked(fs.writeFile).mockRejectedValue(accessError);
 
       await expect(addCommand()).rejects.toThrow('Permission denied');
+    });
+
+    it('should throw file not found error for non-EACCES write errors', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Test Prompt')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(confirm).mockResolvedValue(false);
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      const enoentError = new Error('ENOENT: no such file or directory') as NodeJS.ErrnoException;
+      enoentError.code = 'ENOENT';
+      vi.mocked(fs.writeFile).mockRejectedValue(enoentError);
+
+      await expect(addCommand()).rejects.toThrow('File not found');
+    });
+  });
+
+  describe('editor found and opens successfully', () => {
+    beforeEach(() => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Test Prompt')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    });
+
+    it('should call openInEditor when editor is found and user confirms', async () => {
+      vi.mocked(confirm).mockResolvedValue(true);
+      vi.mocked(editorLauncher.findEditor).mockResolvedValueOnce('code');
+
+      await addCommand();
+
+      expect(editorLauncher.findEditor).toHaveBeenCalled();
+      expect(editorLauncher.openInEditor).toHaveBeenCalledWith(
+        'code',
+        expect.stringContaining('test-prompt.prompt')
+      );
+    });
+  });
+
+  describe('editor failure handling', () => {
+    beforeEach(() => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Test Prompt')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    });
+
+    it('should log warning and file path when openInEditor throws', async () => {
+      vi.mocked(confirm).mockResolvedValue(true);
+      vi.mocked(editorLauncher.findEditor).mockResolvedValueOnce('code');
+      vi.mocked(editorLauncher.openInEditor).mockRejectedValueOnce(
+        new Error('Editor exited with code 1')
+      );
+
+      await addCommand();
+
+      expect(editorLauncher.openInEditor).toHaveBeenCalledWith(
+        'code',
+        expect.stringContaining('test-prompt.prompt')
+      );
+      // Should log the warning and manual open instructions instead of crashing
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to open editor')
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Open the file manually'),
+        expect.stringContaining('test-prompt.prompt')
+      );
+    });
+  });
+
+  describe('no editor found', () => {
+    beforeEach(() => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Test Prompt')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    });
+
+    it('should log no editor message and file path when no editor is found', async () => {
+      vi.mocked(confirm).mockResolvedValue(true);
+      // findEditor defaults to returning null from the module-level mock
+
+      await addCommand();
+
+      expect(editorLauncher.findEditor).toHaveBeenCalled();
+      expect(editorLauncher.openInEditor).not.toHaveBeenCalled();
+      // Should log the "no editor configured" message
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('No editor configured')
+      );
+      // Should log the manual file path
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Open the file manually'),
+        expect.stringContaining('test-prompt.prompt')
+      );
+    });
+  });
+
+  describe('single promptDir', () => {
+    it('should not call select when there is only one promptDir', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Single Dir Test')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(confirm).mockResolvedValue(false);
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      await addCommand();
+
+      expect(select).not.toHaveBeenCalled();
+      expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
+        expect.stringContaining(path.join('./.prompts', 'single-dir-test.prompt')),
+        expect.any(String)
+      );
+    });
+  });
+
+  describe('title with double quotes', () => {
+    it('should escape double quotes in the title', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Say "Hello" World')
+        .mockResolvedValueOnce(''); // tags
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(confirm).mockResolvedValue(false);
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      await addCommand();
+
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const content = writeCall[1] as string;
+      // Double quotes should be escaped in the JSX name attribute
+      expect(content).toContain('name="Say \\"Hello\\" World"');
+    });
+
+    it('should escape double quotes in tags', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts']
+      } as any);
+      vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
+        return Buffer.from('');
+      });
+      vi.mocked(input)
+        .mockResolvedValueOnce('Quote Tag Test')
+        .mockResolvedValueOnce('tag"one, tag"two'); // tags with quotes
+      vi.mocked(select).mockResolvedValue('./.prompts');
+      vi.mocked(confirm).mockResolvedValue(false);
+      vi.mocked(fs.pathExists).mockResolvedValue(false);
+      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+
+      await addCommand();
+
+      const writeCall = vi.mocked(fs.writeFile).mock.calls[0];
+      const content = writeCall[1] as string;
+      // Double quotes in tags should be escaped
+      expect(content).toContain('tags={["tag\\"one", "tag\\"two"]}');
     });
   });
 });
