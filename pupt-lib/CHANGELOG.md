@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/apowers313/pupt-lib/compare/v1.2.4...v1.2.5) (2026-02-06)
+
+
+### Bug Fixes
+
+* specify relationship between llm model and llm provider ([9da2d8a](https://github.com/apowers313/pupt-lib/commit/9da2d8a5760e1071a3fe3369914543312edb7fda))
+
 ## [1.2.4](https://github.com/apowers313/pupt-lib/compare/v1.2.3...v1.2.4) (2026-02-06)
 
 
