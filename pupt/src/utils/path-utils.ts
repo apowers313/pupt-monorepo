@@ -15,14 +15,22 @@ import { findProjectRoot } from './project-root.js';
 import { logger } from './logger.js';
 
 /**
- * Resolve symlinks in a path if it exists, otherwise return normalized path.
- * This handles macOS /var -> /private/var symlink differences.
+ * Resolve symlinks in a path, even if the leaf segments don't exist.
+ * Walks up to the nearest existing ancestor, resolves it, then re-appends
+ * the non-existent tail. This handles macOS /var -> /private/var symlink
+ * differences when the target path (e.g. a prompt directory) hasn't been
+ * created yet.
  */
 function safeRealpath(p: string): string {
   try {
     return fs.realpathSync(p);
   } catch {
-    return path.normalize(p);
+    const parent = path.dirname(p);
+    if (parent === p) {
+      // Reached filesystem root — nothing more to resolve
+      return p;
+    }
+    return path.join(safeRealpath(parent), path.basename(p));
   }
 }
 
