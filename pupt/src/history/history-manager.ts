@@ -86,7 +86,7 @@ export class HistoryManager {
       // Add execution metadata if provided (for output capture)
       if (options.outputFile || options.executionTime || options.exitCode !== undefined) {
         entry.execution = {
-          ...(options.outputFile && { output_file: path.relative(this.historyDir, options.outputFile) }),
+          ...(options.outputFile && { output_file: path.relative(this.historyDir, options.outputFile).split(path.sep).join('/') }),
           ...(options.outputSize !== undefined && { output_size: options.outputSize }),
           ...(options.executionTime !== undefined && { duration_ms: options.executionTime }),
           ...(options.exitCode !== undefined && { exit_code: options.exitCode })

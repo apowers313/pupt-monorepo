@@ -38,9 +38,7 @@ export function fromDiscoveredPrompt(
   const relativePath = (filePath && baseDir)
     ? path.relative(baseDir, filePath)
     : resolvedPath;
-  const filename = resolvedPath.includes('/')
-    ? resolvedPath.split('/').pop()!
-    : resolvedPath;
+  const filename = path.basename(resolvedPath);
 
   return {
     path: resolvedPath,

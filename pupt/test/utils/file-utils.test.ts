@@ -380,7 +380,6 @@ describe('File Utilities', () => {
       const result = resolveFilePath(relativePath, basePath);
 
       expect(result).toBe(path.resolve(basePath, relativePath));
-      expect(result).toBe('/home/user/project/file.txt');
     });
 
     it('should handle parent directory references', () => {
@@ -388,7 +387,7 @@ describe('File Utilities', () => {
       const basePath = '/home/user/project/src';
       const result = resolveFilePath(relativePath, basePath);
 
-      expect(result).toBe('/home/user/project/file.txt');
+      expect(result).toBe(path.resolve(basePath, relativePath));
     });
 
     it('should handle current directory references', () => {
@@ -396,7 +395,7 @@ describe('File Utilities', () => {
       const basePath = '/home/user/project';
       const result = resolveFilePath(relativePath, basePath);
 
-      expect(result).toBe('/home/user/project/file.txt');
+      expect(result).toBe(path.resolve(basePath, relativePath));
     });
 
     it('should handle nested relative paths', () => {
@@ -404,7 +403,7 @@ describe('File Utilities', () => {
       const basePath = '/home/user/project';
       const result = resolveFilePath(relativePath, basePath);
 
-      expect(result).toBe('/home/user/project/src/utils/file.txt');
+      expect(result).toBe(path.resolve(basePath, relativePath));
     });
 
     it('should work on Windows-style paths', () => {
@@ -418,10 +417,25 @@ describe('File Utilities', () => {
   });
 
   describe('expandPath', () => {
-    const originalEnv = process.env;
+    let savedHome: string | undefined;
+    let savedUserProfile: string | undefined;
+
+    beforeEach(() => {
+      savedHome = process.env.HOME;
+      savedUserProfile = process.env.USERPROFILE;
+    });
 
     afterEach(() => {
-      process.env = originalEnv;
+      if (savedHome !== undefined) {
+        process.env.HOME = savedHome;
+      } else {
+        delete process.env.HOME;
+      }
+      if (savedUserProfile !== undefined) {
+        process.env.USERPROFILE = savedUserProfile;
+      } else {
+        delete process.env.USERPROFILE;
+      }
     });
 
     it('should expand ~ to home directory', () => {
@@ -478,9 +492,6 @@ describe('File Utilities', () => {
     });
 
     it('should handle empty HOME/USERPROFILE gracefully', () => {
-      const originalHome = process.env.HOME;
-      const originalUserProfile = process.env.USERPROFILE;
-
       delete process.env.HOME;
       delete process.env.USERPROFILE;
 
@@ -488,9 +499,6 @@ describe('File Utilities', () => {
 
       // Should still work, using empty string for home
       expect(result).toBe(path.join('', 'file.txt'));
-
-      process.env.HOME = originalHome;
-      process.env.USERPROFILE = originalUserProfile;
     });
 
     it('should handle paths with multiple segments after ~/', () => {

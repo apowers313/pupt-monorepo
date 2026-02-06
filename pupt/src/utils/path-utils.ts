@@ -9,9 +9,22 @@
  */
 
 import path from 'node:path';
+import fs from 'node:fs';
 import os from 'node:os';
 import { findProjectRoot } from './project-root.js';
 import { logger } from './logger.js';
+
+/**
+ * Resolve symlinks in a path if it exists, otherwise return normalized path.
+ * This handles macOS /var -> /private/var symlink differences.
+ */
+function safeRealpath(p: string): string {
+  try {
+    return fs.realpathSync(p);
+  } catch {
+    return path.normalize(p);
+  }
+}
 
 export interface ContractPathsOptions {
   /** Directory to resolve relative paths from (typically config file location) */
@@ -55,14 +68,14 @@ export function contractPath(
   const homeDir = os.homedir();
   const projectRoot = findProjectRoot(configDir);
 
-  // Normalize paths for comparison
-  const normalizedPath = path.normalize(filepath);
+  // Resolve symlinks for comparison (handles macOS /var -> /private/var)
+  const resolvedPath = safeRealpath(filepath);
 
   // Check if path is under project root (prefer this over home)
   if (projectRoot) {
-    const normalizedProjectRoot = path.normalize(projectRoot);
-    if (normalizedPath.startsWith(normalizedProjectRoot + path.sep) || normalizedPath === normalizedProjectRoot) {
-      const relativePath = path.relative(normalizedProjectRoot, normalizedPath);
+    const resolvedProjectRoot = safeRealpath(projectRoot);
+    if (resolvedPath.startsWith(resolvedProjectRoot + path.sep) || resolvedPath === resolvedProjectRoot) {
+      const relativePath = path.relative(resolvedProjectRoot, resolvedPath);
       // Use forward slashes for cross-platform compatibility in config
       const portablePath = relativePath.split(path.sep).join('/');
       return {
@@ -73,8 +86,9 @@ export function contractPath(
   }
 
   // Check if path is under home directory
-  if (normalizedPath.startsWith(homeDir + path.sep) || normalizedPath === homeDir) {
-    const relativePath = path.relative(homeDir, normalizedPath);
+  const resolvedHomeDir = safeRealpath(homeDir);
+  if (resolvedPath.startsWith(resolvedHomeDir + path.sep) || resolvedPath === resolvedHomeDir) {
+    const relativePath = path.relative(resolvedHomeDir, resolvedPath);
     // Use forward slashes for cross-platform compatibility
     const portablePath = relativePath.split(path.sep).join('/');
     return {
@@ -112,17 +126,18 @@ export function isNonPortableAbsolutePath(filepath: string, configDir?: string):
 
   const homeDir = os.homedir();
   const projectRoot = findProjectRoot(configDir || process.cwd());
-  const normalizedPath = path.normalize(filepath);
+  const resolvedPath = safeRealpath(filepath);
 
   // Check if it could be made portable
   if (projectRoot) {
-    const normalizedProjectRoot = path.normalize(projectRoot);
-    if (normalizedPath.startsWith(normalizedProjectRoot + path.sep)) {
+    const resolvedProjectRoot = safeRealpath(projectRoot);
+    if (resolvedPath.startsWith(resolvedProjectRoot + path.sep)) {
       return true; // Could use ${projectRoot}
     }
   }
 
-  if (normalizedPath.startsWith(homeDir + path.sep)) {
+  const resolvedHomeDir = safeRealpath(homeDir);
+  if (resolvedPath.startsWith(resolvedHomeDir + path.sep)) {
     return true; // Could use ~/
   }
 
