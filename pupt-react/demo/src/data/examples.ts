@@ -17,64 +17,7 @@ export const EXAMPLES: PromptExample[] = [
 </Prompt>`,
   },
   {
-    name: "With Context (.prompt)",
-    description: "A prompt with task and context sections",
-    format: "prompt",
-    source: `<Prompt name="summarize">
-  <Task>Summarize the following document in 3 bullet points.</Task>
-  <Context>
-    The document discusses the benefits of functional programming,
-    including immutability, pure functions, and declarative code.
-  </Context>
-</Prompt>`,
-  },
-  {
-    name: "With Ask Inputs (.prompt)",
-    description: "A prompt that collects user input",
-    format: "prompt",
-    source: `<Prompt name="cover-letter">
-  <Task>
-    Write a cover letter for <Ask.Text name="name" label="Your name" required /> applying
-    for the role of <Ask.Text name="role" label="Job title" required /> at <Ask.Text name="company" label="Company name" required />.
-  </Task>
-  <Context>
-    <Ask.Text name="name" label="Your name" required /> has <Ask.Number name="years" label="Years of experience" /> years of experience
-    and is passionate about the mission of <Ask.Text name="company" label="Company name" required />.
-  </Context>
-  <Constraint>Keep it under 200 words</Constraint>
-  <Constraint>Use a professional but enthusiastic tone</Constraint>
-</Prompt>`,
-  },
-  {
-    name: "With Variables (.tsx)",
-    description: "Use JavaScript variables for dynamic content",
-    format: "jsx",
-    // Show how to use JS variables in prompts
-    source: `// Define reusable content as variables
-const language = "TypeScript";
-const focusAreas = "type safety and React patterns";
-
-// Build structured content
-const reviewStructure = \`Structure your review as:
-1. Summary (2-3 sentences)
-2. Issues Found (bullet list)
-3. Suggestions (numbered list with code)\`;
-
-// Use variables directly in the prompt
-export default (
-  <Prompt name="code-review">
-    <Task>Review the provided code for quality and best practices.</Task>
-    <Context>
-      You are reviewing {language} code. Focus on {focusAreas}.
-    </Context>
-    <Constraint>Be constructive and specific</Constraint>
-    <Constraint>Include code examples in suggestions</Constraint>
-    <Format>{reviewStructure}</Format>
-  </Prompt>
-);`,
-  },
-  {
-    name: "Dynamic Data (.tsx)",
+    name: "Simple TSX (.tsx)",
     description: "Use JavaScript data and logic in prompts",
     format: "jsx",
     // Full source - components are available in scope, no imports needed
@@ -119,7 +62,62 @@ export default (
 );`,
   },
   {
-    name: "Call an API (.tsx)",
+    name: "With Ask Inputs (.prompt)",
+    description: "A prompt that collects user input",
+    format: "prompt",
+    source: `<Prompt name="cover-letter">
+  <Task>
+    Write a cover letter for <Ask.Text name="name" label="Your name" required /> applying
+    for the role of <Ask.Text name="role" label="Job title" required /> at <Ask.Text name="company" label="Company name" required />.
+  </Task>
+  <Context>
+    <Ask.Text name="name" label="Your name" required /> has <Ask.Number name="years" label="Years of experience" /> years of experience
+    and is passionate about the mission of <Ask.Text name="company" label="Company name" required />.
+  </Context>
+  <Constraint>Keep it under 200 words</Constraint>
+  <Constraint>Use a professional but enthusiastic tone</Constraint>
+</Prompt>`,
+  },
+  {
+    name: "Conditional Logic (.prompt)",
+    description: "Use If statements to conditionally include content",
+    format: "prompt",
+    source: `<Prompt name="adaptive-guide">
+  <Task>Create a guide about React state management.</Task>
+  <Context>
+    Target audience: <Ask.Select name="audience" label="Target audience" default="developer">
+      <Ask.Option value="developer">Software Developer</Ask.Option>
+      <Ask.Option value="designer">UI/UX Designer</Ask.Option>
+      <Ask.Option value="manager">Engineering Manager</Ask.Option>
+      <Ask.Option value="student">Student</Ask.Option>
+    </Ask.Select>
+    <Ask.Confirm name="includeCode" label="Include code examples?" silent />
+    <Ask.Confirm name="senior" label="Senior-level audience?" silent />
+  </Context>
+  <If when="=includeCode">
+    <Constraint>Include code examples in TypeScript.</Constraint>
+  </If>
+  <If when="=NOT(includeCode)">
+    <Constraint>Keep examples conceptual, no code.</Constraint>
+  </If>
+  <If when="=senior">
+    <Constraint>Assume familiarity with advanced patterns.</Constraint>
+  </If>
+  <If when="=NOT(senior)">
+    <Constraint>Explain concepts from first principles.</Constraint>
+  </If>
+  <Constraint>Focus on practical, real-world scenarios</Constraint>
+  <Format>
+    Structure the guide as:
+    1. Introduction
+    2. Core Concepts
+    3. Best Practices
+    4. Common Pitfalls
+  </Format>
+</Prompt>`,
+  },
+  {
+    name: "GitHub API with Variable (.tsx)",
     description: "Async component that fetches from GitHub API",
     format: "jsx",
     source: `import { Prompt, Task, Context, Constraint, Component, Ask } from 'pupt-lib';
@@ -221,59 +219,6 @@ export default (
     <Constraint>Keep it under 100 words</Constraint>
   </Prompt>
 );`,
-  },
-  {
-    name: "Conditional Logic (.prompt)",
-    description: "Use If statements to conditionally include content",
-    format: "prompt",
-    source: `<Prompt name="adaptive-guide">
-  <Task>Create a guide about React state management.</Task>
-  <Context>
-    Target audience: <Ask.Select name="audience" label="Target audience" default="developer">
-      <Ask.Option value="developer">Software Developer</Ask.Option>
-      <Ask.Option value="designer">UI/UX Designer</Ask.Option>
-      <Ask.Option value="manager">Engineering Manager</Ask.Option>
-      <Ask.Option value="student">Student</Ask.Option>
-    </Ask.Select>
-    <Ask.Confirm name="includeCode" label="Include code examples?" silent />
-    <Ask.Confirm name="senior" label="Senior-level audience?" silent />
-  </Context>
-  <If when="=includeCode">
-    <Constraint>Include code examples in TypeScript.</Constraint>
-  </If>
-  <If when="=NOT(includeCode)">
-    <Constraint>Keep examples conceptual, no code.</Constraint>
-  </If>
-  <If when="=senior">
-    <Constraint>Assume familiarity with advanced patterns.</Constraint>
-  </If>
-  <If when="=NOT(senior)">
-    <Constraint>Explain concepts from first principles.</Constraint>
-  </If>
-  <Constraint>Focus on practical, real-world scenarios</Constraint>
-  <Format>
-    Structure the guide as:
-    1. Introduction
-    2. Core Concepts
-    3. Best Practices
-    4. Common Pitfalls
-  </Format>
-</Prompt>`,
-  },
-  {
-    name: "Multi-Section (.prompt)",
-    description: "A prompt with task, context, and constraints",
-    format: "prompt",
-    source: `<Prompt name="code-review">
-  <Task>Review the following code and suggest improvements.</Task>
-  <Context>
-    This is a React component that fetches data from an API
-    and displays it in a table format.
-  </Context>
-  <Constraint>Focus on performance and readability</Constraint>
-  <Constraint>Suggest TypeScript improvements where applicable</Constraint>
-  <Constraint>Keep suggestions concise and actionable</Constraint>
-</Prompt>`,
   },
 ];
 
