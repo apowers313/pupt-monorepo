@@ -239,36 +239,16 @@ describe('generatePuptLibImportMap', () => {
     expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://esm.sh/pupt-lib@1.1.0/jsx-runtime');
   });
 
-  it('should include zod dependency', () => {
+  it('should not include zod (bundled into dist)', () => {
     const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
 
-    expect(importMap.imports['zod']).toBeDefined();
-    expect(importMap.imports['zod']).toContain('zod@');
+    expect(importMap.imports['zod']).toBeUndefined();
   });
 
-  it('should use custom zod version when provided', () => {
-    const importMap = generatePuptLibImportMap({
-      puptLibVersion: '1.1.0',
-      zodVersion: '3.20.0',
-    });
-
-    expect(importMap.imports['zod']).toBe('https://esm.sh/zod@3.20.0');
-  });
-
-  it('should include minisearch dependency', () => {
+  it('should not include minisearch (bundled into dist)', () => {
     const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
 
-    expect(importMap.imports['minisearch']).toBeDefined();
-    expect(importMap.imports['minisearch']).toContain('minisearch@');
-  });
-
-  it('should use custom minisearch version when provided', () => {
-    const importMap = generatePuptLibImportMap({
-      puptLibVersion: '1.1.0',
-      minisearchVersion: '6.0.0',
-    });
-
-    expect(importMap.imports['minisearch']).toBe('https://esm.sh/minisearch@6.0.0');
+    expect(importMap.imports['minisearch']).toBeUndefined();
   });
 
   it('should support different CDN providers', () => {
@@ -279,7 +259,6 @@ describe('generatePuptLibImportMap', () => {
 
     expect(importMap.imports['pupt-lib']).toBe('https://unpkg.com/pupt-lib@1.1.0');
     expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://unpkg.com/pupt-lib@1.1.0/jsx-runtime');
-    expect(importMap.imports['zod']).toContain('unpkg.com');
   });
 
   it('should support custom CDN template', () => {
@@ -319,8 +298,8 @@ describe('generatePuptLibImportMapScript', () => {
     expect(html).toContain('</script>');
     expect(html).toContain('"pupt-lib"');
     expect(html).toContain('"pupt-lib/jsx-runtime"');
-    expect(html).toContain('"zod"');
-    expect(html).toContain('"minisearch"');
+    expect(html).not.toContain('"zod"');
+    expect(html).not.toContain('"minisearch"');
   });
 
   it('should generate valid embeddable HTML', () => {

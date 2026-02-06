@@ -190,25 +190,9 @@ export interface PuptLibImportMapOptions {
   cdnTemplate?: string;
   /** pupt-lib version (default: current installed version) */
   puptLibVersion?: string;
-  /** zod version (default: '3.24.2') */
-  zodVersion?: string;
-  /** minisearch version (default: '7.2.0') */
-  minisearchVersion?: string;
   /** Additional dependencies to include */
   additionalDependencies?: Dependency[];
 }
-
-/**
- * Default zod version that works with pupt-lib.
- * This matches the version used in pupt-lib's dependencies.
- */
-const DEFAULT_ZOD_VERSION = '3.24.2';
-
-/**
- * Default minisearch version that works with pupt-lib.
- * This matches the version used in pupt-lib's dependencies.
- */
-const DEFAULT_MINISEARCH_VERSION = '7.2.0';
 
 /**
  * Generate an import map for browser usage of pupt-lib.
@@ -217,8 +201,9 @@ const DEFAULT_MINISEARCH_VERSION = '7.2.0';
  * in browser environments. It includes:
  * - pupt-lib main entry
  * - pupt-lib/jsx-runtime subpath
- * - zod (required peer dependency)
- * - minisearch (required for search functionality)
+ *
+ * Note: zod, minisearch, and @babel/standalone are bundled into pupt-lib's dist
+ * and do not need separate import map entries.
  *
  * @param options - Configuration options
  * @returns An ImportMap object ready to be serialized
@@ -250,9 +235,7 @@ const DEFAULT_MINISEARCH_VERSION = '7.2.0';
  *   {
  *     "imports": {
  *       "pupt-lib": "https://esm.sh/pupt-lib@1.1.0",
- *       "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime",
- *       "zod": "https://esm.sh/zod@3.24.2",
- *       "minisearch": "https://esm.sh/minisearch@7.2.0"
+ *       "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime"
  *     }
  *   }
  * </script>
@@ -265,8 +248,6 @@ export function generatePuptLibImportMap(
     cdn = 'esm.sh',
     cdnTemplate,
     puptLibVersion = 'latest',
-    zodVersion = DEFAULT_ZOD_VERSION,
-    minisearchVersion = DEFAULT_MINISEARCH_VERSION,
     additionalDependencies = [],
   } = options;
 
@@ -282,12 +263,6 @@ export function generatePuptLibImportMap(
   // pupt-lib/jsx-runtime subpath
   // Most CDNs support subpath exports, so we construct the URL directly
   imports['pupt-lib/jsx-runtime'] = `${puptLibUrl}/jsx-runtime`;
-
-  // zod is a required dependency
-  imports['zod'] = resolveCdn('zod', zodVersion, cdnOptions);
-
-  // minisearch is required for search functionality
-  imports['minisearch'] = resolveCdn('minisearch', minisearchVersion, cdnOptions);
 
   // Add any additional dependencies
   for (const dep of additionalDependencies) {
