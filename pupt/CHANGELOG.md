@@ -1,3 +1,22 @@
+# [2.0.0](https://github.com/apowers313/pupt/compare/v1.4.1...v2.0.0) (2026-02-06)
+
+
+### Bug Fixes
+
+* fix os-specific bugs found in ci ([38744ac](https://github.com/apowers313/pupt/commit/38744ac1cd97d3b7b6553bd6b36371fe9ab39228))
+* update to latest pupt-lib ([54d63c1](https://github.com/apowers313/pupt/commit/54d63c15b4061a34e9448a4ffd5d47e42f1eb33b))
+
+
+### Features
+
+* refactor to use jsx prompt files and pupt-lib ([4289e56](https://github.com/apowers313/pupt/commit/4289e5695cca02db216aa321be0234f635f7d760))
+
+
+### BREAKING CHANGES
+
+* prompt files are no longer .md, they are now either .prompt or .tsx and use the JSX
+format from pupt-lib
+
 ## [1.4.1](https://github.com/apowers313/pupt/compare/v1.4.0...v1.4.1) (2026-01-20)
 
 
