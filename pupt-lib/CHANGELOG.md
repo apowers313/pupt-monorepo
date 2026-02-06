@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/apowers313/pupt-lib/compare/v1.2.5...v1.2.6) (2026-02-06)
+
+
+### Bug Fixes
+
+* ask components should never return undefined ([c335111](https://github.com/apowers313/pupt-lib/commit/c3351110ca985b1784903eecc3a33b05922b864a))
+
 ## [1.2.5](https://github.com/apowers313/pupt-lib/compare/v1.2.4...v1.2.5) (2026-02-06)
 
 
