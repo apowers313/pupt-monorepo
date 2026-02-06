@@ -175,6 +175,11 @@ export async function render(
     pendingResolutions: new Map(),
   };
 
+  // Pre-seed Ask component defaults into context.inputs before rendering.
+  // This ensures defaults are available when If components evaluate formulas,
+  // even with parallel rendering of sibling elements.
+  seedAskDefaults(element, context);
+
   const text = await renderNode(element, state);
   const trimmedText = trim ? text.trim() : text;
 
@@ -398,4 +403,48 @@ async function renderElement(
   }
 
   return '';
+}
+
+/**
+ * Walk the element tree and pre-seed default values from Ask components
+ * into context.inputs. This ensures that formula-based conditions in If
+ * components can reference Ask defaults during parallel rendering.
+ *
+ * Ask components are identified by having both `name` and `label` string props
+ * (the askBaseSchema pattern). Handles both explicit `default` props and
+ * static `implicitDefault` values (e.g., AskConfirm defaults to `false`).
+ */
+function seedAskDefaults(node: PuptNode, context: RenderContext): void {
+  if (!node || typeof node !== 'object') return;
+
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      seedAskDefaults(child, context);
+    }
+    return;
+  }
+
+  if (!isPuptElement(node)) return;
+
+  const element = node as PuptElement;
+  const type = element[TYPE];
+  const props = element[PROPS] as Record<string, unknown>;
+  const children = element[CHILDREN];
+
+  // Seed defaults from Ask components (identified by name + label props)
+  if (typeof props.name === 'string' && typeof props.label === 'string'
+    && !context.inputs.has(props.name)) {
+    if (props.default !== undefined) {
+      context.inputs.set(props.name, props.default);
+    } else if (isComponentClass(type)
+      && 'implicitDefault' in (type as unknown as Record<string, unknown>)) {
+      context.inputs.set(props.name,
+        (type as unknown as Record<string, unknown>).implicitDefault);
+    }
+  }
+
+  // Recurse into children
+  for (const child of children) {
+    seedAskDefaults(child, context);
+  }
 }

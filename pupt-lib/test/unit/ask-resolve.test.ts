@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, Component } from '../../src';
+import { render, Component, If } from '../../src';
 import { jsx, Fragment } from '../../src/jsx-runtime';
 import { z } from 'zod';
 import { AskText, AskNumber, AskSelect, AskConfirm, AskMultiSelect, AskRating, AskEditor, AskFile, AskPath, AskDate, AskSecret, AskChoice, AskReviewFile } from '../../src/components/ask';
@@ -164,6 +164,92 @@ describe('Ask components with resolve()', () => {
         { inputs: new Map([['reviewFile', '/path/to/review.txt']]) },
       );
       expect(result.text).toBe('/path/to/review.txt');
+    });
+  });
+
+  describe('Ask default values seeded into context.inputs', () => {
+    it('should seed Confirm default into inputs so If formula resolves (issue #16)', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskConfirm, { name: 'includeCode', label: 'Include code?', silent: true }),
+          jsx(If, { when: '=includeCode', children: 'TRUTHY_BRANCH' }),
+          jsx(If, { when: '=NOT(includeCode)', children: 'FALSY_BRANCH' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map() });
+      expect(result.text).toContain('FALSY_BRANCH');
+      expect(result.text).not.toContain('TRUTHY_BRANCH');
+    });
+
+    it('should seed Confirm explicit true default into inputs', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskConfirm, { name: 'includeCode', label: 'Include code?', default: true, silent: true }),
+          jsx(If, { when: '=includeCode', children: 'TRUTHY_BRANCH' }),
+          jsx(If, { when: '=NOT(includeCode)', children: 'FALSY_BRANCH' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map() });
+      expect(result.text).toContain('TRUTHY_BRANCH');
+      expect(result.text).not.toContain('FALSY_BRANCH');
+    });
+
+    it('should seed Text default into inputs for If formula', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskText, { name: 'lang', label: 'Language', default: 'python', silent: true }),
+          jsx(If, { when: '=lang="python"', children: 'python-branch' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map() });
+      expect(result.text).toContain('python-branch');
+    });
+
+    it('should seed Number default into inputs for If formula', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskNumber, { name: 'count', label: 'Count', default: 10, silent: true }),
+          jsx(If, { when: '=count>5', children: 'many-items' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map() });
+      expect(result.text).toContain('many-items');
+    });
+
+    it('should seed Select default into inputs for If formula', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskSelect, {
+            name: 'format',
+            label: 'Format',
+            default: 'json',
+            options: [{ value: 'json', label: 'JSON' }, { value: 'xml', label: 'XML' }],
+            silent: true,
+          }),
+          jsx(If, { when: '=format="json"', children: 'json-branch' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map() });
+      expect(result.text).toContain('json-branch');
+    });
+
+    it('should not overwrite explicit input values with defaults', async () => {
+      const element = jsx(Fragment, {
+        children: [
+          jsx(AskConfirm, { name: 'includeCode', label: 'Include code?', silent: true }),
+          jsx(If, { when: '=includeCode', children: 'TRUTHY_BRANCH' }),
+          jsx(If, { when: '=NOT(includeCode)', children: 'FALSY_BRANCH' }),
+        ],
+      });
+
+      const result = await render(element, { inputs: new Map([['includeCode', true]]) });
+      expect(result.text).toContain('TRUTHY_BRANCH');
+      expect(result.text).not.toContain('FALSY_BRANCH');
     });
   });
 

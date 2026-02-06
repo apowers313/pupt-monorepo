@@ -15,10 +15,10 @@ export const askRatingSchema = askBaseSchema.extend({
 export type RatingProps = z.infer<typeof askRatingSchema> & { children?: PuptNode };
 
 // Named AskRating for consistent Ask component naming
-export class AskRating extends Component<RatingProps, number | undefined> {
+export class AskRating extends Component<RatingProps, number> {
   static schema = askRatingSchema;
 
-  resolve(props: RatingProps, context: RenderContext): number | undefined {
+  resolve(props: RatingProps, context: RenderContext): number {
     const { name, default: defaultValue } = props;
     const value = context.inputs.get(name) as number | undefined;
 
@@ -30,10 +30,10 @@ export class AskRating extends Component<RatingProps, number | undefined> {
       return defaultValue;
     }
 
-    return undefined;
+    return 0;
   }
 
-  render(props: RatingProps, resolvedValue: number | undefined, context: RenderContext): PuptNode {
+  render(props: RatingProps, resolvedValue: number, context: RenderContext): PuptNode {
     const {
       name,
       label,
@@ -74,7 +74,7 @@ export class AskRating extends Component<RatingProps, number | undefined> {
     // Get actual value - from resolvedValue if available, otherwise compute it
     const actualValue = resolvedValue ?? this.resolve(props, context);
 
-    if (actualValue === undefined) {
+    if (actualValue === 0 && defaultValue === undefined) {
       return `{${name}}`;
     }
 

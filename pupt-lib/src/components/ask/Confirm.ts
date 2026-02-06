@@ -12,6 +12,7 @@ export type ConfirmProps = z.infer<typeof askConfirmSchema> & { children?: PuptN
 // Named AskConfirm for consistent Ask component naming
 export class AskConfirm extends Component<ConfirmProps, boolean> {
   static schema = askConfirmSchema;
+  static implicitDefault = false;
 
   resolve(props: ConfirmProps, context: RenderContext): boolean {
     const { name, default: defaultValue = false } = props;
