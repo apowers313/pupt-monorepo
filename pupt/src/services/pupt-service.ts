@@ -6,6 +6,8 @@ import {
   createInputIterator,
   Transformer,
   createEnvironment,
+  PROPS,
+  isPuptElement,
 } from 'pupt-lib';
 import type {
   PuptElement,
@@ -49,7 +51,7 @@ function evaluateCode(
   const fn = new Function(...scopeKeys, evalCode);
   const element = fn(...scopeValues);
 
-  if (!element || typeof element !== 'object' || !('type' in element) || !('props' in element)) {
+  if (!isPuptElement(element)) {
     throw new Error('Prompt source did not produce a valid PuptElement');
   }
 
@@ -323,7 +325,7 @@ export class PuptService {
 
       const loaded: LoadedPrompt = { code, filePath, discoveryElement };
 
-      const props = discoveryElement.props as Record<string, unknown>;
+      const props = discoveryElement[PROPS] as Record<string, unknown>;
       const name = (props.name as string) || path.basename(filePath, path.extname(filePath));
       const description = (props.description as string) || '';
       const tags = Array.isArray(props.tags) ? (props.tags as string[]) : [];
