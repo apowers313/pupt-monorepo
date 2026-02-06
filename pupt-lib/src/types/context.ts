@@ -91,17 +91,85 @@ if (!isBrowser) {
 }
 
 // ============================================================================
+// LLM Providers & Model Inference
+// ============================================================================
+
+/**
+ * Known LLM providers (model creators, not hosting platforms).
+ * Hosting platforms like AWS Bedrock and Azure are not included here
+ * because the provider represents who created the model, which determines
+ * the prompt optimization strategy.
+ */
+export const LLM_PROVIDERS = [
+  'anthropic',
+  'openai',
+  'google',
+  'meta',
+  'mistral',
+  'deepseek',
+  'xai',
+  'cohere',
+  'unspecified',
+] as const;
+
+export type LlmProvider = typeof LLM_PROVIDERS[number];
+
+/**
+ * Infer the LLM provider from a model name/ID.
+ * Returns the provider if the model matches a known pattern, or null if unknown.
+ */
+export function inferProviderFromModel(model: string): LlmProvider | null {
+  const m = model.toLowerCase();
+
+  // Anthropic: claude-*, or short names opus/sonnet/haiku
+  if (m.startsWith('claude') || m === 'opus' || m === 'sonnet' || m === 'haiku') return 'anthropic';
+
+  // OpenAI: gpt-*, chatgpt-*, o1/o3/o4 series
+  if (m.startsWith('gpt-') || m.startsWith('chatgpt-') || /^o[134]([-_]|$)/.test(m)) return 'openai';
+
+  // Google: gemini-*
+  if (m.startsWith('gemini')) return 'google';
+
+  // Meta: llama-*
+  if (m.startsWith('llama')) return 'meta';
+
+  // Mistral: mistral-*, mixtral-*, codestral-*, pixtral-*
+  if (m.startsWith('mistral') || m.startsWith('mixtral') || m.startsWith('codestral') || m.startsWith('pixtral')) return 'mistral';
+
+  // DeepSeek: deepseek-*
+  if (m.startsWith('deepseek')) return 'deepseek';
+
+  // xAI: grok-*
+  if (m.startsWith('grok')) return 'xai';
+
+  // Cohere: command-*
+  if (m.startsWith('command')) return 'cohere';
+
+  return null;
+}
+
+// ============================================================================
 // Zod Schemas
 // ============================================================================
 
 /**
- * Schema for LLM configuration
+ * Schema for LLM configuration.
+ * When a model is specified but provider is not, the provider is automatically
+ * inferred from the model name.
  */
 export const llmConfigSchema = z.object({
   model: z.string().default('unspecified'),
-  provider: z.string().default('unspecified'),
+  provider: z.enum(LLM_PROVIDERS).default('unspecified'),
   maxTokens: z.number().positive().optional(),
   temperature: z.number().min(0).max(2).optional(),
+}).transform((data) => {
+  if (data.provider === 'unspecified' && data.model !== 'unspecified') {
+    const inferred = inferProviderFromModel(data.model);
+    if (inferred) {
+      return { ...data, provider: inferred };
+    }
+  }
+  return data;
 });
 
 /**

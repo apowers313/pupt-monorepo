@@ -11,6 +11,8 @@ import {
   codeConfigSchema,
   userConfigSchema,
   environmentContextSchema,
+  LLM_PROVIDERS,
+  inferProviderFromModel,
 } from '../../../src/types/context';
 
 describe('DEFAULT_ENVIRONMENT', () => {
@@ -193,7 +195,7 @@ describe('Zod Schema Validation', () => {
     it('should reject invalid temperature (out of range)', () => {
       expect(() => llmConfigSchema.parse({
         model: 'test',
-        provider: 'test',
+        provider: 'openai',
         temperature: 3.0,
       })).toThrow();
     });
@@ -201,9 +203,42 @@ describe('Zod Schema Validation', () => {
     it('should reject negative maxTokens', () => {
       expect(() => llmConfigSchema.parse({
         model: 'test',
-        provider: 'test',
+        provider: 'openai',
         maxTokens: -100,
       })).toThrow();
+    });
+
+    it('should reject invalid provider values', () => {
+      expect(() => llmConfigSchema.parse({
+        model: 'test',
+        provider: 'aws-bedrock',
+      })).toThrow();
+      expect(() => llmConfigSchema.parse({
+        model: 'test',
+        provider: 'azure',
+      })).toThrow();
+    });
+
+    it('should accept all valid provider values', () => {
+      for (const provider of LLM_PROVIDERS) {
+        const result = llmConfigSchema.parse({ provider });
+        expect(result.provider).toBe(provider);
+      }
+    });
+
+    it('should auto-infer provider from model when provider is unspecified', () => {
+      const result = llmConfigSchema.parse({ model: 'claude-sonnet-4-5' });
+      expect(result.provider).toBe('anthropic');
+    });
+
+    it('should not override explicitly set provider', () => {
+      const result = llmConfigSchema.parse({ model: 'claude-sonnet-4-5', provider: 'openai' });
+      expect(result.provider).toBe('openai');
+    });
+
+    it('should leave provider as unspecified for unknown models', () => {
+      const result = llmConfigSchema.parse({ model: 'my-custom-model' });
+      expect(result.provider).toBe('unspecified');
     });
   });
 
@@ -289,12 +324,12 @@ describe('Zod Schema Validation', () => {
       expect(result.runtime).toEqual({});
     });
 
-    it('should allow partial overrides', () => {
+    it('should allow partial overrides and auto-infer provider', () => {
       const result = environmentContextSchema.parse({
         llm: { model: 'claude-opus-4-5-20251101' },
       });
       expect(result.llm.model).toBe('claude-opus-4-5-20251101');
-      expect(result.llm.provider).toBe('unspecified');
+      expect(result.llm.provider).toBe('anthropic');
       expect(result.output.format).toBe('unspecified');
     });
   });
@@ -302,9 +337,10 @@ describe('Zod Schema Validation', () => {
   describe('createEnvironment() validation', () => {
     it('should validate overrides through zod', () => {
       const env = createEnvironment({
-        llm: { model: 'test-model', provider: 'test-provider' },
+        llm: { model: 'gpt-4', provider: 'openai' },
       });
-      expect(env.llm.model).toBe('test-model');
+      expect(env.llm.model).toBe('gpt-4');
+      expect(env.llm.provider).toBe('openai');
     });
 
     it('should reject invalid format through validation', () => {
@@ -316,9 +352,123 @@ describe('Zod Schema Validation', () => {
 
     it('should reject invalid temperature through validation', () => {
       expect(() => createEnvironment({
-        llm: { model: 'test', provider: 'test', temperature: 5.0 },
+        llm: { model: 'gpt-4', provider: 'openai', temperature: 5.0 },
       })).toThrow();
     });
+
+    it('should reject invalid provider through validation', () => {
+      expect(() => createEnvironment({
+        // @ts-expect-error Testing invalid value
+        llm: { model: 'test', provider: 'aws-bedrock' },
+      })).toThrow();
+    });
+
+    it('should auto-infer provider from model in createEnvironment', () => {
+      const env = createEnvironment({
+        llm: { model: 'gemini-2.0-flash' },
+      });
+      expect(env.llm.model).toBe('gemini-2.0-flash');
+      expect(env.llm.provider).toBe('google');
+    });
+  });
+});
+
+describe('inferProviderFromModel()', () => {
+  it('should infer anthropic from claude models', () => {
+    expect(inferProviderFromModel('claude-sonnet-4-5')).toBe('anthropic');
+    expect(inferProviderFromModel('claude-opus-4-5-20251101')).toBe('anthropic');
+    expect(inferProviderFromModel('claude-haiku-3-5')).toBe('anthropic');
+    expect(inferProviderFromModel('claude-3-opus')).toBe('anthropic');
+  });
+
+  it('should infer anthropic from short model names', () => {
+    expect(inferProviderFromModel('opus')).toBe('anthropic');
+    expect(inferProviderFromModel('sonnet')).toBe('anthropic');
+    expect(inferProviderFromModel('haiku')).toBe('anthropic');
+  });
+
+  it('should infer openai from gpt models', () => {
+    expect(inferProviderFromModel('gpt-4')).toBe('openai');
+    expect(inferProviderFromModel('gpt-4o')).toBe('openai');
+    expect(inferProviderFromModel('gpt-4o-2024-08-06')).toBe('openai');
+    expect(inferProviderFromModel('gpt-3.5-turbo')).toBe('openai');
+  });
+
+  it('should infer openai from o-series models', () => {
+    expect(inferProviderFromModel('o1')).toBe('openai');
+    expect(inferProviderFromModel('o1-mini')).toBe('openai');
+    expect(inferProviderFromModel('o1-preview')).toBe('openai');
+    expect(inferProviderFromModel('o3')).toBe('openai');
+    expect(inferProviderFromModel('o3-mini')).toBe('openai');
+    expect(inferProviderFromModel('o4-mini')).toBe('openai');
+  });
+
+  it('should infer google from gemini models', () => {
+    expect(inferProviderFromModel('gemini-2.0-flash')).toBe('google');
+    expect(inferProviderFromModel('gemini-1.5-pro')).toBe('google');
+    expect(inferProviderFromModel('gemini-2.5-pro')).toBe('google');
+  });
+
+  it('should infer meta from llama models', () => {
+    expect(inferProviderFromModel('llama-3.1-70b')).toBe('meta');
+    expect(inferProviderFromModel('llama-3.2-90b')).toBe('meta');
+  });
+
+  it('should infer mistral from mistral/mixtral models', () => {
+    expect(inferProviderFromModel('mistral-large')).toBe('mistral');
+    expect(inferProviderFromModel('mistral-small')).toBe('mistral');
+    expect(inferProviderFromModel('mixtral-8x7b')).toBe('mistral');
+    expect(inferProviderFromModel('codestral-latest')).toBe('mistral');
+  });
+
+  it('should infer deepseek from deepseek models', () => {
+    expect(inferProviderFromModel('deepseek-r1')).toBe('deepseek');
+    expect(inferProviderFromModel('deepseek-v3')).toBe('deepseek');
+    expect(inferProviderFromModel('deepseek-chat')).toBe('deepseek');
+  });
+
+  it('should infer xai from grok models', () => {
+    expect(inferProviderFromModel('grok-2')).toBe('xai');
+    expect(inferProviderFromModel('grok-3')).toBe('xai');
+  });
+
+  it('should infer cohere from command models', () => {
+    expect(inferProviderFromModel('command-r')).toBe('cohere');
+    expect(inferProviderFromModel('command-r-plus')).toBe('cohere');
+  });
+
+  it('should be case-insensitive', () => {
+    expect(inferProviderFromModel('Claude-Sonnet-4-5')).toBe('anthropic');
+    expect(inferProviderFromModel('GPT-4o')).toBe('openai');
+    expect(inferProviderFromModel('GEMINI-2.0-flash')).toBe('google');
+  });
+
+  it('should return null for unknown models', () => {
+    expect(inferProviderFromModel('my-custom-model')).toBeNull();
+    expect(inferProviderFromModel('unspecified')).toBeNull();
+    expect(inferProviderFromModel('some-random-name')).toBeNull();
+  });
+});
+
+describe('LLM_PROVIDERS', () => {
+  it('should not include hosting platforms', () => {
+    expect(LLM_PROVIDERS).not.toContain('aws-bedrock');
+    expect(LLM_PROVIDERS).not.toContain('azure');
+  });
+
+  it('should include known model providers', () => {
+    expect(LLM_PROVIDERS).toContain('anthropic');
+    expect(LLM_PROVIDERS).toContain('openai');
+    expect(LLM_PROVIDERS).toContain('google');
+    expect(LLM_PROVIDERS).toContain('meta');
+    expect(LLM_PROVIDERS).toContain('mistral');
+    expect(LLM_PROVIDERS).toContain('deepseek');
+    expect(LLM_PROVIDERS).toContain('xai');
+    expect(LLM_PROVIDERS).toContain('cohere');
+  });
+
+  it('should include unspecified as default', () => {
+    expect(LLM_PROVIDERS).toContain('unspecified');
   });
 });
 

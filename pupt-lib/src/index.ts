@@ -15,6 +15,7 @@ export type {
   ComponentType,
   DeferredRef,
   LlmConfig,
+  LlmProvider,
   OutputConfig,
   CodeConfig,
   UserConfig,
@@ -51,6 +52,8 @@ export type {
 
 // Export context utilities
 export {
+  LLM_PROVIDERS,
+  inferProviderFromModel,
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,

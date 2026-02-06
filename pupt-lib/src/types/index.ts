@@ -16,6 +16,7 @@ export { isPuptElement, isDeferredRef } from './element';
 // Context types
 export type {
   LlmConfig,
+  LlmProvider,
   OutputConfig,
   CodeConfig,
   UserConfig,
@@ -25,6 +26,8 @@ export type {
 } from './context';
 
 export {
+  LLM_PROVIDERS,
+  inferProviderFromModel,
   DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,

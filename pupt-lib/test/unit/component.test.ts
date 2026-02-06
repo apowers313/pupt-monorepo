@@ -23,7 +23,7 @@ describe('Component', () => {
     const instance = new TestComponent();
     const mockContext: RenderContext = {
       env: {
-        llm: { model: 'test-model', provider: 'test' },
+        llm: { model: 'test-model', provider: 'openai' },
         output: { format: 'xml', trim: true, indent: '  ' },
         code: { language: 'typescript' },
         user: { editor: 'unknown' },
