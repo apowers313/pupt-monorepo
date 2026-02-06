@@ -16,7 +16,7 @@ export class Audience extends Component<AudienceProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<audience>\n', childContent, '\n</audience>'];
+        return ['<audience>\n', childContent, '\n</audience>\n'];
       case 'markdown':
         return ['## audience\n\n', childContent];
       case 'none':

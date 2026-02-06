@@ -18,7 +18,7 @@ export class Role extends Component<RoleProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<role>\n', childContent, '\n</role>'];
+        return ['<role>\n', childContent, '\n</role>\n'];
       case 'markdown':
         return ['## role\n\n', childContent];
       case 'none':

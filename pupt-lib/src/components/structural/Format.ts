@@ -28,9 +28,9 @@ export class Format extends Component<FormatProps> {
     switch (delimiter) {
       case 'xml':
         if (hasChildren) {
-          return ['<format>\n', prefix, childContent, '\n</format>'];
+          return ['<format>\n', prefix, childContent, '\n</format>\n'];
         }
-        return ['<format>\n', prefix.trim(), '\n</format>'];
+        return ['<format>\n', prefix.trim(), '\n</format>\n'];
       case 'markdown':
         if (hasChildren) {
           return ['## format\n\n', prefix, childContent];

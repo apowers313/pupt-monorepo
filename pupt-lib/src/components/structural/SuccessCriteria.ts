@@ -16,7 +16,7 @@ export class SuccessCriteria extends Component<SuccessCriteriaProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<success-criteria>\n', childContent, '\n</success-criteria>'];
+        return ['<success-criteria>\n', childContent, '\n</success-criteria>\n'];
       case 'markdown':
         return ['## success-criteria\n\n', childContent];
       case 'none':

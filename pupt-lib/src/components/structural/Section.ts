@@ -20,7 +20,7 @@ export class Section extends Component<SectionProps> {
 
     switch (effectiveDelimiter) {
       case 'xml':
-        return [`<${tagName}>\n`, childContent, `\n</${tagName}>`];
+        return [`<${tagName}>\n`, childContent, `\n</${tagName}>\n`];
       case 'markdown':
         return [`## ${tagName}\n\n`, childContent];
       case 'none':

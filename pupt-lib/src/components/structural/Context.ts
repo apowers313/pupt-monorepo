@@ -16,7 +16,7 @@ export class Context extends Component<ContextProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<context>\n', childContent, '\n</context>'];
+        return ['<context>\n', childContent, '\n</context>\n'];
       case 'markdown':
         return ['## context\n\n', childContent];
       case 'none':

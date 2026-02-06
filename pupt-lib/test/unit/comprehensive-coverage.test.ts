@@ -1170,13 +1170,13 @@ describe('AskConfirm - Branch Coverage', () => {
     expect(result.text).toBe('Yes');
   });
 
-  it('should show placeholder when no default and no input', async () => {
+  it('should default to false when no default and no input', async () => {
     const element = jsx(AskConfirm, {
       name: 'accept',
       label: 'Accept',
     });
     const result = await render(element);
-    expect(result.text).toBe('{accept}');
+    expect(result.text).toBe('No');
   });
 });
 

@@ -24,7 +24,7 @@ export class Constraint extends Component<ConstraintProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<constraint>\n', prefix, childContent, '\n</constraint>'];
+        return ['<constraint>\n', prefix, childContent, '\n</constraint>\n'];
       case 'markdown':
         return ['## constraint\n\n', prefix, childContent];
       case 'none':

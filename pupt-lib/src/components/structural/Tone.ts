@@ -16,7 +16,7 @@ export class Tone extends Component<ToneProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<tone>\n', childContent, '\n</tone>'];
+        return ['<tone>\n', childContent, '\n</tone>\n'];
       case 'markdown':
         return ['## tone\n\n', childContent];
       case 'none':

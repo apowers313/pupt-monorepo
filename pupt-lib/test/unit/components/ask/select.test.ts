@@ -260,14 +260,14 @@ describe('Ask.Number', () => {
 });
 
 describe('Ask.Confirm', () => {
-  it('should render placeholder when no input provided', async () => {
+  it('should render default false when no input provided', async () => {
     const element = jsx(Ask.Confirm, {
       name: 'proceed',
       label: 'Do you want to proceed?',
     });
 
     const result = await render(element);
-    expect(result.text).toContain('{proceed}');
+    expect(result.text).toContain('No');
   });
 
   it('should render Yes when true is provided', async () => {

@@ -16,7 +16,7 @@ export class Task extends Component<TaskProps> {
 
     switch (delimiter) {
       case 'xml':
-        return ['<task>\n', childContent, '\n</task>'];
+        return ['<task>\n', childContent, '\n</task>\n'];
       case 'markdown':
         return ['## task\n\n', childContent];
       case 'none':
