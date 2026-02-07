@@ -105,6 +105,42 @@ describe('PuptService', () => {
       expect(service.getPrompts()).toHaveLength(1);
     });
 
+    it('should skip .tsx files during discovery', async () => {
+      await writePromptFile('valid.prompt', `
+<Prompt name="valid" description="Valid prompt">
+  <Task>OK</Task>
+</Prompt>
+      `);
+      await writePromptFile('component.tsx', `
+export default function Test() { return <div>test</div>; }
+      `);
+
+      const service = new PuptService({ promptDirs: [tempDir] });
+      await service.init();
+
+      // Only the .prompt file should be discovered, not the .tsx
+      expect(service.getPrompts()).toHaveLength(1);
+      expect(service.getPrompts()[0].name).toBe('valid');
+    });
+
+    it('should skip .jsx files during discovery', async () => {
+      await writePromptFile('valid.prompt', `
+<Prompt name="valid-jsx" description="Valid prompt">
+  <Task>OK</Task>
+</Prompt>
+      `);
+      await writePromptFile('component.jsx', `
+export default function Test() { return <div>test</div>; }
+      `);
+
+      const service = new PuptService({ promptDirs: [tempDir] });
+      await service.init();
+
+      // Only the .prompt file should be discovered, not the .jsx
+      expect(service.getPrompts()).toHaveLength(1);
+      expect(service.getPrompts()[0].name).toBe('valid-jsx');
+    });
+
     it('should not re-initialize on second init call', async () => {
       await writePromptFile('test.prompt', `
 <Prompt name="test" description="Test">
@@ -316,6 +352,61 @@ describe('PuptService', () => {
         inputs: { name: 'Alice' },
       });
       expect(result.text).toContain('Hi Alice');
+    });
+
+    it('should render with environment config applied', async () => {
+      await writePromptFile('env-test.prompt', `
+<Prompt name="env-test" description="Environment test">
+  <Task>Hello world</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [tempDir],
+        environment: {
+          llm: {
+            model: 'gpt-4',
+            provider: 'openai',
+          },
+        },
+      });
+      await service.init();
+
+      const prompt = service.getPrompt('env-test');
+      expect(prompt).toBeDefined();
+      const result = await prompt!.render();
+      expect(result.text).toContain('Hello world');
+    });
+
+    it('should render with environment config and inputs', async () => {
+      await writePromptFile('env-input.prompt', `
+<Prompt name="env-input" description="Env with input">
+  <Ask.Text name="topic" label="Topic" />
+  <Task>Write about {inputs.topic}</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [tempDir],
+        environment: {
+          llm: {
+            model: 'claude-3',
+            provider: 'anthropic',
+          },
+          output: {
+            trim: true,
+            indent: '  ',
+          },
+        },
+      });
+      await service.init();
+
+      const prompt = service.getPrompt('env-input');
+      expect(prompt).toBeDefined();
+      const result = await prompt!.render({
+        inputs: new Map([['topic', 'testing']]),
+      });
+      expect(result.text).toContain('Write about testing');
     });
   });
 

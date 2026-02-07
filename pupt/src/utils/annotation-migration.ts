@@ -112,19 +112,3 @@ export async function migrateAnnotationsToJson(annotationDir: string): Promise<A
     throw error;
   }
 }
-
-/**
- * Check if annotation migration is needed
- */
-async function _needsAnnotationMigration(annotationDir: string): Promise<boolean> {
-  try {
-    if (!await fs.pathExists(annotationDir)) {
-      return false;
-    }
-
-    const files = await fs.readdir(annotationDir);
-    return files.some(file => file.includes('-annotation-') && file.endsWith('.md'));
-  } catch {
-    return false;
-  }
-}
