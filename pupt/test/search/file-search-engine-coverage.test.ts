@@ -207,8 +207,8 @@ describe('FileSearchEngine - Coverage Improvements', () => {
 
     it('should handle empty input', () => {
       const result = engine.resolveToAbsolutePath('');
-      // normalizePathInput('') returns '', path.resolve('/test/base', '') returns '/test/base'
-      expect(result).toBe('/test/base');
+      // normalizePathInput('') returns '', path.resolve('/test/base', '') returns the resolved basePath
+      expect(result).toBe(path.resolve('/test/base'));
     });
   });
 

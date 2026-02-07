@@ -186,7 +186,7 @@ describe('Install Command - Coverage Improvements', () => {
       // Mock cosmiconfig to return promptDirs from the installed package
       const mockExplorer = {
         load: vi.fn().mockImplementation(async (configPath: string) => {
-          if (configPath.includes('node_modules/my-pkg/.pt-config.json')) {
+          if (configPath.includes(path.join('node_modules', 'my-pkg', '.pt-config.json'))) {
             return {
               config: {
                 promptDirs: ['prompts', 'extra-prompts']
