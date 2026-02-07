@@ -17,7 +17,7 @@ import { unwrapJsx } from "../util/jsxWrapper";
 import { AskInputs } from "./AskInputs";
 
 export function PromptOutput() {
-  const { source, format } = useDemoContext();
+  const { source, format, environmentOverrides } = useDemoContext();
   const [inputValues, setInputValues] = useState<Map<string, unknown>>(
     () => new Map(),
   );
@@ -45,7 +45,7 @@ export function PromptOutput() {
   }, []);
 
   return (
-    <PromptRenderer source={rawSource} inputs={inputValues} autoRender>
+    <PromptRenderer source={rawSource} inputs={inputValues} environment={environmentOverrides} autoRender>
       {({
         output,
         error,

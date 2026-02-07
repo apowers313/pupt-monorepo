@@ -52,7 +52,7 @@ function renderWithProviders(ui: React.ReactElement) {
 describe("Demo Layout", () => {
   it("should render header with title", () => {
     renderWithProviders(<Layout />);
-    expect(screen.getByText("pupt-react Demo")).toBeInTheDocument();
+    expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
   });
 
   it("should render two-column layout", () => {
@@ -61,13 +61,10 @@ describe("Demo Layout", () => {
     expect(screen.getByTestId("right-panel")).toBeInTheDocument();
   });
 
-  it("should include GitHub link in header", () => {
+  it("should include settings button in header", () => {
     renderWithProviders(<Layout />);
-    const link = screen.getByRole("link", { name: /github/i });
-    expect(link).toHaveAttribute(
-      "href",
-      expect.stringContaining("github.com")
-    );
+    const button = screen.getByRole("button", { name: /environment settings/i });
+    expect(button).toBeInTheDocument();
   });
 
   it("should render Prompt Input title in left panel", () => {

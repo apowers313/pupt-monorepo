@@ -1,21 +1,24 @@
 import { Group, Title, ActionIcon } from "@mantine/core";
-import { IconBrandGithub } from "@tabler/icons-react";
+import { IconSettings } from "@tabler/icons-react";
 
-export function Header() {
+interface HeaderProps {
+  onSettingsClick: () => void;
+}
+
+export function Header({ onSettingsClick }: HeaderProps) {
   return (
     <Group h="100%" px="md" justify="space-between">
-      <Title order={3}>pupt-react Demo</Title>
-      <ActionIcon
-        component="a"
-        href="https://github.com/apowers313/pupt-react"
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="subtle"
-        size="lg"
-        aria-label="GitHub"
-      >
-        <IconBrandGithub size={22} />
-      </ActionIcon>
+      <Title order={3}>JSX Prompt Demo</Title>
+      <Group gap="xs">
+        <ActionIcon
+          variant="subtle"
+          size="lg"
+          aria-label="Environment settings"
+          onClick={onSettingsClick}
+        >
+          <IconSettings size={22} />
+        </ActionIcon>
+      </Group>
     </Group>
   );
 }

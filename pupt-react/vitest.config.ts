@@ -34,6 +34,9 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    include: ["@mantine/hooks"],
+  },
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),

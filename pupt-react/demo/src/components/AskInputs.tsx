@@ -1,5 +1,5 @@
 import {
-  SimpleGrid,
+  Stack,
   TextInput,
   NumberInput,
   Switch,
@@ -28,6 +28,7 @@ function renderInput(
     label: req.label || req.name,
     required: req.required,
     size: "xs" as const,
+    styles: { input: { minHeight: 24, height: 24 } },
   };
 
   switch (req.type) {
@@ -166,9 +167,9 @@ export function AskInputs({ requirements, values, onChange }: AskInputsProps) {
   return (
     <div>
       <Text size="xs" fw={600} mb={4}>Inputs</Text>
-      <SimpleGrid cols={2} spacing="xs" verticalSpacing="xs">
+      <Stack gap={4}>
         {requirements.map((req) => renderInput(req, values.get(req.name), onChange))}
-      </SimpleGrid>
+      </Stack>
     </div>
   );
 }

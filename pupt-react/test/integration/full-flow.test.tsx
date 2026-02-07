@@ -100,7 +100,7 @@ describe("Full Flow Integration", () => {
     renderApp();
 
     // Verify header
-    expect(screen.getByText("pupt-react Demo")).toBeInTheDocument();
+    expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
 
     // Verify two-column layout
     expect(screen.getByTestId("left-panel")).toBeInTheDocument();
@@ -248,14 +248,11 @@ describe("Example Prompts Validation", () => {
 });
 
 describe("Layout Structure", () => {
-  it("should render GitHub link in header", () => {
+  it("should render settings button in header", () => {
     renderApp();
 
-    const githubLink = screen.getByRole("link", { name: /github/i });
-    expect(githubLink).toHaveAttribute(
-      "href",
-      expect.stringContaining("github.com")
-    );
+    const settingsButton = screen.getByRole("button", { name: /environment settings/i });
+    expect(settingsButton).toBeInTheDocument();
   });
 
   it("should render both panels side by side", () => {
@@ -288,7 +285,7 @@ describe("Error Handling", () => {
     });
 
     // App should still be functional - header visible
-    expect(screen.getByText("pupt-react Demo")).toBeInTheDocument();
+    expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
     // Editor still visible
     expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
     // Output container still exists
@@ -304,7 +301,7 @@ describe("Error Handling", () => {
     fireEvent.change(editor, { target: { value: "" } });
 
     // App should still be functional
-    expect(screen.getByText("pupt-react Demo")).toBeInTheDocument();
+    expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
     expect(screen.getByTestId("rendered-output")).toBeInTheDocument();
   });
 });
@@ -329,6 +326,6 @@ describe("Application Stability", () => {
     }
 
     // App should still be stable
-    expect(screen.getByText("pupt-react Demo")).toBeInTheDocument();
+    expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
   });
 });

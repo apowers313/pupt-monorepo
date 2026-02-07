@@ -220,6 +220,61 @@ export default (
   </Prompt>
 );`,
   },
+  {
+    name: "Environment-Adaptive (.tsx)",
+    description: "Prompt that adapts to model, provider, format, and language",
+    format: "jsx",
+    source: `import { Prompt, Task, Context, Constraint, Component } from 'pupt-lib';
+import { z } from 'zod';
+
+// Custom component that reads the current environment context
+// and produces adaptive instructions based on the configured settings
+class EnvironmentInfo extends Component {
+  static schema = z.object({});
+
+  async render(_props, _resolved, context) {
+    const { llm, output, code } = context.env;
+    const parts = [];
+
+    if (llm.model) {
+      parts.push("Target Model: " + llm.model);
+    }
+    if (llm.provider && llm.provider !== "unspecified") {
+      parts.push("Provider: " + llm.provider);
+    }
+    if (output.format && output.format !== "unspecified") {
+      parts.push("Preferred Output Format: " + output.format);
+    }
+    if (code.language) {
+      parts.push("Programming Language: " + code.language);
+    }
+
+    return parts.length > 0
+      ? parts.join("\\n")
+      : "No environment preferences configured.";
+  }
+}
+
+export default (
+  <Prompt name="adaptive-error-handling">
+    <Task>
+      Write a brief tutorial on error handling best practices.
+      Adapt your response to match the user's environment preferences below.
+    </Task>
+    <Context>
+      <EnvironmentInfo />
+    </Context>
+    <Constraint>
+      If a programming language is specified, use that language for all code examples.
+      If no language is set, use pseudocode.
+    </Constraint>
+    <Constraint>
+      If an output format is specified, structure your response in that format.
+    </Constraint>
+    <Constraint>Keep the tutorial concise — under 300 words.</Constraint>
+  </Prompt>
+);`,
+  },
 ];
 
 export const DEFAULT_EXAMPLE = EXAMPLES[0]!;

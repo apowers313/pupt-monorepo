@@ -21,11 +21,9 @@ export default defineConfig({
   server: {
     host: true,
     fs: {
-      // Allow serving files from pupt-lib for import map resolution
       allow: [
         resolve(__dirname),
         resolve(__dirname, ".."),
-        resolve(__dirname, "../../pupt-lib"),
       ],
     },
     ...(process.env.SERVHERD_HOSTNAME ? { allowedHosts: [process.env.SERVHERD_HOSTNAME] } : {}),
