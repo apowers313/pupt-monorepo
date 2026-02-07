@@ -45,9 +45,13 @@ function renderWithProviders() {
 }
 
 describe("PromptOutput", () => {
-  it("should render the Rendered Output title", () => {
+  it("should render the Rendered Output title", async () => {
     renderWithProviders();
     expect(screen.getByText("Rendered Output")).toBeInTheDocument();
+    // Wait for async prompt transform/render effects to settle
+    await waitFor(() => {
+      expect(screen.getByText(/Say hello to the user/)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
   it("should render output for the default example", async () => {

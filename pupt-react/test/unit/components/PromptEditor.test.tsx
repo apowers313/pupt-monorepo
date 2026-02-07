@@ -171,8 +171,10 @@ describe("PromptEditor", () => {
     // No transformation should have happened yet
     expect(capturedProps!.element).toBeNull();
 
-    // Advance past debounce
-    await vi.advanceTimersByTimeAsync(250);
+    // Advance past debounce - wrap in act since this triggers async state updates
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
 
     // The key assertion is that we didn't get multiple transforms for rapid changes
     expect(transformCount).toBeLessThanOrEqual(1);

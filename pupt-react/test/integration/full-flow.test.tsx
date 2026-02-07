@@ -95,8 +95,19 @@ function renderOutputOnly() {
   );
 }
 
+/**
+ * Wait for the async prompt transform/render cycle to settle.
+ * PromptRenderer triggers async effects (transform then render) that update
+ * state. Tests must wait for these to complete to avoid act() warnings.
+ */
+async function waitForPromptRender() {
+  await waitFor(() => {
+    expect(screen.getByText(/Say hello to the user/)).toBeInTheDocument();
+  }, { timeout: 5000 });
+}
+
 describe("Full Flow Integration", () => {
-  it("should render the complete demo application", () => {
+  it("should render the complete demo application", async () => {
     renderApp();
 
     // Verify header
@@ -115,19 +126,24 @@ describe("Full Flow Integration", () => {
 
     // Verify rendered output container exists
     expect(screen.getByTestId("rendered-output")).toBeInTheDocument();
+
+    await waitForPromptRender();
   });
 
-  it("should render editor with default example content", () => {
+  it("should render editor with default example content", async () => {
     renderApp();
 
     // Verify editor renders with default example
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
     expect(editor.value).toContain("Prompt");
     expect(editor.value).toContain("greeting");
+
+    await waitForPromptRender();
   });
 
-  it("should handle editing prompt source in the editor", () => {
+  it("should handle editing prompt source in the editor", async () => {
     renderApp();
+    await waitForPromptRender();
 
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
 
@@ -140,26 +156,35 @@ describe("Full Flow Integration", () => {
 
     // Verify editor updated
     expect(editor.value).toBe(newPrompt);
+
+    // Wait for async effects from the source change to settle
+    await waitFor(() => {
+      expect(screen.getByText(/This is a test task/)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
-  it("should have examples dropdown in the input panel", () => {
+  it("should have examples dropdown in the input panel", async () => {
     renderApp();
 
     const examplesButton = screen.getByRole("button", { name: /examples/i });
     expect(examplesButton).toBeInTheDocument();
     expect(examplesButton).toHaveAttribute("aria-haspopup", "menu");
+
+    await waitForPromptRender();
   });
 });
 
 describe("Output Panel Integration", () => {
-  it("should render output panel with title", () => {
+  it("should render output panel with title", async () => {
     renderOutputOnly();
     expect(screen.getByText("Rendered Output")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
-  it("should render output container", () => {
+  it("should render output container", async () => {
     renderOutputOnly();
     expect(screen.getByTestId("rendered-output")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
   it("should render output for the default example", async () => {
@@ -248,14 +273,16 @@ describe("Example Prompts Validation", () => {
 });
 
 describe("Layout Structure", () => {
-  it("should render settings button in header", () => {
+  it("should render settings button in header", async () => {
     renderApp();
 
     const settingsButton = screen.getByRole("button", { name: /environment settings/i });
     expect(settingsButton).toBeInTheDocument();
+
+    await waitForPromptRender();
   });
 
-  it("should render both panels side by side", () => {
+  it("should render both panels side by side", async () => {
     renderApp();
 
     const leftPanel = screen.getByTestId("left-panel");
@@ -263,19 +290,24 @@ describe("Layout Structure", () => {
 
     expect(leftPanel).toBeInTheDocument();
     expect(rightPanel).toBeInTheDocument();
+
+    await waitForPromptRender();
   });
 
-  it("should have proper panel labels", () => {
+  it("should have proper panel labels", async () => {
     renderApp();
 
     expect(screen.getByText("Prompt Input")).toBeInTheDocument();
     expect(screen.getByText("Rendered Output")).toBeInTheDocument();
+
+    await waitForPromptRender();
   });
 });
 
 describe("Error Handling", () => {
-  it("should not crash when rendering invalid prompt source", () => {
+  it("should not crash when rendering invalid prompt source", async () => {
     renderApp();
+    await waitForPromptRender();
 
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
 
@@ -290,10 +322,16 @@ describe("Error Handling", () => {
     expect(screen.getByTestId("mock-editor")).toBeInTheDocument();
     // Output container still exists
     expect(screen.getByTestId("rendered-output")).toBeInTheDocument();
+
+    // Wait for async error handling to settle
+    await waitFor(() => {
+      expect(screen.getByText(/Invalid JSX/)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 
-  it("should handle empty input gracefully", () => {
+  it("should handle empty input gracefully", async () => {
     renderApp();
+    await waitForPromptRender();
 
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
 
@@ -303,21 +341,30 @@ describe("Error Handling", () => {
     // App should still be functional
     expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
     expect(screen.getByTestId("rendered-output")).toBeInTheDocument();
+
+    // Wait for async effects from the source change to settle
+    await waitFor(() => {
+      expect(screen.queryByText(/Say hello to the user/)).not.toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 });
 
 describe("Application Stability", () => {
-  it("should render without throwing errors", () => {
+  it("should render without throwing errors", async () => {
     expect(() => renderApp()).not.toThrow();
+    await waitForPromptRender();
   });
 
-  it("should cleanup properly between renders", () => {
+  it("should cleanup properly between renders", async () => {
     const { unmount } = renderApp();
+    await waitForPromptRender();
     expect(() => unmount()).not.toThrow();
   });
 
-  it("should handle multiple rapid editor changes", () => {
+  it("should handle multiple rapid editor changes", async () => {
     renderApp();
+    await waitForPromptRender();
+
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
 
     // Simulate rapid typing
@@ -327,5 +374,10 @@ describe("Application Stability", () => {
 
     // App should still be stable
     expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
+
+    // Wait for async effects from the last change to settle
+    await waitFor(() => {
+      expect(screen.getByText(/test 9/)).toBeInTheDocument();
+    }, { timeout: 5000 });
   });
 });

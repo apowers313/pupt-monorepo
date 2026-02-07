@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeAll } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { MantineProvider } from "@mantine/core";
 import { PuptProvider } from "../../../src/components/PuptProvider";
@@ -49,31 +49,45 @@ function renderWithProviders(ui: React.ReactElement) {
   );
 }
 
+/**
+ * Wait for the async prompt transform/render cycle to settle.
+ */
+async function waitForPromptRender() {
+  await waitFor(() => {
+    expect(screen.getByText(/Say hello to the user/)).toBeInTheDocument();
+  }, { timeout: 5000 });
+}
+
 describe("Demo Layout", () => {
-  it("should render header with title", () => {
+  it("should render header with title", async () => {
     renderWithProviders(<Layout />);
     expect(screen.getByText("JSX Prompt Demo")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
-  it("should render two-column layout", () => {
+  it("should render two-column layout", async () => {
     renderWithProviders(<Layout />);
     expect(screen.getByTestId("left-panel")).toBeInTheDocument();
     expect(screen.getByTestId("right-panel")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
-  it("should include settings button in header", () => {
+  it("should include settings button in header", async () => {
     renderWithProviders(<Layout />);
     const button = screen.getByRole("button", { name: /environment settings/i });
     expect(button).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
-  it("should render Prompt Input title in left panel", () => {
+  it("should render Prompt Input title in left panel", async () => {
     renderWithProviders(<Layout />);
     expect(screen.getByText("Prompt Input")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 
-  it("should render Rendered Output title in right panel", () => {
+  it("should render Rendered Output title in right panel", async () => {
     renderWithProviders(<Layout />);
     expect(screen.getByText("Rendered Output")).toBeInTheDocument();
+    await waitForPromptRender();
   });
 });

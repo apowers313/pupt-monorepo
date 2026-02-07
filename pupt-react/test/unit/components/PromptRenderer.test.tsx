@@ -233,8 +233,10 @@ describe("PromptRenderer", () => {
     // Output should be null since autoRender is false
     // (the hook only auto-renders when autoRender is true)
 
-    // Manually render
-    await capturedProps!.render();
+    // Manually render - wrap in act since render triggers async state updates
+    await act(async () => {
+      await capturedProps!.render();
+    });
     await waitFor(() => expect(capturedProps!.output).not.toBeNull());
     expect(capturedProps!.output).toContain("Manual");
   });
