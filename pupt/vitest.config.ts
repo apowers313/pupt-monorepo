@@ -8,6 +8,7 @@ export default defineConfig({
     env: {
       NODE_ENV: 'test'
     },
+    exclude: ['test/scripts/**', 'node_modules/**'],
     setupFiles: ['./test/setup.ts'],
     teardownTimeout: 10000,
     pool: 'forks',
