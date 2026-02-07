@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/apowers313/pupt/compare/v2.0.0...v2.0.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* remove migration command remenants ([30bedc9](https://github.com/apowers313/pupt/commit/30bedc912c5ccbff36aff7bec494e194e73e9095))
+* windows path seperator bugs ([5ace9cd](https://github.com/apowers313/pupt/commit/5ace9cd0132d97e305261413b785b190a314d630))
+
 # [2.0.0](https://github.com/apowers313/pupt/compare/v1.4.1...v2.0.0) (2026-02-06)
 
 
