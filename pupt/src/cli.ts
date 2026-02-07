@@ -18,7 +18,6 @@ import { installCommand } from './commands/install.js';
 import { helpCommand } from './commands/help.js';
 import { reviewCommand } from './commands/review.js';
 import { configCommand } from './commands/config.js';
-import { findOldFormatPrompts, migratePromptFile } from './commands/migrate.js';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
 
@@ -127,101 +126,8 @@ async function checkAndMigrateOldConfig(): Promise<void> {
   }
 }
 
-async function checkAndMigrateOldPrompts(): Promise<void> {
-  // Skip in test environment or non-TTY mode
-  if (process.env.NODE_ENV === 'test' || !process.stdin.isTTY) {
-    return;
-  }
-
-  try {
-    // Load config to get prompt directories
-    const configResult = await ConfigManager.loadWithPath();
-    const config = configResult.config;
-
-    // Find old format prompts
-    const oldPrompts = await findOldFormatPrompts(config.promptDirs);
-
-    if (oldPrompts.length === 0) {
-      return;
-    }
-
-    logger.warn(chalk.yellow('\n⚠️  Found old format (.md) prompt file(s):'));
-    for (const prompt of oldPrompts) {
-      logger.warn(chalk.yellow(`   - ${prompt.relativePath}`));
-    }
-    logger.log('');
-
-    const { confirm, checkbox } = await import('@inquirer/prompts');
-    const shouldMigrate = await confirm({
-      message: 'Would you like to migrate these prompts to the new .prompt format?',
-      default: true
-    });
-
-    if (!shouldMigrate) {
-      logger.log(chalk.dim('Skipping migration. You can migrate later by editing the files manually.'));
-      return;
-    }
-
-    // Let user select which files to migrate
-    const choices = oldPrompts.map(p => ({
-      name: p.relativePath,
-      value: p,
-      checked: true,
-    }));
-
-    const filesToMigrate = await checkbox({
-      message: 'Select prompts to migrate:',
-      choices,
-    });
-
-    if (filesToMigrate.length === 0) {
-      logger.log(chalk.dim('No files selected.'));
-      return;
-    }
-
-    const keepBackup = await confirm({
-      message: 'Keep backup of original .md files?',
-      default: true
-    });
-
-    logger.log('');
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const prompt of filesToMigrate) {
-      const result = await migratePromptFile(prompt.path, { backup: keepBackup });
-
-      if (result.success) {
-        successCount++;
-        logger.log(chalk.green(`✓ ${prompt.relativePath} → ${path.basename(result.newPath)}`));
-      } else {
-        failCount++;
-        logger.log(chalk.red(`✗ ${prompt.relativePath}: ${result.error}`));
-      }
-    }
-
-    logger.log('');
-    if (successCount > 0) {
-      logger.log(chalk.green(`Migrated ${successCount} file(s).`));
-    }
-    if (failCount > 0) {
-      logger.log(chalk.red(`Failed to migrate ${failCount} file(s).`));
-    }
-    if (keepBackup && successCount > 0) {
-      logger.log(chalk.dim('Original files backed up with .bak extension.'));
-    }
-    logger.log('');
-  } catch {
-    // Silently ignore errors during migration check (e.g., no config file)
-  }
-}
-
 // Check for old config files before running commands
 await checkAndMigrateOldConfig();
-
-// Check for old format prompts
-await checkAndMigrateOldPrompts();
 
 program
   .name('pt')
