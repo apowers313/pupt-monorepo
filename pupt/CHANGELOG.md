@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/apowers313/pupt/compare/v2.1.0...v2.1.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* use kiro-cli chat for prompts ([beea887](https://github.com/apowers313/pupt/commit/beea887d62a16957446e4ef995966d5356955420))
+
 # [2.1.0](https://github.com/apowers313/pupt/compare/v2.0.1...v2.1.0) (2026-02-08)
 
 
