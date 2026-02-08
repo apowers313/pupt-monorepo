@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/apowers313/pupt/compare/v2.0.1...v2.1.0) (2026-02-08)
+
+
+### Features
+
+* retire q, add kiro-cli ([22c3165](https://github.com/apowers313/pupt/commit/22c31650b8e4c2c3f3486c594480f691a9d757cf))
+
 ## [2.0.1](https://github.com/apowers313/pupt/compare/v2.0.0...v2.0.1) (2026-02-07)
 
 
