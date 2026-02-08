@@ -288,9 +288,10 @@ describe('Run Command - Coverage Tests', () => {
       await runCommand(['claude'], {});
 
       // Prompt should be in args, not piped via stdin
+      // Default args from SUPPORTED_TOOLS are injected when no explicit args provided
       expect(spawn).toHaveBeenCalledWith(
         'claude',
-        ['my prompt text'],
+        ['--permission-mode', 'acceptEdits', 'my prompt text'],
         { stdio: ['inherit', 'inherit', 'pipe'] }
       );
     });
@@ -303,10 +304,10 @@ describe('Run Command - Coverage Tests', () => {
 
       await runCommand(['kiro-cli'], {});
 
-      // Prompt should be in args, not piped via stdin
+      // 'chat' subcommand from SUPPORTED_TOOLS defaultArgs, then prompt appended
       expect(spawn).toHaveBeenCalledWith(
         'kiro-cli',
-        ['my prompt text'],
+        ['chat', 'my prompt text'],
         { stdio: ['inherit', 'inherit', 'inherit'] }
       );
     });
@@ -373,7 +374,7 @@ describe('Run Command - Coverage Tests', () => {
         config: {
           promptDirs: ['./.prompts'],
           defaultCmd: 'kiro-cli',
-          defaultCmdArgs: []
+          defaultCmdArgs: ['chat']
         } as any,
         filepath: undefined
       });
@@ -385,10 +386,10 @@ describe('Run Command - Coverage Tests', () => {
 
       await runCommand([], {});
 
-      // When defaultCmd is 'kiro-cli', prompt is appended to args
+      // When defaultCmd is 'kiro-cli', chat subcommand + prompt appended
       expect(spawn).toHaveBeenCalledWith(
         'kiro-cli',
-        ['hello world'],
+        ['chat', 'hello world'],
         { stdio: ['inherit', 'inherit', 'inherit'] }
       );
     });

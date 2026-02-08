@@ -13,7 +13,7 @@ import { OutputCaptureService } from '../services/output-capture-service.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
 import crypto from 'node:crypto';
-import { isInteractiveTUI } from '../utils/tool-detection.js';
+import { isInteractiveTUI, getToolByCommand } from '../utils/tool-detection.js';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -89,7 +89,13 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   if (tool) {
     // Explicit tool specified
     finalTool = tool;
-    finalArgs = [...toolArgs, ...extraArgs];
+    if (toolArgs.length === 0) {
+      // No explicit args — use defaults from SUPPORTED_TOOLS if available
+      const toolConfig = getToolByCommand(tool);
+      finalArgs = [...(toolConfig?.defaultArgs || []), ...extraArgs];
+    } else {
+      finalArgs = [...toolArgs, ...extraArgs];
+    }
   } else if ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) {
     // Use configured tool (prefer new field name)
     finalTool = (config.defaultCmd && config.defaultCmd.trim() !== '' ? config.defaultCmd : config.codingTool)!;

@@ -268,7 +268,7 @@ describe('Init Command', () => {
         name: 'kiro',
         displayName: 'Kiro',
         command: 'kiro-cli',
-        defaultArgs: [],
+        defaultArgs: ['chat'],
         defaultOptions: {}
       }]);
 
@@ -276,7 +276,7 @@ describe('Init Command', () => {
         name: 'kiro',
         displayName: 'Kiro',
         command: 'kiro-cli',
-        defaultArgs: [],
+        defaultArgs: ['chat'],
         defaultOptions: {}
       });
 
@@ -291,7 +291,7 @@ describe('Init Command', () => {
 
       const config = await fs.readJson('.pt-config.json');
       expect(config.defaultCmd).toBe('kiro-cli');
-      expect(config.defaultCmdArgs).toBeUndefined();
+      expect(config.defaultCmdArgs).toEqual(['chat']);
       expect(config.defaultCmdOptions).toBeUndefined();
       expect(config.autoRun).toBe(true);
     });

@@ -154,6 +154,7 @@ export const migrations: ConfigMigration[] = [
       // Migrate Amazon Q ('q') to Kiro CLI ('kiro-cli')
       if (migrated.defaultCmd === 'q') {
         migrated.defaultCmd = 'kiro-cli';
+        migrated.defaultCmdArgs = ['chat'];
       }
 
       return migrated;

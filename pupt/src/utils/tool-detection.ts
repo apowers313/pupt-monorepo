@@ -22,7 +22,7 @@ export const SUPPORTED_TOOLS: ToolConfig[] = [
     name: 'kiro',
     displayName: 'Kiro',
     command: 'kiro-cli',
-    defaultArgs: [],
+    defaultArgs: ['chat'],
     defaultOptions: {}
   }
 ];
@@ -41,6 +41,10 @@ export function detectInstalledTools(): ToolConfig[] {
 
 export function getToolByName(name: string): ToolConfig | undefined {
   return SUPPORTED_TOOLS.find(tool => tool.name === name);
+}
+
+export function getToolByCommand(command: string): ToolConfig | undefined {
+  return SUPPORTED_TOOLS.find(tool => tool.command === command);
 }
 
 /**

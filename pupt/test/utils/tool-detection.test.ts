@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { detectInstalledTools, getToolByName, SUPPORTED_TOOLS, isInteractiveTUI } from '../../src/utils/tool-detection.js';
+import { detectInstalledTools, getToolByName, getToolByCommand, SUPPORTED_TOOLS, isInteractiveTUI } from '../../src/utils/tool-detection.js';
 import { sync as commandExistsSync } from 'command-exists';
 
 // Mock command-exists module
@@ -68,13 +68,36 @@ describe('tool-detection', () => {
       expect(tool).toBeDefined();
       expect(tool?.name).toBe('kiro');
       expect(tool?.command).toBe('kiro-cli');
-      expect(tool?.defaultArgs).toEqual([]);
+      expect(tool?.defaultArgs).toEqual(['chat']);
       expect(tool?.defaultOptions).toEqual({});
     });
 
     it('should return undefined for unknown tool', () => {
       const tool = getToolByName('unknown');
       
+      expect(tool).toBeUndefined();
+    });
+  });
+
+  describe('getToolByCommand', () => {
+    it('should return Claude config by command', () => {
+      const tool = getToolByCommand('claude');
+
+      expect(tool).toBeDefined();
+      expect(tool?.name).toBe('claude');
+    });
+
+    it('should return Kiro config by command', () => {
+      const tool = getToolByCommand('kiro-cli');
+
+      expect(tool).toBeDefined();
+      expect(tool?.name).toBe('kiro');
+      expect(tool?.command).toBe('kiro-cli');
+    });
+
+    it('should return undefined for unknown command', () => {
+      const tool = getToolByCommand('unknown');
+
       expect(tool).toBeUndefined();
     });
   });
