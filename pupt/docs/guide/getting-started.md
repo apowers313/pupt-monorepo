@@ -7,7 +7,7 @@ Welcome to PUPT (Powerful Universal Prompt Tool) - your faithful prompt companio
 PUPT is a command-line tool designed to streamline your AI workflow by:
 - Managing a library of reusable prompt templates
 - Collecting user input dynamically through interactive prompts
-- Integrating seamlessly with AI tools like Claude Code, Amazon Q, and others
+- Integrating seamlessly with AI tools like Claude Code, Kiro, and others
 - Tracking prompt history and analyzing usage patterns
 - Sharing prompts across teams and projects
 

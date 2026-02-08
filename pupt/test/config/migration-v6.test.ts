@@ -9,7 +9,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
   });
 
   it('should migrate targetLlm to environment.llm.provider', () => {
@@ -20,7 +20,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     expect(migrated.environment?.llm?.provider).toBe('anthropic');
   });
@@ -37,7 +37,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     // provider should come from targetLlm since environment.llm.provider wasn't set
     expect(migrated.environment?.llm?.provider).toBe('anthropic');
@@ -58,7 +58,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     // provider should not be overwritten since it was already set
     expect(migrated.environment?.llm?.provider).toBe('openai');
@@ -80,9 +80,9 @@ describe('Config Migration v5 → v6', () => {
     })).toBe(true);
   });
 
-  it('should not migrate v6 config', () => {
+  it('should not migrate v7 config', () => {
     expect(migrateConfig.needsMigration({
-      version: '6.0.0',
+      version: '7.0.0',
       promptDirs: ['./prompts'],
     })).toBe(false);
   });

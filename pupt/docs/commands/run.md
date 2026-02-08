@@ -55,8 +55,8 @@ pt run claude
 # OpenAI GPT
 pt run gpt
 
-# Amazon Q
-pt run q
+# Kiro
+pt run kiro
 
 # VS Code
 pt run code -

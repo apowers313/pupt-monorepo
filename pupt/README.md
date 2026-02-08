@@ -20,7 +20,7 @@ A powerful CLI tool for managing and using AI prompts with template support, des
 - 📝 **Template Support** - Use Handlebars templates with user input
 - 🔍 **Interactive Search** - Quickly find prompts with fuzzy search
 - 🔧 **Cross-platform** - Works on Windows, macOS, and Linux
-- 🚀 **Tool Integration** - Run prompts with Claude Code, Amazon Q, or any command line tool
+- 🚀 **Tool Integration** - Run prompts with Claude Code, Kiro, or any command line tool
 - 📊 **History Tracking** - Keep track of generated prompts and re-run them
 - 📊 **Output Capture** - Capture and save command outputs (configurable)
 - 🏷️ **Annotations** - Add notes and tags to your prompt history

@@ -275,8 +275,8 @@ describe('Run Command - Coverage Tests', () => {
     });
   });
 
-  describe('Claude Code detection in executeTool', () => {
-    it('should append prompt to args when isClaudeCode is true (explicit claude tool)', async () => {
+  describe('Interactive TUI tool detection in executeTool', () => {
+    it('should append prompt to args for Claude (interactive TUI)', async () => {
       setupResolvePromptMock('my prompt text');
 
       const mockSpawn = createMockSpawn(0);
@@ -293,13 +293,25 @@ describe('Run Command - Coverage Tests', () => {
         ['my prompt text'],
         { stdio: ['inherit', 'inherit', 'pipe'] }
       );
-
-      // stdin should NOT have been written to (the finalPrompt is empty)
-      // Since isClaudeCode is true, stdin is 'inherit' so child.stdin may not exist
-      // The close stdin path handles child.stdin.end() for empty prompt
     });
 
-    it('should use inherit for stdin when tool is claude', async () => {
+    it('should append prompt to args for kiro-cli (interactive TUI)', async () => {
+      setupResolvePromptMock('my prompt text');
+
+      const mockSpawn = createMockSpawn(0);
+      vi.mocked(spawn).mockReturnValue(mockSpawn as any);
+
+      await runCommand(['kiro-cli'], {});
+
+      // Prompt should be in args, not piped via stdin
+      expect(spawn).toHaveBeenCalledWith(
+        'kiro-cli',
+        ['my prompt text'],
+        { stdio: ['inherit', 'inherit', 'inherit'] }
+      );
+    });
+
+    it('should use inherit for stdin when tool is an interactive TUI', async () => {
       setupResolvePromptMock('my prompt text');
 
       const mockSpawn = createMockSpawn(0);
@@ -315,7 +327,7 @@ describe('Run Command - Coverage Tests', () => {
       );
     });
 
-    it('should use pipe for stdin when tool is not claude', async () => {
+    it('should use pipe for stdin when tool is not an interactive TUI', async () => {
       setupResolvePromptMock('my prompt text');
 
       const mockSpawn = createMockSpawn(0);
@@ -353,6 +365,31 @@ describe('Run Command - Coverage Tests', () => {
         'claude',
         ['--model', 'sonnet', 'hello world'],
         { stdio: ['inherit', 'inherit', 'pipe'] }
+      );
+    });
+
+    it('should detect kiro-cli as default tool and append prompt to args', async () => {
+      vi.mocked(ConfigManager.loadWithPath).mockResolvedValue({
+        config: {
+          promptDirs: ['./.prompts'],
+          defaultCmd: 'kiro-cli',
+          defaultCmdArgs: []
+        } as any,
+        filepath: undefined
+      });
+
+      setupResolvePromptMock('hello world');
+
+      const mockSpawn = createMockSpawn(0);
+      vi.mocked(spawn).mockReturnValue(mockSpawn as any);
+
+      await runCommand([], {});
+
+      // When defaultCmd is 'kiro-cli', prompt is appended to args
+      expect(spawn).toHaveBeenCalledWith(
+        'kiro-cli',
+        ['hello world'],
+        { stdio: ['inherit', 'inherit', 'inherit'] }
       );
     });
   });
@@ -579,7 +616,7 @@ describe('Run Command - Coverage Tests', () => {
     });
 
     it('should close stdin when no prompt (empty finalPrompt)', async () => {
-      // For claude, finalPrompt becomes '' and isClaudeCode is true
+      // For interactive TUI tools like claude, finalPrompt becomes '' and isTUI is true
       setupResolvePromptMock('my prompt');
 
       const mock = createMockSpawn(0);

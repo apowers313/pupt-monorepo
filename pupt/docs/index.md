@@ -25,7 +25,7 @@ features:
     details: Quickly find prompts with fuzzy search. Preview content before selection and navigate effortlessly through your prompt library.
   - icon: 🤖
     title: Tool Integration
-    details: Seamlessly integrate with Claude Code, Amazon Q, or any CLI tool. Configure default commands and options for your workflow.
+    details: Seamlessly integrate with Claude Code, Kiro, or any CLI tool. Configure default commands and options for your workflow.
   - icon: 📊
     title: History & Analytics
     details: Track prompt executions, add annotations, and analyze usage patterns. Generate insights to improve your prompts over time.

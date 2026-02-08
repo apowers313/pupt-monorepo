@@ -51,7 +51,7 @@ describe('Config Migration Integration', () => {
         'Continue with last session?': '--continue',
         'Enable web search?': '--web'
       });
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
@@ -73,7 +73,7 @@ describe('Config Migration Integration', () => {
       expect(savedConfig.defaultCmd).toBe('claude');
       expect(savedConfig.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
       expect(savedConfig.defaultCmdOptions).toBeDefined();
-      expect(savedConfig.version).toBe('6.0.0');
+      expect(savedConfig.version).toBe('7.0.0');
 
       // Check that backup was created
       const backupPath = '.pt-config.json.backup';
@@ -102,7 +102,7 @@ describe('Config Migration Integration', () => {
       // Second load (should not re-migrate)
       config = await ConfigManager.load();
       expect(config.defaultCmd).toBe('gpt');
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       
       // Verify only one backup exists
       const backupPath = '.pt-config.json.backup';
@@ -180,7 +180,7 @@ describe('Config Migration Integration', () => {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
-        version: '6.0.0',
+        version: '7.0.0',
         libraries: [],
         outputCapture: {
           enabled: false
@@ -243,7 +243,7 @@ codingToolOptions:
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
       expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
   });
 
@@ -284,7 +284,7 @@ codingToolOptions:
       const config = await ConfigManager.load();
       
       // Should update version to 5.0.0 (migrates through v4 to v5)
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
 
       // Should have output capture defaults
       expect(config.outputCapture).toEqual({
@@ -321,7 +321,7 @@ codingToolOptions:
       
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
 
       // Should preserve user's output capture settings
       expect(config.outputCapture).toEqual({
@@ -371,7 +371,7 @@ codingToolOptions:
       const config = await ConfigManager.load();
 
       // Should migrate v4 to v5
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.libraries).toEqual([]);
 
       // Existing fields should be preserved
@@ -391,7 +391,7 @@ codingToolOptions:
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.outputCapture).toBeDefined();
       // autoAnnotate is removed during migration
       expect(config.autoAnnotate).toBeUndefined();
@@ -422,7 +422,7 @@ codingToolOptions:
       const config = await ConfigManager.load();
 
       // Should be migrated to v5.0.0
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
 
       // Should add missing v4 fields with defaults
       expect(config.outputCapture).toBeDefined();

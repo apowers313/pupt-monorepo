@@ -19,9 +19,9 @@ export const SUPPORTED_TOOLS: ToolConfig[] = [
     }
   },
   {
-    name: 'q',
-    displayName: 'Amazon Q',
-    command: 'q',
+    name: 'kiro',
+    displayName: 'Kiro',
+    command: 'kiro-cli',
     defaultArgs: [],
     defaultOptions: {}
   }
@@ -41,4 +41,14 @@ export function detectInstalledTools(): ToolConfig[] {
 
 export function getToolByName(name: string): ToolConfig | undefined {
   return SUPPORTED_TOOLS.find(tool => tool.name === name);
+}
+
+/**
+ * Tools that are interactive TUIs requiring TTY access.
+ * These receive prompts as positional arguments instead of stdin.
+ */
+const INTERACTIVE_TUI_TOOLS = ['claude', 'kiro-cli'];
+
+export function isInteractiveTUI(tool: string): boolean {
+  return INTERACTIVE_TUI_TOOLS.includes(tool);
 }

@@ -102,7 +102,7 @@ export const DEFAULT_CONFIG: Partial<Config> = {
   autoReview: true,
   autoRun: false,
   gitPromptDir: '.git-prompts',
-  version: '6.0.0',
+  version: '7.0.0',
   outputCapture: {
     enabled: false,
     directory: '.pt-output',

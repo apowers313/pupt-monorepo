@@ -221,7 +221,7 @@ describe('Init Command', () => {
       expect(config.defaultCmdArgs).toBeUndefined();
       expect(config.defaultCmdOptions).toBeUndefined();
       expect(config.autoRun).toBe(false);
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should prompt for tool selection when Claude is detected', async () => {
@@ -261,21 +261,21 @@ describe('Init Command', () => {
       expect(config.autoRun).toBe(true);
     });
 
-    it('should prompt for tool selection when Amazon Q is detected', async () => {
+    it('should prompt for tool selection when Kiro is detected', async () => {
       const { detectInstalledTools, getToolByName } = await import('../../src/utils/tool-detection.js');
-      
+
       vi.mocked(detectInstalledTools).mockReturnValue([{
-        name: 'q',
-        displayName: 'Amazon Q',
-        command: 'q',
+        name: 'kiro',
+        displayName: 'Kiro',
+        command: 'kiro-cli',
         defaultArgs: [],
         defaultOptions: {}
       }]);
-      
+
       vi.mocked(getToolByName).mockReturnValue({
-        name: 'q',
-        displayName: 'Amazon Q',
-        command: 'q',
+        name: 'kiro',
+        displayName: 'Kiro',
+        command: 'kiro-cli',
         defaultArgs: [],
         defaultOptions: {}
       });
@@ -285,12 +285,12 @@ describe('Init Command', () => {
       vi.mocked(inquirerPrompts.confirm)
         .mockResolvedValue(false);
       vi.mocked(inquirerPrompts.select)
-        .mockResolvedValue('q');
+        .mockResolvedValue('kiro');
 
       await initCommand();
 
       const config = await fs.readJson('.pt-config.json');
-      expect(config.defaultCmd).toBe('q');
+      expect(config.defaultCmd).toBe('kiro-cli');
       expect(config.defaultCmdArgs).toBeUndefined();
       expect(config.defaultCmdOptions).toBeUndefined();
       expect(config.autoRun).toBe(true);
@@ -400,7 +400,7 @@ describe('Init Command', () => {
       const config = await fs.readJson('.pt-config.json');
 
       // Should have version 5.0.0
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
 
       // Should have outputCapture with defaults
       expect(config.outputCapture).toBeDefined();

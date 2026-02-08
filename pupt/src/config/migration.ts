@@ -142,6 +142,22 @@ export const migrations: ConfigMigration[] = [
 
       return migrated;
     }
+  },
+  {
+    version: '7.0.0',
+    migrate: (config) => {
+      const migrated = { ...config };
+
+      // Update version
+      migrated.version = '7.0.0';
+
+      // Migrate Amazon Q ('q') to Kiro CLI ('kiro-cli')
+      if (migrated.defaultCmd === 'q') {
+        migrated.defaultCmd = 'kiro-cli';
+      }
+
+      return migrated;
+    }
   }
 ];
 
@@ -175,6 +191,11 @@ export const migrateConfig = Object.assign(
       migrated = migrations[3].migrate(migrated);
     }
 
+    // Apply v7 migration if version is old or defaultCmd is 'q'
+    if (!migrated.version || migrated.version < '7.0.0' || migrated.defaultCmd === 'q') {
+      migrated = migrations[4].migrate(migrated);
+    }
+
     return migrated as unknown as Config;
   },
   {
@@ -194,8 +215,13 @@ export const migrateConfig = Object.assign(
         return true;
       }
 
+      // Check if defaultCmd is 'q' (Amazon Q renamed to Kiro CLI)
+      if (config.defaultCmd === 'q') {
+        return true;
+      }
+
       // Check if version is missing or old
-      if (!config.version || config.version < '6.0.0') {
+      if (!config.version || config.version < '7.0.0') {
         return true;
       }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { detectInstalledTools, getToolByName, SUPPORTED_TOOLS } from '../../src/utils/tool-detection.js';
+import { detectInstalledTools, getToolByName, SUPPORTED_TOOLS, isInteractiveTUI } from '../../src/utils/tool-detection.js';
 import { sync as commandExistsSync } from 'command-exists';
 
 // Mock command-exists module
@@ -21,14 +21,14 @@ describe('tool-detection', () => {
       expect(tools[0].displayName).toBe('Claude');
     });
 
-    it('should detect Amazon Q when installed', () => {
-      vi.mocked(commandExistsSync).mockImplementation((cmd: string) => cmd === 'q');
+    it('should detect Kiro when installed', () => {
+      vi.mocked(commandExistsSync).mockImplementation((cmd: string) => cmd === 'kiro-cli');
 
       const tools = detectInstalledTools();
-      
+
       expect(tools).toHaveLength(1);
-      expect(tools[0].name).toBe('q');
-      expect(tools[0].displayName).toBe('Amazon Q');
+      expect(tools[0].name).toBe('kiro');
+      expect(tools[0].displayName).toBe('Kiro');
     });
 
     it('should detect both tools when both are installed', () => {
@@ -37,7 +37,7 @@ describe('tool-detection', () => {
       const tools = detectInstalledTools();
       
       expect(tools).toHaveLength(2);
-      expect(tools.map(t => t.name)).toEqual(['claude', 'q']);
+      expect(tools.map(t => t.name)).toEqual(['claude', 'kiro']);
     });
 
     it('should return empty array when no tools are installed', () => {
@@ -62,12 +62,12 @@ describe('tool-detection', () => {
       });
     });
 
-    it('should return Amazon Q config when requested', () => {
-      const tool = getToolByName('q');
-      
+    it('should return Kiro config when requested', () => {
+      const tool = getToolByName('kiro');
+
       expect(tool).toBeDefined();
-      expect(tool?.name).toBe('q');
-      expect(tool?.command).toBe('q');
+      expect(tool?.name).toBe('kiro');
+      expect(tool?.command).toBe('kiro-cli');
       expect(tool?.defaultArgs).toEqual([]);
       expect(tool?.defaultOptions).toEqual({});
     });
@@ -80,9 +80,25 @@ describe('tool-detection', () => {
   });
 
   describe('SUPPORTED_TOOLS', () => {
-    it('should have Claude and Amazon Q configured', () => {
+    it('should have Claude and Kiro configured', () => {
       expect(SUPPORTED_TOOLS).toHaveLength(2);
-      expect(SUPPORTED_TOOLS.map(t => t.name)).toEqual(['claude', 'q']);
+      expect(SUPPORTED_TOOLS.map(t => t.name)).toEqual(['claude', 'kiro']);
+    });
+  });
+
+  describe('isInteractiveTUI', () => {
+    it('should return true for claude', () => {
+      expect(isInteractiveTUI('claude')).toBe(true);
+    });
+
+    it('should return true for kiro-cli', () => {
+      expect(isInteractiveTUI('kiro-cli')).toBe(true);
+    });
+
+    it('should return false for other tools', () => {
+      expect(isInteractiveTUI('cat')).toBe(false);
+      expect(isInteractiveTUI('gpt')).toBe(false);
+      expect(isInteractiveTUI('code')).toBe(false);
     });
   });
 });

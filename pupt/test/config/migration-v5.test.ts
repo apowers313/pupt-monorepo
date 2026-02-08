@@ -9,7 +9,7 @@ describe('Config Migration v4 → v5', () => {
       outputCapture: { enabled: false },
     };
     const migrated = migrateConfig(v4Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
   });
 
   it('should preserve existing fields during migration', () => {
@@ -80,9 +80,9 @@ describe('Config Migration v4 → v5', () => {
     })).toBe(true);
   });
 
-  it('should not migrate v6 config', () => {
+  it('should not migrate v7 config', () => {
     expect(migrateConfig.needsMigration({
-      version: '6.0.0',
+      version: '7.0.0',
       promptDirs: ['./prompts'],
     })).toBe(false);
   });
@@ -95,7 +95,7 @@ describe('Config Migration v4 → v5', () => {
       autoRun: false,
     };
     const migrated = migrateConfig(v3Config);
-    expect(migrated.version).toBe('6.0.0');
+    expect(migrated.version).toBe('7.0.0');
     expect(migrated.outputCapture).toBeDefined();
     expect(migrated.autoAnnotate).toBeUndefined();
     expect(migrated.libraries).toEqual([]);

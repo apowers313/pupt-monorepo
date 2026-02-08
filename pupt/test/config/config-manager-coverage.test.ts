@@ -45,7 +45,7 @@ describe('ConfigManager coverage', () => {
       expect(config.defaultCmdArgs).toEqual(['--model', 'gpt-4']);
       expect(config.defaultCmdOptions).toEqual({ 'Resume?': '--resume' });
       // Should be migrated to latest version
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should migrate a v2 config with codingTool fields', async () => {
@@ -62,7 +62,7 @@ describe('ConfigManager coverage', () => {
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual(['--verbose']);
       expect(config.defaultCmdOptions).toEqual({ 'Continue?': '--continue' });
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should migrate a v3 config to v6', async () => {
@@ -77,7 +77,7 @@ describe('ConfigManager coverage', () => {
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.autoReview).toBe(false);
       expect(config.autoRun).toBe(true);
       expect(config.outputCapture).toBeDefined();
@@ -98,7 +98,7 @@ describe('ConfigManager coverage', () => {
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.outputCapture?.enabled).toBe(true);
     });
 
@@ -111,7 +111,7 @@ describe('ConfigManager coverage', () => {
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should migrate targetLlm to environment.llm.provider', async () => {
@@ -123,7 +123,7 @@ describe('ConfigManager coverage', () => {
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
       expect(config.environment?.llm?.provider).toBe('anthropic');
       expect((config as Record<string, unknown>).targetLlm).toBeUndefined();
     });
@@ -178,7 +178,7 @@ describe('ConfigManager coverage', () => {
         const config = await ConfigManager.load();
         // Migration should still succeed
         expect(config.defaultCmd).toBe('claude');
-        expect(config.version).toBe('6.0.0');
+        expect(config.version).toBe('7.0.0');
       } finally {
         migrateConfig.createBackup = originalCreateBackup;
       }
@@ -194,7 +194,7 @@ describe('ConfigManager coverage', () => {
 
       // Read the config file back and verify it was updated
       const savedConfig = await fs.readJson('.pt-config.json');
-      expect(savedConfig.version).toBe('6.0.0');
+      expect(savedConfig.version).toBe('7.0.0');
       expect(savedConfig.promptDirs).toBeDefined();
       expect(savedConfig.promptDirectory).toBeUndefined();
       expect(savedConfig.codingTool).toBeUndefined();
@@ -203,11 +203,11 @@ describe('ConfigManager coverage', () => {
     it('should retry migration when initial validation fails but migration fixes it', async () => {
       // Config that passes ConfigFileSchema but fails ConfigSchema validation,
       // but can be fixed by running migration
-      // A config with version '6.0.0' won't trigger needsMigration,
+      // A config with version '7.0.0' won't trigger needsMigration,
       // but if it has an issue that migration can fix, the retry path kicks in
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0',
+        version: '7.0.0',
         targetLlm: 'openai' // This triggers needsMigration=true for targetLlm
       });
 
@@ -224,7 +224,7 @@ describe('ConfigManager coverage', () => {
       // but fails ConfigSchema validation, and migration cannot fix the type mismatch.
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0',
+        version: '7.0.0',
         outputCapture: {
           enabled: 'not-a-boolean'
         }
@@ -249,7 +249,7 @@ describe('ConfigManager coverage', () => {
       // This should trigger the union error handling in validateConfig
       await fs.writeJson('.pt-config.json', {
         promptDirs: 123, // Invalid: should be array of strings
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       await expect(ConfigManager.load()).rejects.toThrow(/promptDirs/);
@@ -266,7 +266,7 @@ describe('ConfigManager coverage', () => {
     it('should throw for config with invalid nested field', async () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0',
+        version: '7.0.0',
         helpers: {
           myHelper: {
             type: 'inline'
@@ -285,7 +285,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         defaultCmd: 'aider',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -296,7 +296,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         defaultCmdArgs: ['--verbose', '--model', 'gpt-4'],
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -307,7 +307,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         defaultCmdOptions: { 'Continue?': '--continue', 'Reset?': '--reset' },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -322,7 +322,7 @@ describe('ConfigManager coverage', () => {
         promptDirs: ['./prompts'],
         autoReview: false,
         autoRun: true,
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -333,7 +333,7 @@ describe('ConfigManager coverage', () => {
     it('should keep autoReview and autoRun as undefined when not specified in current-version config', async () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -360,7 +360,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         gitPromptDir: '.custom-git-prompts',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -373,7 +373,7 @@ describe('ConfigManager coverage', () => {
         codingTool: 'cursor',
         codingToolArgs: ['--fast'],
         codingToolOptions: { 'Save?': '--save' },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -384,11 +384,11 @@ describe('ConfigManager coverage', () => {
     it('should merge version field', async () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should merge helpers field', async () => {
@@ -398,7 +398,7 @@ describe('ConfigManager coverage', () => {
           dateHelper: { type: 'inline', value: 'return Date.now()' },
           fileHelper: { type: 'file', path: './helpers/custom.js' }
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -418,7 +418,7 @@ describe('ConfigManager coverage', () => {
           maxSizeMB: 200,
           retentionDays: 90
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -433,7 +433,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         logLevel: 'debug',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -449,7 +449,7 @@ describe('ConfigManager coverage', () => {
           code: { language: 'typescript', highlight: true },
           user: { editor: 'vscode' }
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -469,7 +469,7 @@ describe('ConfigManager coverage', () => {
     it('should not set default gitPromptDir when not specified in current-version config', async () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -497,7 +497,7 @@ describe('ConfigManager coverage', () => {
           enabled: true,
           directory: './captured-output'
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -511,7 +511,7 @@ describe('ConfigManager coverage', () => {
           enabled: true,
           directory: '~/.pt-output'
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -527,7 +527,7 @@ describe('ConfigManager coverage', () => {
           enabled: true,
           directory: '${projectRoot}/.pt-output'
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -538,7 +538,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         annotationDir: './my-annotations',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -549,7 +549,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         gitPromptDir: './my-git-prompts',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -562,7 +562,7 @@ describe('ConfigManager coverage', () => {
         outputCapture: {
           enabled: false
         },
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const config = await ConfigManager.load();
@@ -578,7 +578,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         annotationDir: './annotations',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       // Load config - should attempt annotation migration without error
@@ -590,7 +590,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
         annotationDir: './annotations',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       // Create annotationDir as a file (not a directory) to cause migration to fail
@@ -609,7 +609,7 @@ describe('ConfigManager coverage', () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['/some/absolute/path/prompts'],
         historyDir: '/another/absolute/history',
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       await ConfigManager.load();
@@ -641,7 +641,7 @@ describe('ConfigManager coverage', () => {
     it('should return filepath and configDir when config is found', async () => {
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
-        version: '6.0.0'
+        version: '7.0.0'
       });
 
       const result = await ConfigManager.loadWithPath();
@@ -653,7 +653,7 @@ describe('ConfigManager coverage', () => {
 
   describe('migrateConfig retry path', () => {
     it('should retry migration when validation fails but migration can fix it', async () => {
-      // Write config that has version 6.0.0 (so needsMigration returns false for version)
+      // Write config that has version 5.0.0 (so needsMigration returns true for version)
       // but has targetLlm (so needsMigration returns true)
       await fs.writeJson('.pt-config.json', {
         promptDirs: ['./prompts'],
@@ -663,7 +663,7 @@ describe('ConfigManager coverage', () => {
 
       const config = await ConfigManager.load();
       expect(config.environment?.llm?.provider).toBe('openai');
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
 
     it('should throw when config validation fails and migration cannot fix it', async () => {
@@ -673,7 +673,7 @@ describe('ConfigManager coverage', () => {
       const yamlContent = `
 promptDirs:
   - ./prompts
-version: "6.0.0"
+version: "7.0.0"
 outputCapture:
   enabled: "yes"
 `;
@@ -712,7 +712,7 @@ codingTool: claude
 
       // Migration should still work
       expect(config.defaultCmd).toBe('claude');
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
 
       // YAML file should not be modified (migration only writes back .json)
       const yamlAfter = await fs.readFile('.pt-config.yaml', 'utf-8');
@@ -776,7 +776,7 @@ codingTool: claude
       const config = await ConfigManager.load();
       // After migration through v5, libraries should be empty array or undefined
       // The migration adds it but ConfigSchema makes it optional
-      expect(config.version).toBe('6.0.0');
+      expect(config.version).toBe('7.0.0');
     });
   });
 });

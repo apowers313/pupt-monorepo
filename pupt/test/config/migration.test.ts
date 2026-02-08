@@ -33,7 +33,7 @@ describe('Config Migration', () => {
       expect(migrated.defaultCmd).toBe('mycli');
       expect(migrated.defaultCmdArgs).toEqual(['--flag']);
       expect(migrated.defaultCmdOptions).toEqual({ 'Some option': '--opt' });
-      expect(migrated.version).toBe('6.0.0');
+      expect(migrated.version).toBe('7.0.0');
       expect('codingTool' in migrated).toBe(false);
       expect('codingToolArgs' in migrated).toBe(false);
       expect('codingToolOptions' in migrated).toBe(false);
@@ -46,7 +46,7 @@ describe('Config Migration', () => {
 
       const migrated = migrateConfig(oldConfig);
 
-      expect(migrated.version).toBe('6.0.0');
+      expect(migrated.version).toBe('7.0.0');
       expect(migrated.autoReview).toBe(true);
       expect(migrated.autoRun).toBe(false);
       expect(migrated.gitPromptDir).toBe('.git-prompts');
@@ -115,7 +115,7 @@ describe('Config Migration', () => {
 
     it('should return false for up-to-date configs', () => {
       const config = {
-        version: '6.0.0',
+        version: '7.0.0',
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         outputCapture: {
@@ -210,7 +210,7 @@ describe('Config Migration', () => {
         // Should have required fields
         expect(migrated.promptDirs).toBeDefined();
         expect(Array.isArray(migrated.promptDirs)).toBe(true);
-        expect(migrated.version).toBe('6.0.0');
+        expect(migrated.version).toBe('7.0.0');
 
         // Should not have legacy fields
         expect('promptDirectory' in migrated).toBe(false);

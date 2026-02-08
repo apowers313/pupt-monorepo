@@ -13,6 +13,7 @@ import { OutputCaptureService } from '../services/output-capture-service.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
 import crypto from 'node:crypto';
+import { isInteractiveTUI } from '../utils/tool-detection.js';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -209,16 +210,17 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   try {
     // Check if output capture is enabled
     if (config.outputCapture?.enabled && config.historyDir) {
+      const isTUI = isInteractiveTUI(finalTool);
       const result = await executeToolWithCapture(finalTool, finalArgs, promptResult, config, {
         dateStr,
         timeStr,
         randomSuffix
-      }, tool === 'claude' || (tool === undefined && finalTool === 'claude'));
+      }, isTUI);
       exitCode = result.exitCode;
       outputFile = result.outputFile;
       outputSize = result.outputSize;
     } else {
-      exitCode = await executeTool(finalTool, finalArgs, promptResult, tool === 'claude' || (tool === undefined && finalTool === 'claude'));
+      exitCode = await executeTool(finalTool, finalArgs, promptResult, isInteractiveTUI(finalTool));
     }
   } finally {
     const executionTime = Date.now() - startTime;
@@ -259,7 +261,7 @@ async function executeToolWithCapture(
   prompt: string,
   config: Config,
   filenameComponents: { dateStr: string; timeStr: string; randomSuffix: string },
-  isClaudeCode: boolean = false
+  isTUI: boolean = false
 ): Promise<{ exitCode: number | null; outputFile?: string; outputSize?: number }> {
   const outputCapture = new OutputCaptureService({
     outputDirectory: config.outputCapture?.directory || config.historyDir!,
@@ -274,10 +276,10 @@ async function executeToolWithCapture(
     outputFilename
   );
 
-  // For Claude Code, pass prompt as argument; for others, use stdin
+  // For interactive TUI tools (Claude, Kiro), pass prompt as argument; for others, use stdin
   let finalArgs = args;
   let finalPrompt = prompt;
-  if (isClaudeCode) {
+  if (isTUI) {
     finalArgs = [...args, prompt];
     finalPrompt = ''; // Don't send via stdin
   }
@@ -291,20 +293,20 @@ async function executeToolWithCapture(
   };
 }
 
-async function executeTool(tool: string, args: string[], prompt: string, isClaudeCode: boolean = false): Promise<number | null> {
-  // For Claude Code, pass prompt as argument; for others, use stdin
+async function executeTool(tool: string, args: string[], prompt: string, isTUI: boolean = false): Promise<number | null> {
+  // For interactive TUI tools (Claude, Kiro), pass prompt as argument; for others, use stdin
   let finalArgs = args;
   let finalPrompt = prompt;
-  if (isClaudeCode) {
+  if (isTUI) {
     finalArgs = [...args, prompt];
     finalPrompt = ''; // Don't send via stdin
   }
 
   return new Promise((resolve, reject) => {
-    // When running Claude Code, inherit stdin so Ink can use the TTY
+    // When running interactive TUI tools, inherit stdin for TTY access
     // For other tools, pipe stdin to send the prompt
     const child = spawn(tool, finalArgs, {
-      stdio: [isClaudeCode ? 'inherit' : 'pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
+      stdio: [isTUI ? 'inherit' : 'pipe', 'inherit', tool === 'claude' ? 'pipe' : 'inherit']
     });
 
     let _stderrData = '';
@@ -329,7 +331,7 @@ async function executeTool(tool: string, args: string[], prompt: string, isClaud
     child.on('error', (error: Error & { code?: string }) => {
       if (error.code === 'ENOENT') {
         // Try to suggest similar tools
-        const commonTools = ['claude', 'code', 'cat', 'less', 'vim'];
+        const commonTools = ['claude', 'kiro-cli', 'code', 'cat', 'less', 'vim'];
         const suggestions = commonTools.filter(t =>
           t.toLowerCase().includes(tool.toLowerCase()) ||
           tool.toLowerCase().includes(t.toLowerCase())

@@ -234,7 +234,7 @@ describe('Config Schema Validation', () => {
       expect(loaded.defaultCmd).toBeUndefined();
       expect(loaded.defaultCmdArgs).toBeUndefined();
       expect(loaded.defaultCmdOptions).toBeUndefined();
-      expect(loaded.version).toBe('6.0.0');
+      expect(loaded.version).toBe('7.0.0');
       expect(loaded.autoReview).toBe(true);
       expect(loaded.autoRun).toBe(false);
       expect(loaded.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
@@ -306,7 +306,7 @@ describe('Config Migration', () => {
     await fs.writeJson(configPath, oldConfig);
     
     const loaded = await ConfigManager.load();
-    expect(loaded.version).toBe('6.0.0');
+    expect(loaded.version).toBe('7.0.0');
   });
 
   it('should add version to configs without it', async () => {
@@ -318,7 +318,7 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('6.0.0');
+    expect(saved.version).toBe('7.0.0');
   });
 
   it('should migrate old field names to new ones', async () => {
@@ -390,7 +390,7 @@ describe('Config Migration', () => {
     const loaded = await ConfigManager.load();
 
     expect(loaded.defaultCmd).toBe('my-tool'); // not overridden
-    expect(loaded.version).toBe('6.0.0');
+    expect(loaded.version).toBe('7.0.0');
   });
 
   it('should save migrated config back to disk', async () => {
@@ -402,7 +402,7 @@ describe('Config Migration', () => {
     await ConfigManager.load();
     
     const saved = await fs.readJson(configPath);
-    expect(saved.version).toBe('6.0.0');
+    expect(saved.version).toBe('7.0.0');
     expect(saved.defaultCmd).toBe('claude');
     expect(saved.defaultCmdArgs).toEqual([]);
     expect(saved.defaultCmdOptions).toBeDefined();
