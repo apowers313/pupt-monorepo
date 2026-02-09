@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Ask, AskOption, AskLabel } from '../../../../src/components/ask';
+import { Ask, AskOption, AskLabel } from '../../../../components/ask';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime/index';
 import { createInputIterator } from '../../../../src/services/input-iterator';

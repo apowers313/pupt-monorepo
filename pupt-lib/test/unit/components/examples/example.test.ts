@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Example, Examples } from '../../../../src/components/examples';
+import { Example, Examples } from '../../../../components/examples';
 
 describe('Example', () => {
   it('should render input/output pair', async () => {

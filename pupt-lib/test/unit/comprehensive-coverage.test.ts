@@ -9,34 +9,34 @@ import { jsx } from '../../src/jsx-runtime';
 import { createRenderContext } from '../setup';
 
 // Structural components
-import { Audience } from '../../src/components/structural/Audience';
-import { Context } from '../../src/components/structural/Context';
-import { Role } from '../../src/components/structural/Role';
-import { Task } from '../../src/components/structural/Task';
-import { Tone } from '../../src/components/structural/Tone';
-import { Section } from '../../src/components/structural/Section';
-import { Constraint } from '../../src/components/structural/Constraint';
-import { SuccessCriteria } from '../../src/components/structural/SuccessCriteria';
+import { Audience } from '../../components/structural/Audience';
+import { Context } from '../../components/structural/Context';
+import { Role } from '../../components/structural/Role';
+import { Task } from '../../components/structural/Task';
+import { Tone } from '../../components/structural/Tone';
+import { Section } from '../../components/structural/Section';
+import { Constraint } from '../../components/structural/Constraint';
+import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
 
 // Ask components
-import { AskChoice } from '../../src/components/ask/Choice';
-import { AskDate } from '../../src/components/ask/Date';
-import { AskEditor } from '../../src/components/ask/Editor';
-import { AskPath } from '../../src/components/ask/Path';
-import { AskSecret } from '../../src/components/ask/Secret';
-import { AskSelect } from '../../src/components/ask/Select';
-import { AskMultiSelect } from '../../src/components/ask/MultiSelect';
-import { AskNumber } from '../../src/components/ask/Number';
-import { AskRating } from '../../src/components/ask/Rating';
-import { AskConfirm } from '../../src/components/ask/Confirm';
-import { AskText } from '../../src/components/ask/Text';
+import { AskChoice } from '../../components/ask/Choice';
+import { AskDate } from '../../components/ask/Date';
+import { AskEditor } from '../../components/ask/Editor';
+import { AskPath } from '../../components/ask/Path';
+import { AskSecret } from '../../components/ask/Secret';
+import { AskSelect } from '../../components/ask/Select';
+import { AskMultiSelect } from '../../components/ask/MultiSelect';
+import { AskNumber } from '../../components/ask/Number';
+import { AskRating } from '../../components/ask/Rating';
+import { AskConfirm } from '../../components/ask/Confirm';
+import { AskText } from '../../components/ask/Text';
 
 // Utility components
-import { Hostname } from '../../src/components/utility/Hostname';
-import { Username } from '../../src/components/utility/Username';
+import { Hostname } from '../../components/utility/Hostname';
+import { Username } from '../../components/utility/Username';
 
 // Control components
-import { ForEach } from '../../src/components/control/ForEach';
+import { ForEach } from '../../components/control/ForEach';
 
 // Services
 import { Transformer } from '../../src/services/transformer';
@@ -564,21 +564,13 @@ describe('Transformer - Branch Coverage', () => {
     expect(result).toContain('jsx');
   });
 
-  it('should transform and then use sync transform', async () => {
-    // First load Babel via async
-    await transformer.transformSourceAsync('const a = 1;', 'preload.ts');
-
-    // Now sync should work
-    const result = transformer.transformSource('const b = 2;', 'sync.ts');
-    expect(result).toContain('const b = 2');
-  });
 });
 
 // ============================================================================
 // IF COMPONENT - Boolean coercion edge cases
 // ============================================================================
 
-import { If } from '../../src/components/control/If';
+import { If } from '../../components/control/If';
 
 describe('If Component - Branch Coverage', () => {
   it('should handle boolean true condition', async () => {
@@ -624,7 +616,7 @@ describe('If Component - Branch Coverage', () => {
 // SELECT COMPONENT - Additional branches
 // ============================================================================
 
-import { AskOption } from '../../src/components/ask/Option';
+import { AskOption } from '../../components/ask/Option';
 
 describe('AskSelect - Additional Branch Coverage', () => {
   it('should show placeholder when no value and no default', async () => {
@@ -1061,8 +1053,8 @@ describe('AskMultiSelect - Additional Branch Coverage', () => {
 // ADDITIONAL EDGE CASE COVERAGE
 // ============================================================================
 
-import { File } from '../../src/components/data/File';
-import { Prompt } from '../../src/components/structural/Prompt';
+import { File } from '../../components/data/File';
+import { Prompt } from '../../components/structural/Prompt';
 import path from 'path';
 
 describe('File Component - Branch Coverage', () => {
@@ -1217,6 +1209,7 @@ describe('Prompt Component - Branch Coverage', () => {
   it('should render with name only', async () => {
     const element = jsx(Prompt, {
       name: 'test-prompt',
+      bare: true,
       children: 'Content here',
     });
     const result = await render(element);
@@ -1226,6 +1219,7 @@ describe('Prompt Component - Branch Coverage', () => {
   it('should render with description', async () => {
     const element = jsx(Prompt, {
       name: 'test-prompt',
+      bare: true,
       description: 'A test prompt',
       children: 'Content',
     });
@@ -1236,6 +1230,7 @@ describe('Prompt Component - Branch Coverage', () => {
   it('should render with tags', async () => {
     const element = jsx(Prompt, {
       name: 'test-prompt',
+      bare: true,
       tags: ['coding', 'test'],
       children: 'Tagged content',
     });
@@ -1324,7 +1319,7 @@ describe('MultiSelect Option Children', () => {
 // STEPS COMPONENT - Branch Coverage
 // ============================================================================
 
-import { Steps, Step } from '../../src/components/reasoning';
+import { Steps, Step } from '../../components/reasoning';
 
 describe('Steps Component - Branch Coverage', () => {
   it('should handle single (non-array) child', async () => {
@@ -1409,6 +1404,7 @@ describe('Render Error Handling', () => {
   it('should handle null node', async () => {
     const element = jsx(Prompt, {
       name: 'test',
+      bare: true,
       children: [null, 'content', undefined, false],
     });
     const result = await render(element);
@@ -1418,6 +1414,7 @@ describe('Render Error Handling', () => {
   it('should handle number nodes', async () => {
     const element = jsx(Prompt, {
       name: 'test',
+      bare: true,
       children: [1, 2, 3],
     });
     const result = await render(element);
@@ -1427,6 +1424,7 @@ describe('Render Error Handling', () => {
   it('should handle mixed node types', async () => {
     const element = jsx(Prompt, {
       name: 'test',
+      bare: true,
       children: ['Hello ', 42, ' times'],
     });
     const result = await render(element);

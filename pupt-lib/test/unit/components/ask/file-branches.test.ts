@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask } from '../../../../src/components/ask';
+import { Ask } from '../../../../components/ask';
 
 describe('Ask.File branch coverage', () => {
   describe('array value handling', () => {

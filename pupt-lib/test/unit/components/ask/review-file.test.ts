@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AskReviewFile } from '../../../../src/components/ask/ReviewFile';
+import { AskReviewFile } from '../../../../components/ask/ReviewFile';
 import { createRenderContext } from '../../../setup';
 
 describe('Ask.ReviewFile', () => {

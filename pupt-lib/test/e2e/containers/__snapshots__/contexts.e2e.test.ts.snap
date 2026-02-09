@@ -1,0 +1,43 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Contexts container e2e > should render Contexts inside Prompt 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<contexts>
+<context>
+[Background]
+Important background
+</context>
+<context>
+[Data]
+Some data context
+</context>
+
+</contexts>
+<task>
+Analyze the data
+</task>
+<format>
+Output format: xml
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Contexts container e2e > should render multiple contexts in container 1`] = `
+"<contexts>
+<context>
+[Background]
+User is a beginner
+</context>
+<context>
+[Domain]
+Web development
+</context>
+
+</contexts>"
+`;

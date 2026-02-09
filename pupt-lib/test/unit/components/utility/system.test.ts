@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Hostname, Username, Cwd } from '../../../../src/components/utility';
+import { Hostname, Username, Cwd } from '../../../../components/utility';
 
 describe('Hostname', () => {
   it('should render system hostname', async () => {

@@ -1,0 +1,37 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Provider adaptations e2e > should render a prompt with Role + Task for each provider (baseline) 1`] = `
+"<role>
+You are a helpful software engineer.
+</role>
+<task>
+Review this code.
+</task>
+<constraint>
+MUST: Be thorough.
+</constraint>"
+`;
+
+exports[`Provider adaptations e2e > should render a prompt with Role + Task for each provider (baseline) 2`] = `
+"<role>
+You are a helpful software engineer.
+</role>
+<task>
+Review this code.
+</task>
+<constraint>
+MUST: Be thorough.
+</constraint>"
+`;
+
+exports[`Provider adaptations e2e > should render a prompt with Role + Task for each provider (baseline) 3`] = `
+"<role>
+You are a helpful software engineer.
+</role>
+<task>
+Review this code.
+</task>
+<constraint>
+MUST: Be thorough.
+</constraint>"
+`;

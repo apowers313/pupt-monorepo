@@ -69,18 +69,18 @@ describe('render()', () => {
     expect(result.text).toBe('Hello, World!');
   });
 
-  it('should handle unknown string types gracefully', async () => {
-    const consoleWarn = console.warn;
-    const warnings: string[] = [];
-    console.warn = (msg: string) => warnings.push(msg);
-
+  it('should produce a render error for string-typed elements', async () => {
     const element = jsx('Unknown' as unknown as typeof Component, { children: 'test' });
     const result = await render(element);
 
+    expect(result.ok).toBe(false);
     expect(result.text).toBe('test');
-    expect(warnings).toContain('Unknown component type "Unknown". Components should be imported, not referenced by string.');
-
-    console.warn = consoleWarn;
+    if (!result.ok) {
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].code).toBe('unknown_component');
+      expect(result.errors[0].component).toBe('Unknown');
+      expect(result.errors[0].message).toContain('Components should be imported, not referenced by string');
+    }
   });
 
   it('should handle null, undefined, and false nodes', async () => {

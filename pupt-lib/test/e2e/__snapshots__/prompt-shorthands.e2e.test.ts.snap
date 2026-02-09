@@ -1,0 +1,56 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Prompt shorthand disable props e2e > should render with defaults="none" through pipeline 1`] = `
+"<task>
+Summarize this document
+</task>"
+`;
+
+exports[`Prompt shorthand disable props e2e > should render with multiple shorthand props through pipeline 1`] = `
+"<task>
+Summarize this document
+</task>
+<format>
+Output format: xml
+</format>"
+`;
+
+exports[`Prompt shorthand disable props e2e > should render with noConstraints through pipeline 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<task>
+Summarize this document
+</task>
+<format>
+Output format: xml
+</format>"
+`;
+
+exports[`Prompt shorthand disable props e2e > should render with noFormat through pipeline 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<task>
+Summarize this document
+</task>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt shorthand disable props e2e > should render with noRole through pipeline 1`] = `
+"<task>
+Summarize this document
+</task>
+<format>
+Output format: xml
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;

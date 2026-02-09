@@ -3,6 +3,12 @@ import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      'pupt-lib/jsx-runtime': resolve(__dirname, 'src/jsx-runtime/index.ts'),
+      'pupt-lib': resolve(__dirname, 'src/index.ts'),
+    },
+  },
   build: {
     lib: {
       entry: {
@@ -25,8 +31,9 @@ export default defineConfig({
   },
   plugins: [
     dts({
-      include: ['src/**/*'],
+      include: ['src/**/*', 'components/**/*'],
       outDir: 'dist',
+      rollupTypes: true,
     }),
   ],
 });

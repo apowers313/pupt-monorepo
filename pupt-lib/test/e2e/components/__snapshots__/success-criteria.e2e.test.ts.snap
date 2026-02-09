@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`SuccessCriteria e2e > snapshots > should match snapshot: presets with markdown delimiter 1`] = `
+"## success-criteria
+
+- Easy to follow and understand
+- Well-organized structure"
+`;
+
+exports[`SuccessCriteria e2e > snapshots > should match snapshot: presets with metrics 1`] = `
+"<success-criteria>
+- Response is factually accurate
+- No fabricated information
+- Addresses all parts of the question
+- Includes all required sections
+
+Metrics:
+- Coverage: 80%
+- Accuracy: 95%
+
+</success-criteria>"
+`;

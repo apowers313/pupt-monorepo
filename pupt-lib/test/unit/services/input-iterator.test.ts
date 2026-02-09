@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { createInputIterator } from '../../../src/services/input-iterator';
 import { jsx, Fragment } from '../../../src/jsx-runtime';
-import { Ask } from '../../../src/components/ask';
+import { Ask } from '../../../components/ask';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 import { join } from 'path';
-import '../../../src/components'; // Register components
+import '../../../components'; // Register components
 
 // Create temp directory for filesystem tests
 const tmpDir = join(__dirname, '../../../tmp/iterator-test');

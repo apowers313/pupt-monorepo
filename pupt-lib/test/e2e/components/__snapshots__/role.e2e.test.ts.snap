@@ -1,0 +1,47 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Role e2e > snapshots > should match snapshot: both expertise and domain 1`] = `
+"<role>
+You are an expert analyst
+with expertise in data analysis
+specializing in the finance domain
+</role>"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: domain with xml delimiter 1`] = `
+"<role>
+Analyst
+specializing in the healthcare domain
+</role>"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: expertise with markdown delimiter 1`] = `
+"## role
+
+Software Engineer
+with expertise in TypeScript"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: expertise with none delimiter 1`] = `
+"Software Engineer
+with expertise in TypeScript"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: expertise with xml delimiter 1`] = `
+"<role>
+Software Engineer
+with expertise in TypeScript
+</role>"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: preset engineer 1`] = `
+"<role>
+You are a senior Software Engineer with expertise in software development, programming, system design. You are analytical, detail-oriented, problem-solver.
+</role>"
+`;
+
+exports[`Role e2e > snapshots > should match snapshot: preset with experience and traits 1`] = `
+"<role>
+You are a senior Software Engineer with expertise in software development, programming, system design. You are detail-oriented, pragmatic.
+</role>"
+`;

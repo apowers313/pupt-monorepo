@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { ForEach } from '../../../../src/components/control/ForEach';
-import '../../../../src/components';
+import { ForEach } from '../../../../components/control/ForEach';
+import '../../../../components';
 
 describe('ForEach', () => {
   it('should iterate over items', async () => {

@@ -8,14 +8,15 @@ A TypeScript library for creating AI prompts as versionable, composable, shareab
 
 **Features:**
 
-- **JSX Syntax** - Write prompts using familiar JSX/TSX syntax with built-in components
-- **Composable** - Build complex prompts from reusable, shareable components
-- **Version Controlled** - Prompts live in files, tracked in git, reviewed in PRs
-- **Shareable** - Publish prompt libraries to npm, consume others' work via npm, URLs, or local files
-- **UI Agnostic** - Library handles prompt logic; any UI (CLI, web, desktop) can collect inputs
-- **LLM Agnostic** - Target Claude, GPT, Gemini, or others with environment-based output optimization
-- **Research-Backed** - Built-in components encode prompt engineering best practices
-- **Browser & Node.js** - Works in both environments with runtime JSX transformation
+- **JSX Syntax** — Write prompts using familiar JSX/TSX syntax with 50+ built-in components
+- **`.prompt` Files** — Simplified format with no imports, no exports — just JSX
+- **Composable** — Build complex prompts from reusable, shareable components
+- **Provider Targeting** — Adapt output for Claude, GPT, Gemini, and others via environment config
+- **Presets** — Role, task, constraint, and steps presets encode prompt engineering best practices
+- **Smart Defaults** — Auto-generated role, format, and constraint sections with full opt-out control
+- **Version Controlled** — Prompts live in files, tracked in git, reviewed in PRs
+- **Shareable** — Publish prompt libraries to npm, consume others' work via npm, URLs, or local files
+- **Browser & Node.js** — Works in both environments with runtime JSX transformation
 
 ## Installation
 
@@ -29,11 +30,44 @@ For build-time JSX transformation (recommended for production), also install the
 npm install --save-dev @babel/core @babel/plugin-transform-react-jsx @babel/preset-typescript
 ```
 
-## Quick Start
+## Quick Start with `.prompt`
 
-Create a prompt file `greeting.tsx`:
+The simplest way to write a prompt — no imports or exports needed:
+
+```xml
+<!-- greeting.prompt -->
+<Prompt name="greeting" description="A friendly greeting prompt">
+  <Role>You are a friendly assistant.</Role>
+  <Task>
+    Greet the user named <Ask.Text name="userName" label="User's name" /> warmly.
+  </Task>
+  <Constraint type="must">Keep the greeting under 50 words.</Constraint>
+</Prompt>
+```
+
+Load and render it:
+
+```typescript
+import { createPromptFromSource, render } from 'pupt-lib';
+import { readFile } from 'fs/promises';
+
+const source = await readFile('./greeting.prompt', 'utf-8');
+const element = await createPromptFromSource(source, 'greeting.prompt');
+const result = await render(element, {
+  inputs: { userName: 'Alice' },
+});
+
+console.log(result.text);
+```
+
+## Quick Start with `.tsx`
+
+The same prompt as a TypeScript JSX file — explicit imports, full type safety:
 
 ```tsx
+// greeting.tsx
+import { Prompt, Role, Task, Constraint, Ask } from 'pupt-lib';
+
 export default (
   <Prompt name="greeting" description="A friendly greeting prompt">
     <Role>You are a friendly assistant.</Role>
@@ -45,179 +79,22 @@ export default (
 );
 ```
 
-Render the prompt:
-
-```typescript
-import { createPrompt, render, createInputIterator } from 'pupt-lib';
-
-// Load the prompt
-const element = await createPrompt('./greeting.tsx');
-
-// Collect inputs
-const iterator = createInputIterator(element);
-iterator.start();
-while (!iterator.isDone()) {
-  const req = iterator.current();
-  const answer = await askUser(req.label); // Your UI logic
-  await iterator.submit(answer);
-  iterator.advance();
-}
-
-// Render to text
-const result = render(element, { inputs: iterator.getValues() });
-console.log(result.text);
-```
-
-Or render directly with pre-supplied values:
+Load with `createPrompt` (reads the file for you):
 
 ```typescript
 import { createPrompt, render } from 'pupt-lib';
 
 const element = await createPrompt('./greeting.tsx');
-const result = render(element, {
-  inputs: { userName: 'Alice' }
+const result = await render(element, {
+  inputs: { userName: 'Alice' },
 });
+
 console.log(result.text);
 ```
 
-## Components
+## Collecting User Inputs
 
-### Structural Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Prompt>` | Root container for a complete prompt. Props: `name`, `description`, `tags`, `version` |
-| `<Section>` | Creates a labeled section with optional XML delimiters |
-| `<Role>` | Defines the AI persona/role. Props: `expertise`, `domain` |
-| `<Task>` | Clearly states what the AI should do |
-| `<Context>` | Provides background information |
-| `<Constraint>` | Adds boundaries/rules. Props: `type` (`must`, `should`, `must-not`) |
-| `<Format>` | Specifies output format. Props: `type` (`json`, `markdown`, `code`, `list`), `schema` |
-| `<Audience>` | Who the output is for. Props: `expertise`, `domain` |
-| `<Tone>` | Emotional quality of output. Props: `type`, `formality` |
-| `<SuccessCriteria>` | Container for success criteria |
-| `<Criterion>` | Individual success criterion. Props: `priority` |
-
-### Example Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Examples>` | Container for multiple examples |
-| `<Example>` | Single example with input/output |
-| `<ExampleInput>` | Input portion of an example |
-| `<ExampleOutput>` | Expected output of an example |
-
-### Reasoning Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Steps>` | Encourages step-by-step thinking |
-| `<Step>` | Individual step in a reasoning chain. Props: `number` |
-
-### Data Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Data>` | Embeds data with optional formatting. Props: `name`, `format` |
-| `<Code>` | Embeds code with language hint. Props: `language`, `filename` |
-| `<File>` | Embeds file contents. Props: `path` |
-| `<Json>` | Embeds JSON data. Props: `name` |
-| `<Xml>` | Embeds XML data. Props: `name` |
-
-### Utility Components
-
-| Component | Description |
-|-----------|-------------|
-| `<UUID>` | Generates a unique identifier |
-| `<Timestamp>` | Current Unix timestamp |
-| `<DateTime>` | Current date/time. Props: `format` |
-| `<Hostname>` | Current machine hostname |
-| `<Username>` | Current system username |
-| `<Cwd>` | Current working directory |
-
-### Control Flow Components
-
-| Component | Description |
-|-----------|-------------|
-| `<If>` | Conditional rendering. Props: `when` (Excel formula or JS expression) |
-| `<ForEach>` | Loop over items. Props: `items`, `as` |
-| `<Scope>` | Resolve components from a specific library. Props: `from` |
-
-### User Input Components (Ask.*)
-
-| Component | Description |
-|-----------|-------------|
-| `<Ask.Text>` | Single-line text input. Props: `name`, `label`, `required`, `default`, `pattern` |
-| `<Ask.Editor>` | Multi-line text editor. Props: `name`, `label`, `language` |
-| `<Ask.Select>` | Single choice from options. Props: `name`, `label`, `options` or `<Option>` children |
-| `<Ask.MultiSelect>` | Multiple choices. Props: `name`, `label`, `options` or `<Option>` children |
-| `<Ask.Confirm>` | Yes/no question. Props: `name`, `label`, `default` |
-| `<Ask.Choice>` | Binary choice with custom labels. Props: `name`, `label`, `options` |
-| `<Ask.Number>` | Numeric input. Props: `name`, `label`, `min`, `max`, `default` |
-| `<Ask.File>` | File path input. Props: `name`, `label`, `mustExist` |
-| `<Ask.Path>` | Directory path input. Props: `name`, `label`, `mustBeDirectory` |
-| `<Ask.Date>` | Date selection. Props: `name`, `label` |
-| `<Ask.Secret>` | Masked input for sensitive values. Props: `name`, `label`, `validator` |
-| `<Ask.Rating>` | Numeric scale input. Props: `name`, `label`, `min`, `max`, `labels` or `<Label>` children |
-| `<Ask.ReviewFile>` | File input with post-execution review. Props: `name`, `label` |
-| `<Option>` | Option for Select/MultiSelect. Props: `value`, `label`, children (render text) |
-| `<Label>` | Label for Rating scale. Props: `value`, children (label text) |
-
-### Meta Components
-
-| Component | Description |
-|-----------|-------------|
-| `<Uses>` | Declares module dependencies. Props: `src`, `optional` |
-
-### Post-Execution Components
-
-| Component | Description |
-|-----------|-------------|
-| `<PostExecution>` | Container for post-execution actions |
-| `<ReviewFile>` | Open a file for review after prompt execution. Props: `file`, `editor` |
-| `<OpenUrl>` | Open a URL in browser. Props: `url`, `browser` |
-| `<RunCommand>` | Execute a shell command. Props: `command`, `cwd` |
-
-## API Summary
-
-| Export | Type | Description |
-|--------|------|-------------|
-| `render(element, options?)` | Function | Render a PuptElement tree to text |
-| `createPrompt(filePath)` | Function | Create a prompt from a JSX/TSX file |
-| `createPromptFromSource(source, filename)` | Function | Create a prompt from source string |
-| `createInputIterator(element)` | Function | Create iterator for collecting user inputs |
-| `Component<Props>` | Class | Base class for custom components |
-| `Pupt` | Class | High-level API for loading and managing prompt libraries |
-| `createSearchEngine(config?)` | Function | Create fuzzy search engine for prompts |
-| `createRegistry()` | Function | Create a new component registry |
-| `defaultRegistry` | Const | The default global component registry |
-
-## Detailed API Usage
-
-### Rendering Prompts
-
-```typescript
-import { render, createPromptFromSource } from 'pupt-lib';
-
-// From source string
-const element = await createPromptFromSource(`
-  <Prompt name="example">
-    <Role>You are a helpful assistant.</Role>
-    <Task>Help the user with their question.</Task>
-  </Prompt>
-`, 'example.tsx');
-
-// Render with options
-const result = render(element, {
-  inputs: new Map([['userName', 'Alice']]),  // or { userName: 'Alice' }
-  trim: true,  // Trim whitespace (default: true)
-});
-
-console.log(result.text);  // The rendered prompt text
-console.log(result.postExecution);  // Array of post-execution actions
-```
-
-### Collecting User Inputs
+When prompts contain `<Ask.*>` components, use `createInputIterator` to collect values interactively:
 
 ```typescript
 import { createPrompt, createInputIterator, render } from 'pupt-lib';
@@ -226,137 +103,293 @@ const element = await createPrompt('./my-prompt.tsx');
 const iterator = createInputIterator(element);
 
 // Start iteration
-iterator.start();
+await iterator.start();
 
-// Iterate through each input requirement
+// Loop through each input requirement
 while (!iterator.isDone()) {
   const req = iterator.current();
+  console.log(`${req.label} (${req.type}, required: ${req.required})`);
 
-  console.log(`Name: ${req.name}`);
-  console.log(`Type: ${req.type}`);
-  console.log(`Label: ${req.label}`);
-  console.log(`Required: ${req.required}`);
+  const answer = await askUser(req); // your UI logic
+  const validation = await iterator.submit(answer);
 
-  // Collect input from user (your UI logic)
-  const answer = await promptUser(req);
-
-  // Submit and validate
-  const result = await iterator.submit(answer);
-  if (!result.valid) {
-    console.log(`Validation error: ${result.errors.map(e => e.message).join(', ')}`);
-    continue;  // Re-prompt for same input
+  if (!validation.valid) {
+    console.log('Errors:', validation.errors.map(e => e.message));
+    continue; // re-prompt for same input
   }
 
-  iterator.advance();
+  await iterator.advance();
 }
 
 // Render with collected values
-const result = render(element, { inputs: iterator.getValues() });
+const result = await render(element, { inputs: iterator.getValues() });
 ```
 
-### Creating Custom Components
+Or use non-interactive mode to auto-fill defaults:
 
 ```typescript
-import { Component, RenderContext, PuptNode } from 'pupt-lib';
+const iterator = createInputIterator(element, { nonInteractive: true });
+const values = await iterator.runNonInteractive();
+const result = await render(element, { inputs: values });
+```
 
-interface WarningProps {
-  level: 'info' | 'warning' | 'error';
-  children?: PuptNode;
+## Working with Results
+
+`render()` returns a `RenderResult` discriminated union:
+
+```typescript
+const result = await render(element, { inputs: { userName: 'Alice' } });
+
+if (result.ok) {
+  console.log(result.text);              // The rendered prompt string
+  console.log(result.postExecution);     // Post-execution actions (if any)
+  if (result.errors) {
+    console.log('Warnings:', result.errors); // Non-fatal validation warnings
+  }
+} else {
+  console.log('Errors:', result.errors);   // Validation/runtime errors
+  console.log(result.text);               // Best-effort partial output
 }
+```
+
+## `.prompt` vs `.tsx`
+
+| Feature | `.prompt` | `.tsx` |
+|---------|-----------|--------|
+| Imports | Auto-injected for all built-in components | Explicit `import` statements |
+| Exports | Auto-wrapped with `export default` | Explicit `export default` |
+| Custom components | Via `<Uses>` declarations | Standard `import` |
+| Component definitions | Not supported | Define components in same file |
+| Target audience | Non-technical users, simple prompts | Developers, complex prompts |
+| Behavior | Identical after preprocessing | Identical after preprocessing |
+
+Both formats go through the same transformation pipeline and produce identical output.
+
+## Component Overview
+
+pupt-lib includes 50+ built-in components organized by category:
+
+| Category | Count | Key Components |
+|----------|-------|----------------|
+| **Structural** | 24 | `Prompt`, `Role`, `Task`, `Context`, `Constraint`, `Format`, `Audience`, `Tone` |
+| **Ask (User Input)** | 15 | `Ask.Text`, `Ask.Number`, `Ask.Select`, `Ask.Confirm`, `Ask.MultiSelect` |
+| **Data** | 5 | `Code`, `Data`, `File`, `Json`, `Xml` |
+| **Examples** | 5 | `Examples`, `Example`, `ExampleInput`, `ExampleOutput`, `NegativeExample` |
+| **Reasoning** | 3 | `Steps`, `Step`, `ChainOfThought` |
+| **Control Flow** | 2 | `If`, `ForEach` |
+| **Post-Execution** | 4 | `PostExecution`, `ReviewFile`, `OpenUrl`, `RunCommand` |
+| **Utility** | 6 | `UUID`, `Timestamp`, `DateTime`, `Hostname`, `Username`, `Cwd` |
+| **Meta** | 1 | `Uses` |
+
+See [docs/COMPONENTS.md](docs/COMPONENTS.md) for the full reference with all props.
+
+## Environment & Providers
+
+Components adapt their output based on the target LLM provider. Set the provider via the `env` option:
+
+```typescript
+import { render, createEnvironment } from 'pupt-lib';
+
+// Target Anthropic Claude
+const result = await render(element, {
+  inputs: { ... },
+  env: createEnvironment({
+    llm: { provider: 'anthropic' },
+  }),
+});
+
+// Target OpenAI GPT (uses markdown delimiters instead of XML)
+const result2 = await render(element, {
+  inputs: { ... },
+  env: createEnvironment({
+    llm: { provider: 'openai' },
+  }),
+});
+```
+
+Supported providers: `anthropic`, `openai`, `google`, `meta`, `mistral`, `deepseek`, `xai`, `cohere`. Provider can also be auto-inferred from model name:
+
+```typescript
+env: createEnvironment({
+  llm: { model: 'claude-sonnet-4-5-20250929' }, // auto-infers provider: 'anthropic'
+})
+```
+
+Each provider has adaptations for role prefix style, constraint framing, format preference, and instruction style.
+
+## Presets
+
+Many components accept a `preset` prop that loads pre-configured settings:
+
+```tsx
+<Role preset="engineer" />
+// Renders: "You are a senior Software Engineer with expertise in software development, programming, system design."
+
+<Steps preset="debugging" />
+// Renders step-by-step phases: Reproduce → Isolate → Fix → Verify
+
+<Constraint preset="cite-sources" />
+// Renders: "Cite sources for factual claims" with type "must"
+```
+
+Available preset categories:
+
+| Preset | Keys | Used by |
+|--------|------|---------|
+| **Role** | `assistant`, `engineer`, `writer`, `analyst`, `teacher`, +25 more | `<Role>` |
+| **Task** | `summarize`, `code-review`, `translate`, `explain`, `generate-code`, +5 more | `<Task>` |
+| **Constraint** | `be-concise`, `cite-sources`, `no-opinions`, `no-hallucination`, +4 more | `<Constraint>` |
+| **Steps** | `analysis`, `problem-solving`, `code-generation`, `debugging`, `research` | `<Steps>` |
+| **Guardrails** | `standard`, `strict`, `minimal` | `<Guardrails>` |
+
+See [docs/COMPONENTS.md](docs/COMPONENTS.md) for the full list of preset keys.
+
+## Prompt Defaults
+
+`<Prompt>` auto-generates Role, Format, and Constraint sections when you don't provide them. This means a minimal prompt:
+
+```xml
+<Prompt name="helper">
+  <Task>Help the user with their question.</Task>
+</Prompt>
+```
+
+...automatically includes a default role ("You are a helpful Assistant"), format guidance, and basic constraints.
+
+**Controlling defaults:**
+
+```tsx
+// Disable all defaults
+<Prompt name="bare-prompt" bare>
+  <Task>Just the task, nothing else.</Task>
+</Prompt>
+
+// Disable specific defaults
+<Prompt name="custom" noRole noFormat>
+  <Task>Only constraints are auto-generated.</Task>
+</Prompt>
+
+// Fine-grained control
+<Prompt name="custom" defaults={{ role: true, format: false, constraints: true }}>
+  <Task>Role and constraints, but no format section.</Task>
+</Prompt>
+
+// Shorthand: customize the default role
+<Prompt name="expert" role="engineer" expertise="TypeScript">
+  <Task>Review this code.</Task>
+</Prompt>
+```
+
+**Slots** let you replace default sections with custom components:
+
+```tsx
+<Prompt name="custom" slots={{ role: MyCustomRole }}>
+  <Task>Uses MyCustomRole instead of the default role.</Task>
+</Prompt>
+```
+
+## Creating Custom Components
+
+Extend `Component` and implement `render(props, resolvedValue, context)`:
+
+```typescript
+import { Component } from 'pupt-lib';
+import type { PuptNode, RenderContext } from 'pupt-lib';
+import { z } from 'zod';
+
+const warningSchema = z.object({
+  level: z.enum(['info', 'warning', 'error']),
+});
+
+type WarningProps = z.infer<typeof warningSchema> & { children?: PuptNode };
 
 class Warning extends Component<WarningProps> {
-  render(props: WarningProps, context: RenderContext): PuptNode {
+  static schema = warningSchema;
+
+  render(props: WarningProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const prefix = {
       info: 'INFO',
       warning: 'WARNING',
-      error: 'ERROR'
+      error: 'ERROR',
     }[props.level];
 
     return `[${prefix}] ${props.children}`;
   }
 }
-
-// Register with the default registry
-import { defaultRegistry } from 'pupt-lib';
-defaultRegistry.register('Warning', Warning);
 ```
 
-### Using the Pupt Class
+Use in `.prompt` files with `<Uses>`:
 
-```typescript
-import { Pupt } from 'pupt-lib';
+```xml
+<Uses component="Warning" from="./my-components" />
 
-// Initialize with module sources
-const pupt = new Pupt({
-  modules: [
-    '@acme/prompts',                    // npm package
-    'https://example.com/prompts.js',   // URL
-    './local-prompts/',                 // local path
-  ],
-});
-
-await pupt.init();
-
-// List all prompts
-const prompts = pupt.getPrompts();
-console.log(prompts.map(p => p.name));
-
-// Filter by tags
-const devPrompts = pupt.getPrompts({ tags: ['development'] });
-
-// Search prompts
-const results = pupt.searchPrompts('code review');
-
-// Get a specific prompt
-const prompt = pupt.getPrompt('security-review');
-if (prompt) {
-  const result = prompt.render({ inputs: { code: sourceCode } });
-  console.log(result.text);
-}
-
-// Get all unique tags
-const tags = pupt.getTags();
+<Prompt name="example">
+  <Warning level="info">This is a custom component.</Warning>
+</Prompt>
 ```
 
-### Conditional Rendering
+The `Component` base class provides helpers:
+- `getProvider(context)` — Get the current LLM provider
+- `getDelimiter(context)` — Get the delimiter style (`xml`, `markdown`, or `none`)
+- `hasContent(children)` — Check if children have meaningful content
 
-```typescript
-// Excel formula syntax (accessible to non-technical users)
+## Advanced Features
+
+**Conditional rendering** with `<If>`:
+
+```tsx
+// Boolean condition
+<If when={isAdmin}>
+  <Task>Perform admin operations.</Task>
+</If>
+
+// Excel-style formula (evaluated against input values)
 <If when='=AND(count>5, userType="admin")'>
   <Ask.Text name="adminCode" label="Admin authorization code" />
 </If>
 
-// JavaScript expression (for power users)
-<If when={items.filter(i => i.priority > 3).length >= 2}>
-  <Task>Handle high-priority items first</Task>
+// Provider-specific content
+<If provider="anthropic">
+  <Context>Use XML tags for structured output.</Context>
+</If>
+<If notProvider="anthropic">
+  <Context>Use markdown headers for structured output.</Context>
 </If>
 ```
 
-### Post-Execution Actions
+**Iteration** with `<ForEach>`:
 
-```typescript
-import { createPrompt, render } from 'pupt-lib';
-
-const element = await createPrompt('./generate-code.tsx');
-const result = render(element, { inputs: { ... } });
-
-// Handle post-execution actions
-for (const action of result.postExecution) {
-  switch (action.type) {
-    case 'reviewFile':
-      openInEditor(action.file, action.editor);
-      break;
-    case 'openUrl':
-      openBrowser(action.url);
-      break;
-    case 'runCommand':
-      exec(action.command, { cwd: action.cwd });
-      break;
-  }
-}
+```tsx
+<ForEach items={['bug fix', 'feature', 'refactor']} as="type">
+  <Step>Handle the {type} case.</Step>
+</ForEach>
 ```
 
-### TypeScript Configuration
+**Container composition** with `<Constraints>` and `<Contexts>`:
+
+```tsx
+// Extend default constraints with additional ones
+<Constraints extend>
+  <Constraint type="must">Always include code examples.</Constraint>
+</Constraints>
+
+// Replace defaults entirely
+<Constraints>
+  <Constraint type="must">Only respond in JSON.</Constraint>
+</Constraints>
+```
+
+**Post-execution actions** — actions to perform after the LLM responds:
+
+```tsx
+<PostExecution>
+  <ReviewFile file="output.ts" />
+  <OpenUrl url="https://docs.example.com" />
+  <RunCommand command="npm test" />
+</PostExecution>
+```
+
+## TypeScript Configuration
 
 For build-time JSX transformation, configure `tsconfig.json`:
 
@@ -374,11 +407,14 @@ Or use the Babel preset for runtime transformation:
 ```javascript
 // babel.config.js
 module.exports = {
-  presets: [
-    'pupt-lib/babel-preset'
-  ]
+  presets: ['pupt-lib/babel-preset'],
 };
 ```
+
+## Reference Documentation
+
+- **[docs/COMPONENTS.md](docs/COMPONENTS.md)** — Full component reference (all 50+ components with all props)
+- **[docs/API.md](docs/API.md)** — Full API reference (functions, types, base class, utilities)
 
 ## License
 

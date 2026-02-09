@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { SuccessCriteria } from '../../../../src/components/structural/SuccessCriteria';
-import { Criterion } from '../../../../src/components/structural/Criterion';
+import { SuccessCriteria } from '../../../../components/structural/SuccessCriteria';
+import { Criterion } from '../../../../components/structural/Criterion';
 
 describe('SuccessCriteria', () => {
   it('should render with XML delimiters by default', async () => {

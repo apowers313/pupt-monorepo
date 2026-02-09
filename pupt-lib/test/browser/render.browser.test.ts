@@ -8,22 +8,23 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../src/render';
 import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { Prompt } from '../../src/components/structural/Prompt';
-import { Role } from '../../src/components/structural/Role';
-import { Task } from '../../src/components/structural/Task';
-import { Example } from '../../src/components/examples/Example';
-import { ExampleInput } from '../../src/components/examples/ExampleInput';
-import { ExampleOutput } from '../../src/components/examples/ExampleOutput';
-import { Examples } from '../../src/components/examples/Examples';
-import { Code } from '../../src/components/data/Code';
-import { Steps } from '../../src/components/reasoning/Steps';
-import { Step } from '../../src/components/reasoning/Step';
+import { Prompt } from '../../components/structural/Prompt';
+import { Role } from '../../components/structural/Role';
+import { Task } from '../../components/structural/Task';
+import { Example } from '../../components/examples/Example';
+import { ExampleInput } from '../../components/examples/ExampleInput';
+import { ExampleOutput } from '../../components/examples/ExampleOutput';
+import { Examples } from '../../components/examples/Examples';
+import { Code } from '../../components/data/Code';
+import { Steps } from '../../components/reasoning/Steps';
+import { Step } from '../../components/reasoning/Step';
 import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 
 describe('Browser: render', () => {
   it('should render a simple prompt', async () => {
     const element = jsx(Prompt, {
       name: 'test',
+      bare: true,
       children: 'Hello, world!',
     });
 
@@ -34,6 +35,7 @@ describe('Browser: render', () => {
   it('should render nested components', async () => {
     const element = jsx(Prompt, {
       name: 'test',
+      bare: true,
       children: [
         jsx(Role, { children: 'You are a helpful assistant.' }),
         jsx(Task, { children: 'Help the user.' }),

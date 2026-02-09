@@ -1,7 +1,7 @@
 // Test setup file - runs before all tests
 
 // Import the main entry point which triggers component loading
-import '../src/components/index';
+import '../components/index';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../src/types/context';
 import type { RenderContext } from '../src/types/context';
 
@@ -15,6 +15,7 @@ export function createRenderContext(overrides?: Partial<RenderContext>): RenderC
     env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
     postExecution: [],
     errors: [],
+    metadata: new Map(),
     ...overrides,
   };
 }

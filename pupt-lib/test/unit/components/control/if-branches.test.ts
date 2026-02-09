@@ -4,8 +4,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { If } from '../../../../src/components/control/If';
-import '../../../../src/components';
+import { If } from '../../../../components/control/If';
+import '../../../../components';
 
 describe('If branch coverage', () => {
   describe('non-boolean, non-string when values', () => {
@@ -66,18 +66,17 @@ describe('If branch coverage', () => {
       }
     });
 
-    it('should produce validation error for undefined when value', async () => {
+    it('should not render when when value is undefined (optional, no error)', async () => {
       const element = jsx(If, {
         when: undefined as unknown as boolean,
         children: 'Hidden',
       });
 
       const result = await render(element);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.errors.length).toBeGreaterThan(0);
-        expect(result.errors[0].component).toBe('If');
-      }
+      // when is optional (provider/notProvider are alternative conditions),
+      // so undefined is valid. Boolean(undefined) === false, so no rendering.
+      expect(result.ok).toBe(true);
+      expect(result.text).toBe('');
     });
   });
 

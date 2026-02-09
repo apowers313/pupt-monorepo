@@ -20,6 +20,7 @@ export type {
   CodeConfig,
   UserConfig,
   RuntimeConfig,
+  PromptConfig,
   EnvironmentContext,
   RenderContext,
   RenderOptions,
@@ -27,17 +28,13 @@ export type {
   RenderSuccess,
   RenderFailure,
   RenderError,
-  RenderMetadata,
   PostExecutionAction,
+  ReviewFileAction,
+  OpenUrlAction,
+  RunCommandAction,
   InputRequirement,
   ValidationResult,
   ValidationError,
-  ValidationWarning,
-  CollectedInputs,
-  ComponentProps,
-  PromptProps,
-  StructuralProps,
-  CommonProps,
   SearchablePrompt,
   SearchOptions,
   SearchResult,
@@ -66,6 +63,28 @@ export { Component, isComponentClass, COMPONENT_MARKER } from './component';
 // Export render function
 export { render } from './render';
 
+// Export utilities
+export { wrapWithDelimiter } from './utils/delimiter';
+export { findChildrenOfType, partitionChildren, isElementOfType } from './utils/children';
+// Component preset data (re-exported from components/presets/ for public API)
+export {
+  PROVIDER_ADAPTATIONS,
+  LANGUAGE_CONVENTIONS,
+  ROLE_PRESETS,
+  TASK_PRESETS,
+  CONSTRAINT_PRESETS,
+  STEPS_PRESETS,
+  DEFAULT_CONSTRAINTS,
+  STANDARD_GUARDRAILS,
+  EDGE_CASE_PRESETS,
+  FALLBACK_PRESETS,
+} from '../components/presets';
+export type { ProviderAdaptations } from '../components/presets';
+export type { RolePresetConfig } from '../components/presets';
+export type { TaskPresetConfig } from '../components/presets';
+export type { ConstraintPresetConfig } from '../components/presets';
+export type { StepsPresetConfig } from '../components/presets';
+
 // Export services
 export { createInputIterator } from './services/input-iterator';
 export type { InputIterator, InputIteratorOptions, OnMissingDefaultStrategy } from './services/input-iterator';
@@ -73,8 +92,17 @@ export { evaluateFormula } from './services/formula-parser';
 export { Transformer } from './services/transformer';
 export { evaluateModule } from './services/module-evaluator';
 export type { EvaluateOptions } from './services/module-evaluator';
-export { preprocessSource, isPromptFile, needsPreprocessing, BUILTIN_COMPONENTS } from './services/preprocessor';
+export { preprocessSource, isPromptFile, needsPreprocessing } from './services/preprocessor';
 export type { PreprocessOptions } from './services/preprocessor';
+
+// Export component discovery (dynamically computed from actual component exports)
+export {
+  getBuiltinComponents,
+  getAskComponents,
+  getAskShorthand,
+  getStructuralComponents,
+} from './services/component-discovery';
+import { setComponentExportsThunk } from './services/component-discovery';
 
 // Export module loading services
 export { ModuleLoader } from './services/module-loader';
@@ -98,7 +126,11 @@ export type {
 } from './services/browser-support';
 
 // Export built-in components
-export * from './components';
+import * as _allComponentExports from '../components';
+export * from '../components';
+
+// Export ask utilities (needed by external Ask-style components)
+export { askBaseSchema, attachRequirement } from '../components/ask/utils';
 
 // Export prompt creation
 export { createPromptFromSource, createPrompt } from './create-prompt';
@@ -119,3 +151,8 @@ export type {
   FileSearchResult,
   FileSearchEngineConfig,
 } from './services/file-search-engine';
+
+// Register component exports for dynamic discovery.
+// Uses a thunk (lazy reference) so the namespace object is fully populated
+// by the time it's actually accessed at runtime.
+setComponentExportsThunk(() => _allComponentExports);

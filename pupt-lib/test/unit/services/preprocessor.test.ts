@@ -9,10 +9,12 @@ import {
   needsImportInjection,
   needsExportWrapper,
   needsPreprocessing,
-  BUILTIN_COMPONENTS,
-  ASK_COMPONENTS,
-  ASK_SHORTHAND,
 } from '../../../src/services/preprocessor';
+import {
+  getBuiltinComponents,
+  getAskComponents,
+  getAskShorthand,
+} from '../../../src/services/component-discovery';
 
 describe('isPromptFile', () => {
   it('should return true for .prompt files', () => {
@@ -254,34 +256,38 @@ export default <Prompt />;
   });
 });
 
-describe('exported constants', () => {
-  it('BUILTIN_COMPONENTS should contain all structural components', () => {
+describe('component discovery', () => {
+  it('getBuiltinComponents should contain all structural components', () => {
     const structural = ['Prompt', 'Section', 'Role', 'Task', 'Context', 'Constraint', 'Format'];
+    const builtins = getBuiltinComponents();
     for (const comp of structural) {
-      expect(BUILTIN_COMPONENTS).toContain(comp);
+      expect(builtins).toContain(comp);
     }
   });
 
-  it('BUILTIN_COMPONENTS should contain Component base class for custom components', () => {
-    expect(BUILTIN_COMPONENTS).toContain('Component');
+  it('getBuiltinComponents should contain Component base class for custom components', () => {
+    expect(getBuiltinComponents()).toContain('Component');
   });
 
-  it('BUILTIN_COMPONENTS should contain control flow components', () => {
-    expect(BUILTIN_COMPONENTS).toContain('If');
-    expect(BUILTIN_COMPONENTS).toContain('ForEach');
+  it('getBuiltinComponents should contain control flow components', () => {
+    const builtins = getBuiltinComponents();
+    expect(builtins).toContain('If');
+    expect(builtins).toContain('ForEach');
   });
 
-  it('ASK_COMPONENTS should contain all Ask-related components', () => {
+  it('getAskComponents should contain all Ask-related components', () => {
     const askComps = ['Ask', 'AskText', 'AskNumber', 'AskSelect', 'AskConfirm'];
+    const discovered = getAskComponents();
     for (const comp of askComps) {
-      expect(ASK_COMPONENTS).toContain(comp);
+      expect(discovered).toContain(comp);
     }
   });
 
-  it('ASK_SHORTHAND should map shorthand names to full names', () => {
-    expect(ASK_SHORTHAND['Text']).toBe('AskText');
-    expect(ASK_SHORTHAND['Number']).toBe('AskNumber');
-    expect(ASK_SHORTHAND['Select']).toBe('AskSelect');
-    expect(ASK_SHORTHAND['Confirm']).toBe('AskConfirm');
+  it('getAskShorthand should map shorthand names to full names', () => {
+    const shorthand = getAskShorthand();
+    expect(shorthand['Text']).toBe('AskText');
+    expect(shorthand['Number']).toBe('AskNumber');
+    expect(shorthand['Select']).toBe('AskSelect');
+    expect(shorthand['Confirm']).toBe('AskConfirm');
   });
 });

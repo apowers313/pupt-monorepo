@@ -21,6 +21,7 @@ export type {
   CodeConfig,
   UserConfig,
   RuntimeConfig,
+  PromptConfig,
   EnvironmentContext,
   RenderContext,
 } from './context';
@@ -38,6 +39,7 @@ export {
   codeConfigSchema,
   userConfigSchema,
   runtimeConfigSchema,
+  promptConfigSchema,
   environmentContextSchema,
 } from './context';
 
@@ -48,7 +50,6 @@ export type {
   RenderSuccess,
   RenderFailure,
   RenderError,
-  RenderMetadata,
   PostExecutionAction,
   ReviewFileAction,
   OpenUrlAction,
@@ -60,17 +61,7 @@ export type {
   InputRequirement,
   ValidationResult,
   ValidationError,
-  ValidationWarning,
-  CollectedInputs,
 } from './input';
-
-// Component types
-export type {
-  ComponentProps,
-  PromptProps,
-  StructuralProps,
-  CommonProps,
-} from './component';
 
 // Search types
 export type {

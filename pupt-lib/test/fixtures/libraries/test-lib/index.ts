@@ -2,8 +2,8 @@
 import { z } from 'zod';
 import { Component } from '../../../../src/component';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Prompt, Section, Task } from '../../../../src/components/structural';
-import { AskText } from '../../../../src/components/ask';
+import { Prompt, Section, Task } from '../../../../components/structural';
+import { AskText } from '../../../../components/ask';
 
 // Component exports for hasComponent tests
 export class TestComponent extends Component<{ value?: string; children?: unknown }> {

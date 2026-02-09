@@ -49,7 +49,7 @@ export interface InputRequirement {
 export interface ValidationResult {
   valid: boolean;
   errors: ValidationError[];
-  warnings: ValidationWarning[];
+  warnings: Array<{ field: string; message: string }>;
 }
 
 /**
@@ -61,17 +61,3 @@ export interface ValidationError {
   code: string;
 }
 
-/**
- * Validation warning details
- */
-export interface ValidationWarning {
-  field: string;
-  message: string;
-}
-
-/**
- * Collected inputs from Ask components
- */
-export interface CollectedInputs {
-  [key: string]: unknown;
-}

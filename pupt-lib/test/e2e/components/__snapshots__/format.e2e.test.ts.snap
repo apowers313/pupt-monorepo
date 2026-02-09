@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format e2e > snapshots > should match snapshot: format with length constraints 1`] = `
+"<format>
+Output format: text
+
+Maximum length: 500 words characters.
+
+Minimum length: 100 words characters.
+</format>"
+`;
+
+exports[`Format e2e > snapshots > should match snapshot: json format with schema 1`] = `
+"<format>
+Output format: json
+
+Schema:
+\`\`\`json
+{"result": "string"}
+\`\`\`
+</format>"
+`;
+
+exports[`Format e2e > snapshots > should match snapshot: markdown format with strict 1`] = `
+"<format>
+Output format: markdown
+
+Return ONLY the formatted output with no additional text or explanation.
+</format>"
+`;

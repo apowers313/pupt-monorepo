@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { DateTime, Timestamp, UUID } from '../../../../src/components/utility';
+import { DateTime, Timestamp, UUID } from '../../../../components/utility';
 
 describe('DateTime', () => {
   it('should render current date/time', async () => {

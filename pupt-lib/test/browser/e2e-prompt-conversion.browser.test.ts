@@ -5,22 +5,22 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../src/render';
 import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { Prompt } from '../../src/components/structural/Prompt';
-import { Role } from '../../src/components/structural/Role';
-import { Task } from '../../src/components/structural/Task';
-import { Section } from '../../src/components/structural/Section';
-import { Context } from '../../src/components/structural/Context';
-import { Constraint } from '../../src/components/structural/Constraint';
-import { If } from '../../src/components/control/If';
-import { ForEach } from '../../src/components/control/ForEach';
-import { Code } from '../../src/components/data/Code';
-import { Steps } from '../../src/components/reasoning/Steps';
-import { Step } from '../../src/components/reasoning/Step';
-import { Example } from '../../src/components/examples/Example';
-import { Examples } from '../../src/components/examples/Examples';
+import { Prompt } from '../../components/structural/Prompt';
+import { Role } from '../../components/structural/Role';
+import { Task } from '../../components/structural/Task';
+import { Section } from '../../components/structural/Section';
+import { Context } from '../../components/structural/Context';
+import { Constraint } from '../../components/structural/Constraint';
+import { If } from '../../components/control/If';
+import { ForEach } from '../../components/control/ForEach';
+import { Code } from '../../components/data/Code';
+import { Steps } from '../../components/reasoning/Steps';
+import { Step } from '../../components/reasoning/Step';
+import { Example } from '../../components/examples/Example';
+import { Examples } from '../../components/examples/Examples';
 import { PROPS } from '../../src/types/symbols';
-import { ExampleInput } from '../../src/components/examples/ExampleInput';
-import { ExampleOutput } from '../../src/components/examples/ExampleOutput';
+import { ExampleInput } from '../../components/examples/ExampleInput';
+import { ExampleOutput } from '../../components/examples/ExampleOutput';
 
 /**
  * Helper to transform and evaluate TSX source in the browser using babel-standalone.

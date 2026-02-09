@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AskLabel } from '../../../../src/components/ask/Label';
+import { AskLabel } from '../../../../components/ask/Label';
 import { createRenderContext } from '../../../setup';
 
 describe('AskLabel', () => {

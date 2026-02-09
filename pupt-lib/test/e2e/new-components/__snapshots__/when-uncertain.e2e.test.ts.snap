@@ -1,0 +1,25 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`WhenUncertain e2e > snapshots > should match snapshot: each action type 1`] = `
+"<uncertainty-handling>
+If unsure, say "I'm not certain about this" and explain your uncertainty.
+</uncertainty-handling>"
+`;
+
+exports[`WhenUncertain e2e > snapshots > should match snapshot: each action type 2`] = `
+"<uncertainty-handling>
+If unsure, ask clarifying questions before proceeding.
+</uncertainty-handling>"
+`;
+
+exports[`WhenUncertain e2e > snapshots > should match snapshot: each action type 3`] = `
+"<uncertainty-handling>
+If unsure, politely decline to answer rather than guess.
+</uncertainty-handling>"
+`;
+
+exports[`WhenUncertain e2e > snapshots > should match snapshot: each action type 4`] = `
+"<uncertainty-handling>
+If unsure, provide your best estimate with confidence level.
+</uncertainty-handling>"
+`;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { AskOption } from '../../../../src/components/ask/Option';
+import { AskOption } from '../../../../components/ask/Option';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime/index';
 

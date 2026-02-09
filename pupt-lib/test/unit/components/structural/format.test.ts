@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Format } from '../../../../src/components/structural/Format';
+import { Format } from '../../../../components/structural/Format';
 
 describe('Format', () => {
   it('should render json format with XML tags', async () => {

@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask } from '../../../../src/components/ask';
-import '../../../../src/components';
+import { Ask } from '../../../../components/ask';
+import '../../../../components';
 
 describe('Ask.Text', () => {
   it('should render placeholder when no input provided', async () => {

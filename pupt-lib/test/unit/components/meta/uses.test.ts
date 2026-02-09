@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Uses } from '../../../../src/components/meta/Uses';
+import { Uses } from '../../../../components/meta/Uses';
 
 describe('Uses', () => {
   it('should render as empty (meta component)', async () => {

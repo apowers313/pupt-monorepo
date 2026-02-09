@@ -4,9 +4,9 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, AskOption } from '../../../../src/components/ask';
+import { Ask, AskOption } from '../../../../components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
-import '../../../../src/components';
+import '../../../../components';
 
 describe('Ask.Select branch coverage', () => {
   describe('selected option not found', () => {

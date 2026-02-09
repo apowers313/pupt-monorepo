@@ -2,15 +2,24 @@
 
 This document outlines the design for pupt-lib's core prompt components, establishing patterns for creating well-structured, reusable, and customizable AI prompts.
 
+> **IMPORTANT — Current State vs. Proposed Changes**
+>
+> This document contains both descriptions of the current codebase and proposed enhancements.
+> To avoid confusion during implementation planning:
+> - Sections marked **[CURRENT]** describe what exists in the codebase today.
+> - Sections marked **[PROPOSED]** describe changes that need to be implemented.
+> - Code examples use the **actual** 3-parameter `render()` signature: `render(props, resolvedValue, context)`.
+
 ---
 
 ## Table of Contents
 
-1. [Requirements](#requirements)
-2. [Design Principles](#design-principles)
-3. [Component Architecture](#component-architecture)
-4. [The Prompt Component](#the-prompt-component)
-5. [Core Component Designs](#core-component-designs)
+1. [Current Implementation Summary](#current-implementation-summary)
+2. [Requirements](#requirements)
+3. [Design Principles](#design-principles)
+4. [Component Architecture](#component-architecture)
+5. [The Prompt Component](#the-prompt-component)
+6. [Core Component Designs](#core-component-designs)
    - [Role System Design](#role-system-design)
    - [Task / Directive System Design](#task--directive-system-design)
    - [Format / Output System Design](#format--output-system-design)
@@ -21,13 +30,195 @@ This document outlines the design for pupt-lib's core prompt components, establi
    - [Tone System Design](#tone-system-design)
    - [Success Criteria System Design](#success-criteria-system-design)
    - [Steps / Workflow System Design](#steps--workflow-system-design)
-6. [Environment Context Adaptation](#environment-context-adaptation)
-7. [Component Extensibility](#component-extensibility)
-8. [Existing Component Improvements](#existing-component-improvements)
-9. [New Components](#new-components)
-10. [Implementation Priorities](#implementation-priorities)
-11. [Open Questions](#open-questions)
-12. [References](#references)
+7. [Environment Context Adaptation](#environment-context-adaptation)
+8. [Component Extensibility](#component-extensibility)
+9. [Existing Component Improvements](#existing-component-improvements)
+10. [New Components](#new-components)
+11. [System Capability Expansions](#system-capability-expansions)
+12. [Implementation Priorities](#implementation-priorities)
+13. [Open Questions](#open-questions)
+14. [References](#references)
+
+---
+
+## Current Implementation Summary
+
+**[CURRENT]** This section documents what exists in the codebase today, to serve as the baseline for all proposed changes in this document.
+
+### Component Base Class (`src/component.ts`)
+
+```typescript
+export const COMPONENT_MARKER = Symbol.for('pupt-lib:component:v1');
+
+export abstract class Component<
+  Props = Record<string, unknown>,
+  ResolveType = void,
+> {
+  static [COMPONENT_MARKER] = true;
+  static schema: ZodObject<ZodRawShape>;
+  static resolveSchema?: ZodObject<ZodRawShape>;
+
+  // Optional two-phase lifecycle: resolve() gathers async data, render() produces output
+  resolve?(props: Props, context: RenderContext): ResolveType | Promise<ResolveType>;
+  render?(props: Props, resolvedValue: ResolveType, context: RenderContext): PuptNode | Promise<PuptNode>;
+}
+```
+
+**Key points:**
+- `render()` takes **3 parameters**: `(props, resolvedValue, context)` — NOT 2.
+- Both `resolve()` and `render()` are optional and can be async.
+- All components use Zod schemas for prop validation via `static schema`.
+
+### RenderContext (`src/types/context.ts`)
+
+```typescript
+export interface RenderContext {
+  inputs: Map<string, unknown>;       // User inputs from Ask components
+  env: EnvironmentContext;             // Environment & config
+  postExecution: PostExecutionAction[]; // Post-render actions (ReviewFile, OpenUrl, RunCommand)
+  errors: RenderError[];               // Accumulated validation/runtime errors
+}
+```
+
+**Note:** There is NO `registry` field on `RenderContext`. Components are resolved via ES6 imports, not a runtime registry.
+
+### RenderOptions (`src/types/render.ts`)
+
+```typescript
+export interface RenderOptions {
+  format?: 'xml' | 'markdown' | 'json' | 'text' | 'unspecified';
+  trim?: boolean;
+  indent?: string;
+  maxDepth?: number;
+  inputs?: Map<string, unknown> | Record<string, unknown>;
+  env?: EnvironmentContext;
+}
+```
+
+**Note:** There is NO `registry` option. Component resolution is static (import-time), not dynamic (render-time).
+
+### RenderResult (`src/types/render.ts`)
+
+```typescript
+export type RenderResult = RenderSuccess | RenderFailure;
+
+interface RenderSuccess {
+  ok: true;
+  text: string;
+  postExecution: PostExecutionAction[];
+}
+
+interface RenderFailure {
+  ok: false;
+  text: string;  // Best-effort output
+  errors: RenderError[];
+  postExecution: PostExecutionAction[];
+}
+```
+
+### EnvironmentContext (`src/types/context.ts`)
+
+```typescript
+export const environmentContextSchema = z.object({
+  llm: llmConfigSchema.default({}),
+  output: outputConfigSchema.default({}),
+  code: codeConfigSchema.default({}),
+  user: userConfigSchema.default({}),
+  runtime: runtimeConfigSchema.partial().default({}),
+});
+
+export type EnvironmentContext = z.infer<typeof environmentContextSchema>;
+```
+
+**Fields:**
+- `llm: { model: string, provider: LlmProvider, maxTokens?: number, temperature?: number }` — provider auto-inferred from model name
+- `output: { format: 'xml'|'markdown'|'json'|'text'|'unspecified', trim: boolean, indent: string }`
+- `code: { language: string, highlight?: boolean }`
+- `user: { editor: string }` — defaults to `'unknown'`
+- `runtime: Partial<{ hostname, username, cwd, platform, os, locale, timestamp, date, time, uuid }>` — auto-detected at render time
+
+**LLM Providers** (more than the 3 discussed in the design sections below):
+```typescript
+export const LLM_PROVIDERS = [
+  'anthropic', 'openai', 'google', 'meta', 'mistral',
+  'deepseek', 'xai', 'cohere', 'unspecified',
+] as const;
+```
+
+**Defaults:**
+```typescript
+export const DEFAULT_ENVIRONMENT: EnvironmentContext = {
+  llm: { model: 'unspecified', provider: 'unspecified' },
+  output: { format: 'unspecified', trim: true, indent: '  ' },
+  code: { language: 'unspecified' },
+  user: { editor: 'unknown' },
+  runtime: {},  // Auto-populated by createRuntimeConfig()
+};
+```
+
+### Existing Components
+
+All components are class-based, extend `Component<Props>`, and use Zod schemas. There is no runtime component registry — components are imported directly and made available to `.prompt` files via the preprocessor (`src/services/preprocessor.ts`).
+
+**Structural** (all have `delimiter` prop defaulting to `'xml'`, except Prompt and Criterion):
+
+| Component | Props (beyond delimiter + children) | Behavior |
+|-----------|-------------------------------------|----------|
+| `Prompt` | `name`, `version?`, `description?`, `tags?` | **Passthrough only** — renders children, no auto-generated sections |
+| `Section` | `name?` | Generic wrapper; delimiter defaults to `'xml'` if name set, `'none'` otherwise |
+| `Role` | `expertise?`, `domain?` | Wraps in `<role>` tags; **expertise and domain are defined in schema but UNUSED in render** |
+| `Task` | _(none)_ | Wraps in `<task>` tags |
+| `Context` | _(none)_ | Wraps in `<context>` tags |
+| `Constraint` | `type?: 'must'\|'should'\|'must-not'` | Wraps in `<constraint>` tags with optional prefix (`MUST:`, `SHOULD:`, `MUST NOT:`) |
+| `Format` | `type?: 'json'\|'markdown'\|'xml'\|'text'\|'code'`, `language?` | Generates `Output format: ${type}` prefix, wraps in `<format>` tags |
+| `Audience` | _(none)_ | Wraps in `<audience>` tags |
+| `Tone` | _(none)_ | Wraps in `<tone>` tags |
+| `SuccessCriteria` | _(none)_ | Wraps in `<success-criteria>` tags |
+| `Criterion` | _(none)_ | Renders as `- ${children}\n` (bullet point, no delimiter prop) |
+
+**Delimiter pattern** — 9 components duplicate identical switch logic:
+```typescript
+switch (delimiter) {
+  case 'xml':    return [`<${tag}>\n`, children, `\n</${tag}>\n`];
+  case 'markdown': return [`## ${tag}\n\n`, children];
+  case 'none':   return children;
+}
+```
+
+**No provider-aware rendering exists.** All structural components ignore `context.env.llm.provider`. Most destructure context as `_context` (unused).
+
+**Data**: `Code`, `Data`, `File`, `Json`, `Xml`
+**Control**: `If` (boolean or Excel formula), `ForEach`
+**Utility**: `UUID`, `Timestamp`, `DateTime`, `Hostname`, `Username`, `Cwd`
+**Examples**: `Examples` (wraps in `<examples>` tags), `Example` (wraps in `<example>` tags), `ExampleInput`, `ExampleOutput`
+**Reasoning**: `Steps` (auto-numbers Step children, wraps in `<steps>` tags), `Step` (`number?` prop)
+**Post-execution**: `PostExecution`, `ReviewFile`, `OpenUrl`, `RunCommand` — these push actions to `context.postExecution`
+
+**Ask components** (12 total, more than documented elsewhere):
+`AskText`, `AskNumber`, `AskSelect`, `AskConfirm`, `AskMultiSelect`, `AskEditor`, `AskFile`, `AskPath`, `AskDate`, `AskSecret`, `AskChoice`, `AskRating` — plus helpers `AskOption` and `AskLabel`.
+All use the two-phase `resolve()`/`render()` lifecycle.
+
+**Meta**: `Uses` — declares dependencies for `.prompt` files; transformed to imports by Babel plugin.
+
+### What Does NOT Exist Yet
+
+The following items are proposed in this design document but **do not exist** in the codebase:
+
+- **Component Registry** (`ComponentRegistry`, `defaultRegistry`, `createChild()`, string-based component lookup)
+- **`PromptConfig` type** or `prompt` field on `EnvironmentContext`
+- **`<Prompt>` smart defaults** (auto-generating Role, Format, Constraints sections)
+- **Provider-aware rendering** (`PROVIDER_ADAPTATIONS`, `getProvider()`, `getDelimiter()` helpers)
+- **Language-aware rendering** (`LANGUAGE_CONVENTIONS`, code language adaptation)
+- **Additive composition** (`extend`, `exclude`, `replace` props on any component)
+- **Container components** (`<Contexts>`, `<Constraints>`, `<Fallbacks>`, `<EdgeCases>`, `<References>`)
+- **Preset systems** (role presets, task presets, constraint presets, etc.)
+- **Shared delimiter utility** (`wrapWithDelimiter`)
+- **Symbol markers** for child inspection (`STEP_MARKER`, `OPTION_MARKER`)
+- **Component Slots pattern** on `<Prompt>`
+- **New components**: Objective, Style, Guardrails, EdgeCases/When, WhenUncertain, NegativeExample, ChainOfThought, References, Specialization, Fallback
+- **`DelimitedComponent<P>` base class** or `RoleBase` extension points
+- **Additional Constraint types**: `may`, `should-not`
+- **Rich props** on existing components (e.g., Role's `preset`, `experience`, `traits`; Task's `preset`, `verb`, `subject`; etc.)
 
 ---
 
@@ -59,6 +250,13 @@ This document outlines the design for pupt-lib's core prompt components, establi
    - Users can create custom components to replace defaults
    - Registry system allows component overrides
    - Clean extension points for customization
+
+6. **Components Implemented as `.tsx` or `.prompt` Files**
+   - ALL built-in components must be implemented as `.tsx` or `.prompt` files using the public component API
+   - No component may depend on renderer internals or private APIs
+   - This validates that the component system is sufficient for third-party authors
+   - Components needing async resolution, context mutation, or complex child inspection logic use `.tsx`
+   - Simpler structural components that are purely declarative may use `.prompt`
 
 ---
 
@@ -179,16 +377,27 @@ When users override defaults, they should be explicit:
 
 ### Base Component Enhancement
 
+**[CURRENT]** The base `Component` class already exists with the following signature:
+
 ```typescript
-// Enhanced base with environment access
-export abstract class Component<Props = Record<string, unknown>> {
+export abstract class Component<Props = Record<string, unknown>, ResolveType = void> {
   static [COMPONENT_MARKER] = true;
+  static schema: ZodObject<ZodRawShape>;
 
-  abstract render(props: Props, context: RenderContext): PuptNode;
+  resolve?(props: Props, context: RenderContext): ResolveType | Promise<ResolveType>;
+  render?(props: Props, resolvedValue: ResolveType, context: RenderContext): PuptNode | Promise<PuptNode>;
+}
+```
 
-  // Helper for environment-aware rendering
-  protected getProvider(context: RenderContext): 'anthropic' | 'openai' | 'google' {
-    return context.env.llm.provider as 'anthropic' | 'openai' | 'google';
+**[PROPOSED]** Add helper methods to the base class for environment-aware rendering:
+
+```typescript
+export abstract class Component<Props = Record<string, unknown>, ResolveType = void> {
+  // ... existing members ...
+
+  // NEW: Helper for environment-aware rendering
+  protected getProvider(context: RenderContext): LlmProvider {
+    return context.env.llm.provider;
   }
 
   protected getDelimiter(context: RenderContext): 'xml' | 'markdown' | 'none' {
@@ -199,48 +408,71 @@ export abstract class Component<Props = Record<string, unknown>> {
 
 ### Enhanced Environment Context
 
+**[CURRENT]** The `EnvironmentContext` already has these fields: `llm`, `output`, `code`, `user`, `runtime` (see [Current Implementation Summary](#current-implementation-summary) for details).
+
+**[PROPOSED]** Add a new `prompt` field to `EnvironmentContext` for controlling `<Prompt>` default sections:
+
 ```typescript
-export interface EnvironmentContext {
-  llm: LlmConfig;
-  output: OutputConfig;
-  code: CodeConfig;
-  runtime: Partial<RuntimeConfig>;
+// Add to existing environmentContextSchema
+export const environmentContextSchema = z.object({
+  llm: llmConfigSchema.default({}),
+  output: outputConfigSchema.default({}),
+  code: codeConfigSchema.default({}),
+  user: userConfigSchema.default({}),
+  runtime: runtimeConfigSchema.partial().default({}),
+  prompt: promptConfigSchema.default({}),  // NEW
+});
 
-  // New: Prompt defaults configuration
-  prompt: PromptConfig;
-}
-
-export interface PromptConfig {
+// NEW schema
+export const promptConfigSchema = z.object({
   // Default sections to include
-  includeRole: boolean;
-  includeFormat: boolean;
-  includeConstraints: boolean;
-  includeSuccessCriteria: boolean;
+  includeRole: z.boolean().default(true),
+  includeFormat: z.boolean().default(true),
+  includeConstraints: z.boolean().default(true),
+  includeSuccessCriteria: z.boolean().default(false),
 
   // Default role configuration
-  defaultRole: string;
-  defaultExpertise: string;
+  defaultRole: z.string().default('assistant'),
+  defaultExpertise: z.string().default('general'),
 
   // Delimiter preference (can be overridden per-component)
-  delimiter: 'xml' | 'markdown' | 'none';
-}
+  delimiter: z.enum(['xml', 'markdown', 'none']).default('xml'),
+});
 
-export const DEFAULT_PROMPT_CONFIG: PromptConfig = {
-  includeRole: true,
-  includeFormat: true,
-  includeConstraints: true,
-  includeSuccessCriteria: false,
-  defaultRole: 'assistant',
-  defaultExpertise: 'general',
-  delimiter: 'xml',
-};
+export type PromptConfig = z.infer<typeof promptConfigSchema>;
 ```
 
 ---
 
 ## The Prompt Component
 
-### Enhanced Props Interface
+### Current State
+
+**[CURRENT]** The Prompt component today is a simple passthrough:
+
+```typescript
+// src/components/structural/Prompt.ts (current implementation)
+export const promptSchema = z.object({
+  name: z.string(),
+  version: z.string().optional(),
+  description: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+}).passthrough();
+
+type PromptProps = z.infer<typeof promptSchema> & { children: PuptNode };
+
+export class Prompt extends Component<PromptProps> {
+  static schema = promptSchema;
+
+  render({ children }: PromptProps, _resolvedValue: void, _context: RenderContext): PuptNode {
+    return children;  // Just passes through, no auto-generated sections
+  }
+}
+```
+
+It renders ONLY its children. There are no default sections, no shorthand props, no `bare` mode. All the below is proposed.
+
+### Enhanced Props Interface [PROPOSED]
 
 ```typescript
 interface PromptProps {
@@ -289,11 +521,11 @@ type RolePreset =
   | 'legal' | 'medical' | 'financial' | 'hr' | 'sales';
 ```
 
-### Render Logic
+### Render Logic [PROPOSED]
 
 ```typescript
 export class Prompt extends Component<PromptProps> {
-  render(props: PromptProps, context: RenderContext): PuptNode {
+  render(props: PromptProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const {
       bare = false,
       defaults = {},
@@ -412,7 +644,37 @@ This section provides comprehensive designs for all core prompt components, each
 
 ## Role System Design
 
-### Role Taxonomy
+### Current State
+
+**[CURRENT]** The Role component today is a simple delimiter wrapper with unused props:
+
+```typescript
+// src/components/structural/Role.ts (current implementation)
+export const roleSchema = z.object({
+  expertise: z.string().optional(),
+  domain: z.string().optional(),
+  delimiter: z.enum(['xml', 'markdown', 'none']).optional(),
+}).passthrough();
+
+type RoleProps = z.infer<typeof roleSchema> & { children: PuptNode };
+
+export class Role extends Component<RoleProps> {
+  static schema = roleSchema;
+
+  render({ delimiter = 'xml', children }: RoleProps, _resolvedValue: void, _context: RenderContext): PuptNode {
+    // NOTE: expertise and domain are in the schema but IGNORED here
+    switch (delimiter) {
+      case 'xml':      return ['<role>\n', children, '\n</role>\n'];
+      case 'markdown': return ['## role\n\n', children];
+      case 'none':     return children;
+    }
+  }
+}
+```
+
+No presets, no provider-aware rendering, no experience levels. All the below is proposed.
+
+### Role Taxonomy [PROPOSED]
 
 Based on research from [awesome-chatgpt-prompts](https://github.com/f/awesome-chatgpt-prompts), [ChatGPT-Roles](https://github.com/WynterJones/ChatGPT-Roles), and [LearnPrompt.org](https://learnprompt.org/act-as-chat-gpt-prompts/), roles are organized into categories:
 
@@ -538,7 +800,9 @@ const ROLE_PRESETS: Record<string, RoleConfig> = {
 };
 ```
 
-### Role Component Props
+### Role Component Props [PROPOSED]
+
+The current Role only has `expertise?`, `domain?`, `delimiter?`, `children`. The below is the proposed expansion:
 
 ```typescript
 interface RoleProps {
@@ -585,11 +849,11 @@ interface RoleProps {
 // Result: Uses engineer preset + cloud architecture expertise (replaces default)
 ```
 
-### Role Rendering Logic
+### Role Rendering Logic [PROPOSED]
 
 ```typescript
 export class Role extends Component<RoleProps> {
-  render(props: RoleProps, context: RenderContext): PuptNode {
+  render(props: RoleProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset, title, expertise, experience, traits, domain, style, children } = props;
 
     // If custom children provided, use them
@@ -679,6 +943,8 @@ export class Role extends Component<RoleProps> {
 
 ## Task / Directive System Design
 
+**[CURRENT]** The Task component today is a simple delimiter wrapper with only `delimiter` and `children` props. No presets, verb, subject, objective, scope, or complexity props exist. All the below taxonomy and configuration is proposed.
+
 Research shows **Task/Directive is the most critical component** (86.7% usage in production prompts). It establishes the fundamental purpose of the prompt.
 
 ### Task Taxonomy
@@ -752,7 +1018,9 @@ const TASK_PRESETS: Record<string, TaskConfig> = {
 };
 ```
 
-### Task Component Props
+### Task Component Props [PROPOSED]
+
+The current Task only has `delimiter?` and `children`. The below is the proposed expansion:
 
 ```typescript
 interface TaskProps {
@@ -776,11 +1044,11 @@ interface TaskProps {
 }
 ```
 
-### Task Rendering Logic
+### Task Rendering Logic [PROPOSED]
 
 ```typescript
 export class Task extends Component<TaskProps> {
-  render(props: TaskProps, context: RenderContext): PuptNode {
+  render(props: TaskProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset, verb, subject, objective, children } = props;
     const provider = this.getProvider(context);
 
@@ -843,6 +1111,8 @@ export class Task extends Component<TaskProps> {
 
 ## Format / Output System Design
 
+**[CURRENT]** The Format component today has `type?: 'json'|'markdown'|'xml'|'text'|'code'`, `language?`, `delimiter`, and `children` props. It generates a simple `Output format: ${type}` prefix wrapped in delimiter tags. No schema, template, example, strict, validate, maxLength, or minLength props exist. No provider-aware format selection. All the below taxonomy and configuration is proposed.
+
 Research shows **output format significantly impacts performance** - up to 40% variation based on format choice. Different models prefer different formats.
 
 ### Format Taxonomy
@@ -902,7 +1172,9 @@ const FORMAT_PRESETS: Record<string, FormatConfig> = {
 };
 ```
 
-### Format Component Props
+### Format Component Props [PROPOSED]
+
+The current Format only has `type?` (`'json'|'markdown'|'xml'|'text'|'code'`), `language?`, `delimiter?`, and `children?`. The below is the proposed expansion:
 
 ```typescript
 interface FormatProps {
@@ -931,11 +1203,11 @@ interface FormatProps {
 }
 ```
 
-### Format Rendering Logic
+### Format Rendering Logic [PROPOSED]
 
 ```typescript
 export class Format extends Component<FormatProps> {
-  render(props: FormatProps, context: RenderContext): PuptNode {
+  render(props: FormatProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { type, schema, template, example, strict, children } = props;
     const provider = this.getProvider(context);
     const preferredFormat = this.getPreferredFormat(type, provider);
@@ -1025,6 +1297,8 @@ export class Format extends Component<FormatProps> {
 
 ## Context System Design
 
+**[CURRENT]** The Context component today has only `delimiter` and `children` props. No preset, type, label, source, priority, relevance, truncate, or maxTokens props exist. There is no `<Contexts>` container component. All the below taxonomy and configuration is proposed.
+
 Research shows **context is used in 56.2% of production prompts** and is critical for grounding model responses. Context engineering is becoming as important as prompt engineering.
 
 ### Context Taxonomy
@@ -1084,9 +1358,9 @@ const CONTEXT_PRESETS: Record<string, ContextConfig> = {
 };
 ```
 
-### Context Container Props
+### Context Container Props [PROPOSED]
 
-Multiple `<Context>` sections can coexist in a prompt. The container controls how they interact with any auto-generated context from `<Prompt>`.
+The `<Contexts>` container component does not exist yet. Multiple `<Context>` sections can coexist in a prompt. The container would control how they interact with any auto-generated context from `<Prompt>`.
 
 ```typescript
 interface ContextsProps {
@@ -1102,7 +1376,9 @@ interface ContextsProps {
 }
 ```
 
-### Context Component Props
+### Context Component Props [PROPOSED]
+
+The current Context only has `delimiter?` and `children`. The below is the proposed expansion:
 
 ```typescript
 interface ContextProps {
@@ -1155,11 +1431,11 @@ interface ContextProps {
 </Prompt>
 ```
 
-### Context Rendering Logic
+### Context Rendering Logic [PROPOSED]
 
 ```typescript
 export class Context extends Component<ContextProps> {
-  render(props: ContextProps, context: RenderContext): PuptNode {
+  render(props: ContextProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset, label, source, relevance, children } = props;
     const config = preset ? CONTEXT_PRESETS[preset] : null;
 
@@ -1222,6 +1498,8 @@ export class Context extends Component<ContextProps> {
 ---
 
 ## Constraint System Design
+
+**[CURRENT]** The Constraint component today has `type?: 'must'|'should'|'must-not'`, `delimiter`, and `children` props. Only 3 constraint types exist (missing `may` and `should-not`). No `positive`, `category`, or `preset` props. No provider-aware adaptation. No `<Constraints>` container component with `extend`/`exclude` composition. All the below taxonomy and configuration is proposed.
 
 Research shows **constraints are used in 35.7% of production prompts** and are critical for controlling model behavior. Research also shows larger models perform worse on negated instructions.
 
@@ -1297,7 +1575,9 @@ const CONSTRAINT_PRESETS: Record<string, ConstraintConfig> = {
 };
 ```
 
-### Constraints Container Props
+### Constraints Container Props [PROPOSED]
+
+The `<Constraints>` container component does not exist yet.
 
 ```typescript
 interface ConstraintsProps {
@@ -1316,7 +1596,9 @@ interface ConstraintsProps {
 }
 ```
 
-### Constraint Component Props
+### Constraint Component Props [PROPOSED]
+
+The current Constraint only has `type?: 'must'|'should'|'must-not'`, `delimiter?`, and `children`. The below is the proposed expansion:
 
 ```typescript
 interface ConstraintProps {
@@ -1338,11 +1620,11 @@ interface ConstraintProps {
 }
 ```
 
-### Constraint Rendering Logic
+### Constraint Rendering Logic [PROPOSED]
 
 ```typescript
 export class Constraint extends Component<ConstraintProps> {
-  render(props: ConstraintProps, context: RenderContext): PuptNode {
+  render(props: ConstraintProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset, type = 'must', positive, children } = props;
     const provider = this.getProvider(context);
     const adaptations = PROVIDER_ADAPTATIONS[provider];
@@ -1427,6 +1709,8 @@ export class Constraint extends Component<ConstraintProps> {
 
 ## Examples System Design
 
+**[CURRENT]** The Examples component today has only `{ children }` — wraps in `<examples>` tags. The Example component has only `{ children }` — wraps in `<example>` tags, with `Example.Input` and `Example.Output` static references to ExampleInput/ExampleOutput. No preset, extend, maxExamples, shuffle, includeNegative, type, negative, or reason props exist on any of these. All the below taxonomy and configuration is proposed.
+
 Research shows **examples are used in 19.9% of production prompts** but can improve accuracy by 15-40% when used correctly. Both positive and negative examples are valuable.
 
 ### Examples Taxonomy
@@ -1491,7 +1775,9 @@ const EXAMPLE_SETS: Record<string, ExampleConfig[]> = {
 };
 ```
 
-### Examples Component Props
+### Examples Component Props [PROPOSED]
+
+The current Examples only has `{ children }` (wraps in `<examples>` tags). The current Example only has `{ children }`. The below is the proposed expansion:
 
 ```typescript
 interface ExamplesProps {
@@ -1527,14 +1813,14 @@ interface ExampleProps {
 }
 ```
 
-### Enhanced Example Component
+### Enhanced Example Component [PROPOSED]
 
 ```typescript
 export class Example extends Component<ExampleProps> {
   static Input = ExampleInput;
   static Output = ExampleOutput;
 
-  render(props: ExampleProps, context: RenderContext): PuptNode {
+  render(props: ExampleProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { type = 'positive', negative, reason, children } = props;
     const exampleType = negative ? 'negative' : type;
 
@@ -1619,6 +1905,8 @@ export class Example extends Component<ExampleProps> {
 
 ## Audience System Design
 
+**[CURRENT]** The Audience component today has only `delimiter` and `children` props. No level, type, description, knowledgeLevel, or goals props exist. All the below taxonomy and configuration is proposed.
+
 Research shows audience specification helps tailor vocabulary, complexity, and depth of responses.
 
 ### Audience Taxonomy
@@ -1643,7 +1931,9 @@ Research shows audience specification helps tailor vocabulary, complexity, and d
 | `general` | General public | Plain language, broad accessibility |
 | `children` | Young learners | Simple words, engaging examples |
 
-### Audience Component Props
+### Audience Component Props [PROPOSED]
+
+The current Audience only has `delimiter?` and `children`. The below is the proposed expansion:
 
 ```typescript
 interface AudienceProps {
@@ -1664,11 +1954,11 @@ interface AudienceProps {
 }
 ```
 
-### Audience Rendering Logic
+### Audience Rendering Logic [PROPOSED]
 
 ```typescript
 export class Audience extends Component<AudienceProps> {
-  render(props: AudienceProps, context: RenderContext): PuptNode {
+  render(props: AudienceProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { level, type, description, knowledgeLevel, goals, children } = props;
 
     if (children) {
@@ -1742,6 +2032,8 @@ export class Audience extends Component<AudienceProps> {
 
 ## Tone System Design
 
+**[CURRENT]** The Tone component today has only `delimiter` and `children` props. No type, formality, energy, warmth, brandVoice, or avoidTones props exist. All the below taxonomy and configuration is proposed.
+
 Research shows tone specification affects engagement and appropriateness of responses.
 
 ### Tone Taxonomy
@@ -1770,7 +2062,9 @@ Research shows tone specification affects engagement and appropriateness of resp
 | Warmth | warm, neutral, distant |
 | Confidence | confident, humble, uncertain |
 
-### Tone Component Props
+### Tone Component Props [PROPOSED]
+
+The current Tone only has `delimiter?` and `children`. The below is the proposed expansion:
 
 ```typescript
 interface ToneProps {
@@ -1817,6 +2111,8 @@ interface ToneProps {
 
 ## Success Criteria System Design
 
+**[CURRENT]** The SuccessCriteria component today has only `delimiter` and `children` props. The Criterion component has only `children` and renders as a bullet point (`- ${children}\n`). No presets, extend, exclude, metrics, category, metric, or weight props exist. All the below taxonomy and configuration is proposed.
+
 Research shows explicit success criteria improve output quality and enable evaluation.
 
 ### Success Criteria Taxonomy
@@ -1835,7 +2131,9 @@ Based on research from [PromptHub](https://www.prompthub.us/blog/everything-you-
 | `tone` | Communication style | "Professional", "Empathetic" |
 | `efficiency` | Conciseness and directness | "Under 500 words", "No redundancy" |
 
-### Success Criteria Component Props
+### Success Criteria Component Props [PROPOSED]
+
+The current SuccessCriteria only has `delimiter?` and `children`. Criterion only has `children`. The below is the proposed expansion:
 
 ```typescript
 interface SuccessCriteriaProps {
@@ -1910,10 +2208,10 @@ interface CriterionProps {
 // Result: Default criteria (minus efficiency) + custom criterion
 ```
 
-**How it works in `<Prompt>`:**
+**How it would work in `<Prompt>` [PROPOSED]** (Prompt currently does not do this):
 
 ```typescript
-// Inside Prompt.render()
+// Inside Prompt.render() — proposed implementation
 private renderSuccessCriteria(
   children: PuptNode,
   context: RenderContext,
@@ -1975,6 +2273,8 @@ private renderSuccessCriteria(
 
 ## Steps / Workflow System Design
 
+**[CURRENT]** The Steps component today has only `{ children }` and auto-numbers Step children. It wraps in `<steps>` tags. The Step component has `number?` and `children` — no `name` or `optional` props. Steps detects Step children via string-based type checking (`type.name === 'Step'`). No preset, style, showReasoning, verify, selfCritique, extend, or prependSteps props exist. All the below taxonomy and configuration is proposed.
+
 Research shows **workflow/steps are used in 27.5% of production prompts**. Chain-of-thought prompting can improve accuracy by 10-30% on reasoning tasks.
 
 ### Steps Taxonomy
@@ -2024,7 +2324,9 @@ const STEPS_PRESETS: Record<string, StepsConfig> = {
 };
 ```
 
-### Steps Component Props
+### Steps Component Props [PROPOSED]
+
+The current Steps only has `{ children }` (with auto-numbering). Step only has `number?` and `children`. The below is the proposed expansion:
 
 ```typescript
 interface StepsProps {
@@ -2060,11 +2362,11 @@ interface StepProps {
 }
 ```
 
-### Enhanced Steps Rendering
+### Enhanced Steps Rendering [PROPOSED]
 
 ```typescript
 export class Steps extends Component<StepsProps> {
-  render(props: StepsProps, context: RenderContext): PuptNode {
+  render(props: StepsProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset, style, showReasoning, verify, selfCritique, children } = props;
     const config = preset ? STEPS_PRESETS[preset] : null;
 
@@ -2159,23 +2461,30 @@ export class Steps extends Component<StepsProps> {
 
 ## Environment Context Adaptation
 
-Components adapt their output based on `RenderContext.env`. This section documents the full environment configuration and how each setting affects component rendering.
+**[PROPOSED]** Components should adapt their output based on `RenderContext.env`. Currently, **no component reads `context.env`** for provider-aware or language-aware rendering — all structural components ignore the context parameter. This entire section describes the proposed adaptation behavior.
 
 ### Environment Configuration Interface
 
-Environment configuration uses **Zod schemas** for runtime validation. Types are inferred from schemas.
+**[CURRENT]** Environment configuration already uses **Zod schemas** for runtime validation in `src/types/context.ts`. Types are inferred from schemas. The schemas, types, defaults, runtime auto-detection, and validation described below are all **already implemented**.
 
-#### Zod Schemas
+#### Zod Schemas [CURRENT]
 
 ```typescript
 import { z } from 'zod';
 
-// LLM configuration schema
+// LLM configuration schema — includes auto-inference of provider from model name
 export const llmConfigSchema = z.object({
   model: z.string().default('unspecified'),
-  provider: z.string().default('unspecified'),
+  provider: z.enum(LLM_PROVIDERS).default('unspecified'),  // Note: enum, not string
   maxTokens: z.number().positive().optional(),
   temperature: z.number().min(0).max(2).optional(),
+}).transform((data) => {
+  // Auto-infer provider from model name if not specified
+  if (data.provider === 'unspecified' && data.model !== 'unspecified') {
+    const inferred = inferProviderFromModel(data.model);
+    if (inferred) return { ...data, provider: inferred };
+  }
+  return data;
 });
 
 // Output configuration schema
@@ -2220,11 +2529,13 @@ export const environmentContextSchema = z.object({
 });
 ```
 
-#### TypeScript Types (inferred from schemas)
+**Note:** The `llm.provider` field is a `z.enum(LLM_PROVIDERS)` with 9 values (`anthropic`, `openai`, `google`, `meta`, `mistral`, `deepseek`, `xai`, `cohere`, `unspecified`), not a plain string. The `.transform()` auto-infers provider from model name (e.g., `'claude-3-opus'` → `'anthropic'`).
+
+#### TypeScript Types [CURRENT]
 
 ```typescript
 export type LlmConfig = z.infer<typeof llmConfigSchema>;
-// { model: string; provider: string; maxTokens?: number; temperature?: number }
+// { model: string; provider: LlmProvider; maxTokens?: number; temperature?: number }
 
 export type OutputConfig = z.infer<typeof outputConfigSchema>;
 // { format: 'xml' | 'markdown' | 'json' | 'text' | 'unspecified'; trim: boolean; indent: string }
@@ -2242,7 +2553,7 @@ export type EnvironmentContext = z.infer<typeof environmentContextSchema>;
 // { llm, output, code, user, runtime }
 ```
 
-### Default Values
+### Default Values [CURRENT]
 
 ```typescript
 export const DEFAULT_ENVIRONMENT: EnvironmentContext = {
@@ -2254,21 +2565,21 @@ export const DEFAULT_ENVIRONMENT: EnvironmentContext = {
 };
 ```
 
-#### Default Value Semantics
+#### Default Value Semantics [CURRENT]
 
 | Value | Meaning | Used For |
 |-------|---------|----------|
 | `'unspecified'` | Caller hasn't set a preference | `llm.model`, `llm.provider`, `output.format`, `code.language` |
 | `'unknown'` | Auto-detection failed or not applicable | `user.editor`, `runtime.os` (browser fallback) |
 
-### Runtime Auto-Detection
+### Runtime Auto-Detection [CURRENT]
 
-The `runtime` field is auto-populated by `createRuntimeConfig()` at render time:
+The `runtime` field is auto-populated by `createRuntimeConfig()` at render time. Node.js values are loaded lazily via dynamic `import('os')` to avoid bundling issues in browsers.
 
 | Field | Node.js | Browser | Fallback |
 |-------|---------|---------|----------|
-| `hostname` | `os.hostname()` | `'browser'` | — |
-| `username` | `os.userInfo().username` | `'anonymous'` | — |
+| `hostname` | `os.hostname()` | `'browser'` | `'unknown'` |
+| `username` | `os.userInfo().username` | `'anonymous'` | `'anonymous'` |
 | `cwd` | `process.cwd()` | `'/'` | — |
 | `platform` | `'node'` | `'browser'` | — |
 | `os` | `os.platform()` (e.g., `'linux'`, `'darwin'`, `'win32'`) | `'unknown'` | `'unknown'` |
@@ -2278,15 +2589,16 @@ The `runtime` field is auto-populated by `createRuntimeConfig()` at render time:
 | `time` | ISO time (HH:MM:SS) | ISO time | — |
 | `uuid` | `crypto.randomUUID()` | `crypto.randomUUID()` | — |
 
-### Validation
+### Validation [CURRENT]
 
 `createEnvironment()` validates all inputs through the Zod schema:
 
 ```typescript
-// Valid - applies defaults
+// Valid - applies defaults, auto-infers provider
 const env = createEnvironment({
-  llm: { model: 'gpt-4o', provider: 'openai' },
+  llm: { model: 'gpt-4o' },
 });
+// env.llm.provider === 'openai' (auto-inferred)
 
 // Throws ZodError - temperature out of range (0-2)
 createEnvironment({
@@ -2301,7 +2613,9 @@ createEnvironment({
 
 ---
 
-### Environment Impact by Setting
+### Environment Impact by Setting [PROPOSED]
+
+**Note:** Everything below in this subsection describes **proposed** behavior. Currently no component adapts to any environment setting. The `PROVIDER_ADAPTATIONS` map, `LANGUAGE_CONVENTIONS`, `PROVIDER_COMPONENT_ORDER`, and all related adaptation logic do not exist in the codebase.
 
 #### `env.llm.model` / `env.llm.provider`
 
@@ -2326,7 +2640,9 @@ interface ProviderAdaptations {
   instructionStyle: 'direct' | 'elaborate' | 'structured';
 }
 
-const PROVIDER_ADAPTATIONS: Record<string, ProviderAdaptations> = {
+// NOTE: Must cover all LLM_PROVIDERS values:
+// 'anthropic', 'openai', 'google', 'meta', 'mistral', 'deepseek', 'xai', 'cohere', 'unspecified'
+const PROVIDER_ADAPTATIONS: Record<LlmProvider, ProviderAdaptations> = {
   'anthropic': {
     rolePrefix: 'You are ',
     constraintStyle: 'positive',  // Claude prefers positive framing
@@ -2345,7 +2661,38 @@ const PROVIDER_ADAPTATIONS: Record<string, ProviderAdaptations> = {
     formatPreference: 'markdown',
     instructionStyle: 'direct',   // Gemini prefers concise
   },
-  'auto': {
+  // Providers with less-documented preferences — use safe defaults
+  'meta': {
+    rolePrefix: 'You are ',
+    constraintStyle: 'balanced',
+    formatPreference: 'markdown',
+    instructionStyle: 'direct',
+  },
+  'mistral': {
+    rolePrefix: 'You are ',
+    constraintStyle: 'balanced',
+    formatPreference: 'markdown',
+    instructionStyle: 'direct',
+  },
+  'deepseek': {
+    rolePrefix: 'You are ',
+    constraintStyle: 'balanced',
+    formatPreference: 'markdown',
+    instructionStyle: 'structured',
+  },
+  'xai': {
+    rolePrefix: 'You are ',
+    constraintStyle: 'balanced',
+    formatPreference: 'markdown',
+    instructionStyle: 'direct',
+  },
+  'cohere': {
+    rolePrefix: 'You are ',
+    constraintStyle: 'balanced',
+    formatPreference: 'markdown',
+    instructionStyle: 'direct',
+  },
+  'unspecified': {
     rolePrefix: 'You are ',       // Safe default
     constraintStyle: 'positive',  // Positive framing works for all
     formatPreference: 'xml',      // XML is unambiguous
@@ -2495,7 +2842,7 @@ const OS_SHELL: Record<string, { shell: string; pathSep: string }> = {
 
 ---
 
-### Component Impact Summary
+### Component Impact Summary [PROPOSED]
 
 #### High Impact (adapt to 3+ settings)
 
@@ -2527,9 +2874,9 @@ These components are pass-through or static and don't need environment adaptatio
 
 ---
 
-### Research-Based Adaptation Patterns
+### Research-Based Adaptation Patterns [PROPOSED]
 
-Based on findings from [prompt-structure-research.md](./prompt-structure-research.md), these additional adaptations should be considered:
+Based on findings from [prompt-structure-research.md](./prompt-structure-research.md), these additional adaptations should be considered. None of this logic is implemented yet.
 
 #### Component Ordering (Provider-specific)
 
@@ -2544,11 +2891,17 @@ Research shows optimal component order varies by provider:
 
 ```typescript
 // Gemini-optimized ordering
-const PROVIDER_COMPONENT_ORDER: Record<string, string[]> = {
+// NOTE: Must use 'unspecified' (not 'auto') — matches LLM_PROVIDERS enum
+const PROVIDER_COMPONENT_ORDER: Record<LlmProvider, string[]> = {
   'anthropic': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
   'openai': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
   'google': ['Context', 'Data', 'Role', 'Task', 'Steps', 'Format', 'Constraints', 'Examples'],
-  'auto': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'meta': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'mistral': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'deepseek': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'xai': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'cohere': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
+  'unspecified': ['Role', 'Task', 'Context', 'Steps', 'Format', 'Constraints', 'Examples'],
 };
 ```
 
@@ -2595,7 +2948,7 @@ const COT_EFFECTIVE_MODELS = [
 ];
 
 function shouldUseCoT(model: string): boolean {
-  if (model === 'auto') return true; // Assume capable
+  if (model === 'unspecified') return true; // Assume capable
   return COT_EFFECTIVE_MODELS.some(m => model.includes(m));
 }
 ```
@@ -2705,7 +3058,7 @@ if (props.prefill && context.env.llm.provider === 'anthropic') {
 
 ---
 
-### Provider-Specific Rendering Examples
+### Provider-Specific Rendering Examples [PROPOSED]
 
 #### Constraint Adaptation
 
@@ -2713,10 +3066,10 @@ Research shows larger models perform worse on negated instructions. Convert to p
 
 ```typescript
 export class Constraint extends Component<ConstraintProps> {
-  render(props: ConstraintProps, context: RenderContext): PuptNode {
+  render(props: ConstraintProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { type, positive, children } = props;
     const provider = context.env.llm.provider;
-    const adaptations = PROVIDER_ADAPTATIONS[provider] ?? PROVIDER_ADAPTATIONS['auto'];
+    const adaptations = PROVIDER_ADAPTATIONS[provider] ?? PROVIDER_ADAPTATIONS['unspecified'];
 
     // Convert negative constraints to positive for certain providers
     if ((type === 'must-not' || type === 'should-not') &&
@@ -2737,7 +3090,7 @@ export class Constraint extends Component<ConstraintProps> {
 
 ```typescript
 export class Code extends Component<CodeProps> {
-  render(props: CodeProps, context: RenderContext): PuptNode {
+  render(props: CodeProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const language = props.language ?? context.env.code.language;
     const effectiveLang = language === 'unspecified' ? '' : language;
     const { filename, children } = props;
@@ -2756,7 +3109,7 @@ export class Code extends Component<CodeProps> {
 
 ```typescript
 export class Format extends Component<FormatProps> {
-  render(props: FormatProps, context: RenderContext): PuptNode {
+  render(props: FormatProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const outputFormat = context.env.output.format;
     const type = props.type ??
       (outputFormat !== 'unspecified' ? outputFormat : this.getProviderPreference(context));
@@ -2772,7 +3125,7 @@ export class Format extends Component<FormatProps> {
 
   private getProviderPreference(context: RenderContext): string {
     const provider = context.env.llm.provider;
-    const adaptations = PROVIDER_ADAPTATIONS[provider] ?? PROVIDER_ADAPTATIONS['auto'];
+    const adaptations = PROVIDER_ADAPTATIONS[provider] ?? PROVIDER_ADAPTATIONS['unspecified'];
     return adaptations.formatPreference;
   }
 
@@ -2795,24 +3148,28 @@ export class Format extends Component<FormatProps> {
 
 ## Component Extensibility
 
-### Registry-Based Replacement
+**[PROPOSED]** The entire extensibility system described below does not exist yet. There is no component registry, no slots pattern, and no extension base classes. Components are currently resolved via ES6 imports at build time, and `.prompt` files get auto-imports injected by the preprocessor (`src/services/preprocessor.ts`).
 
-Users can replace default components via the registry:
+### Registry-Based Replacement [PROPOSED]
+
+Users would be able to replace default components via a registry:
 
 ```typescript
 // User creates custom Role component
 class MyCustomRole extends Component<MyRoleProps> {
-  render(props: MyRoleProps, context: RenderContext): PuptNode {
+  render(props: MyRoleProps, _resolvedValue: void, context: RenderContext): PuptNode {
     // Custom implementation
     return `[SYSTEM] You are operating as: ${props.type}`;
   }
 }
 
 // Register to override default
+// NOTE: Would require implementing ComponentRegistry class and adding
+// a 'registry' field to RenderOptions (neither exists today)
 const customRegistry = defaultRegistry.createChild();
 customRegistry.register('Role', MyCustomRole);
 
-// Use custom registry
+// Use custom registry — requires adding 'registry' to RenderOptions
 const result = render(element, { registry: customRegistry });
 ```
 
@@ -2833,7 +3190,7 @@ interface PromptProps {
 }
 
 export class Prompt extends Component<PromptProps> {
-  render(props: PromptProps, context: RenderContext): PuptNode {
+  render(props: PromptProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { slots = {} } = props;
 
     // Use slot override or default
@@ -2876,14 +3233,16 @@ ${super.buildRoleDescription(config, context)}`;
 
 ## Existing Component Improvements
 
+**[PROPOSED]** All improvements below are proposed changes to existing code.
+
 ### 1. Fix Role Component (Unused Props)
 
-**Current Issue:** `expertise` and `domain` props are defined but never used.
+**Current Issue:** `expertise` and `domain` props are defined in the Zod schema but the render method destructures only `{ delimiter, children }` and ignores them.
 
 **Fix:**
 ```typescript
 export class Role extends Component<RoleProps> {
-  render({ expertise, domain, delimiter = 'xml', children }: RoleProps, context: RenderContext): PuptNode {
+  render({ expertise, domain, delimiter = 'xml', children }: RoleProps, _resolvedValue: void, _context: RenderContext): PuptNode {
     const content: PuptNode[] = [];
 
     // Include expertise if provided
@@ -2906,7 +3265,7 @@ export class Role extends Component<RoleProps> {
 
 ### 2. Extract Delimiter Logic
 
-**Current Issue:** 8+ components duplicate the same switch statement.
+**Current Issue:** 9 components duplicate the same switch statement (Role, Task, Context, Constraint, Format, Audience, Tone, SuccessCriteria, Section).
 
 **Solution:** Create shared utility:
 ```typescript
@@ -2940,7 +3299,7 @@ export abstract class DelimitedComponent<P> extends Component<P> {
 
 ### 3. Safer Type Checking for Child Inspection
 
-**Current Issue:** String-based type checking is fragile.
+**Current Issue:** String-based type checking is fragile. Steps uses `type.name === 'Step'`, Select/MultiSelect use `elementType === 'AskOption' || type.name === 'AskOption'`.
 
 **Solution:** Use Symbol markers:
 ```typescript
@@ -2977,7 +3336,7 @@ Components use `context.env.output.delimiter` as default.
 
 ### 5. Constraint Type Enhancement
 
-**Current:** Only 3 types (`must`, `should`, `must-not`).
+**Current:** Only 3 types in the Zod schema: `z.enum(['must', 'should', 'must-not'])`.
 
 **Enhanced:**
 ```typescript
@@ -2996,6 +3355,8 @@ type ConstraintSeverity = 'required' | 'recommended' | 'optional' | 'prohibited'
 
 ## New Components
 
+**[PROPOSED]** None of the components below exist yet. All code examples use the current 3-parameter render signature.
+
 Based on research gaps and production needs:
 
 ### 1. Objective / Goal Component
@@ -3012,7 +3373,7 @@ interface ObjectiveProps {
 }
 
 export class Objective extends Component<ObjectiveProps> {
-  render(props: ObjectiveProps, context: RenderContext): PuptNode {
+  render(props: ObjectiveProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { primary, secondary = [], metrics = [], children } = props;
 
     return (
@@ -3079,7 +3440,7 @@ const STANDARD_GUARDRAILS = [
 ];
 
 export class Guardrails extends Component<GuardrailsProps> {
-  render(props: GuardrailsProps, context: RenderContext): PuptNode {
+  render(props: GuardrailsProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { preset = 'standard', prohibit = [], require = [], children } = props;
 
     const baseGuardrails = this.getPresetGuardrails(preset);
@@ -3148,7 +3509,7 @@ interface WhenUncertainProps {
 }
 
 export class WhenUncertain extends Component<WhenUncertainProps> {
-  render(props: WhenUncertainProps, context: RenderContext): PuptNode {
+  render(props: WhenUncertainProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { action = 'acknowledge', children } = props;
 
     const defaultBehavior = {
@@ -3178,7 +3539,7 @@ interface NegativeExampleProps {
 }
 
 export class NegativeExample extends Component<NegativeExampleProps> {
-  render(props: NegativeExampleProps, context: RenderContext): PuptNode {
+  render(props: NegativeExampleProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { reason, children } = props;
 
     return [
@@ -3211,7 +3572,7 @@ interface ChainOfThoughtProps {
 }
 
 export class ChainOfThought extends Component<ChainOfThoughtProps> {
-  render(props: ChainOfThoughtProps, context: RenderContext): PuptNode {
+  render(props: ChainOfThoughtProps, _resolvedValue: void, context: RenderContext): PuptNode {
     const { style = 'step-by-step', showReasoning = true, children } = props;
 
     const instructions = {
@@ -3302,66 +3663,365 @@ interface FallbackProps {
 
 ---
 
+## System Capability Expansions
+
+**[PROPOSED]** This section documents capabilities that do NOT exist in the current codebase but are required to implement the proposed components above. These were identified by systematically auditing what each proposed component needs against what the component system currently supports.
+
+The design goal is that ALL components — both built-in and third-party — should be implementable as `.tsx` or `.prompt` files using the public component API, without reaching into renderer internals.
+
+### Expansion 1: Fragment-Aware Child Search Utility
+
+**Why needed:** Several proposed components need to find specific child component types. For example, `<Prompt>` needs to detect whether a `<Role>`, `<Task>`, `<Constraint>`, etc. was provided so it can generate defaults for missing sections. `<Constraints>` (container) needs to find `<Constraint>` children to support `extend`/`exclude` composition.
+
+**The problem:** In JSX, children can be wrapped in `<Fragment>` elements (via `<>...</>` syntax or conditional rendering). Currently, a component only sees its direct children — if a child is a Fragment, the component sees the Fragment, not the elements inside it. There is no utility to walk through Fragments to find deeply-nested children by type.
+
+**Current state:** The renderer's `renderNode()` and the input-iterator's tree walker both handle Fragment flattening internally, but this logic is NOT exposed to components. Components like `Steps` use manual `child[TYPE].name === 'Step'` string checks on direct children only.
+
+**Proposed solution:** A public utility function:
+
+```typescript
+import { findChildrenOfType, type PuptNode } from 'pupt-lib';
+
+// Recursively searches through Fragments to find all children matching a type
+function findChildrenOfType(
+  children: PuptNode,
+  typeName: string,
+): PuptElement[];
+
+// Usage in a component's render():
+render(props: PromptProps, _resolvedValue: void, context: RenderContext): PuptNode {
+  const { children } = props;
+  const hasRole = findChildrenOfType(children, 'Role').length > 0;
+  const hasTask = findChildrenOfType(children, 'Task').length > 0;
+  // ... generate defaults for missing sections
+}
+```
+
+**Components that require this:** Prompt (defaults system), Constraints (container), Contexts (container), Fallbacks (container), EdgeCases (container), References (container), Examples (shuffle/maxExamples), Steps (auto-numbering).
+
+### Expansion 2: Child Partition Utility
+
+**Why needed:** The `extend`/`exclude`/`replace` composition pattern proposed for multiple container components needs to split children into "matching a type" and "everything else." For example, `<Constraints extend>` needs to keep default constraints AND add user-provided ones, while `<Constraints exclude={['must-not']}>` needs to filter specific children out.
+
+**Current state:** No such utility exists. Components that inspect children (Steps, Select) do manual iteration but don't partition.
+
+**Proposed solution:**
+
+```typescript
+import { partitionChildren } from 'pupt-lib';
+
+// Split children into [matching, rest] based on type name
+function partitionChildren(
+  children: PuptNode,
+  typeName: string,
+): [PuptElement[], PuptNode[]];
+
+// Usage:
+const [constraints, otherChildren] = partitionChildren(children, 'Constraint');
+```
+
+**Components that require this:** All container components with extend/exclude/replace (Constraints, Contexts, Fallbacks, EdgeCases, References), Prompt (separating known section types from free-form content).
+
+### Expansion 3: Element Type Checking Utility
+
+**Why needed:** Currently, component type checking uses fragile string comparisons against `child[TYPE].name` (the JavaScript function/class `.name` property). This breaks under minification, and different components could share a name. The codebase already has `COMPONENT_MARKER` for identifying components in general, but no clean way to identify *specific* component types.
+
+**Current state:** Steps.ts uses `type.name === 'Step'`, Select.ts uses `elementType === 'AskOption' || type.name === 'AskOption'`. These are brittle patterns.
+
+**Proposed solution:** Either:
+
+**(a) Symbol-based markers** (mentioned in Phase 1 item 4 of Implementation Priorities):
+```typescript
+// Each component exports a symbol
+export const STEP_SYMBOL = Symbol.for('pupt-lib:step');
+export class Step extends Component<StepProps> {
+  static [STEP_SYMBOL] = true;
+}
+
+// Type check: child[TYPE][STEP_SYMBOL] === true
+```
+
+**(b) A utility function** that abstracts the check:
+```typescript
+import { isElementOfType } from 'pupt-lib';
+
+// Works with both class components (by reference) and string names
+function isElementOfType(
+  element: PuptElement,
+  type: ComponentType | string,
+): boolean;
+
+// Usage:
+if (isElementOfType(child, Step)) { ... }
+if (isElementOfType(child, 'Step')) { ... }  // for .prompt files
+```
+
+Option (b) is preferred because it works naturally in both `.tsx` files (passing the class reference) and `.prompt` files (passing a string name). The implementation can use symbol markers internally while providing a clean public API.
+
+**Components that require this:** Steps (child numbering), Select/MultiSelect (option collection), Prompt (section detection), all container components.
+
+### Expansion 4: Shared Delimiter Utility
+
+**Why needed:** 9 existing structural components (Role, Task, Context, Constraint, Format, Audience, Tone, SuccessCriteria, Section) all duplicate an identical `switch(delimiter)` pattern. Every new structural component proposed in this design will also need this pattern. The duplication is error-prone and makes it difficult to add new delimiter formats (e.g., a future `'yaml'` delimiter).
+
+**Current state:** Each component has its own copy of:
+```typescript
+switch (delimiter) {
+  case 'xml':
+    return ['<tagname>\n', childContent, '\n</tagname>\n'];
+  case 'markdown':
+    return ['## tagname\n\n', childContent];
+  case 'none':
+    return childContent;
+}
+```
+
+**Proposed solution:** A shared utility function (or base class method):
+
+```typescript
+import { wrapWithDelimiter } from 'pupt-lib';
+
+function wrapWithDelimiter(
+  tagName: string,
+  content: PuptNode,
+  delimiter: 'xml' | 'markdown' | 'none',
+): PuptNode;
+
+// Usage in any component:
+render(props: RoleProps, _resolvedValue: void, context: RenderContext): PuptNode {
+  return wrapWithDelimiter('role', childContent, props.delimiter ?? 'xml');
+}
+```
+
+**Components that require this:** All 9 existing structural components (refactor), plus all proposed structural components (Objective, Guardrails, EdgeCases, WhenUncertain, Fallback, Style, ChainOfThought, References, Specialization).
+
+### Expansion 5: Environment-Conditional Rendering in .prompt Files
+
+**Why needed:** The design proposes provider-aware rendering where components adapt their output based on the target LLM (e.g., XML delimiters for Claude, Markdown for GPT). However, `.prompt` files currently have NO way to do environment-conditional rendering. The `<If>` component's formula system (`when="=A1>5"`) only has access to `context.inputs` values, not `context.env` values like `env.llm.provider` or `env.output.format`.
+
+**Current state:**
+- `<If>` formulas use HyperFormula with only `context.inputs` as cell values
+- `.prompt` files produce static PuptElement trees — they are not functions that receive context
+- Function components do NOT receive `RenderContext` (only class components do)
+- This means a `.prompt` file cannot conditionally render based on the target LLM provider
+
+**Proposed solution:** Extend `<If>` to support environment value access:
+
+```tsx
+// Option A: Dedicated env props on <If>
+<If provider="anthropic">
+  <Format delimiter="xml" />
+</If>
+
+// Option B: Expose env values to the formula system
+<If when="=env.llm.provider='anthropic'">
+  <Format delimiter="xml" />
+</If>
+
+// Option C: New <EnvSwitch> component
+<EnvSwitch on="llm.provider">
+  <EnvCase value="anthropic"><Format delimiter="xml" /></EnvCase>
+  <EnvCase value="openai"><Format delimiter="markdown" /></EnvCase>
+  <EnvCase default><Format delimiter="none" /></EnvCase>
+</EnvSwitch>
+```
+
+Option A is simplest and covers the most common case (provider switching). Options B and C are more general. These approaches are NOT mutually exclusive.
+
+**Components that require this:** Any `.prompt` file that needs provider-aware rendering. Without this, provider adaptation can only happen inside class components (`.tsx`), which defeats the goal of implementing all components as `.prompt` files.
+
+### Expansion 6: Context Metadata Field
+
+**Why needed:** Some proposed component behaviors require passing information "upstream" or between siblings. For example, `<Format>` with a `prefill` prop needs to communicate to the rendering system that the response should start with certain text (relevant for Claude's prefill feature). `<Prompt>` needs to know which sections were explicitly provided vs. generated as defaults.
+
+**Current state:** `RenderContext` is a single shared mutable object with 4 fields: `inputs`, `env`, `postExecution`, `errors`. Components can mutate `postExecution` and `errors` (and this is how PostExecution components work), but there is no general-purpose metadata field for component-to-component communication.
+
+**Proposed solution:** Add a `metadata` field to `RenderContext`:
+
+```typescript
+export interface RenderContext {
+  inputs: Map<string, unknown>;
+  env: EnvironmentContext;
+  postExecution: PostExecutionAction[];
+  errors: RenderError[];
+  metadata: Map<string, unknown>;  // NEW: component-to-component communication
+}
+```
+
+Usage:
+```typescript
+// Format component sets prefill metadata
+render(props: FormatProps, _resolvedValue: void, context: RenderContext): PuptNode {
+  if (props.prefill) {
+    context.metadata.set('format.prefill', props.prefill);
+  }
+  // ...
+}
+
+// Prompt component reads it
+render(props: PromptProps, _resolvedValue: void, context: RenderContext): PuptNode {
+  const prefill = context.metadata.get('format.prefill');
+  // ...
+}
+```
+
+**Components that require this:** Format (prefill), Prompt (section tracking for defaults), potentially Guardrails (safety metadata for external systems).
+
+### Expansion 7: Function Component Context Access
+
+**Why needed:** Currently, function components receive only `props` — they do NOT receive `RenderContext`. This means `.prompt` files (which produce static element trees, not class components) cannot access environment information, inputs, or metadata. For the goal of implementing all components as `.prompt` files, function components need some form of context access.
+
+**Current state in the renderer (`src/render.ts`):**
+```typescript
+// Class components get context:
+const instance = new (type as ComponentClass)();
+result = await instance.render(validatedProps, resolvedValue, context);
+
+// Function components do NOT:
+result = await (type as FunctionComponent)(validatedProps);
+```
+
+**Proposed solution:** Pass context as the second argument to function components:
+
+```typescript
+// Current:
+type FunctionComponent = (props: Record<string, unknown>) => PuptNode;
+
+// Proposed:
+type FunctionComponent = (
+  props: Record<string, unknown>,
+  context: RenderContext,
+) => PuptNode;
+```
+
+This is a backward-compatible change — existing function components that only declare `props` will simply ignore the second argument.
+
+**Impact:** This allows `.prompt` files that are transpiled into function components to access environment values, though the transpiler would need to be updated to generate functions that accept and use the context parameter.
+
+**Components that require this:** Any `.prompt` file that needs to read `context.env`, `context.inputs`, or `context.metadata`. This is a prerequisite for implementing provider-aware rendering in `.prompt` files.
+
+**Note:** Even with this expansion, `.prompt` files would still need transpiler changes to actually pass context to the generated function. This expansion enables the runtime support; Expansion 5 (environment-conditional rendering) addresses the authoring experience.
+
+---
+
 ## Implementation Priorities
 
-### Phase 1: Core Enhancements (High Priority)
+**Note:** All items below are **[PROPOSED]** — none have been implemented yet.
 
-1. **Enhance `<Prompt>` with defaults system**
+### Phase 1: Foundation (High Priority)
+
+These are prerequisites that unblock all other phases. See [System Capability Expansions](#system-capability-expansions) for detailed rationale and API designs.
+
+1. **Extract delimiter utility** *(see Expansion 4)*
+   - Create shared `wrapWithDelimiter` function
+   - Refactor all 9 structural components to use it
+   - This eliminates duplication and establishes the pattern for all new components
+
+2. **Add child inspection utilities** *(see Expansions 1, 2, 3)*
+   - `findChildrenOfType()` — Fragment-aware search for children by type
+   - `partitionChildren()` — split children into matching/non-matching groups
+   - `isElementOfType()` — clean type checking that works with class refs and string names
+   - Refactor Steps, Select, MultiSelect to use these utilities
+
+3. **Add `getProvider()` and `getDelimiter()` helper methods to Component base class**
+   - Enables environment-aware rendering in all components
+   - Small change, high leverage
+
+4. **Add `metadata` field to `RenderContext`** *(see Expansion 6)*
+   - `metadata: Map<string, unknown>` for component-to-component communication
+   - Required by Format (prefill), Prompt (section tracking), Guardrails (safety metadata)
+
+5. **Add `PromptConfig` to `EnvironmentContext`**
+   - Add `prompt` field with `promptConfigSchema`
+   - Controls which default sections `<Prompt>` auto-generates
+
+6. **Pass `RenderContext` to function components** *(see Expansion 7)*
+   - Update renderer to pass context as second argument to function components
+   - Backward-compatible: existing functions that only take `props` still work
+   - Prerequisite for environment-aware `.prompt` files
+
+7. **Extend `<If>` for environment-conditional rendering** *(see Expansion 5)*
+   - Add `provider` prop for the most common case (provider switching)
+   - Consider extending formula system to access `context.env` values
+   - Enables `.prompt` files to do provider-aware rendering
+
+### Phase 2: Core Enhancements (High Priority)
+
+8. **Enhance `<Prompt>` with defaults system**
    - Add `bare`, `defaults` props
-   - Implement default section rendering
+   - Implement default section rendering (Role, Format, Constraints, SuccessCriteria)
    - Add shorthand props (`role`, `format`, etc.)
+   - Depends on: Phase 1 items 1-5
 
-2. **Fix `<Role>` component**
-   - Make `expertise`, `domain` props functional
+9. **Fix `<Role>` component**
+   - Make `expertise`, `domain` props functional (they exist in schema but are ignored)
    - Add `preset` prop with role taxonomy
    - Implement provider-aware rendering
 
-3. **Extract delimiter utility**
-   - Create `wrapWithDelimiter` function
-   - Refactor all structural components to use it
-   - Add global delimiter config to context
+10. **Enhance `<Constraint>` component**
+    - Add `may` and `should-not` types
+    - Add `positive` and `category` props
+    - Implement provider-aware constraint style adaptation
 
-4. **Add `<Guardrails>` component**
-   - Standard safety presets
-   - Production-critical for deployed prompts
+11. **Add `<Guardrails>` component**
+    - Standard safety presets
+    - Production-critical for deployed prompts
 
-### Phase 2: Role System (Medium Priority)
+### Phase 3: Additive Composition (Medium Priority)
 
-5. **Implement role presets**
-   - Define all role configurations
-   - Technical, creative, business, education categories
-   - Experience levels and traits
+12. **Implement `extend`/`exclude`/`replace` composition pattern**
+    - Add composition props to: Role, Constraints, SuccessCriteria, Examples, Steps
+    - Add container components: `<Constraints>`, `<Contexts>`, `<Fallbacks>`, `<EdgeCases>`, `<References>`
+    - Depends on: Phase 1 items 1-2 (child utilities)
 
-6. **Add `<Specialization>` component**
-   - Layered expertise system
-   - Language/domain adaptation
+13. **Enhance existing components with presets and rich props**
+    - Task: `preset`, `verb`, `subject`, `objective`, `scope`, `complexity`
+    - Format: `schema`, `template`, `example`, `strict`, `validate`
+    - Context: `preset`, `type`, `label`, `source`, `priority`, `relevance`
+    - Audience: `level`, `type`, `description`, `knowledgeLevel`, `goals`
+    - Tone: `type`, `formality`, `energy`, `warmth`, `brandVoice`
+    - SuccessCriteria: `presets`, `metrics`
+    - Examples: `preset`, `maxExamples`, `shuffle`, `includeNegative`
+    - Steps: `preset`, `style`, `showReasoning`, `verify`, `selfCritique`
 
-7. **Environment context adaptation**
-   - Provider-specific phrasing
-   - Constraint style adaptation
-   - Language conventions
+### Phase 4: Environment Adaptation (Medium Priority)
 
-### Phase 3: Production Components (Medium Priority)
+14. **Implement `PROVIDER_ADAPTATIONS` lookup table**
+    - Cover all 9 LLM_PROVIDERS values
+    - Wire into Role, Format, Constraint, Prompt components
 
-8. **Add `<EdgeCases>` and `<When>` components**
-9. **Add `<WhenUncertain>` component**
-10. **Add `<NegativeExample>` component or `negative` prop to Example**
-11. **Add `<Fallback>` component**
+15. **Implement `LANGUAGE_CONVENTIONS` for code-aware rendering**
+    - Wire into Role (expertise adaptation), Format (code conventions), Code (default language)
 
-### Phase 4: Advanced Features (Lower Priority)
+16. **Implement provider-specific component ordering in `<Prompt>`**
+    - Gemini: context-first, instructions at end
+    - Claude/GPT: role-first
+    - Depends on: Phase 1 items 6-7 (context access, env-conditional rendering)
 
-12. **Add `<Objective>` / `<Goal>` component**
-13. **Add `<Style>` component**
-14. **Add `<ChainOfThought>` component**
-15. **Add `<References>` component**
-16. **Implement component slots pattern**
+17. **Implement reasoning model detection**
+    - `<Steps>` emits high-level goals for o1/o3 models
+    - `<Steps>` uses CoT based on model capability
 
-### Phase 5: Developer Experience
+### Phase 5: New Components (Lower Priority)
 
-17. **Type-safe presets with autocomplete**
-18. **Validation for required sections**
-19. **Prompt quality analyzer (linting)**
-20. **Documentation and examples**
+18. **Add `<EdgeCases>` and `<When>` components**
+19. **Add `<WhenUncertain>` component**
+20. **Add `<NegativeExample>` component or `negative` prop to Example**
+21. **Add `<Fallback>` / `<Fallbacks>` component**
+22. **Add `<Objective>` / `<Goal>` component**
+23. **Add `<Style>` component**
+24. **Add `<ChainOfThought>` component**
+25. **Add `<References>` / `<Reference>` component**
+26. **Add `<Specialization>` component**
+
+### Phase 6: Extensibility & DX (Lower Priority)
+
+27. **Implement component registry** (if needed — may not be required if ES6 imports suffice)
+28. **Implement component slots pattern on `<Prompt>`**
+29. **Type-safe presets with autocomplete**
+30. **Validation for required sections**
+31. **Prompt quality analyzer (linting)**
+32. **Documentation and examples**
 
 ---
 

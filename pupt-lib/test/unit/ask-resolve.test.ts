@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { render, Component, If } from '../../src';
+import { render, Component } from '../../src';
+import { If } from '../../components/control/If';
 import { jsx, Fragment } from '../../src/jsx-runtime';
 import { z } from 'zod';
-import { AskText, AskNumber, AskSelect, AskConfirm, AskMultiSelect, AskRating, AskEditor, AskFile, AskPath, AskDate, AskSecret, AskChoice, AskReviewFile } from '../../src/components/ask';
+import { AskText, AskNumber, AskSelect, AskConfirm, AskMultiSelect, AskRating, AskEditor, AskFile, AskPath, AskDate, AskSecret, AskChoice, AskReviewFile } from '../../components/ask';
 import { COMPONENT_MARKER, isComponentClass } from '../../src/component';
 import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 

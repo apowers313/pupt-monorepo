@@ -1,0 +1,18 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Tone e2e > snapshots > should match snapshot: friendly tone with brand voice 1`] = `
+"<tone>
+Tone: friendly
+Be warm, approachable, and supportive.
+Match the Acme Corp brand voice.
+Avoid these tones: sarcastic, condescending
+</tone>"
+`;
+
+exports[`Tone e2e > snapshots > should match snapshot: professional tone with formality 1`] = `
+"<tone>
+Tone: professional
+Maintain a formal, business-appropriate communication style.
+Voice characteristics: formality: formal, warmth: neutral
+</tone>"
+`;

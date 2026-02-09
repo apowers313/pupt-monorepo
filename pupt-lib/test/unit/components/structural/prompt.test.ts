@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Prompt } from '../../../../src/components/structural/Prompt';
+import { Prompt } from '../../../../components/structural/Prompt';
 
 describe('Prompt', () => {
   it('should render children', async () => {

@@ -11,6 +11,7 @@
  */
 
 import type { PluginObj, types as BabelTypes, NodePath } from '@babel/core';
+import { getStructuralComponents } from '../component-discovery';
 
 // JavaScript reserved words that cannot be used as variable names
 const RESERVED_WORDS = new Set([
@@ -88,14 +89,15 @@ function findNameAttribute(
 /**
  * Built-in structural components that use `name` for identification, not variable creation.
  * These should NOT be hoisted even though they have a `name` prop.
+ * Computed lazily from actual component exports.
  */
-const STRUCTURAL_COMPONENTS = new Set([
-  'Prompt', 'Section', 'Role', 'Task', 'Context', 'Constraint', 'Format',
-  'Audience', 'Tone', 'SuccessCriteria', 'Criterion', 'If', 'ForEach',
-  'Examples', 'Example', 'ExampleInput', 'ExampleOutput', 'Steps', 'Step',
-  'Code', 'Data', 'Json', 'Xml', 'PostExecution', 'OpenUrl', 'RunCommand',
-  'Uses', 'Fragment',
-]);
+let _structuralSet: Set<string> | null = null;
+function getStructuralSet(): Set<string> {
+  if (!_structuralSet) {
+    _structuralSet = new Set(getStructuralComponents());
+  }
+  return _structuralSet;
+}
 
 /**
  * Check if the JSX element should have its name hoisted to a variable.
@@ -115,42 +117,21 @@ function shouldHoistName(
   elementName: BabelTypes.JSXOpeningElement['name'],
   t: typeof BabelTypes,
 ): boolean {
-  // Handle namespace: Ask.Text, Ask.Number, etc.
+  // Member expressions (X.Y) → always hoist
   if (t.isJSXMemberExpression(elementName)) {
-    const obj = elementName.object;
-    if (t.isJSXIdentifier(obj) && obj.name === 'Ask') {
-      return true;
-    }
-    // Any other namespace is a custom component
     return true;
   }
 
-  // Handle identifier: Check if it starts with uppercase (component convention)
   if (t.isJSXIdentifier(elementName)) {
     const name = elementName.name;
 
     // Built-in structural components should NOT be hoisted
     // These use `name` for identification, not variable creation
-    if (STRUCTURAL_COMPONENTS.has(name)) {
+    if (getStructuralSet().has(name)) {
       return false;
     }
 
-    // AskText, AskNumber, AskSelect, etc. - always hoist
-    if (name.startsWith('Ask')) {
-      return true;
-    }
-
-    // Short Ask component names from preprocessor aliases
-    const askShortNames = new Set([
-      'Text', 'Number', 'Select', 'Confirm', 'Editor', 'MultiSelect',
-      'Path', 'Secret', 'Choice', 'Rating', 'Option', 'Label',
-    ]);
-    if (askShortNames.has(name)) {
-      return true;
-    }
-
-    // Any other PascalCase identifier is likely a custom component
-    // PascalCase: first char is uppercase
+    // Any PascalCase identifier → hoist (covers Ask*, shorthands, custom components)
     if (name.length > 0 && name[0] === name[0].toUpperCase() && name[0] !== name[0].toLowerCase()) {
       return true;
     }

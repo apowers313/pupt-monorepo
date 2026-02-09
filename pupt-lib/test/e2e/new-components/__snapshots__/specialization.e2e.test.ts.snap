@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Specialization e2e > snapshots > should match snapshot: multiple areas with expert level 1`] = `
+"<specialization>
+Expertise level: expert
+Areas of specialization:
+- TypeScript
+- React
+- Node.js
+</specialization>"
+`;
+
+exports[`Specialization e2e > snapshots > should match snapshot: single area no level 1`] = `
+"<specialization>
+Specialization: machine learning
+</specialization>"
+`;

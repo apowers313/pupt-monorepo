@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`EdgeCases e2e > snapshots > should match snapshot: edge cases with When children 1`] = `
+"<edge-cases>
+<when>
+When input is empty: Ask for input
+</when>
+<when>
+When data is ambiguous: Ask for clarification
+</when>
+
+</edge-cases>"
+`;

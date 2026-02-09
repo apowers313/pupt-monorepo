@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, AskOption, AskLabel } from '../../../../src/components/ask';
+import { Ask, AskOption, AskLabel } from '../../../../components/ask';
 import { createInputIterator } from '../../../../src/services/input-iterator';
-import '../../../../src/components';
+import '../../../../components';
 
 describe('Ask.Editor', () => {
   it('should render placeholder when no input provided', async () => {

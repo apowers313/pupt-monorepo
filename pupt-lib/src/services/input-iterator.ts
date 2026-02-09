@@ -187,6 +187,7 @@ export function createInputIterator(
       env: { ...DEFAULT_ENVIRONMENT, runtime: createRuntimeConfig() },
       postExecution: [],
       errors: [],
+      metadata: new Map(),
       __requirements: collected,
     };
 

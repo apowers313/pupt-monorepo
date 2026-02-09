@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { Section } from '../../../../src/components/structural/Section';
-import { Prompt } from '../../../../src/components/structural/Prompt';
+import { Section } from '../../../../components/structural/Section';
+import { Prompt } from '../../../../components/structural/Prompt';
 
 describe('Section', () => {
   it('should render with XML delimiters', async () => {
@@ -54,6 +54,7 @@ describe('Section', () => {
   it('should render children without undefined tags when nested in Prompt', async () => {
     const element = jsxs(Prompt, {
       name: 'test-prompt',
+      bare: true,
       description: 'Test',
       tags: [],
       children: [

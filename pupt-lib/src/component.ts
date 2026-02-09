@@ -2,6 +2,7 @@
 
 import type { ZodObject, ZodRawShape } from 'zod';
 import type { PuptNode, RenderContext } from './types';
+import type { LlmProvider } from './types/context';
 
 /**
  * Symbol used to mark Component classes for identification
@@ -59,6 +60,15 @@ export abstract class Component<
   static resolveSchema?: ZodObject<ZodRawShape>;
 
   /**
+   * When true, the name-hoisting Babel plugin will hoist this component's
+   * `name` prop to a variable declaration. Components that use `name` for
+   * variable creation (e.g., File, ReviewFile) should set this to true.
+   * Components that use `name` for identification (e.g., Section, Role)
+   * leave this unset.
+   */
+  static hoistName?: boolean;
+
+  /**
    * Optional: Compute the resolved value for this component.
    *
    * If implemented, this method is called before render().
@@ -69,6 +79,40 @@ export abstract class Component<
    * @returns The resolved value, or a Promise resolving to the value for async components
    */
   resolve?(props: Props, context: RenderContext): ResolveType | Promise<ResolveType>;
+
+  /**
+   * Get the LLM provider from the render context.
+   *
+   * @param context - The render context
+   * @returns The LLM provider string
+   */
+  protected getProvider(context: RenderContext): LlmProvider {
+    return context.env.llm.provider;
+  }
+
+  /**
+   * Get the appropriate delimiter based on the output format in the render context.
+   * Returns 'markdown' if the output format is markdown, otherwise 'xml'.
+   *
+   * @param context - The render context
+   * @returns The delimiter style to use
+   */
+  protected getDelimiter(context: RenderContext): 'xml' | 'markdown' | 'none' {
+    return context.env.output.format === 'markdown' ? 'markdown' : 'xml';
+  }
+
+  /**
+   * Check if children has meaningful content.
+   * Returns false for undefined, null, empty arrays, and empty strings.
+   */
+  protected hasContent(children: PuptNode): boolean {
+    if (children === undefined || children === null) return false;
+    if (typeof children === 'boolean') return false;
+    if (typeof children === 'string') return children.length > 0;
+    if (typeof children === 'number') return true;
+    if (Array.isArray(children)) return children.length > 0;
+    return true;
+  }
 
   /**
    * Optional: Render the component with the given props and resolved value.

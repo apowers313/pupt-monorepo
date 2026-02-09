@@ -9,7 +9,7 @@ import { render } from '../src/render';
 import { createInputIterator } from '../src/services/input-iterator';
 import { createSearchEngine, type SearchEngine } from '../src/services/search-engine';
 import type { SearchablePrompt } from '../src/types';
-import '../src/components';
+import '../components';
 
 const PROMPT_DIR = './tmp';
 const PROMPT_EXTENSIONS = ['.prompt', '.tsx'];

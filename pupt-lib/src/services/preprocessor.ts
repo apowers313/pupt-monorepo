@@ -3,97 +3,11 @@
  * Injects imports for built-in components and wraps raw JSX with export default.
  */
 
-/**
- * List of all built-in components that should be auto-imported for .prompt files.
- */
-export const BUILTIN_COMPONENTS = [
-  // Base class for custom components
-  'Component',
-  // Structural
-  'Prompt',
-  'Section',
-  'Role',
-  'Task',
-  'Context',
-  'Constraint',
-  'Format',
-  'Audience',
-  'Tone',
-  'SuccessCriteria',
-  'Criterion',
-  // Utility
-  'UUID',
-  'Timestamp',
-  'DateTime',
-  'Hostname',
-  'Username',
-  'Cwd',
-  // Meta
-  'Uses',
-  // Control flow
-  'If',
-  'ForEach',
-  // Examples
-  'Example',
-  'Examples',
-  'ExampleInput',
-  'ExampleOutput',
-  // Reasoning
-  'Steps',
-  'Step',
-  // Data
-  'Code',
-  'Data',
-  'File',
-  'Json',
-  'Xml',
-  // Post-execution
-  'PostExecution',
-  'ReviewFile',
-  'OpenUrl',
-  'RunCommand',
-] as const;
-
-/**
- * Ask components that need special handling (Ask namespace + individual exports)
- */
-export const ASK_COMPONENTS = [
-  'Ask',
-  'AskOption',
-  'AskLabel',
-  'AskText',
-  'AskNumber',
-  'AskSelect',
-  'AskConfirm',
-  'AskEditor',
-  'AskMultiSelect',
-  'AskFile',
-  'AskPath',
-  'AskDate',
-  'AskSecret',
-  'AskChoice',
-  'AskRating',
-  'AskReviewFile',
-] as const;
-
-/**
- * Shorthand component names that map to Ask.* components.
- * These allow using <Text> instead of <Ask.Text> in .prompt files.
- */
-export const ASK_SHORTHAND: Record<string, string> = {
-  'Option': 'AskOption',
-  'Label': 'AskLabel',
-  'Text': 'AskText',
-  'Number': 'AskNumber',
-  'Select': 'AskSelect',
-  'Confirm': 'AskConfirm',
-  'Editor': 'AskEditor',
-  'MultiSelect': 'AskMultiSelect',
-  'Path': 'AskPath',
-  'Secret': 'AskSecret',
-  'Choice': 'AskChoice',
-  'Rating': 'AskRating',
-};
+import {
+  getBuiltinComponents,
+  getAskComponents,
+  getAskShorthand,
+} from './component-discovery';
 
 export interface PreprocessOptions {
   /** Original filename for error messages */
@@ -138,24 +52,29 @@ export function needsPreprocessing(source: string): boolean {
 
 /**
  * Generate the import statements for built-in components.
+ * Lists are computed lazily from actual component exports.
  */
 function generateImports(): string {
+  const builtinComponents = getBuiltinComponents();
+  const askComponents = getAskComponents();
+  const askShorthand = getAskShorthand();
+
   const lines: string[] = [];
 
   // Main components import
   lines.push('import {');
-  lines.push(`  ${BUILTIN_COMPONENTS.join(',\n  ')},`);
+  lines.push(`  ${builtinComponents.join(',\n  ')},`);
   lines.push('} from \'pupt-lib\';');
   lines.push('');
 
   // Ask components import (including namespace)
   lines.push('import {');
-  lines.push(`  ${ASK_COMPONENTS.join(',\n  ')},`);
+  lines.push(`  ${askComponents.join(',\n  ')},`);
   lines.push('} from \'pupt-lib\';');
   lines.push('');
 
   // Create shorthand aliases
-  const aliases = Object.entries(ASK_SHORTHAND)
+  const aliases = Object.entries(askShorthand)
     .map(([short, full]) => `const ${short} = ${full};`)
     .join('\n');
   lines.push(aliases);

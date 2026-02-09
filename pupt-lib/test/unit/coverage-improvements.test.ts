@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../src/render';
 import { jsx } from '../../src/jsx-runtime';
-import { Format } from '../../src/components/structural/Format';
-import { Steps, Step } from '../../src/components/reasoning';
+import { Format } from '../../components/structural/Format';
+import { Steps, Step } from '../../components/reasoning';
 import { createPromptFromSource } from '../../src/create-prompt';
 import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
 import type { PuptElement } from '../../src/types';

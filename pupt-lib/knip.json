@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@latest/schema.json",
-  "project": ["src/**/*.ts"],
+  "project": ["src/**/*.ts", "components/**/*.{ts,tsx}"],
   "ignore": ["dist/**", "test/**"],
   "ignoreDependencies": [
     "@semantic-release/commit-analyzer",

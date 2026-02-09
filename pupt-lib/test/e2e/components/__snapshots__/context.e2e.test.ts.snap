@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Context e2e > content handling props > should render all new props combined through pipeline 1`] = `
+"<context>
+[API Response]
+(max tokens: 1500)
+(preserve formatting)
+[may be truncated]
+Some API data
+</context>"
+`;
+
+exports[`Context e2e > content handling props > should render maxTokens hint through pipeline 1`] = `
+"<context>
+[Document]
+(max tokens: 2000)
+Some long document content
+</context>"
+`;
+
+exports[`Context e2e > content handling props > should render preserveFormatting hint through pipeline 1`] = `
+"<context>
+(preserve formatting)
+  indented
+    content
+</context>"
+`;
+
+exports[`Context e2e > content handling props > should render truncate hint through pipeline 1`] = `
+"<context>
+[may be truncated]
+Long content that may need truncation
+</context>"
+`;
+
+exports[`Context e2e > snapshots > should match snapshot: context with label and source 1`] = `
+"<context>
+[Project Info]
+This is a TypeScript project.
+
+(Source: docs)
+</context>"
+`;
+
+exports[`Context e2e > snapshots > should match snapshot: context with markdown delimiter 1`] = `
+"## context
+
+[Requirements]
+Must support both Node.js and browser."
+`;
+
+exports[`Context e2e > snapshots > should match snapshot: context with type and relevance 1`] = `
+"<context>
+(Relevant because: Provides essential background for the task)
+
+The system uses microservices architecture.
+</context>"
+`;

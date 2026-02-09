@@ -1,0 +1,19 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Task e2e > snapshots > should match snapshot: preset summarize 1`] = `
+"<task>
+Summarize.
+</task>"
+`;
+
+exports[`Task e2e > snapshots > should match snapshot: preset with markdown delimiter 1`] = `
+"## task
+
+Review."
+`;
+
+exports[`Task e2e > snapshots > should match snapshot: verb + subject with children 1`] = `
+"<task>
+Cover edge cases and error paths.
+</task>"
+`;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { File } from '../../../../src/components/data/File';
+import { File } from '../../../../components/data/File';
 import { createRenderContext } from '../../../setup';
 import { writeFileSync, mkdirSync, rmSync } from 'fs';
 import { join } from 'path';

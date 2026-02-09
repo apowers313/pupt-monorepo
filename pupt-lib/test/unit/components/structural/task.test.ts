@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Task } from '../../../../src/components/structural/Task';
+import { Task } from '../../../../components/structural/Task';
 
 describe('Task', () => {
   it('should render with XML delimiters by default', async () => {

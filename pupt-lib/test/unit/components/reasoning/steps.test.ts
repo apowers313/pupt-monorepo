@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Steps, Step } from '../../../../src/components/reasoning';
+import { jsx, Fragment } from '../../../../src/jsx-runtime';
+import { Steps, Step } from '../../../../components/reasoning';
 
 describe('Steps', () => {
   it('should render numbered steps', async () => {
@@ -31,5 +31,20 @@ describe('Steps', () => {
     const result = await render(element);
     expect(result.text).toMatch(/1\..*First/s);
     expect(result.text).toMatch(/2\..*Second/s);
+  });
+
+  it('should find Step children through Fragments', async () => {
+    const element = jsx(Steps, {
+      children: jsx(Fragment, {
+        children: [
+          jsx(Step, { children: 'First step' }),
+          jsx(Step, { children: 'Second step' }),
+        ],
+      }),
+    });
+
+    const result = await render(element);
+    expect(result.text).toMatch(/1\..*First step/s);
+    expect(result.text).toMatch(/2\..*Second step/s);
   });
 });

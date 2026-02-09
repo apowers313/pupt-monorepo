@@ -6,10 +6,7 @@ import type { EnvironmentContext } from './context';
  * Options for rendering a prompt
  */
 export interface RenderOptions {
-  format?: 'xml' | 'markdown' | 'json' | 'text' | 'unspecified';
   trim?: boolean;
-  indent?: string;
-  maxDepth?: number;
   inputs?: Map<string, unknown> | Record<string, unknown>;
   env?: EnvironmentContext;
 }
@@ -35,11 +32,13 @@ export interface RenderError {
 }
 
 /**
- * Successful render result — no validation errors
+ * Successful render result — no validation errors (may contain non-fatal warnings)
  */
 export interface RenderSuccess {
   ok: true;
   text: string;
+  /** Non-fatal validation warnings (code: 'validation_warning') */
+  errors?: RenderError[];
   postExecution: PostExecutionAction[];
 }
 
@@ -58,16 +57,6 @@ export interface RenderFailure {
  * Result of rendering a prompt — discriminated union on `ok`
  */
 export type RenderResult = RenderSuccess | RenderFailure;
-
-/**
- * Metadata collected during rendering
- */
-export interface RenderMetadata {
-  componentCount: number;
-  depth: number;
-  renderTime: number;
-  warnings?: string[];
-}
 
 /**
  * Actions to be executed after the LLM response

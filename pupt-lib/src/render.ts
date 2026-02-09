@@ -6,8 +6,8 @@ import { validateProps, getSchema, getComponentName } from './services/prop-vali
 import { TYPE, PROPS, CHILDREN } from './types/symbols';
 import { isPuptElement, isDeferredRef } from './types/element';
 
-/** Type for function components */
-type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }) => PuptNode | Promise<PuptNode>;
+/** Type for function components - context is passed as optional second argument */
+type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }, context?: RenderContext) => PuptNode | Promise<PuptNode>;
 
 /**
  * Internal state for rendering, passed through the render tree.
@@ -167,6 +167,7 @@ export async function render(
     env: { ...env, runtime: createRuntimeConfig() },
     postExecution,
     errors,
+    metadata: new Map(),
   };
 
   const state: RenderState = {
@@ -183,11 +184,24 @@ export async function render(
   const text = await renderNode(element, state);
   const trimmedText = trim ? text.trim() : text;
 
-  if (errors.length > 0) {
+  // Separate non-fatal warnings from hard errors
+  const warnings = errors.filter(e => e.code === 'validation_warning');
+  const hardErrors = errors.filter(e => e.code !== 'validation_warning');
+
+  if (hardErrors.length > 0) {
     return {
       ok: false,
       text: trimmedText,
       errors,
+      postExecution,
+    };
+  }
+
+  if (warnings.length > 0) {
+    return {
+      ok: true,
+      text: trimmedText,
+      errors: warnings,
       postExecution,
     };
   }
@@ -389,17 +403,22 @@ async function renderElement(
       state,
       () => {
         const fn = type as FunctionComponent;
-        return fn({ ...resolvedProps, children });
+        return fn({ ...resolvedProps, children }, state.context);
       },
     );
   }
 
-  // String type - should not happen with ES module evaluation
-  // This would only occur if JSX was created with a string type directly
+  // String type - this indicates a bug: either the preprocessor failed to inject
+  // imports, or an element was manually constructed with a string type.
   if (typeof type === 'string') {
-    console.warn(`Unknown component type "${type}". Components should be imported, not referenced by string.`);
-    const results = await Promise.all(children.map(c => renderNode(c, state)));
-    return results.join('');
+    state.context.errors.push({
+      component: type,
+      prop: null,
+      message: `Unknown component type "${type}". Components should be imported, not referenced by string.`,
+      code: 'unknown_component',
+      path: [],
+    });
+    return renderChildrenFallback(children, state);
   }
 
   return '';

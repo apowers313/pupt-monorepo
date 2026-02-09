@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`If provider e2e > snapshots > should match snapshot: notProvider conditional 1`] = `"Non-OpenAI content"`;
+
+exports[`If provider e2e > snapshots > should match snapshot: provider conditional for anthropic 1`] = `"Anthropic-specific instructions"`;
+
+exports[`If provider e2e > snapshots > should match snapshot: provider conditional for google 1`] = `"Google-specific instructions"`;
+
+exports[`If provider e2e > snapshots > should match snapshot: provider conditional for openai 1`] = `"OpenAI-specific instructions"`;

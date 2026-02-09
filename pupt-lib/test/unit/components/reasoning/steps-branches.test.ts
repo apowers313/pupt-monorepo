@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Steps, Step } from '../../../../src/components/reasoning';
+import { Steps, Step } from '../../../../components/reasoning';
 
 describe('Step branch coverage', () => {
   describe('step number handling', () => {

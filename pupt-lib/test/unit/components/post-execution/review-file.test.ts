@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { PostExecution, ReviewFile, OpenUrl, RunCommand } from '../../../../src/components/post-execution';
+import { PostExecution, ReviewFile, OpenUrl, RunCommand } from '../../../../components/post-execution';
 
 describe('PostExecution', () => {
   it('should collect post-execution actions', async () => {

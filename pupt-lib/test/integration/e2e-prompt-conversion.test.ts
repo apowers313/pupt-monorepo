@@ -23,7 +23,7 @@ describe('End-to-End: .prompt file conversion', () => {
     });
 
     it('should handle prompt with text content', async () => {
-      const source = '<Prompt name="text">Hello, World!</Prompt>';
+      const source = '<Prompt name="text" bare>Hello, World!</Prompt>';
 
       const element = await createPromptFromSource(source, 'text.prompt');
       const result = await render(element);

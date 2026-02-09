@@ -4,10 +4,10 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Ask } from '../../../../src/components/ask';
-import { AskLabel } from '../../../../src/components/ask/Label';
+import { Ask } from '../../../../components/ask';
+import { AskLabel } from '../../../../components/ask/Label';
 import { createInputIterator } from '../../../../src/services/input-iterator';
-import '../../../../src/components';
+import '../../../../components';
 
 describe('Ask.Rating branch coverage', () => {
   describe('label text rendering', () => {

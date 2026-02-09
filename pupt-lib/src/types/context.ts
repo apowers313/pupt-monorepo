@@ -213,6 +213,20 @@ export const runtimeConfigSchema = z.object({
 }).passthrough();
 
 /**
+ * Schema for prompt configuration (controls Prompt component default sections)
+ */
+export const promptConfigSchema = z.object({
+  includeRole: z.boolean().default(true),
+  includeFormat: z.boolean().default(true),
+  includeConstraints: z.boolean().default(true),
+  includeSuccessCriteria: z.boolean().default(false),
+  includeGuardrails: z.boolean().default(false),
+  defaultRole: z.string().default('assistant'),
+  defaultExpertise: z.string().default('general'),
+  delimiter: z.enum(['xml', 'markdown', 'none']).default('xml'),
+});
+
+/**
  * Schema for the full environment context
  */
 export const environmentContextSchema = z.object({
@@ -221,6 +235,7 @@ export const environmentContextSchema = z.object({
   code: codeConfigSchema.default({}),
   user: userConfigSchema.default({}),
   runtime: runtimeConfigSchema.partial().default({}),
+  prompt: promptConfigSchema.default({}),
 });
 
 // ============================================================================
@@ -248,6 +263,11 @@ export type CodeConfig = z.infer<typeof codeConfigSchema>;
 export type UserConfig = z.infer<typeof userConfigSchema>;
 
 /**
+ * Prompt configuration for default section behavior
+ */
+export type PromptConfig = z.infer<typeof promptConfigSchema>;
+
+/**
  * Runtime configuration gathered from the environment
  */
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>;
@@ -265,6 +285,7 @@ export interface RenderContext {
   env: EnvironmentContext;
   postExecution: PostExecutionAction[];
   errors: RenderError[];
+  metadata: Map<string, unknown>;
 }
 
 /**
@@ -276,6 +297,16 @@ export const DEFAULT_ENVIRONMENT: EnvironmentContext = {
   code: { language: 'unspecified' },
   user: { editor: 'unknown' },
   runtime: {},
+  prompt: {
+    includeRole: true,
+    includeFormat: true,
+    includeConstraints: true,
+    includeSuccessCriteria: false,
+    includeGuardrails: false,
+    defaultRole: 'assistant',
+    defaultExpertise: 'general',
+    delimiter: 'xml',
+  },
 };
 
 /**
@@ -291,6 +322,7 @@ export function createEnvironment(
     code: { ...DEFAULT_ENVIRONMENT.code, ...overrides?.code },
     user: { ...DEFAULT_ENVIRONMENT.user, ...overrides?.user },
     runtime: { ...DEFAULT_ENVIRONMENT.runtime, ...overrides?.runtime },
+    prompt: { ...DEFAULT_ENVIRONMENT.prompt, ...overrides?.prompt },
   };
   return environmentContextSchema.parse(merged);
 }

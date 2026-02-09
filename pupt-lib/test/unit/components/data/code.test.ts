@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Code, Data, Json } from '../../../../src/components/data';
+import { Code, Data, Json } from '../../../../components/data';
 
 describe('Code', () => {
   it('should render code block with language', async () => {

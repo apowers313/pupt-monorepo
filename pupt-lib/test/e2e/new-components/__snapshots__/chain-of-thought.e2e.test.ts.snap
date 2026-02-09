@@ -1,0 +1,29 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ChainOfThought e2e > snapshots > should match snapshot: each style 1`] = `
+"<reasoning>
+Think through this step by step before providing your answer.
+Show your reasoning process.
+</reasoning>"
+`;
+
+exports[`ChainOfThought e2e > snapshots > should match snapshot: each style 2`] = `
+"<reasoning>
+Reason through your thought process as you work on this.
+Show your reasoning process.
+</reasoning>"
+`;
+
+exports[`ChainOfThought e2e > snapshots > should match snapshot: each style 3`] = `
+"<reasoning>
+Break down your reasoning into: 1) Understanding, 2) Analysis, 3) Conclusion.
+Show your reasoning process.
+</reasoning>"
+`;
+
+exports[`ChainOfThought e2e > snapshots > should match snapshot: each style 4`] = `
+"<reasoning>
+Consider the problem carefully before answering.
+Show your reasoning process.
+</reasoning>"
+`;
