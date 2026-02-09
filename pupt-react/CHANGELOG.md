@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/apowers313/pupt-react/compare/v1.0.0...v1.1.0) (2026-02-09)
+
+
+### Features
+
+* add react components for parity with pupt-lib ([5dd1d54](https://github.com/apowers313/pupt-react/commit/5dd1d548664eaa587549556bee046038eb6df1e5))
+
 # 1.0.0 (2026-02-07)
 
 
