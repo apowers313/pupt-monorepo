@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { InputRequirement, ValidationResult } from "pupt-lib";
+import { createInputIterator } from "pupt-lib";
 import { extractInputRequirements } from "../utils/transform";
 import { validateInput } from "../utils/validation";
 import type {
@@ -43,7 +44,7 @@ import type {
 export function useAskIterator(
   options: UseAskIteratorOptions
 ): UseAskIteratorReturn {
-  const { element, onComplete, initialValues } = options;
+  const { element, onComplete, initialValues, preSuppliedValues, onMissingDefault } = options;
 
   // State
   const [requirements, setRequirements] = useState<InputRequirement[]>([]);
@@ -73,7 +74,8 @@ export function useAskIterator(
     let cancelled = false;
     setIsLoading(true);
 
-    extractInputRequirements(element).then((reqs) => {
+    const extractOpts = preSuppliedValues ? { values: preSuppliedValues } : undefined;
+    extractInputRequirements(element, extractOpts).then((reqs) => {
       if (!cancelled) {
         setRequirements(reqs);
         setCurrentIndex(0);
@@ -86,7 +88,7 @@ export function useAskIterator(
     return () => {
       cancelled = true;
     };
-  }, [element, initialValues]);
+  }, [element, initialValues, preSuppliedValues]);
 
   // Derived state
   const totalInputs = requirements.length;
@@ -169,6 +171,26 @@ export function useAskIterator(
     [values]
   );
 
+  // Run all inputs non-interactively using defaults and pre-supplied values
+  const runNonInteractive = useCallback(async () => {
+    if (!element) return new Map<string, unknown>();
+    const iteratorOpts: Parameters<typeof createInputIterator>[1] = {
+      validateOnSubmit: false,
+      environment: "browser",
+      nonInteractive: true,
+      onMissingDefault: onMissingDefault ?? "error",
+    };
+    if (preSuppliedValues) {
+      iteratorOpts.values = preSuppliedValues;
+    }
+    const iterator = createInputIterator(element, iteratorOpts);
+    await iterator.start();
+    const result = await iterator.runNonInteractive();
+    setValues(result);
+    setCurrentIndex(requirements.length);
+    return result;
+  }, [element, preSuppliedValues, onMissingDefault, requirements.length]);
+
   return {
     requirements,
     current,
@@ -183,5 +205,6 @@ export function useAskIterator(
     reset,
     setValue,
     getValue,
+    runNonInteractive,
   };
 }

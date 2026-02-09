@@ -30,6 +30,14 @@ export async function transformSource(
 }
 
 /**
+ * Options for extractInputRequirements
+ */
+export interface ExtractOptions {
+  /** Pre-supply values to skip during iteration */
+  values?: Record<string, unknown>;
+}
+
+/**
  * Extract input requirements from a PuptElement by traversing its tree
  * and finding Ask components.
  *
@@ -37,16 +45,22 @@ export async function transformSource(
  * values to advance through all requirements.
  *
  * @param element - The PuptElement to extract requirements from
+ * @param options - Optional configuration including pre-supplied values
  * @returns Array of InputRequirement objects
  */
 export async function extractInputRequirements(
-  element: PuptElement
+  element: PuptElement,
+  options?: ExtractOptions
 ): Promise<InputRequirement[]> {
   try {
-    const iterator = createInputIterator(element, {
+    const iteratorOpts: Parameters<typeof createInputIterator>[1] = {
       validateOnSubmit: false,
       environment: "browser",
-    });
+    };
+    if (options?.values) {
+      iteratorOpts.values = options.values;
+    }
+    const iterator = createInputIterator(element, iteratorOpts);
 
     const requirements: InputRequirement[] = [];
 

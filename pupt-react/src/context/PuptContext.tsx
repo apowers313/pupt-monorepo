@@ -11,6 +11,7 @@ import type { PuptContextValue } from "../types/context";
 const defaultContextValue: PuptContextValue = {
   _initialized: false,
   searchEngine: null,
+  prompts: [],
   renderOptions: {},
   environment: {},
   isLoading: false,

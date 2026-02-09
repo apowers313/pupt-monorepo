@@ -77,10 +77,23 @@ vi.mock("pupt-lib", async (importOriginal) => {
   }
 
   // Create a flexible mock for createInputIterator
-  function createMockInputIterator(element: PuptElement) {
-    const requirements = extractRequirementsFromElement(element);
+  function createMockInputIterator(
+    element: PuptElement,
+    options?: { values?: Record<string, unknown>; nonInteractive?: boolean; onMissingDefault?: string }
+  ) {
+    const allRequirements = extractRequirementsFromElement(element);
+    // Filter out pre-supplied values from requirements
+    const preSupplied = options?.values ?? {};
+    const requirements = allRequirements.filter(
+      (req) => !(req.name in preSupplied)
+    );
     let currentIndex = 0;
     const inputs = new Map<string, unknown>();
+
+    // Pre-populate inputs with pre-supplied values
+    for (const [key, value] of Object.entries(preSupplied)) {
+      inputs.set(key, value);
+    }
 
     return {
       start: vi.fn(),
@@ -114,6 +127,29 @@ vi.mock("pupt-lib", async (importOriginal) => {
       }),
       getValue: vi.fn((name: string) => inputs.get(name)),
       currentIndex: vi.fn(() => currentIndex),
+      runNonInteractive: vi.fn(() => {
+        // Auto-fill all requirements with defaults or pre-supplied values
+        const result = new Map<string, unknown>(inputs);
+        for (const req of allRequirements) {
+          if (!result.has(req.name)) {
+            if (options?.onMissingDefault === "skip") {
+              // Skip inputs without defaults
+              continue;
+            }
+            // Use a sensible default based on type
+            if (req.type === "string" || req.type === "text") {
+              result.set(req.name, "default");
+            } else if (req.type === "number") {
+              result.set(req.name, 0);
+            } else if (req.type === "boolean") {
+              result.set(req.name, false);
+            } else {
+              result.set(req.name, "default");
+            }
+          }
+        }
+        return Promise.resolve(result);
+      }),
     };
   }
 
@@ -155,8 +191,96 @@ vi.mock("pupt-lib", async (importOriginal) => {
     return `<${tagName}>${childText}</${tagName}>`;
   }
 
+  // Mock Pupt class
+  class MockPupt {
+    private config: { modules?: string[]; searchConfig?: unknown };
+    private _prompts: Array<{
+      name: string;
+      description: string;
+      tags: string[];
+      library: string;
+      element: PuptElement;
+      render: () => Promise<{ ok: boolean; text: string; postExecution: never[] }>;
+      getInputIterator: () => unknown;
+    }>;
+
+    constructor(config: { modules?: string[]; searchConfig?: unknown }) {
+      this.config = config;
+      this._prompts = [];
+    }
+
+    async init() {
+      // Simulate discovering prompts from modules
+      const modules = this.config.modules ?? [];
+      this._prompts = modules.flatMap((mod: string) => [
+        {
+          name: `${mod}-prompt-1`,
+          description: `A prompt from ${mod}`,
+          tags: ["example"],
+          library: mod,
+          element: createMockElement("Prompt", { name: `${mod}-prompt-1` }, [
+            createMockElement("Task", {}, [`Task from ${mod}`]),
+          ]),
+          render: vi.fn(() =>
+            Promise.resolve({ ok: true, text: `Rendered ${mod}-prompt-1`, postExecution: [] })
+          ),
+          getInputIterator: vi.fn(() => createMockInputIterator(
+            createMockElement("Prompt", { name: `${mod}-prompt-1` }, [])
+          )),
+        },
+        {
+          name: `${mod}-prompt-2`,
+          description: `Another prompt from ${mod}`,
+          tags: ["utility"],
+          library: mod,
+          element: createMockElement("Prompt", { name: `${mod}-prompt-2` }, [
+            createMockElement("Task", {}, [`Another task from ${mod}`]),
+          ]),
+          render: vi.fn(() =>
+            Promise.resolve({ ok: true, text: `Rendered ${mod}-prompt-2`, postExecution: [] })
+          ),
+          getInputIterator: vi.fn(() => createMockInputIterator(
+            createMockElement("Prompt", { name: `${mod}-prompt-2` }, [])
+          )),
+        },
+      ]);
+    }
+
+    getPrompts(filter?: { tags?: string[] }) {
+      if (filter?.tags && filter.tags.length > 0) {
+        return this._prompts.filter((p) =>
+          p.tags.some((t) => filter.tags!.includes(t))
+        );
+      }
+      return this._prompts;
+    }
+
+    getPrompt(name: string) {
+      return this._prompts.find((p) => p.name === name);
+    }
+
+    getTags() {
+      const tagSet = new Set<string>();
+      for (const p of this._prompts) {
+        for (const t of p.tags) tagSet.add(t);
+      }
+      return Array.from(tagSet);
+    }
+
+    getPromptsByTag(tag: string) {
+      return this._prompts.filter((p) => p.tags.includes(tag));
+    }
+
+    searchPrompts(query: string) {
+      return this._prompts
+        .filter((p) => p.name.includes(query) || p.description.includes(query))
+        .map((p) => ({ item: p, score: 1 }));
+    }
+  }
+
   return {
     ...actual,
+    Pupt: MockPupt,
     // Mock render to produce text output from mock elements
     render: vi.fn(
       (element: PuptElement, options?: { inputs?: Map<string, unknown> }) => {
@@ -249,9 +373,38 @@ vi.mock("pupt-lib", async (importOriginal) => {
         ])
       );
     }),
-    createInputIterator: vi.fn((element: PuptElement) =>
-      createMockInputIterator(element)
+    createInputIterator: vi.fn(
+      (element: PuptElement, options?: { values?: Record<string, unknown>; nonInteractive?: boolean; onMissingDefault?: string }) =>
+        createMockInputIterator(element, options)
     ),
+    evaluateFormula: vi.fn((formula: string, inputs: Map<string, unknown>) => {
+      // Simple mock that handles basic comparison formulas
+      const match = formula.match(/^=(\w+)\s*(>|<|>=|<=|==|!=)\s*(\d+)$/);
+      if (match) {
+        const [, varName, op, threshold] = match;
+        const value = Number(inputs.get(varName!) ?? 0);
+        const num = Number(threshold);
+        switch (op) {
+          case ">": return value > num;
+          case "<": return value < num;
+          case ">=": return value >= num;
+          case "<=": return value <= num;
+          case "==": return value === num;
+          case "!=": return value !== num;
+        }
+      }
+      // Handle AND/OR
+      if (formula.startsWith("=AND(")) {
+        return true; // simplified mock
+      }
+      if (formula.startsWith("=OR(")) {
+        return true; // simplified mock
+      }
+      if (formula === "=invalid") {
+        throw new Error("Invalid formula");
+      }
+      return false;
+    }),
   };
 });
 

@@ -5,6 +5,7 @@
 import type {
   SearchEngine,
   SearchablePrompt,
+  SearchEngineConfig,
   RenderOptions,
   EnvironmentContext,
 } from "pupt-lib";
@@ -14,6 +15,11 @@ export type {
   SearchablePrompt,
   SearchResult,
   SearchOptions,
+  SearchEngineConfig,
+  OnMissingDefaultStrategy,
+  RuntimeConfig,
+  DeferredRef,
+  PuptNode,
   InputRequirement,
   ValidationResult,
   RenderResult,
@@ -21,6 +27,8 @@ export type {
   PuptElement,
   EnvironmentContext,
   PostExecutionAction,
+  DiscoveredPromptWithMethods,
+  PuptInitConfig,
 } from "pupt-lib";
 
 /**
@@ -32,6 +40,9 @@ export interface PuptContextValue {
 
   /** Search engine for finding prompts (null if no prompts provided) */
   searchEngine: SearchEngine | null;
+
+  /** All indexed prompts (empty array if no prompts provided) */
+  prompts: SearchablePrompt[];
 
   /** Default render options */
   renderOptions: Partial<RenderOptions>;
@@ -55,6 +66,9 @@ export interface PuptProviderProps {
 
   /** Initial prompts to index for search */
   prompts?: SearchablePrompt[];
+
+  /** Configuration for the search engine (threshold, weights, fuzzy matching, etc.) */
+  searchConfig?: SearchEngineConfig;
 
   /** Default render options to use for all renders */
   renderOptions?: Partial<RenderOptions>;

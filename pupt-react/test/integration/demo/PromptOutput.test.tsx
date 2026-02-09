@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { PuptProvider, PuptLibraryProvider } from "../../../src";
 import { DemoProvider } from "../../../demo/src/context/DemoContext";
 import { PromptOutput } from "../../../demo/src/components/PromptOutput";
 
@@ -35,11 +35,13 @@ beforeAll(() => {
 function renderWithProviders() {
   return render(
     <MantineProvider>
-      <PuptProvider>
-        <DemoProvider>
-          <PromptOutput />
-        </DemoProvider>
-      </PuptProvider>
+      <PuptLibraryProvider>
+        <PuptProvider>
+          <DemoProvider>
+            <PromptOutput />
+          </DemoProvider>
+        </PuptProvider>
+      </PuptLibraryProvider>
     </MantineProvider>,
   );
 }
@@ -107,11 +109,13 @@ describe("PromptOutput", () => {
     // Render with a custom provider that has invalid source
     render(
       <MantineProvider>
-        <PuptProvider>
-          <DemoProvider>
-            <PromptOutput />
-          </DemoProvider>
-        </PuptProvider>
+        <PuptLibraryProvider>
+          <PuptProvider>
+            <DemoProvider>
+              <PromptOutput />
+            </DemoProvider>
+          </PuptProvider>
+        </PuptLibraryProvider>
       </MantineProvider>,
     );
 

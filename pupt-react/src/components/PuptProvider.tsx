@@ -43,6 +43,7 @@ import type { PuptProviderProps, PuptContextValue } from "../types/context";
 export function PuptProvider({
   children,
   prompts,
+  searchConfig,
   renderOptions = {},
   environment = {},
 }: PuptProviderProps): React.ReactElement {
@@ -55,26 +56,27 @@ export function PuptProvider({
       return null;
     }
     try {
-      const engine = createSearchEngine();
+      const engine = createSearchEngine(searchConfig);
       engine.index(prompts);
       return engine;
     } catch (err) {
       console.error("Failed to initialize search engine:", err);
       return null;
     }
-  }, [prompts]);
+  }, [prompts, searchConfig]);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue: PuptContextValue = useMemo(
     () => ({
       _initialized: true,
       searchEngine,
+      prompts: prompts ?? [],
       renderOptions,
       environment,
       isLoading,
       error,
     }),
-    [searchEngine, renderOptions, environment, isLoading, error]
+    [searchEngine, prompts, renderOptions, environment, isLoading, error]
   );
 
   return (

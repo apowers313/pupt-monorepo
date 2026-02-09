@@ -56,9 +56,19 @@ function createElementWithNoAsks(): PuptElement {
 // Helper to create a mock iterator for tests
 // Note: submit() should NOT increment currentIndex because extractInputRequirements
 // calls both submit() and advance() - advance() handles the increment
-function createMockIterator(requirements: { name: string; label: string; type: string }[]) {
+function createMockIterator(
+  requirements: { name: string; label: string; type: string }[],
+  preSuppliedValues?: Record<string, unknown>
+) {
   let currentIndex = 0;
   const inputs = new Map<string, unknown>();
+
+  // Pre-populate with supplied values
+  if (preSuppliedValues) {
+    for (const [key, value] of Object.entries(preSuppliedValues)) {
+      inputs.set(key, value);
+    }
+  }
 
   return {
     start: vi.fn(),
@@ -89,6 +99,19 @@ function createMockIterator(requirements: { name: string; label: string; type: s
     setValue: vi.fn((name: string, value: unknown) => { inputs.set(name, value); }),
     getValue: vi.fn((name: string) => inputs.get(name)),
     currentIndex: () => currentIndex,
+    runNonInteractive: vi.fn(() => {
+      const result = new Map<string, unknown>(inputs);
+      for (const req of requirements) {
+        if (!result.has(req.name)) {
+          if (req.type === "number") {
+            result.set(req.name, 0);
+          } else {
+            result.set(req.name, "default");
+          }
+        }
+      }
+      return Promise.resolve(result);
+    }),
   };
 }
 
@@ -506,6 +529,85 @@ describe("useAskIterator", () => {
 
       expect(result.current.getValue("firstName")).toBe("Pre");
       expect(result.current.getValue("lastName")).toBe("Supplied");
+    });
+  });
+
+  describe("runNonInteractive", () => {
+    it("should auto-fill all inputs with defaults", async () => {
+      const mockIterator = createMockIterator([
+        { name: "firstName", label: "First name", type: "string" },
+        { name: "lastName", label: "Last name", type: "string" },
+        { name: "age", label: "Your age", type: "number" },
+      ]);
+      mockCreateInputIterator.mockReturnValue(mockIterator as ReturnType<typeof createInputIterator>);
+
+      const element = createElementWithAsks();
+      const { result } = renderHook(
+        () => useAskIterator({ element }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let nonInteractiveResult: Map<string, unknown> | undefined;
+      await act(async () => {
+        nonInteractiveResult = await result.current.runNonInteractive();
+      });
+
+      expect(nonInteractiveResult).toBeInstanceOf(Map);
+      expect(nonInteractiveResult!.size).toBeGreaterThan(0);
+    });
+
+    it("should use preSuppliedValues in runNonInteractive", async () => {
+      const preSuppliedValues = { firstName: "Jane" };
+
+      // First mock for extractInputRequirements call
+      const extractIterator = createMockIterator([
+        { name: "firstName", label: "First name", type: "string" },
+        { name: "lastName", label: "Last name", type: "string" },
+      ]);
+      // Second mock for runNonInteractive call (with pre-supplied values)
+      const nonInteractiveIterator = createMockIterator(
+        [
+          { name: "firstName", label: "First name", type: "string" },
+          { name: "lastName", label: "Last name", type: "string" },
+        ],
+        preSuppliedValues
+      );
+      mockCreateInputIterator
+        .mockReturnValueOnce(extractIterator as ReturnType<typeof createInputIterator>)
+        .mockReturnValueOnce(nonInteractiveIterator as ReturnType<typeof createInputIterator>);
+
+      const element = createElementWithAsks();
+      const { result } = renderHook(
+        () => useAskIterator({ element, preSuppliedValues }),
+        { wrapper: createWrapper() }
+      );
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let nonInteractiveResult: Map<string, unknown> | undefined;
+      await act(async () => {
+        nonInteractiveResult = await result.current.runNonInteractive();
+      });
+
+      expect(nonInteractiveResult).toBeInstanceOf(Map);
+      expect(nonInteractiveResult!.get("firstName")).toBe("Jane");
+    });
+
+    it("should return empty map when element is null", async () => {
+      const { result } = renderHook(
+        () => useAskIterator({ element: null }),
+        { wrapper: createWrapper() }
+      );
+
+      let nonInteractiveResult: Map<string, unknown> | undefined;
+      await act(async () => {
+        nonInteractiveResult = await result.current.runNonInteractive();
+      });
+
+      expect(nonInteractiveResult).toBeInstanceOf(Map);
+      expect(nonInteractiveResult!.size).toBe(0);
     });
   });
 });

@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { PuptProvider, PuptLibraryProvider } from "../../../src";
 import { DemoProvider } from "../../../demo/src/context/DemoContext";
 import { Layout } from "../../../demo/src/components/Layout";
 
@@ -42,9 +42,11 @@ beforeAll(() => {
 function renderWithProviders(ui: React.ReactElement) {
   return render(
     <MantineProvider>
-      <PuptProvider>
-        <DemoProvider>{ui}</DemoProvider>
-      </PuptProvider>
+      <PuptLibraryProvider>
+        <PuptProvider>
+          <DemoProvider>{ui}</DemoProvider>
+        </PuptProvider>
+      </PuptLibraryProvider>
     </MantineProvider>
   );
 }
@@ -75,6 +77,13 @@ describe("Demo Layout", () => {
   it("should include settings button in header", async () => {
     renderWithProviders(<Layout />);
     const button = screen.getByRole("button", { name: /environment settings/i });
+    expect(button).toBeInTheDocument();
+    await waitForPromptRender();
+  });
+
+  it("should include import library button in header", async () => {
+    renderWithProviders(<Layout />);
+    const button = screen.getByRole("button", { name: /import library/i });
     expect(button).toBeInTheDocument();
     await waitForPromptRender();
   });

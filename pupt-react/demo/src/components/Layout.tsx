@@ -4,14 +4,16 @@ import { Header } from "./Header";
 import { PromptInput } from "./PromptInput";
 import { PromptOutput } from "./PromptOutput";
 import { EnvironmentPanel } from "./EnvironmentPanel";
+import { ModuleImport } from "./ModuleImport";
 
 export function Layout() {
-  const [opened, { open, close }] = useDisclosure(false);
+  const [settingsOpened, { open: openSettings, close: closeSettings }] = useDisclosure(false);
+  const [importOpened, { open: openImport, close: closeImport }] = useDisclosure(false);
 
   return (
     <AppShell header={{ height: 56 }} padding="md">
       <AppShell.Header>
-        <Header onSettingsClick={open} />
+        <Header onSettingsClick={openSettings} onImportClick={openImport} />
       </AppShell.Header>
       <AppShell.Main>
         <Grid gutter="md" styles={{ inner: { height: "100%" } }}>
@@ -24,14 +26,15 @@ export function Layout() {
         </Grid>
       </AppShell.Main>
       <Drawer
-        opened={opened}
-        onClose={close}
+        opened={settingsOpened}
+        onClose={closeSettings}
         position="right"
         size="sm"
         title="Environment"
       >
         <EnvironmentPanel />
       </Drawer>
+      <ModuleImport opened={importOpened} onClose={closeImport} />
     </AppShell>
   );
 }

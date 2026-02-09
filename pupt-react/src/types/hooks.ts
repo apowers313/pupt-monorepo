@@ -11,6 +11,9 @@ import type {
   ValidationResult,
   SearchResult,
   RenderError,
+  OnMissingDefaultStrategy,
+  SearchEngineConfig,
+  DiscoveredPromptWithMethods,
 } from "pupt-lib";
 
 /**
@@ -96,6 +99,15 @@ export interface UseAskIteratorOptions {
 
   /** Pre-supplied initial values for inputs */
   initialValues?: Map<string, unknown>;
+
+  /** Pre-supply values that skip interactive iteration */
+  preSuppliedValues?: Record<string, unknown>;
+
+  /** Enable non-interactive mode to auto-fill with defaults */
+  nonInteractive?: boolean;
+
+  /** Strategy when required input has no default in non-interactive mode */
+  onMissingDefault?: OnMissingDefaultStrategy;
 }
 
 /**
@@ -140,6 +152,9 @@ export interface UseAskIteratorReturn {
 
   /** Get the value for a specific input by name */
   getValue: (name: string) => unknown;
+
+  /** Run all inputs non-interactively using defaults and pre-supplied values */
+  runNonInteractive: () => Promise<Map<string, unknown>>;
 }
 
 /**
@@ -222,6 +237,60 @@ export interface UsePostActionsReturn {
 
   /** Reset all actions back to pending */
   reset: () => void;
+}
+
+/**
+ * Options for useFormula hook
+ */
+export interface UseFormulaOptions {
+  /** Formula string (e.g., "=count>5", "=AND(a>1, b<10)") */
+  formula: string;
+  /** Input values for formula variables */
+  inputs: Map<string, unknown>;
+}
+
+/**
+ * Return value of useFormula hook
+ */
+export interface UseFormulaReturn {
+  /** Boolean result of formula evaluation */
+  result: boolean;
+  /** Error if evaluation failed */
+  error: Error | null;
+}
+
+/**
+ * Options for usePuptLibrary hook
+ */
+export interface UsePuptLibraryOptions {
+  /** Module paths to load prompts from (npm packages or URLs) */
+  modules?: string[];
+  /** Configuration for the search engine */
+  searchConfig?: SearchEngineConfig;
+}
+
+/**
+ * Return value of usePuptLibrary hook
+ */
+export interface UsePuptLibraryReturn {
+  /** Whether the library is loading/initializing */
+  isLoading: boolean;
+  /** Error that occurred during initialization */
+  error: Error | null;
+  /** All discovered prompts from loaded modules */
+  prompts: DiscoveredPromptWithMethods[];
+  /** All unique tags from discovered prompts */
+  tags: string[];
+  /** Get a specific prompt by name */
+  getPrompt: (name: string) => DiscoveredPromptWithMethods | undefined;
+  /** Get all prompts with a specific tag */
+  getPromptsByTag: (tag: string) => DiscoveredPromptWithMethods[];
+  /** Add a module source (npm package or URL) */
+  addModule: (source: string) => Promise<void>;
+  /** Remove a module source */
+  removeModule: (source: string) => void;
+  /** Currently loaded module sources */
+  modules: string[];
 }
 
 // Re-export types that are needed by consumers

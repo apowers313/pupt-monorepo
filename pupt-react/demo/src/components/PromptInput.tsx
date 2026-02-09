@@ -1,9 +1,9 @@
-import { Stack, Group, Title } from "@mantine/core";
+import { useMemo } from "react";
+import { Stack, Group, Title, Alert } from "@mantine/core";
+import { IconInfoCircle } from "@tabler/icons-react";
 import Editor, { type BeforeMount } from "@monaco-editor/react";
 import { useDemoContext } from "../context/DemoContext";
-import { ExamplePicker } from "./ExamplePicker";
-import { wrapJsx } from "../util/jsxWrapper";
-import type { ExampleFormat } from "../data/examples";
+import { PromptSearch } from "./PromptSearch";
 
 const handleEditorWillMount: BeforeMount = (monaco) => {
   // Configure TypeScript to support JSX without errors
@@ -27,33 +27,39 @@ const handleEditorWillMount: BeforeMount = (monaco) => {
 };
 
 export function PromptInput() {
-  const { source, setSource, format, setFormat } = useDemoContext();
+  const { activePrompt, setSource } = useDemoContext();
+
+  const isSource = activePrompt.kind === "source";
+  const format = isSource ? activePrompt.format : "prompt";
 
   // Use HTML for both formats — Monaco's Monarch tokenizer has no JSX text
   // awareness and highlights JS keywords (in, is, This) inside tag content.
-  // See: https://github.com/microsoft/monaco-editor/issues/264
   const language = "html";
   const path = format === "jsx" ? "prompt.tsx" : "prompt.prompt";
 
-  const handleExampleSelect = (raw: string, exampleFormat: ExampleFormat) => {
-    // For .tsx examples that don't already have exports, wrap with imports
-    // Full .tsx examples (with functions/variables) already include exports
-    const needsWrapping = exampleFormat === "jsx" && !raw.includes("export default");
-    setSource(needsWrapping ? wrapJsx(raw) : raw);
-    setFormat(exampleFormat);
-  };
+  const editorValue = useMemo(() => {
+    return isSource ? activePrompt.source : "";
+  }, [isSource, activePrompt]);
 
   return (
     <Stack h="100%" gap="sm">
       <Group justify="space-between">
         <Title order={4}>Prompt Input</Title>
-        <ExamplePicker onSelect={handleExampleSelect} />
+        <PromptSearch />
       </Group>
+
+      {activePrompt.kind === "element" && (
+        <Alert icon={<IconInfoCircle size={16} />} color="blue" variant="light">
+          Viewing library prompt: <strong>{activePrompt.name}</strong>.
+          This prompt is rendered directly from the library and cannot be edited.
+        </Alert>
+      )}
+
       <Editor
         height="60vh"
         language={language}
         path={path}
-        value={source}
+        value={editorValue}
         onChange={(value) => setSource(value ?? "")}
         theme="vs-dark"
         beforeMount={handleEditorWillMount}
@@ -64,6 +70,7 @@ export function PromptInput() {
           scrollBeyondLastLine: false,
           automaticLayout: true,
           tabSize: 2,
+          readOnly: activePrompt.kind === "element",
         }}
       />
     </Stack>

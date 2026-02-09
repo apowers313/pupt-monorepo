@@ -12,29 +12,37 @@ import {
 } from "@mantine/core";
 import { IconCopy, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { PromptRenderer } from "pupt-react";
+import type { PromptSource } from "pupt-react";
 import { useDemoContext } from "../context/DemoContext";
 import { unwrapJsx } from "../util/jsxWrapper";
 import { AskInputs } from "./AskInputs";
 
 export function PromptOutput() {
-  const { source, format, environmentOverrides } = useDemoContext();
+  const { activePrompt, environmentOverrides } = useDemoContext();
   const [inputValues, setInputValues] = useState<Map<string, unknown>>(
     () => new Map(),
   );
-  const prevSourceRef = useRef(source);
+  const prevPromptRef = useRef(activePrompt);
 
-  // Reset inputs when source changes
+  // Reset inputs when prompt changes
   useEffect(() => {
-    if (source !== prevSourceRef.current) {
-      prevSourceRef.current = source;
+    if (activePrompt !== prevPromptRef.current) {
+      prevPromptRef.current = activePrompt;
       setInputValues(new Map());
     }
-  }, [source]);
+  }, [activePrompt]);
 
-  // Strip JSX wrapper for .jsx format
-  const rawSource = useMemo(() => {
-    return format === "jsx" ? unwrapJsx(source) : source;
-  }, [source, format]);
+  // Compute PromptSource from the active prompt
+  const promptSource: PromptSource = useMemo(() => {
+    if (activePrompt.kind === "element") {
+      return { type: "element", value: activePrompt.element };
+    }
+    // Source mode: strip JSX wrapper for .jsx format
+    const rawSource = activePrompt.format === "jsx"
+      ? unwrapJsx(activePrompt.source)
+      : activePrompt.source;
+    return { type: "source", value: rawSource };
+  }, [activePrompt]);
 
   const handleInputChange = useCallback((name: string, value: unknown) => {
     setInputValues((prev) => {
@@ -45,7 +53,12 @@ export function PromptOutput() {
   }, []);
 
   return (
-    <PromptRenderer source={rawSource} inputs={inputValues} environment={environmentOverrides} autoRender>
+    <PromptRenderer
+      source={promptSource}
+      inputs={inputValues}
+      environment={environmentOverrides}
+      autoRender
+    >
       {({
         output,
         error,

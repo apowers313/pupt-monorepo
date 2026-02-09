@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import React from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider } from "../../src/components/PuptProvider";
+import { PuptProvider, PuptLibraryProvider } from "../../src";
 import { DemoProvider } from "../../demo/src/context/DemoContext";
 import { Layout } from "../../demo/src/components/Layout";
 import { PromptOutput } from "../../demo/src/components/PromptOutput";
@@ -74,11 +74,13 @@ afterEach(() => {
 function renderApp() {
   return render(
     <MantineProvider>
-      <PuptProvider>
-        <DemoProvider>
-          <Layout />
-        </DemoProvider>
-      </PuptProvider>
+      <PuptLibraryProvider>
+        <PuptProvider>
+          <DemoProvider>
+            <Layout />
+          </DemoProvider>
+        </PuptProvider>
+      </PuptLibraryProvider>
     </MantineProvider>
   );
 }
@@ -86,11 +88,13 @@ function renderApp() {
 function renderOutputOnly() {
   return render(
     <MantineProvider>
-      <PuptProvider>
-        <DemoProvider>
-          <PromptOutput />
-        </DemoProvider>
-      </PuptProvider>
+      <PuptLibraryProvider>
+        <PuptProvider>
+          <DemoProvider>
+            <PromptOutput />
+          </DemoProvider>
+        </PuptProvider>
+      </PuptLibraryProvider>
     </MantineProvider>
   );
 }
@@ -163,12 +167,11 @@ describe("Full Flow Integration", () => {
     }, { timeout: 5000 });
   });
 
-  it("should have examples dropdown in the input panel", async () => {
+  it("should have search input in the input panel", async () => {
     renderApp();
 
-    const examplesButton = screen.getByRole("button", { name: /examples/i });
-    expect(examplesButton).toBeInTheDocument();
-    expect(examplesButton).toHaveAttribute("aria-haspopup", "menu");
+    const searchInput = screen.getByPlaceholderText("Search prompts...");
+    expect(searchInput).toBeInTheDocument();
 
     await waitForPromptRender();
   });
@@ -278,6 +281,15 @@ describe("Layout Structure", () => {
 
     const settingsButton = screen.getByRole("button", { name: /environment settings/i });
     expect(settingsButton).toBeInTheDocument();
+
+    await waitForPromptRender();
+  });
+
+  it("should render import library button in header", async () => {
+    renderApp();
+
+    const importButton = screen.getByRole("button", { name: /import library/i });
+    expect(importButton).toBeInTheDocument();
 
     await waitForPromptRender();
   });

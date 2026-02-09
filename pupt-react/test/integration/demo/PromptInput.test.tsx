@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeAll } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { PuptProvider, PuptLibraryProvider } from "../../../src";
 import { DemoProvider } from "../../../demo/src/context/DemoContext";
 import { PromptInput } from "../../../demo/src/components/PromptInput";
 import { EXAMPLES } from "../../../demo/src/data/examples";
@@ -56,11 +56,13 @@ beforeAll(() => {
 function renderWithProviders() {
   return render(
     <MantineProvider>
-      <PuptProvider>
-        <DemoProvider>
-          <PromptInput />
-        </DemoProvider>
-      </PuptProvider>
+      <PuptLibraryProvider>
+        <PuptProvider>
+          <DemoProvider>
+            <PromptInput />
+          </DemoProvider>
+        </PuptProvider>
+      </PuptLibraryProvider>
     </MantineProvider>
   );
 }
@@ -83,9 +85,9 @@ describe("PromptInput", () => {
     expect(screen.getByText("Prompt Input")).toBeInTheDocument();
   });
 
-  it("should render the Examples dropdown button", () => {
+  it("should render the search input", () => {
     renderWithProviders();
-    expect(screen.getByRole("button", { name: /examples/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search prompts...")).toBeInTheDocument();
   });
 
   it("should set editor language to html", () => {
@@ -99,12 +101,6 @@ describe("PromptInput", () => {
     const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
     fireEvent.change(editor, { target: { value: "new source code" } });
     expect(editor.value).toBe("new source code");
-  });
-
-  it("should have examples button that opens menu", () => {
-    renderWithProviders();
-    const button = screen.getByRole("button", { name: /examples/i });
-    expect(button).toHaveAttribute("aria-haspopup", "menu");
   });
 
   it("should support programmatic source updates via DemoContext", () => {

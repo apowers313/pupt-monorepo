@@ -23,6 +23,10 @@ export type {
   PostActionHandler,
   UsePostActionsOptions,
   UsePostActionsReturn,
+  UseFormulaOptions,
+  UseFormulaReturn,
+  UsePuptLibraryOptions,
+  UsePuptLibraryReturn,
 } from "./hooks";
 
 // Component types
@@ -41,6 +45,11 @@ export type {
   SearchablePrompt,
   SearchResult,
   SearchOptions,
+  SearchEngineConfig,
+  OnMissingDefaultStrategy,
+  RuntimeConfig,
+  DeferredRef,
+  PuptNode,
   InputRequirement,
   ValidationResult,
   RenderResult,
@@ -48,4 +57,6 @@ export type {
   PuptElement,
   EnvironmentContext,
   PostExecutionAction,
+  DiscoveredPromptWithMethods,
+  PuptInitConfig,
 } from "./context";

@@ -11,3 +11,7 @@ export {
 } from "./transform";
 
 export { validateInput } from "./validation";
+
+export { evaluateFormula } from "./formula";
+
+export { createRuntimeConfig } from "pupt-lib";

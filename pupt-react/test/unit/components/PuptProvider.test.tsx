@@ -12,6 +12,7 @@ import type { SearchablePrompt } from "pupt-lib";
 // Helper to create wrapper with PuptProvider
 function createWrapper(props?: {
   prompts?: SearchablePrompt[];
+  searchConfig?: Record<string, unknown>;
   renderOptions?: Record<string, unknown>;
   environment?: Record<string, unknown>;
 }) {
@@ -131,6 +132,54 @@ describe("PuptProvider", () => {
     expect(result.current.error).toBeNull();
 
     console.error = originalConsoleError;
+  });
+
+  it("should pass searchConfig to createSearchEngine", async () => {
+    const prompts: SearchablePrompt[] = [
+      {
+        name: "test-prompt",
+        description: "A test prompt",
+        tags: ["test"],
+        library: "test-lib",
+      },
+    ];
+
+    const searchConfig = { threshold: 0.5, fuzzy: true };
+
+    const { result } = renderHook(() => usePupt(), {
+      wrapper: createWrapper({ prompts, searchConfig }),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Search engine should be created successfully with custom config
+    expect(result.current.searchEngine).not.toBeNull();
+    const results = result.current.searchEngine?.search("test");
+    expect(results).toBeDefined();
+    expect(results!.length).toBeGreaterThan(0);
+  });
+
+  it("should create search engine without searchConfig", async () => {
+    const prompts: SearchablePrompt[] = [
+      {
+        name: "test-prompt",
+        description: "A test prompt",
+        tags: ["test"],
+        library: "test-lib",
+      },
+    ];
+
+    const { result } = renderHook(() => usePupt(), {
+      wrapper: createWrapper({ prompts }),
+    });
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Search engine should still work with default config
+    expect(result.current.searchEngine).not.toBeNull();
+    const results = result.current.searchEngine?.search("test");
+    expect(results).toBeDefined();
+    expect(results!.length).toBeGreaterThan(0);
   });
 
   it("should update when prompts prop changes", async () => {

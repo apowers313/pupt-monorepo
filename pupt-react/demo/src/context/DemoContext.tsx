@@ -1,12 +1,22 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { createRuntimeConfig } from "pupt-lib";
-import type { EnvironmentContext, RuntimeConfig } from "pupt-lib";
+import { createRuntimeConfig } from "pupt-react";
+import type { EnvironmentContext, RuntimeConfig, PuptElement } from "pupt-react";
 import { DEFAULT_EXAMPLE, type ExampleFormat } from "../data/examples";
 
+/**
+ * Discriminated union for the currently active prompt.
+ * - "source": loaded from source code (editable in editor)
+ * - "element": loaded from a library (pre-parsed PuptElement)
+ */
+export type ActivePrompt =
+  | { kind: "source"; source: string; format: ExampleFormat }
+  | { kind: "element"; element: PuptElement; name: string };
+
 interface DemoContextValue {
-  source: string;
+  activePrompt: ActivePrompt;
+  selectPrompt: (prompt: ActivePrompt) => void;
+  /** Set source directly (for editor changes when kind === "source") */
   setSource: (source: string) => void;
-  format: ExampleFormat;
   setFormat: (format: ExampleFormat) => void;
   environmentOverrides: Partial<EnvironmentContext>;
   setEnvironmentOverrides: (overrides: Partial<EnvironmentContext>) => void;
@@ -25,19 +35,44 @@ export function useDemoContext(): DemoContextValue {
 }
 
 export function DemoProvider({ children }: { children: ReactNode }) {
-  // Initialize with the default example's source and format
-  const [source, setSource] = useState(DEFAULT_EXAMPLE.source);
-  const [format, setFormat] = useState<ExampleFormat>(DEFAULT_EXAMPLE.format);
+  const [activePrompt, setActivePrompt] = useState<ActivePrompt>({
+    kind: "source",
+    source: DEFAULT_EXAMPLE.source,
+    format: DEFAULT_EXAMPLE.format,
+  });
   const [environmentOverrides, setEnvironmentOverrides] = useState<Partial<EnvironmentContext>>({
     output: { format: "unspecified" },
   });
   const [runtimeSnapshot, setRuntimeSnapshot] = useState<RuntimeConfig>(() => createRuntimeConfig());
   const refreshRuntime = useCallback(() => setRuntimeSnapshot(createRuntimeConfig()), []);
 
+  const selectPrompt = useCallback((prompt: ActivePrompt) => {
+    setActivePrompt(prompt);
+  }, []);
+
+  const setSource = useCallback((source: string) => {
+    setActivePrompt((prev) => {
+      if (prev.kind === "source") {
+        return { ...prev, source };
+      }
+      // If switching from element to source via editor, default to prompt format
+      return { kind: "source", source, format: "prompt" };
+    });
+  }, []);
+
+  const setFormat = useCallback((format: ExampleFormat) => {
+    setActivePrompt((prev) => {
+      if (prev.kind === "source") {
+        return { ...prev, format };
+      }
+      return prev;
+    });
+  }, []);
+
   return (
     <DemoContext.Provider value={{
-      source, setSource,
-      format, setFormat,
+      activePrompt, selectPrompt,
+      setSource, setFormat,
       environmentOverrides, setEnvironmentOverrides,
       runtimeSnapshot, refreshRuntime,
     }}>
