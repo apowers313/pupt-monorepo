@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/apowers313/pupt-lib/compare/v1.2.6...v1.3.0) (2026-02-10)
+
+
+### Features
+
+* more robust and complete components framework for extensibility and flexibility ([f964694](https://github.com/apowers313/pupt-lib/commit/f964694915d870a4c3cb08baf7590bc93167f0a1))
+
 ## [1.2.6](https://github.com/apowers313/pupt-lib/compare/v1.2.5...v1.2.6) (2026-02-06)
 
 
