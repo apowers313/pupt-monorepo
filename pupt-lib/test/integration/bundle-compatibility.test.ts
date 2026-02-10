@@ -72,6 +72,21 @@ describe('Bundle Browser Compatibility', () => {
     });
   });
 
+  describe('No Vite browser-external stubs for Node.js built-ins (issue #20)', () => {
+    it('should not replace dynamic import("url") with a browser-external stub', () => {
+      // Vite replaces `import('url')` with `import('./__vite-browser-external-*.js')`
+      // which breaks pathToFileURL at runtime when consumed as an npm dependency
+      const viteExternalStub = /import\(["'][^"']*__vite-browser-external[^"']*["']\)/;
+      expect(bundleContent).not.toMatch(viteExternalStub);
+    });
+
+    it('should preserve dynamic import("url") for Node.js pathToFileURL', () => {
+      // The bundle must use dynamic import('url') (or require) so pathToFileURL works
+      const dynamicUrlImport = /import\(\s*['"]url['"]\s*\)|require\(['"]url['"]\)/;
+      expect(bundleContent).toMatch(dynamicUrlImport);
+    });
+  });
+
   describe('Bundle structure', () => {
     it('should be a valid ES module', () => {
       // Should have exports
