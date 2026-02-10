@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/apowers313/pupt-lib/compare/v1.3.1...v1.3.2) (2026-02-10)
+
+
+### Bug Fixes
+
+* change default prompt output to markdown ([b52a9a9](https://github.com/apowers313/pupt-lib/commit/b52a9a9d2effda20d941ede8280776aed4afe2ff))
+
 ## [1.3.1](https://github.com/apowers313/pupt-lib/compare/v1.3.0...v1.3.1) (2026-02-10)
 
 
