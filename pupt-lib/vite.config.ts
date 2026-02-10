@@ -33,7 +33,6 @@ export default defineConfig({
     dts({
       include: ['src/**/*', 'components/**/*'],
       outDir: 'dist',
-      rollupTypes: true,
     }),
   ],
 });

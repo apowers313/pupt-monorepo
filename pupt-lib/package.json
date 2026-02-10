@@ -36,15 +36,15 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./dist/src/index.d.ts",
       "import": "./dist/index.js"
     },
     "./jsx-runtime": {
-      "types": "./dist/jsx-runtime/index.d.ts",
+      "types": "./dist/src/jsx-runtime/index.d.ts",
       "import": "./dist/jsx-runtime/index.js"
     },
     "./jsx-dev-runtime": {
-      "types": "./dist/jsx-runtime/jsx-dev-runtime.d.ts",
+      "types": "./dist/src/jsx-runtime/jsx-dev-runtime.d.ts",
       "import": "./dist/jsx-runtime/jsx-dev-runtime.js"
     }
   },
