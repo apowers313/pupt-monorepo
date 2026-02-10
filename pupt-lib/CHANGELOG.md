@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/apowers313/pupt-lib/compare/v1.3.0...v1.3.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* add type exports after refactoring ([99f3734](https://github.com/apowers313/pupt-lib/commit/99f37349226a91e910c6dd4167095e221e9bdab0))
+
 # [1.3.0](https://github.com/apowers313/pupt-lib/compare/v1.2.6...v1.3.0) (2026-02-10)
 
 
