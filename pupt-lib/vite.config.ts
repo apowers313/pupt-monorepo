@@ -19,7 +19,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: ['os', 'crypto', 'fs', 'fs/promises', 'path', 'url'],
+      external: ['os', 'crypto', 'fs', 'fs/promises', 'path', 'url', 'module'],
       output: {
         preserveModules: false,
         entryFileNames: '[name].js',

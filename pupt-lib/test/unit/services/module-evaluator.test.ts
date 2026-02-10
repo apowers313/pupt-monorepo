@@ -88,6 +88,46 @@ describe('evaluateModule', () => {
       expect((result.default as { hasJsx: boolean }).hasJsx).toBe(true);
       expect((result.default as { hasFragment: boolean }).hasFragment).toBe(true);
     });
+
+    it('should resolve pupt-lib without relying on process.cwd() fallback (issue #21)', async () => {
+      // Regression: require.resolve('pupt-lib') throws ERR_PACKAGE_PATH_NOT_EXPORTED
+      // because package.json has no "require" or "default" condition. The old fallback
+      // used process.cwd() + '/dist/index.js' which only works inside the repo.
+      // By changing cwd to a temp dir, we simulate the consumer-as-dependency scenario.
+      const code = `
+        import { Component } from 'pupt-lib';
+        export default typeof Component;
+      `;
+
+      const originalCwd = process.cwd();
+      const os = await import('os');
+      process.chdir(os.tmpdir());
+
+      try {
+        const result = await evaluateModule(code, { filename: 'test.mjs' });
+        expect(result.default).toBe('function');
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
+
+    it('should resolve pupt-lib/jsx-runtime without relying on process.cwd() fallback (issue #21)', async () => {
+      const code = `
+        import { jsx } from 'pupt-lib/jsx-runtime';
+        export default typeof jsx;
+      `;
+
+      const originalCwd = process.cwd();
+      const os = await import('os');
+      process.chdir(os.tmpdir());
+
+      try {
+        const result = await evaluateModule(code, { filename: 'test.mjs' });
+        expect(result.default).toBe('function');
+      } finally {
+        process.chdir(originalCwd);
+      }
+    });
   });
 
   describe('imports from npm packages', () => {

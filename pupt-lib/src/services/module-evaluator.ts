@@ -83,30 +83,26 @@ function isBareSpecifier(specifier: string): boolean {
 
 /**
  * Resolve a bare specifier to an absolute file:// URL.
- * Handles the special case of running inside the pupt-lib package itself.
+ * Uses import.meta.resolve() when available (Node.js 20+), which correctly
+ * handles ESM-only packages (packages with only an "import" export condition).
+ * Falls back to createRequire for environments that shim import.meta (e.g., Vitest).
  */
 async function resolveBareSpecifier(specifier: string): Promise<string> {
-  const path = await import('path');
-  const { pathToFileURL } = await import('url');
-
-  // Special handling for pupt-lib when running inside the package
-  if (specifier === 'pupt-lib' || specifier === 'pupt-lib/jsx-runtime') {
+  if (typeof import.meta.resolve === 'function') {
     try {
-      // Try normal resolution first
-      const resolved = require.resolve(specifier);
-      return pathToFileURL(resolved).href;
-    } catch {
-      // We're inside pupt-lib - resolve relative to dist/
-      const subpath = specifier === 'pupt-lib' ? 'index.js' : 'jsx-runtime/index.js';
-      const distPath = path.join(process.cwd(), 'dist', subpath);
-      return pathToFileURL(distPath).href;
+      return import.meta.resolve(specifier);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Cannot resolve module "${specifier}": ${message}`);
     }
   }
 
-  // Normal resolution for other packages
+  // Fallback for environments where import.meta.resolve is unavailable
+  const { pathToFileURL } = await import('url');
+  const { createRequire } = await import('module');
+  const esmRequire = createRequire(import.meta.url);
   try {
-    const resolved = require.resolve(specifier);
-    return pathToFileURL(resolved).href;
+    return pathToFileURL(esmRequire.resolve(specifier)).href;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Cannot resolve module "${specifier}": ${message}`);
