@@ -41,7 +41,7 @@ Creates a labeled section with delimiters.
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `name?` | `string` | — | Section heading/tag name |
-| `delimiter?` | `'xml' \| 'markdown' \| 'none'` | `'xml'` | Delimiter style |
+| `delimiter?` | `'xml' \| 'markdown' \| 'none'` | `'xml'` if `name` is set, `'none'` otherwise | Delimiter style |
 
 ### Role
 

@@ -290,35 +290,22 @@ See [docs/COMPONENTS.md](docs/COMPONENTS.md) for the full list of preset keys.
 
 ## Creating Custom Components
 
-Extend `Component` and implement `render(props, resolvedValue, context)`:
+Create a component by extending `Component` and exporting it from a file:
 
 ```typescript
+// my-components.ts
 import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
-import { z } from 'zod';
+import type { PuptNode } from 'pupt-lib';
 
-const warningSchema = z.object({
-  level: z.enum(['info', 'warning', 'error']),
-});
-
-type WarningProps = z.infer<typeof warningSchema> & { children?: PuptNode };
-
-class Warning extends Component<WarningProps> {
-  static schema = warningSchema;
-
-  render(props: WarningProps, _resolvedValue: void, context: RenderContext): PuptNode {
-    const prefix = {
-      info: 'INFO',
-      warning: 'WARNING',
-      error: 'ERROR',
-    }[props.level];
-
-    return `[${prefix}] ${props.children}`;
+export class Warning extends Component<{ level: string; children?: PuptNode }> {
+  render({ level, children }) {
+    const prefix = { info: 'INFO', warning: 'WARNING', error: 'ERROR' }[level];
+    return `[${prefix}] ${children}`;
   }
 }
 ```
 
-Use in `.prompt` files with `<Uses>`:
+Import it in a `.prompt` file with `<Uses>`:
 
 ```xml
 <Uses component="Warning" from="./my-components" />
@@ -328,10 +315,13 @@ Use in `.prompt` files with `<Uses>`:
 </Prompt>
 ```
 
-The `Component` base class provides helpers:
-- `getProvider(context)` — Get the current LLM provider
-- `getDelimiter(context)` — Get the delimiter style (`xml`, `markdown`, or `none`)
-- `hasContent(children)` — Check if children have meaningful content
+Or in a `.tsx` file with a standard import:
+
+```tsx
+import { Warning } from './my-components';
+```
+
+See [docs/MODULES.md](docs/MODULES.md) for the full guide — including function components, prop validation, async components, and publishing to npm.
 
 ## Advanced Features
 
@@ -402,17 +392,9 @@ For build-time JSX transformation, configure `tsconfig.json`:
 }
 ```
 
-Or use the Babel preset for runtime transformation:
-
-```javascript
-// babel.config.js
-module.exports = {
-  presets: ['pupt-lib/babel-preset'],
-};
-```
-
 ## Reference Documentation
 
+- **[docs/MODULES.md](docs/MODULES.md)** — Guide to creating, importing, and publishing reusable components and prompts
 - **[docs/COMPONENTS.md](docs/COMPONENTS.md)** — Full component reference (all 50+ components with all props)
 - **[docs/API.md](docs/API.md)** — Full API reference (functions, types, base class, utilities)
 

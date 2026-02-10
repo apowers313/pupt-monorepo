@@ -603,14 +603,6 @@ Check if a filename has a `.prompt` extension.
 function isPromptFile(filename: string): boolean
 ```
 
-### `needsPreprocessing(source)`
-
-Check if source code needs import injection (no existing imports).
-
-```typescript
-function needsPreprocessing(source: string): boolean
-```
-
 ---
 
 ## Transformer
@@ -635,7 +627,7 @@ Loads prompt libraries from npm packages, URLs, or local paths.
 
 ```typescript
 class ModuleLoader {
-  async load(source: string): Promise<LibraryLoadResult>;
+  async load(source: string): Promise<LoadedLibrary>;
 }
 ```
 
