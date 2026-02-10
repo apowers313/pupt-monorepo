@@ -194,7 +194,8 @@
     ```
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     ```
     Pattern: "verification_gap"
     Evidence: 12 annotations across 5 prompts mention "tests still failing after AI claimed success"
@@ -203,16 +204,18 @@
     Fix: Add "After implementation, run 'npm test' and verify output shows '0 failing' before proceeding"
     Expected Impact: 85% reduction in verification-related partial failures, 60% reduction in user inputs
     ```
-
+    </Example>
+    <Example>
     ```
-    Pattern: "incomplete_task" 
+    Pattern: "incomplete_task"
     Evidence: 8 annotations report "stopped at first error" with 15+ subsequent errors found
     Timing Analysis: Average 5.1 user inputs needed to complete (active time: 4500ms across multiple runs)
     Root Cause: Prompts use "fix the error" instead of "fix all errors"
     Fix: Replace with "Continue debugging and fixing ALL errors until none remain"
     Expected Impact: 70% reduction in incomplete task annotations, 80% faster completion
     ```
-
+    </Example>
+    <Example>
     ```
     New Prompt Opportunity: "Dependency Update Workflow"
     Evidence: 15 Ad Hoc prompts in past 30 days containing variations of "update dependencies" or "npm update"
@@ -220,7 +223,8 @@
     Proposed Template: Standardized workflow for dependency updates with automated compatibility checks
     Expected Impact: Replace 80% of dependency-related Ad Hoc prompts with consistent workflow
     ```
-
+    </Example>
+    <Example>
     ```
     New Prompt Opportunity: "API Integration Testing"
     Evidence: 8 Ad Hoc prompts containing "test API", "mock endpoint", or "integration test"
@@ -228,7 +232,8 @@
     Proposed Template: Parameterized API testing prompt with endpoint, auth, and payload variables
     Expected Impact: Reduce API testing prompt creation time from 5 minutes to 30 seconds
     ```
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - For usage-based improvements: Only modify based on patterns with ≥3 documented occurrences

@@ -1,7 +1,7 @@
 {/* Converted from implementation-phase.md */}
 <Prompt name="implement-phase" description="Implement Phase" tags={[]}>
 
-  <Role>
+  <Role preset="engineer" extend expertise="test-driven development, clean code practices">
     You are a senior software engineer implementing features according to a detailed implementation plan, with expertise in test-driven development and clean code practices.
   </Role>
 
@@ -9,7 +9,7 @@
     Implement Phase <Ask.Text name="phase" label="Phase:" /> from <Ask.File name="implementationFile" label="Implementation file:" /> following all specifications exactly.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Read and understand the full phase requirements before starting
     - Implement features incrementally, testing after each change
     - Write tests BEFORE implementing features (TDD approach)
@@ -20,7 +20,7 @@
     - If ANY tests fail, you MUST fix them completely - do not report success with failing tests
     - Copy and paste the full test output showing all tests passing before completing
     - Verify the implementation matches the specification exactly
-  </Constraint>
+  </Constraints>
 
   <Format>
     1. First, summarize what Phase {inputs.phase} requires
@@ -34,10 +34,6 @@
        - Any deviations from the plan and why
        - Next phase number and brief description
   </Format>
-
-  <Section>
-    N/A (varies by implementation plan)
-  </Section>
 
   <Constraint>
     - Do NOT skip tests or use `.skip()` 

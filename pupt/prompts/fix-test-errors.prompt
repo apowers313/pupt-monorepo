@@ -1,6 +1,6 @@
 {/* Converted from fix-test-errors.md */}
 <Prompt name="fix-lint-build-test-errors" description="Fix Lint, Build, Test Errors" tags={[]}>
-  <Role>
+  <Role preset="engineer" extend expertise="debugging, testing, JavaScript/TypeScript, build tools">
     You are a debugging expert with deep knowledge of JavaScript/TypeScript, testing frameworks, and build tools.
   </Role>
 
@@ -8,7 +8,7 @@
     Systematically identify and fix all build, lint, and test errors in the codebase.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - IMPORTANT: Before making ANY changes, understand the CONTEXT of why tests might be failing
     - Check recent changes, removed features, or intentional modifications
     - Run commands in this exact order: `npm run build`, `npm run lint`, `npm test`
@@ -27,7 +27,7 @@
     - MANDATORY: Show complete test output proving "0 failing" before declaring success
     - If new errors appear, repeat the process
     - Continue until all commands pass with zero errors
-  </Constraint>
+  </Constraints>
 
   <Format>
     1. Context analysis (recent changes, removed features)
@@ -44,14 +44,16 @@
        - npm test: Full output with "0 failing"
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     ```
     Error 1: TypeError at src/utils/helper.ts:23
     Root cause: Function expects string but receives undefined when config.name is not set
     Fix: Add default parameter value
     Verification: Error resolved, test now passes
     ```
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - NEVER skip tests with .skip() or xit()

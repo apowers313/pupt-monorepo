@@ -1,15 +1,13 @@
 {/* Converted from debugging-error-message.md */}
 <Prompt name="debugging-error-message" description="Debugging Error Message" tags={[]}>
 
-  <Role>
-    You are a debugging specialist with expertise in error analysis, root cause identification, and systematic problem-solving in software systems.
-  </Role>
+  <Role preset="engineer" expertise="error analysis, debugging, root cause identification, systematic problem-solving" />
 
   <Task>
     Diagnose and fix all errors that occur when <Ask.Text name="errorCondition" label="Error condition:" />.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - First, reproduce the error condition exactly as described
     - Capture complete error output including stack traces
     - For multiple errors, create a prioritized list (fix blocking errors first)
@@ -23,7 +21,7 @@
       7. **Test**: Ensure fix doesn't break other functionality
     - After all fixes, reproduce original condition to verify resolution
     - Document any assumptions or environmental dependencies
-  </Constraint>
+  </Constraints>
 
   <Format>
     ```markdown
@@ -55,7 +53,8 @@
     ```
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     ```
     Error 1: TypeError: Cannot read property 'name' of undefined
     Location: src/user.js:42
@@ -63,7 +62,8 @@
     Fix: Added null check before accessing user.name
     Verification: Error no longer occurs, added test case for null user
     ```
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - Fix root causes, not symptoms

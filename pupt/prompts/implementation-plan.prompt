@@ -1,7 +1,7 @@
 {/* Converted from implementation-plan.md */}
 <Prompt name="implementation-plan" description="Implementation Plan" tags={[]}>
 
-  <Role>
+  <Role preset="architect" extend expertise="test-driven development, modular design">
     You are a senior software architect creating detailed implementation plans that balance pragmatism with best practices, specializing in test-driven development and modular design.
   </Role>
 
@@ -9,7 +9,7 @@
     Create a comprehensive, phased implementation plan for the design specified in <Ask.File name="designFile" label="Design file:" />.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Analyze the design document completely before planning
     - Break implementation into logical phases
     - The first phase should be a MVP and subsiquent phases should add incremental features
@@ -29,7 +29,7 @@
       - Code reuse and shared utilities
       - External libraries that solve common problems
       - Refactoring to reduce duplication
-  </Constraint>
+  </Constraints>
 
   <Format>
     Write the impleementation plan <Ask.ReviewFile name="planFile" label="Plan file:" />. Use this template for the implementation plan:
@@ -82,10 +82,6 @@
     - [Potential risk]: [Mitigation strategy]
     ```
   </Task>
-
-  <Section>
-    See template above
-  </Section>
 
   <Constraint>
     - Each phase must be independently testable

@@ -8,6 +8,7 @@ import {
   createEnvironment,
   PROPS,
   isPuptElement,
+  inferProviderFromModel,
 } from 'pupt-lib';
 import type {
   PuptElement,
@@ -85,9 +86,14 @@ function toEnvironmentContext(envConfig?: EnvironmentConfig): Record<string, unk
   const result: Record<string, unknown> = {};
 
   if (envConfig.llm) {
+    const model = envConfig.llm.model ?? 'unspecified';
+    let provider = envConfig.llm.provider;
+    if (!provider && model !== 'unspecified') {
+      provider = inferProviderFromModel(model) ?? undefined;
+    }
     const llm: Record<string, unknown> = {
-      model: envConfig.llm.model ?? 'unspecified',
-      provider: envConfig.llm.provider ?? 'unspecified',
+      model,
+      provider: provider ?? 'unspecified',
     };
     if (envConfig.llm.maxTokens !== undefined) llm.maxTokens = envConfig.llm.maxTokens;
     if (envConfig.llm.temperature !== undefined) llm.temperature = envConfig.llm.temperature;

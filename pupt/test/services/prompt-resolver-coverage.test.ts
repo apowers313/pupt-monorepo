@@ -422,8 +422,8 @@ describe('prompt-resolver coverage', () => {
         render: vi.fn().mockResolvedValue({
           text: 'Review output',
           postExecution: [
-            { type: 'reviewFile', path: '/src/app.ts', name: 'app.ts' },
-            { type: 'reviewFile', path: '/src/index.ts', name: 'index.ts' },
+            { type: 'reviewFile', file: '/src/app.ts' },
+            { type: 'reviewFile', file: '/src/index.ts' },
             { type: 'other', path: '/ignore.ts' },
           ],
         }),
@@ -454,8 +454,8 @@ describe('prompt-resolver coverage', () => {
       });
 
       expect(result.templateInfo.reviewFiles).toEqual([
-        { name: 'app.ts', value: '/src/app.ts' },
-        { name: 'index.ts', value: '/src/index.ts' },
+        { name: '/src/app.ts', value: '/src/app.ts' },
+        { name: '/src/index.ts', value: '/src/index.ts' },
       ]);
     });
 
@@ -466,7 +466,7 @@ describe('prompt-resolver coverage', () => {
         render: vi.fn().mockResolvedValue({
           text: 'Fallback output',
           postExecution: [
-            { type: 'reviewFile', path: '/src/util.ts' },
+            { type: 'reviewFile', file: '/src/util.ts' },
           ],
         }),
       };

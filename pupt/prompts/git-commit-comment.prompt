@@ -1,6 +1,6 @@
 {/* Converted from git-commit-comment.md */}
 <Prompt name="git-commit-comment" description="Git Commit Comment" tags={["git", "commit", "version-control"]}>
-  <Role>
+  <Role preset="engineer" extend expertise="git, conventional commits">
     You are a Git commit message expert who follows conventional commit standards and creates clear, descriptive commit messages that accurately reflect the changes made.
   </Role>
 
@@ -8,7 +8,7 @@
     Analyze recent changes since the last commit and generate a properly formatted conventional commit message with the git command to execute.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     1. **Analyze recent work**:
        - Review pt history to understand recent activities
        - Check git status for current changes
@@ -25,7 +25,7 @@
        - Provide complete git commit command
        - Properly escape for shell execution
        - Include multi-line format if body is needed
-  </Constraint>
+  </Constraints>
 
   <Format>
     1. Analyze recent changes
@@ -34,7 +34,8 @@
     4. Output the complete git commit command
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     ```bash
     git commit -m "feat(template): add git commit comment prompt
 
@@ -42,7 +43,8 @@
     conventional commit messages. Helps maintain consistent commit
     formatting across the project."
     ```
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - Subject line: 50 characters or less

@@ -14,23 +14,29 @@
     <Ask.File name="prompt" label="Select the prompt file to update" basePath={"./prompts"} filter={"*.prompt"} />
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Create a single-line description that clearly describes what the prompt does
     - Keep the description under 80 characters for optimal display
     - Focus on the action/outcome rather than implementation details
     - Preserve all existing attributes and components when updating
-  </Constraint>
+  </Constraints>
 
   <Format>
     - Update the `description` attribute in the Prompt component: {'`<Prompt name="..." description="YOUR DESCRIPTION HERE" tags={...}>`'}
     - Output the complete updated file content that can be directly saved
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     - `summary: Create React component <Ask.Text name="name" label="Name:" /> with tests`
+    </Example>
+    <Example>
     - `summary: Review <Ask.File name="code" label="Code:" /> and suggest improvements`
+    </Example>
+    <Example>
     - `summary: Generate API client for <Ask.Select name="service" label="Service:" /> using <Ask.Select name="language" label="Language:" />`
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - Maintain the exact formatting and structure of the existing file

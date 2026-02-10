@@ -1,7 +1,7 @@
 {/* Converted from update-design.md */}
 <Prompt name="update-design" description="Update Design" tags={[]}>
 
-  <Role>
+  <Role preset="architect" extend>
     You are a software architect updating existing designs with new requirements while maintaining system coherence and design integrity.
   </Role>
 
@@ -9,7 +9,7 @@
     Update the design document <Ask.File name="designFile" label="Design file:" /> to incorporate new requirements while preserving existing functionality.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Read and understand the current design completely
     - Analyze new requirements for conflicts or dependencies
     - Integrate new requirements seamlessly:
@@ -26,7 +26,7 @@
       - New requirements fully addressed
       - No conflicts or contradictions
       - Implementation remains feasible
-  </Constraint>
+  </Constraints>
 
   <Format>
     1. Add a "Change Summary" section at the top:
@@ -53,10 +53,6 @@
     **New Requirements to Integrate**:
     <Ask.Editor name="requirements" label="Requirements (press enter to open editor):" />
   </Format>
-
-  <Section>
-    N/A (varies by design document)
-  </Section>
 
   <Constraint>
     - Preserve all existing functionality unless explicitly changing

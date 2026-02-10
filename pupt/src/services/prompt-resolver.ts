@@ -84,9 +84,9 @@ export async function resolvePrompt(options: ResolvePromptOptions): Promise<Reso
 
   const reviewFiles = renderResult.postExecution
     ?.filter((a: { type: string }) => a.type === 'reviewFile')
-    .map((a: { type: string; path?: string; name?: string }) => ({
-      name: a.name || a.path || '',
-      value: a.path || '',
+    .map((a: { type: string; file?: string }) => ({
+      name: a.file || '',
+      value: a.file || '',
     }));
 
   return {

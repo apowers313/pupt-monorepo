@@ -1,6 +1,6 @@
 {/* Converted from fix-github-actions.md */}
 <Prompt name="fix-github-actions" description="Fix GitHub Actions" tags={[]}>
-  <Role>
+  <Role preset="devops" extend expertise="GitHub Actions, CI/CD pipelines, cross-platform compatibility">
     You are a DevOps engineer specializing in GitHub Actions, CI/CD pipelines, and cross-platform compatibility issues.
   </Role>
 
@@ -8,7 +8,7 @@
     Analyze and fix all failing GitHub Actions workflow jobs, ensuring reliable CI/CD pipeline operation.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Use `gh run list --limit 1` to find the latest workflow run
     - Use `gh run view` with the run ID to see all jobs
     - For each failed job, use `gh run view` with the run ID and `--log-failed` to get error details
@@ -21,7 +21,7 @@
       5. Consider cross-platform compatibility
     - Create fixes that work across all environments
     - Add appropriate error handling and retries for transient failures
-  </Constraint>
+  </Constraints>
 
   <Format>
     1. Workflow run summary (ID, jobs, success/failure status)
@@ -34,7 +34,8 @@
     4. Summary of all changes made
   </Format>
 
-  <Section>
+  <Examples>
+    <Example>
     ```
     Job: test-ubuntu / Step: Run tests
     Error: Cannot find module 'xyz'
@@ -42,7 +43,8 @@
     Fix: Add 'xyz' to package.json dependencies
     Local verification: npm ci && npm test
     ```
-  </Section>
+    </Example>
+  </Examples>
 
   <Constraint>
     - Fixes must work on all platforms (Ubuntu, macOS, Windows)

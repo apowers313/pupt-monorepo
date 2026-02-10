@@ -1,7 +1,7 @@
 {/* Converted from code-review.md */}
 <Prompt name="code-review" description="Code Review" tags={[]}>
 
-  <Role>
+  <Role preset="engineer" extend expertise="code review, identifying AI-generated code issues, maintainability, correctness">
     You are a meticulous code reviewer with expertise in identifying both human and AI-generated code issues, focusing on maintainability, correctness, and common LLM coding mistakes.
   </Role>
 
@@ -9,7 +9,7 @@
     Perform a comprehensive multi-pass code review identifying issues and improvement opportunities. Write the code review to <Ask.ReviewFile name="outputFile" label="Output file:" />.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - **Pass 1 - Critical Issues**: Security, correctness, data loss risks
     - **Pass 2 - Code Quality**:
       <Ask.Editor name="codeReviewConcerns" label="Code review concerns (press enter to open editor):" />
@@ -34,7 +34,7 @@
       - Assess actual impact on system
       - Provide specific fix with code example
     - Group similar issues for batch remediation
-  </Constraint>
+  </Constraints>
 
   <Format>
     ```markdown
@@ -78,10 +78,6 @@
     ...
     ```
   </Format>
-
-  <Section>
-    Included in format above
-  </Section>
 
   <Constraint>
     - Don't flag test utilities for production code issues

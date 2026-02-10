@@ -10,17 +10,14 @@
 
   <Constraint>
     - Provide accurate, helpful, and actionable responses
-    - If the task is ambiguous, ask clarifying questions before proceeding
     - Use appropriate formatting (code blocks, lists, tables) based on content type
   </Constraint>
+
+  <WhenUncertain action="ask" />
 
   <Format>
     Match the response format to the task type - use structured output for technical tasks, narrative for explanations, and step-by-step instructions for procedures.
   </Format>
-
-  <Section>
-    N/A (varies by request)
-  </Section>
 
   <Constraint>
     Stay focused on the specific request without adding unnecessary information unless it directly supports the main objective.

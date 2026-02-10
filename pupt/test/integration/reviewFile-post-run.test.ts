@@ -112,7 +112,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
   async function setupPuptServiceMock(
     promptName: string,
     renderedText: string,
-    reviewFiles: Array<{ type: string; path: string; name?: string }> = []
+    reviewFiles: Array<{ type: string; file: string }> = []
   ) {
     const { PuptService } = await import('../../src/services/pupt-service.js');
     const mockSource = {
@@ -181,7 +181,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       setupPuptServiceMock(
         'generate-report',
         `Generate a report and save to ${reportPath}`,
-        [{ type: 'reviewFile', path: reportPath, name: 'outputFile' }]
+        [{ type: 'reviewFile', file: reportPath }]
       );
 
       // Mock user declining the defaultCmdOptions and confirming review
@@ -213,8 +213,8 @@ describe('ReviewFile Post-Run Integration Tests', () => {
         'process-files',
         `Process ${inputPath} and save to ${outputPath}`,
         [
-          { type: 'reviewFile', path: inputPath, name: 'inputFile' },
-          { type: 'reviewFile', path: outputPath, name: 'outputFile' },
+          { type: 'reviewFile', file: inputPath },
+          { type: 'reviewFile', file: outputPath },
         ]
       );
 
@@ -243,7 +243,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       setupPuptServiceMock(
         'report',
         `Generate report to ${reportPath}`,
-        [{ type: 'reviewFile', path: reportPath, name: 'outputFile' }]
+        [{ type: 'reviewFile', file: reportPath }]
       );
 
       // Mock user declining review
@@ -266,7 +266,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       setupPuptServiceMock(
         'create',
         `Create new file at ${nonExistentPath}`,
-        [{ type: 'reviewFile', path: nonExistentPath, name: 'newFile' }]
+        [{ type: 'reviewFile', file: nonExistentPath }]
       );
 
       // Run the command
@@ -294,7 +294,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       setupPuptServiceMock(
         'report',
         'Generate report',
-        [{ type: 'reviewFile', path: reportPath, name: 'outputFile' }]
+        [{ type: 'reviewFile', file: reportPath }]
       );
 
       // Mock user confirming review
@@ -315,7 +315,7 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       setupPuptServiceMock(
         'report',
         'Generate report',
-        [{ type: 'reviewFile', path: reportPath, name: 'outputFile' }]
+        [{ type: 'reviewFile', file: reportPath }]
       );
 
       // Mock user confirming review
@@ -341,8 +341,8 @@ describe('ReviewFile Post-Run Integration Tests', () => {
         'process',
         'Process files',
         [
-          { type: 'reviewFile', path: file1Path, name: 'file1' },
-          { type: 'reviewFile', path: file2Path, name: 'file2' },
+          { type: 'reviewFile', file: file1Path },
+          { type: 'reviewFile', file: file2Path },
         ]
       );
 

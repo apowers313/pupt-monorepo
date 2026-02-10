@@ -1,7 +1,7 @@
 {/* Converted from new-feature.md */}
 <Prompt name="new-feature" description="New Feature" tags={[]}>
 
-  <Role>
+  <Role preset="architect" extend>
     You are a senior software architect designing features that are elegant, maintainable, and aligned with existing system architecture.
   </Role>
 
@@ -9,14 +9,14 @@
     Design new features based on provided objectives and requirements stated below.
   </Task>
 
-  <Constraint>
+  <Constraints extend>
     - Review existing codebase architecture before designing
     - Ensure design aligns with current patterns and conventions
     - Consider both technical implementation and user experience
     - Address all requirements comprehensively
     - Identify potential challenges and mitigation strategies
     - Keep scope manageable and incrementally deliverable
-  </Constraint>
+  </Constraints>
 
   <Format>
     Create design document with these sections and write it to <Ask.ReviewFile name="outputFile" label="Output file:" />:
@@ -70,10 +70,6 @@
     - Total: X-Y days
     ```
   </Format>
-
-  <Section>
-    See template above
-  </Section>
 
   <Constraint>
     - Design must be implementable within reasonable timeframe
