@@ -73,7 +73,7 @@ describe('component file conventions', () => {
       const basename = path.basename(f);
       const relPath = path.relative(COMPONENTS_DIR, f);
       // Exclude barrel files, utility files, and preset data files
-      return basename !== 'index.ts' && basename !== 'utils.ts' && basename !== 'manifest.ts' && !relPath.startsWith('presets/');
+      return basename !== 'index.ts' && basename !== 'utils.ts' && basename !== 'manifest.ts' && !relPath.startsWith(`presets${path.sep}`);
     });
 
     for (const file of componentFiles) {
