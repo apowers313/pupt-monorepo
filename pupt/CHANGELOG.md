@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/apowers313/pupt/compare/v2.1.1...v2.2.0) (2026-02-10)
+
+
+### Features
+
+* upgrade pupt-lib and use new prompt components ([52b2072](https://github.com/apowers313/pupt/commit/52b2072bc705ed80c50513762ff341d5efa2cc1d))
+
 ## [2.1.1](https://github.com/apowers313/pupt/compare/v2.1.0...v2.1.1) (2026-02-08)
 
 
