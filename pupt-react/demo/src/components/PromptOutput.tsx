@@ -5,7 +5,6 @@ import {
   Title,
   Button,
   Alert,
-  Center,
   Loader,
   Code,
   ScrollArea,
@@ -69,7 +68,10 @@ export function PromptOutput() {
       }) => (
         <Stack h="100%" gap="sm">
           <Group justify="space-between">
-            <Title order={4}>Rendered Output</Title>
+            <Group gap="xs">
+              <Title order={4}>Rendered Output</Title>
+              {isLoading && <Loader size="xs" />}
+            </Group>
             {output && (
               <Button
                 variant="light"
@@ -97,12 +99,6 @@ export function PromptOutput() {
             >
               {error.message}
             </Alert>
-          )}
-
-          {isLoading && (
-            <Center py="xl">
-              <Loader size="sm" />
-            </Center>
           )}
 
           {pendingInputs.length > 0 && (

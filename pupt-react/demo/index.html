@@ -4,14 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>JSX Prompt Demo</title>
-    <!-- Import map for dynamic ES module evaluation in pupt-lib -->
+    <!-- Import map for dynamic ES module evaluation in pupt-lib.
+         Version placeholders (__PUPT_LIB_VERSION__, __ZOD_VERSION__) are
+         replaced at build/dev time by the Vite plugin in demo/vite.config.ts
+         to match the installed versions from node_modules. -->
     <script type="importmap">
       {
         "imports": {
-          "pupt-lib": "https://unpkg.com/pupt-lib@1.2.6/dist/index.js",
-          "pupt-lib/jsx-runtime": "https://unpkg.com/pupt-lib@1.2.6/dist/jsx-runtime/index.js",
-          "zod": "https://unpkg.com/zod@3.24.2/lib/index.mjs",
-          "minisearch": "https://unpkg.com/minisearch@7.1.1/dist/es/index.js"
+          "pupt-lib": "https://unpkg.com/pupt-lib@__PUPT_LIB_VERSION__/dist/index.js",
+          "pupt-lib/jsx-runtime": "https://unpkg.com/pupt-lib@__PUPT_LIB_VERSION__/dist/jsx-runtime/index.js",
+          "zod": "https://unpkg.com/zod@__ZOD_VERSION__/index.js"
         }
       }
     </script>
