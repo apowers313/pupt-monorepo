@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/apowers313/pupt-lib/compare/v1.3.3...v1.3.4) (2026-02-10)
+
+
+### Bug Fixes
+
+* resolution of esm imports ([1a2c5ca](https://github.com/apowers313/pupt-lib/commit/1a2c5ca340dfc4e329655db17fea19419a6be59a))
+
 ## [1.3.3](https://github.com/apowers313/pupt-lib/compare/v1.3.2...v1.3.3) (2026-02-10)
 
 

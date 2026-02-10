@@ -1,6 +1,6 @@
 {
   "name": "pupt-lib",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "TypeScript library for creating AI prompts using JSX syntax",
   "license": "MIT",
   "author": "",
