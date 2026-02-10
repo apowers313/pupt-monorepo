@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/apowers313/pupt-react/compare/v1.1.0...v1.1.1) (2026-02-10)
+
+
+### Bug Fixes
+
+* update pupt-lib, fix rendering glitch ([a61f806](https://github.com/apowers313/pupt-react/commit/a61f806d0cf613f5d60a937b069383e3a56ad97f))
+
 # [1.1.0](https://github.com/apowers313/pupt-react/compare/v1.0.0...v1.1.0) (2026-02-09)
 
 
