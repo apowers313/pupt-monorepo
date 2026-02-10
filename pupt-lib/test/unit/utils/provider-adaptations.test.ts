@@ -43,7 +43,7 @@ describe('PROVIDER_ADAPTATIONS', () => {
     const unspecified = PROVIDER_ADAPTATIONS['unspecified'];
     expect(unspecified.rolePrefix).toBe('You are ');
     expect(unspecified.constraintStyle).toBe('positive');
-    expect(unspecified.formatPreference).toBe('xml');
+    expect(unspecified.formatPreference).toBe('markdown');
     expect(unspecified.instructionStyle).toBe('structured');
   });
 

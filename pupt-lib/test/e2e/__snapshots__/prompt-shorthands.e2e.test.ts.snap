@@ -11,7 +11,7 @@ exports[`Prompt shorthand disable props e2e > should render with multiple shorth
 Summarize this document
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>"
 `;
 
@@ -23,7 +23,7 @@ You are a helpful Assistant. You have expertise in general help.
 Summarize this document
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>"
 `;
 
@@ -46,7 +46,7 @@ exports[`Prompt shorthand disable props e2e > should render with noRole through 
 Summarize this document
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused

@@ -14,7 +14,7 @@ You are a helpful Software Engineer. You have expertise in software development,
 Review code
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -31,7 +31,7 @@ You are a helpful Software Engineer. You have expertise in TypeScript.
 Review code
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -48,7 +48,7 @@ You are a helpful Assistant. You have expertise in general help.
 Summarize this document
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -74,7 +74,7 @@ Do something
 MUST: Be awesome
 </constraint>
 <format>
-Output format: xml
+Output format: markdown
 </format>"
 `;
 
@@ -86,7 +86,7 @@ You are an expert in everything
 Do something
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -100,7 +100,7 @@ exports[`Prompt defaults e2e > snapshots > should match snapshot: defaults objec
 Do something
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -117,7 +117,7 @@ You are a helpful Software Engineer. You have expertise in software development,
 Review code
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -134,7 +134,7 @@ You are a helpful Software Engineer. You have expertise in TypeScript, React.
 Review code
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused
@@ -151,7 +151,7 @@ You are a helpful Assistant. You have expertise in general help.
 Do the thing
 </task>
 <format>
-Output format: xml
+Output format: markdown
 </format>
 <constraints>
 - Keep responses concise and focused

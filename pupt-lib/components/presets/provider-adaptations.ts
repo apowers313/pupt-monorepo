@@ -74,7 +74,7 @@ export const PROVIDER_ADAPTATIONS: Record<LlmProvider, ProviderAdaptations> = {
   'unspecified': {
     rolePrefix: 'You are ',
     constraintStyle: 'positive',
-    formatPreference: 'xml',
+    formatPreference: 'markdown',
     instructionStyle: 'structured',
   },
 };
