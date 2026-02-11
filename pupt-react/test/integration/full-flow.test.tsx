@@ -76,7 +76,7 @@ function renderApp() {
     <MantineProvider>
       <PuptLibraryProvider>
         <PuptProvider>
-          <DemoProvider>
+          <DemoProvider builtinPromptMeta={new Map()}>
             <Layout />
           </DemoProvider>
         </PuptProvider>
@@ -90,7 +90,7 @@ function renderOutputOnly() {
     <MantineProvider>
       <PuptLibraryProvider>
         <PuptProvider>
-          <DemoProvider>
+          <DemoProvider builtinPromptMeta={new Map()}>
             <PromptOutput />
           </DemoProvider>
         </PuptProvider>
@@ -241,13 +241,12 @@ describe("Example Prompts Validation", () => {
 
   it("should have valid format for all examples", () => {
     EXAMPLES.forEach((example) => {
-      expect(example.name).toBeDefined();
-      expect(typeof example.name).toBe("string");
-      expect(example.description).toBeDefined();
-      expect(typeof example.description).toBe("string");
       expect(example.source).toBeDefined();
       expect(typeof example.source).toBe("string");
       expect(["jsx", "prompt"]).toContain(example.format);
+      // Prompt metadata (name, description) should be in the source itself
+      expect(example.source).toMatch(/name="/);
+      expect(example.source).toMatch(/description="/);
     });
   });
 

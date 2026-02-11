@@ -1,11 +1,12 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { MantineProvider } from "@mantine/core";
 import { PuptProvider, PuptLibraryProvider, usePuptLibraryContext } from "pupt-react";
 import type { SearchablePrompt } from "pupt-react";
 import { theme } from "./theme";
 import { Layout } from "./components";
 import { DemoProvider } from "./context/DemoContext";
-import { BUILTIN_PROMPTS } from "./data/builtinPrompts";
+import { parseBuiltinPrompts } from "./data/builtinPrompts";
+import type { BuiltinPromptMeta } from "./data/builtinPrompts";
 
 /**
  * Inner component that merges built-in + library prompts for PuptProvider.
@@ -13,6 +14,15 @@ import { BUILTIN_PROMPTS } from "./data/builtinPrompts";
  */
 function AppInner() {
   const { prompts: libraryPrompts } = usePuptLibraryContext();
+  const [builtinPrompts, setBuiltinPrompts] = useState<SearchablePrompt[]>([]);
+  const [builtinPromptMeta, setBuiltinPromptMeta] = useState<Map<string, BuiltinPromptMeta>>(new Map());
+
+  useEffect(() => {
+    parseBuiltinPrompts().then(({ prompts, meta }) => {
+      setBuiltinPrompts(prompts);
+      setBuiltinPromptMeta(meta);
+    });
+  }, []);
 
   // Merge built-in prompts with library-discovered prompts for search indexing
   const allPrompts: SearchablePrompt[] = useMemo(() => {
@@ -22,12 +32,12 @@ function AppInner() {
       tags: p.tags,
       library: p.library,
     }));
-    return [...BUILTIN_PROMPTS, ...librarySearchable];
-  }, [libraryPrompts]);
+    return [...builtinPrompts, ...librarySearchable];
+  }, [builtinPrompts, libraryPrompts]);
 
   return (
     <PuptProvider prompts={allPrompts}>
-      <DemoProvider>
+      <DemoProvider builtinPromptMeta={builtinPromptMeta}>
         <Layout />
       </DemoProvider>
     </PuptProvider>

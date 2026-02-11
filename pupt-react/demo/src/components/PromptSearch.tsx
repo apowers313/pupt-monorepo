@@ -4,11 +4,11 @@ import { IconSearch } from "@tabler/icons-react";
 import { usePupt, usePromptSearch, usePuptLibraryContext } from "pupt-react";
 import type { SearchablePrompt } from "pupt-react";
 import { useDemoContext } from "../context/DemoContext";
-import { BUILTIN_PROMPT_META } from "../data/builtinPrompts";
 import { wrapJsx } from "../util/jsxWrapper";
 
 interface DisplayPrompt {
   name: string;
+  title: string;
   description: string;
   library: string;
   tags: string[];
@@ -18,7 +18,7 @@ export function PromptSearch() {
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
-  const { selectPrompt } = useDemoContext();
+  const { selectPrompt, builtinPromptMeta } = useDemoContext();
   const { prompts: allIndexedPrompts } = usePupt();
   const { setQuery, results } = usePromptSearch({ debounce: 150 });
   const { prompts: libraryPrompts } = usePuptLibraryContext();
@@ -30,24 +30,23 @@ export function PromptSearch() {
   const displayPrompts = useMemo((): DisplayPrompt[] => {
     const hasQuery = inputValue.trim() !== "";
 
-    if (!hasQuery) {
-      // Show all prompts from the search engine index
-      return allIndexedPrompts.map((p: SearchablePrompt) => ({
+    const toDisplay = (p: SearchablePrompt): DisplayPrompt => {
+      const meta = builtinPromptMeta.get(p.name);
+      return {
         name: p.name,
+        title: meta?.title ?? p.name,
         description: p.description ?? "",
         library: p.library ?? "unknown",
         tags: p.tags ?? [],
-      }));
+      };
+    };
+
+    if (!hasQuery) {
+      return allIndexedPrompts.map(toDisplay);
     }
 
-    // Show search results from the search engine
-    return results.map((r) => ({
-      name: r.prompt.name,
-      description: r.prompt.description ?? "",
-      library: r.prompt.library ?? "unknown",
-      tags: r.prompt.tags ?? [],
-    }));
-  }, [allIndexedPrompts, results, inputValue]);
+    return results.map((r) => toDisplay(r.prompt));
+  }, [allIndexedPrompts, results, inputValue, builtinPromptMeta]);
 
   // Group by library
   const grouped = useMemo(() => {
@@ -66,7 +65,7 @@ export function PromptSearch() {
 
     if (prompt.library === "built-in") {
       // Load source from built-in prompt metadata
-      const meta = BUILTIN_PROMPT_META.get(name);
+      const meta = builtinPromptMeta.get(name);
       if (meta) {
         const needsWrapping = meta.format === "jsx" && !meta.source.includes("export default");
         const source = needsWrapping ? wrapJsx(meta.source) : meta.source;
@@ -90,7 +89,7 @@ export function PromptSearch() {
       {prompts.map((p) => (
         <Combobox.Option key={`${library}-${p.name}`} value={p.name}>
           <Group gap="xs" wrap="nowrap">
-            <Text size="sm" fw={500} style={{ whiteSpace: "nowrap" }}>{p.name}</Text>
+            <Text size="sm" fw={500} style={{ whiteSpace: "nowrap" }}>{p.title}</Text>
             {p.description && (
               <Text size="xs" c="dimmed" truncate>{p.description}</Text>
             )}

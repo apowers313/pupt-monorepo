@@ -1,26 +1,29 @@
 export type ExampleFormat = "jsx" | "prompt";
 
 export interface PromptExample {
-  name: string;
-  description: string;
   format: ExampleFormat;
   source: string;
 }
 
 export const EXAMPLES: PromptExample[] = [
   {
-    name: "Hello World (.prompt)",
-    description: "A basic prompt with a single task — auto-generates Role, Format, Constraints, and Guardrails",
     format: "prompt",
-    source: `<Prompt name="greeting">
+    source: `<Prompt
+  name="greeting"
+  title="Hello World"
+  description="A basic prompt with a single task — auto-generates Role, Format, Constraints, and Guardrails"
+>
   <Task>Say hello to the user in a friendly way.</Task>
 </Prompt>`,
   },
   {
-    name: "Role & Audience (.prompt)",
-    description: "Tailored role, audience level, and tone for targeted content",
     format: "prompt",
-    source: `<Prompt name="indexing-guide" noRole>
+    source: `<Prompt
+  name="indexing-guide"
+  title="Role & Audience"
+  description="Tailored role, audience level, and tone for targeted content"
+  noRole
+>
   <Role preset="engineer" experience="senior" domain="databases" />
   <Task>
     Explain database indexing strategies — covering B-tree, hash,
@@ -43,10 +46,13 @@ export const EXAMPLES: PromptExample[] = [
 </Prompt>`,
   },
   {
-    name: "Few-Shot Examples (.prompt)",
-    description: "Teach a model by example — positive and negative few-shot patterns",
     format: "prompt",
-    source: `<Prompt name="sentiment-classifier" noRole>
+    source: `<Prompt
+  name="sentiment-classifier"
+  title="Few-Shot Examples"
+  description="Teach a model by example — positive and negative few-shot patterns"
+  noRole
+>
   <Task>
     Classify the sentiment of the given text as POSITIVE, NEGATIVE, or NEUTRAL.
     Return only the label — no explanation.
@@ -73,15 +79,26 @@ export const EXAMPLES: PromptExample[] = [
 </Prompt>`,
   },
   {
-    name: "Step-by-Step Reasoning (.prompt)",
-    description: "Structured reasoning with objectives, steps, and chain-of-thought",
     format: "prompt",
-    source: `<Prompt name="architecture-eval" noRole>
+    source: `<Prompt
+  name="architecture-eval"
+  title="Step-by-Step Reasoning"
+  description="Structured reasoning with objectives, steps, and chain-of-thought"
+  noRole
+>
   <Role preset="architect" />
   <Task>
     Evaluate the proposed migration from a monolithic Node.js application
     to a microservices architecture.
   </Task>
+  <Context>
+    Current system: E-commerce platform serving 50K daily active users.
+    Pain points: 6-minute build times, single PostgreSQL database bottleneck
+    during flash sales, entire app must redeploy for minor checkout changes.
+    Team: 12 developers across 3 squads (catalog, checkout, fulfillment).
+    Infrastructure: AWS, single RDS PostgreSQL instance, deployed as a
+    Docker monolith on ECS.
+  </Context>
   <Objective
     primary="Determine whether microservices are the right choice for this system"
     secondary={["Identify migration risks", "Estimate complexity"]}
@@ -100,48 +117,54 @@ export const EXAMPLES: PromptExample[] = [
 </Prompt>`,
   },
   {
-    name: "Rich Inputs (.prompt)",
-    description: "Collect diverse user inputs — text, select, date, rating, and conditionals",
     format: "prompt",
-    source: `<Prompt name="retro-generator">
+    source: `<Prompt
+  name="travel-planner"
+  title="Rich Inputs"
+  description="Collect diverse user inputs — text, select, date, rating, and conditionals"
+>
   <Task>
-    Generate a sprint retrospective report for
-    <Ask.Text name="team" label="Team name" required />.
+    Create a travel itinerary for a trip to
+    <Ask.Text name="destination" label="Destination" required />.
   </Task>
   <Context>
-    Sprint: <Ask.Text name="sprint" label="Sprint name or number" required />
-    Duration: <Ask.Date name="start" label="Sprint start date" /> to <Ask.Date name="end" label="Sprint end date" />
-    Overall rating: <Ask.Rating name="rating" label="How did the sprint go? (1-5)" />
+    Traveler: <Ask.Text name="traveler" label="Who is traveling? (e.g. couple, family with kids, solo)" required />
+    Travel dates: <Ask.Date name="start" label="Departure date" /> to <Ask.Date name="end" label="Return date" />
+    Activity level: <Ask.Rating name="intensity" label="Desired pace (1=relaxed, 5=packed schedule)" />
 
-    Focus areas: <Ask.MultiSelect name="areas" label="What areas to cover?">
-      <Ask.Option value="velocity">Velocity &amp; throughput</Ask.Option>
-      <Ask.Option value="quality">Code quality &amp; bugs</Ask.Option>
-      <Ask.Option value="collaboration">Team collaboration</Ask.Option>
-      <Ask.Option value="process">Process improvements</Ask.Option>
+    Interests: <Ask.MultiSelect name="interests" label="What interests you?">
+      <Ask.Option value="history">History &amp; culture</Ask.Option>
+      <Ask.Option value="food">Food &amp; dining</Ask.Option>
+      <Ask.Option value="nature">Nature &amp; outdoors</Ask.Option>
+      <Ask.Option value="shopping">Shopping &amp; markets</Ask.Option>
     </Ask.MultiSelect>
 
-    Retrospective style: <Ask.Select name="style" label="Retro format" default="start-stop-continue">
-      <Ask.Option value="start-stop-continue">Start / Stop / Continue</Ask.Option>
-      <Ask.Option value="4ls">4Ls (Liked, Learned, Lacked, Longed for)</Ask.Option>
-      <Ask.Option value="mad-sad-glad">Mad / Sad / Glad</Ask.Option>
+    Travel style: <Ask.Select name="style" label="Budget level" default="mid-range">
+      <Ask.Option value="budget">Budget</Ask.Option>
+      <Ask.Option value="mid-range">Mid-range</Ask.Option>
+      <Ask.Option value="luxury">Luxury</Ask.Option>
     </Ask.Select>
-    <Ask.Confirm name="includeMetrics" label="Include velocity metrics?" silent />
+    <Ask.Confirm name="includePacking" label="Include packing suggestions?" silent />
   </Context>
-  <If when="=includeMetrics">
-    <Constraint>Include a velocity trend section with charts described in markdown</Constraint>
+  <If when="=includePacking">
+    <Constraint>End with a packing checklist tailored to the destination and activities</Constraint>
   </If>
-  <Constraint>Keep action items specific and assignable</Constraint>
+  <Constraint>Organize the itinerary day by day</Constraint>
   <Format>
-    Use the selected retrospective format as the main structure.
-    End with a prioritized list of action items.
+    For each day include:
+    - Morning, afternoon, and evening activities
+    - Restaurant or food recommendations
+    - Estimated costs in local currency
   </Format>
 </Prompt>`,
   },
   {
-    name: "Conditional Logic (.prompt)",
-    description: "Use If statements to conditionally include content",
     format: "prompt",
-    source: `<Prompt name="adaptive-guide">
+    source: `<Prompt
+  name="adaptive-guide"
+  title="Conditional Logic"
+  description="Use If statements to conditionally include content"
+>
   <Task>Create a guide about React state management.</Task>
   <Context>
     Target audience: <Ask.Select name="audience" label="Target audience" default="developer">
@@ -176,8 +199,6 @@ export const EXAMPLES: PromptExample[] = [
 </Prompt>`,
   },
   {
-    name: "Data & Iteration (.tsx)",
-    description: "ForEach loops, Code blocks, Data sections, and a custom child-processing component",
     format: "jsx",
     source: `import { Prompt, Task, Context, Section, Code, Data, ForEach, Component, Constraint, Format } from 'pupt-lib';
 import { z } from 'zod';
@@ -211,7 +232,11 @@ const codeSnippet = \`export function authenticate(req, res, next) {
 }\`;
 
 export default (
-  <Prompt name="code-review">
+  <Prompt
+    name="code-review"
+    title="Data & Iteration"
+    description="ForEach loops, Code blocks, Data sections, and a custom child-processing component"
+  >
     <Task>
       Review the pull request "Add user authentication middleware" and provide actionable feedback.
     </Task>
@@ -250,10 +275,16 @@ export default (
 );`,
   },
   {
-    name: "Guardrails & Safety (.prompt)",
-    description: "Layered safety with guardrails, edge cases, fallbacks, and success criteria",
     format: "prompt",
-    source: `<Prompt name="medical-info" noRole noGuardrails noConstraints noSuccessCriteria>
+    source: `<Prompt
+  name="medical-info"
+  title="Guardrails & Safety"
+  description="Layered safety with guardrails, edge cases, fallbacks, and success criteria"
+  noRole
+  noGuardrails
+  noConstraints
+  noSuccessCriteria
+>
   <Role title="Medical Information Assistant"
         expertise={["general health literacy", "evidence-based medicine"]}
         experience="senior" />
@@ -284,8 +315,6 @@ export default (
 </Prompt>`,
   },
   {
-    name: "Custom Component (.tsx)",
-    description: "Async component with GitHub API, Ask.Text variable binding, and Style",
     format: "jsx",
     source: `import { Prompt, Task, Context, Constraint, Component, Ask, Style } from 'pupt-lib';
 import { z } from 'zod';
@@ -296,7 +325,8 @@ class GitHubProfile extends Component {
     username: z.string().optional(),
   });
 
-  async render({ username = "octocat" }) {
+  async render({ username }) {
+    username = username || "octocat";
     const res = await fetch(\`https://api.github.com/users/\${username}\`);
     const user = await res.json();
     const joinDate = new Date(user.created_at).toLocaleDateString();
@@ -314,7 +344,11 @@ Repos: \${user.public_repos} | Followers: \${user.followers}\`;
 // Ask.Text with name="username" creates a variable
 // that is passed as a prop to GitHubProfile
 export default (
-  <Prompt name="github-summary">
+  <Prompt
+    name="github-summary"
+    title="Custom Component"
+    description="Async component with GitHub API, Ask.Text variable binding, and Style"
+  >
     <Task>
       Write a professional developer profile summary for
       <Ask.Text name="username" label="GitHub username" default="octocat" />.
@@ -329,14 +363,13 @@ export default (
 );`,
   },
   {
-    name: "Production Prompt (.tsx)",
-    description: "Deployment-ready prompt with versioning, references, specialization, and quality layers",
     format: "jsx",
     source: `import { Prompt, Task, Context, Role, Constraint, Format, Specialization, References, Reference } from 'pupt-lib';
 
 export default (
   <Prompt
     name="api-doc-generator"
+    title="Production Prompt"
     version="2.1.0"
     description="Generates REST API documentation from endpoint specifications"
     tags={["documentation", "api", "openapi"]}

@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useCallback, type ReactNode } from
 import { createRuntimeConfig } from "pupt-react";
 import type { EnvironmentContext, RuntimeConfig, PuptElement } from "pupt-react";
 import { DEFAULT_EXAMPLE, type ExampleFormat } from "../data/examples";
+import type { BuiltinPromptMeta } from "../data/builtinPrompts";
 
 /**
  * Discriminated union for the currently active prompt.
@@ -22,6 +23,7 @@ interface DemoContextValue {
   setEnvironmentOverrides: (overrides: Partial<EnvironmentContext>) => void;
   runtimeSnapshot: RuntimeConfig;
   refreshRuntime: () => void;
+  builtinPromptMeta: Map<string, BuiltinPromptMeta>;
 }
 
 const DemoContext = createContext<DemoContextValue | null>(null);
@@ -34,7 +36,12 @@ export function useDemoContext(): DemoContextValue {
   return ctx;
 }
 
-export function DemoProvider({ children }: { children: ReactNode }) {
+interface DemoProviderProps {
+  children: ReactNode;
+  builtinPromptMeta: Map<string, BuiltinPromptMeta>;
+}
+
+export function DemoProvider({ children, builtinPromptMeta }: DemoProviderProps) {
   const [activePrompt, setActivePrompt] = useState<ActivePrompt>({
     kind: "source",
     source: DEFAULT_EXAMPLE.source,
@@ -75,6 +82,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setSource, setFormat,
       environmentOverrides, setEnvironmentOverrides,
       runtimeSnapshot, refreshRuntime,
+      builtinPromptMeta,
     }}>
       {children}
     </DemoContext.Provider>

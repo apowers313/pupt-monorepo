@@ -44,7 +44,7 @@ function renderWithProviders(ui: React.ReactElement) {
     <MantineProvider>
       <PuptLibraryProvider>
         <PuptProvider>
-          <DemoProvider>{ui}</DemoProvider>
+          <DemoProvider builtinPromptMeta={new Map()}>{ui}</DemoProvider>
         </PuptProvider>
       </PuptLibraryProvider>
     </MantineProvider>

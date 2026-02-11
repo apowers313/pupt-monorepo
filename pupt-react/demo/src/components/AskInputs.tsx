@@ -24,7 +24,6 @@ function renderInput(
   onChange: (name: string, value: unknown) => void,
 ) {
   const common = {
-    key: req.name,
     label: req.label || req.name,
     required: req.required,
     size: "xs" as const,
@@ -106,7 +105,7 @@ function renderInput(
 
     case "rating":
       return (
-        <div key={req.name}>
+        <div>
           <Text size="xs" fw={500} mb={2}>{common.label}</Text>
           <Slider
             size="xs"
@@ -168,7 +167,11 @@ export function AskInputs({ requirements, values, onChange }: AskInputsProps) {
     <div>
       <Text size="xs" fw={600} mb={4}>Inputs</Text>
       <Stack gap={4}>
-        {requirements.map((req) => renderInput(req, values.get(req.name), onChange))}
+        {requirements.map((req) => (
+          <div key={req.name}>
+            {renderInput(req, values.get(req.name), onChange)}
+          </div>
+        ))}
       </Stack>
     </div>
   );

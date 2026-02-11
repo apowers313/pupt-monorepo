@@ -37,7 +37,7 @@ function renderWithProviders() {
     <MantineProvider>
       <PuptLibraryProvider>
         <PuptProvider>
-          <DemoProvider>
+          <DemoProvider builtinPromptMeta={new Map()}>
             <PromptOutput />
           </DemoProvider>
         </PuptProvider>
@@ -111,7 +111,7 @@ describe("PromptOutput", () => {
       <MantineProvider>
         <PuptLibraryProvider>
           <PuptProvider>
-            <DemoProvider>
+            <DemoProvider builtinPromptMeta={new Map()}>
               <PromptOutput />
             </DemoProvider>
           </PuptProvider>

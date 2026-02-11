@@ -58,7 +58,7 @@ function renderWithProviders() {
     <MantineProvider>
       <PuptLibraryProvider>
         <PuptProvider>
-          <DemoProvider>
+          <DemoProvider builtinPromptMeta={new Map()}>
             <PromptInput />
           </DemoProvider>
         </PuptProvider>
