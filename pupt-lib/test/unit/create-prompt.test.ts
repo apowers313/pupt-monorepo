@@ -37,6 +37,8 @@ function getType(element: PuptElement): unknown {
 describe('createPromptFromSource', () => {
   it('should create element from TSX source', async () => {
     const source = `
+      import { Prompt, Role, Task } from 'pupt-lib';
+
       export default (
         <Prompt name="test">
           <Role>Assistant</Role>
@@ -53,6 +55,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle simple JSX without imports', async () => {
     const source = `
+      import { Prompt } from 'pupt-lib';
       export default <div>Hello World</div>;
     `;
 
@@ -64,6 +67,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle JSX with props', async () => {
     const source = `
+      import { Section } from 'pupt-lib';
       export default <Section title="Test" priority={1}>Content</Section>;
     `;
 
@@ -76,6 +80,8 @@ describe('createPromptFromSource', () => {
 
   it('should handle nested JSX elements', async () => {
     const source = `
+      import { Prompt, Role, Task } from 'pupt-lib';
+
       export default (
         <Prompt name="nested">
           <Role>Assistant</Role>
@@ -92,6 +98,8 @@ describe('createPromptFromSource', () => {
 
   it('should handle TypeScript syntax', async () => {
     const source = `
+      import { Prompt, Task } from 'pupt-lib';
+
       interface Props { name: string }
       const config: Props = { name: 'typed-test' };
 
@@ -109,6 +117,8 @@ describe('createPromptFromSource', () => {
 
   it('should handle fragments', async () => {
     const source = `
+      import { Role, Task } from 'pupt-lib';
+
       export default (
         <>
           <Role>Assistant</Role>
@@ -125,6 +135,8 @@ describe('createPromptFromSource', () => {
 
   it('should handle control flow components', async () => {
     const source = `
+      import { Prompt, If, Task } from 'pupt-lib';
+
       export default (
         <Prompt name="conditional">
           <If when={true}>
@@ -143,6 +155,8 @@ describe('createPromptFromSource', () => {
 
   it('should handle data components', async () => {
     const source = `
+      import { Prompt, Code } from 'pupt-lib';
+
       export default (
         <Prompt name="with-code">
           <Code language="typescript">const x = 1;</Code>
@@ -156,7 +170,7 @@ describe('createPromptFromSource', () => {
     expect(getTypeName(getType(getChildren(element)[0] as PuptElement))).toBe('Code');
   });
 
-  it('should auto-wrap raw JSX without export default', async () => {
+  it('should auto-wrap raw JSX without export default (.prompt)', async () => {
     const source = `
       <Prompt name="auto-wrapped">
         <Task>This is auto-wrapped</Task>
@@ -169,12 +183,31 @@ describe('createPromptFromSource', () => {
     expect(getProps(element).name).toBe('auto-wrapped');
   });
 
-  it('should auto-wrap simple raw JSX', async () => {
+  it('should auto-wrap simple raw JSX (.prompt)', async () => {
     const source = '<Task>Just a task</Task>';
 
     const element = await createPromptFromSource(source, 'test.prompt');
 
     expect(getTypeName(getType(element))).toBe('Task');
+  });
+
+  it('should handle non-JS import keywords in content without breaking (issue #29)', async () => {
+    // Python import keywords inside JSX text content should not prevent
+    // the preprocessor from injecting built-in component imports
+    const source = [
+      '<Prompt name="test">',
+      '  <Task>',
+      '    Use the following Python code:',
+      '    import hashlib',
+      '    import secrets',
+      '  </Task>',
+      '</Prompt>',
+    ].join('\n');
+
+    const element = await createPromptFromSource(source, 'test.prompt');
+
+    expect(getTypeName(getType(element))).toBe('Prompt');
+    expect(getProps(element).name).toBe('test');
   });
 
   it('should throw helpful error for undefined component (Ask.FooBar)', async () => {
@@ -339,6 +372,8 @@ describe('createPrompt', () => {
   it('should load and transform .tsx file', async () => {
     const filePath = join(tmpDir, 'prompt.tsx');
     writeFileSync(filePath, `
+      import { Prompt, Task } from 'pupt-lib';
+
       export default (
         <Prompt name="tsx-test">
           <Task>Do something</Task>
@@ -354,6 +389,8 @@ describe('createPrompt', () => {
   it('should handle file with TypeScript types', async () => {
     const filePath = join(tmpDir, 'typed-prompt.tsx');
     writeFileSync(filePath, `
+      import { Prompt, Task } from 'pupt-lib';
+
       interface PromptProps {
         name: string;
       }
@@ -375,6 +412,8 @@ describe('createPrompt', () => {
   it('should handle file with inline function components', async () => {
     const filePath = join(tmpDir, 'func-prompt.tsx');
     writeFileSync(filePath, `
+      import { Prompt, Section } from 'pupt-lib';
+
       // Function component defined inline and used immediately
       const MySection = ({ title, children }: { title: string; children: any }) => (
         <Section title={title}>{children}</Section>
@@ -392,16 +431,13 @@ describe('createPrompt', () => {
     expect(getProps(element).name).toBe('func-test');
   });
 
-  it('should load and transform .prompt file (same as .tsx)', async () => {
-    // .prompt files use the EXACT same Babel parser as .tsx
+  it('should load and transform .prompt file', async () => {
     const filePath = join(tmpDir, 'greeting.prompt');
     writeFileSync(filePath, `
-      export default (
-        <Prompt name="prompt-test">
-          <Role>Assistant</Role>
-          <Task>Help user</Task>
-        </Prompt>
-      );
+<Prompt name="prompt-test">
+  <Role>Assistant</Role>
+  <Task>Help user</Task>
+</Prompt>
     `);
 
     const element = await createPrompt(filePath);

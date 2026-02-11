@@ -92,7 +92,7 @@ export { evaluateFormula } from './services/formula-parser';
 export { Transformer } from './services/transformer';
 export { evaluateModule } from './services/module-evaluator';
 export type { EvaluateOptions } from './services/module-evaluator';
-export { preprocessSource, isPromptFile, needsPreprocessing } from './services/preprocessor';
+export { preprocessSource, isPromptFile } from './services/preprocessor';
 export type { PreprocessOptions } from './services/preprocessor';
 
 // Export component discovery (dynamically computed from actual component exports)

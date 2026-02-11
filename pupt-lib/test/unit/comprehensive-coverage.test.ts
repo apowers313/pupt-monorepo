@@ -879,6 +879,8 @@ describe('createPromptFromSource - Branch Coverage', () => {
   it('should handle source without imports (prepend custom components)', async () => {
     // Source with no import statements - custom components prepended at beginning
     const source = `
+import { Prompt } from 'pupt-lib';
+
 export default (
   <Prompt name="test">
     <CustomComp />

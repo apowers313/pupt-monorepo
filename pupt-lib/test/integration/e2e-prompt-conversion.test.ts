@@ -252,6 +252,8 @@ describe('End-to-End: .tsx file conversion', () => {
   describe('complex JavaScript patterns', () => {
     it('should handle variables and expressions', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         const name = "Dynamic Prompt";
         const items = [1, 2, 3];
         const sum = items.reduce((a, b) => a + b, 0);
@@ -272,6 +274,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle functions and closures', async () => {
       const source = `
+        import { Prompt, Task, Context } from 'pupt-lib';
+
         function formatTask(task: string): string {
           return task.toUpperCase();
         }
@@ -295,6 +299,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle classes and inheritance', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         class Config {
           constructor(public name: string, public version: number) {}
           toString() {
@@ -319,6 +325,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle async/await patterns', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         // Simulate async data (resolved immediately for testing)
         const data = await Promise.resolve({ message: "Async data loaded" });
 
@@ -337,6 +345,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle destructuring and spread', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         const config = { name: "test", version: 1, debug: true };
         const { name, ...rest } = config;
         const extended = { ...rest, extra: "value" };
@@ -359,6 +369,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle array methods', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         const items = ['apple', 'banana', 'cherry'];
         const mapped = items.map(item => item.toUpperCase());
         const filtered = items.filter(item => item.startsWith('a') || item.startsWith('b'));
@@ -379,6 +391,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle template literals with expressions', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         const user = { name: "Alice", age: 30 };
         const message = \`User \${user.name} is \${user.age} years old and will be \${user.age + 10} in 10 years.\`;
 
@@ -400,6 +414,8 @@ describe('End-to-End: .tsx file conversion', () => {
   describe('TypeScript features', () => {
     it('should handle interfaces and types', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         interface PromptConfig {
           name: string;
           tasks: string[];
@@ -431,6 +447,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle generics', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         function identity<T>(value: T): T {
           return value;
         }
@@ -454,6 +472,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle enums', async () => {
       const source = `
+        import { Prompt, Task } from 'pupt-lib';
+
         enum Priority {
           Low = "low",
           Medium = "medium",
@@ -479,6 +499,8 @@ describe('End-to-End: .tsx file conversion', () => {
   describe('local component definitions', () => {
     it('should handle variables used in JSX expressions', async () => {
       const source = `
+        import { Prompt, Section, Task } from 'pupt-lib';
+
         const headerTitle = "My Header";
         const contentText = "Header content for " + headerTitle;
 
@@ -499,6 +521,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle array mapping in JSX', async () => {
       const source = `
+        import { Prompt, Role, Task } from 'pupt-lib';
+
         const name = "User";
         const tasks = ["Do this", "Do that", "Do the other"];
 
@@ -522,6 +546,8 @@ describe('End-to-End: .tsx file conversion', () => {
 
     it('should handle nested sections with dynamic names', async () => {
       const source = `
+        import { Prompt, Section, Task } from 'pupt-lib';
+
         const sectionName = "Section A";
 
         export default (
@@ -545,15 +571,15 @@ describe('End-to-End: .tsx file conversion', () => {
 describe('End-to-End: <Uses> component transformation', () => {
   it('should transform Uses to import (integration with transformer)', async () => {
     // This tests that Uses is properly transformed, but since we can't
-    // actually import from a fake module, we use the built-in pupt-lib
+    // actually import from a fake module, we use the built-in pupt-lib.
+    // Note: .prompt files get auto-wrapped with export default, so we
+    // don't include one here.
     const source = `
       <Uses component="Prompt, Role, Task" from="pupt-lib" />
-      export default (
-        <Prompt name="uses-test">
-          <Role>Test role</Role>
-          <Task>Test task</Task>
-        </Prompt>
-      );
+      <Prompt name="uses-test">
+        <Role>Test role</Role>
+        <Task>Test task</Task>
+      </Prompt>
     `;
 
     const element = await createPromptFromSource(source, 'uses.prompt');
@@ -653,6 +679,8 @@ describe('End-to-End: File-based prompts', () => {
   it('should load and render a .tsx file from disk', async () => {
     const filePath = join(tmpDir, 'disk.tsx');
     writeFileSync(filePath, `
+      import { Prompt, Task } from 'pupt-lib';
+
       const config = { name: "tsx-from-disk", version: 1 };
 
       export default (
@@ -672,6 +700,8 @@ describe('End-to-End: File-based prompts', () => {
   it('should handle complex multi-component .tsx file', async () => {
     const filePath = join(tmpDir, 'complex.tsx');
     writeFileSync(filePath, `
+      import { Prompt, Role, Context, Task, If, Constraint } from 'pupt-lib';
+
       // Complex prompt with multiple features
       interface TaskConfig {
         title: string;
@@ -734,6 +764,8 @@ describe('End-to-End: Edge cases', () => {
 
   it('should handle fragments at root level', async () => {
     const source = `
+      import { Role, Task } from 'pupt-lib';
+
       export default (
         <>
           <Role>Part 1</Role>
@@ -797,6 +829,8 @@ describe('End-to-End: Edge cases', () => {
 
   it('should handle conditional rendering with null/undefined', async () => {
     const source = `
+      import { Prompt, Task } from 'pupt-lib';
+
       const maybeContent = null;
       const alsoMaybe = undefined;
 
@@ -817,6 +851,8 @@ describe('End-to-End: Edge cases', () => {
 
   it('should handle boolean expressions in JSX', async () => {
     const source = `
+      import { Prompt, Task } from 'pupt-lib';
+
       const showExtra = true;
       const hideThis = false;
 

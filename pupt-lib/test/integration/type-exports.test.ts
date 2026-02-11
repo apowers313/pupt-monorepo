@@ -88,7 +88,6 @@ describe('Type Declaration Exports (issue #17)', () => {
       'evaluateModule',
       'preprocessSource',
       'isPromptFile',
-      'needsPreprocessing',
       'createPromptFromSource',
       'createPrompt',
       'Pupt',
