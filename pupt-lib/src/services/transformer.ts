@@ -5,7 +5,7 @@
  * Works in both Node.js and browser environments.
  */
 
-import { usesToImportPlugin, nameHoistingPlugin } from './babel-plugins';
+import { usesToImportPlugin, nameHoistingPlugin, jsxNewlineLiteralPlugin } from './babel-plugins';
 
 // Type for Babel transform interface
 interface BabelStandalone {
@@ -28,6 +28,9 @@ function registerPlugins(Babel: BabelStandalone): void {
 
   // Register the name-hoisting plugin (transforms name="x" to const x = ...)
   Babel.registerPlugin('name-hoisting', nameHoistingPlugin);
+
+  // Register the JSX newline literal plugin (preserves newlines in multi-line text)
+  Babel.registerPlugin('jsx-newline-literal', jsxNewlineLiteralPlugin);
 
   pluginsRegistered = true;
 }
@@ -57,6 +60,8 @@ function getTransformOptions(filename: string): Record<string, unknown> {
       'uses-to-import',
       // Hoist named elements to variable declarations (must run before JSX transform)
       'name-hoisting',
+      // Preserve newlines in multi-line JSX text (must run before JSX transform)
+      'jsx-newline-literal',
       // Transform JSX to jsx() calls
       ['transform-react-jsx', {
         runtime: 'automatic',
