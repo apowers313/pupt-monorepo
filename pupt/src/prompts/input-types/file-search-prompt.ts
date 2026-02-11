@@ -1,5 +1,5 @@
 import { search } from '@inquirer/prompts';
-import { FileSearchEngine } from '../../search/file-search-engine.js';
+import { FileSearchEngine } from 'pupt-lib';
 import type { PartialDeep } from '@inquirer/type';
 import type { Theme } from '@inquirer/core';
 
@@ -12,7 +12,7 @@ export interface FileSearchConfig {
 }
 
 export async function fileSearchPrompt(config: FileSearchConfig): Promise<string> {
-  const searchEngine = new FileSearchEngine(config.basePath || '.', config.filter);
+  const searchEngine = await FileSearchEngine.create({ basePath: config.basePath || '.', filter: config.filter });
   
   return await search<string>({
     message: config.message,

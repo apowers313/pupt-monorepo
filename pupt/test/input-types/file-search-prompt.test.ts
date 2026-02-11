@@ -1,24 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fileSearchPrompt } from '../../src/prompts/input-types/file-search-prompt.js';
 import { search } from '@inquirer/prompts';
-import { FileSearchEngine } from '../../src/search/file-search-engine.js';
+import { FileSearchEngine } from 'pupt-lib';
 
 vi.mock('@inquirer/prompts', () => ({
   search: vi.fn(),
 }));
 
-vi.mock('../../src/search/file-search-engine.js', () => ({
-  FileSearchEngine: vi.fn().mockImplementation(() => ({
-    search: vi.fn(),
-    listDirectory: vi.fn(),
-    formatFileInfo: vi.fn((info) => ({
-      display: info.name + (info.isDirectory ? '/' : ''),
-      value: info.absolutePath,
-      description: info.relativePath,
-    })),
-    normalizePathInput: vi.fn((input) => input),
-    resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
-  })),
+vi.mock('pupt-lib', () => ({
+  FileSearchEngine: {
+    create: vi.fn().mockResolvedValue({
+      search: vi.fn(),
+      listDirectory: vi.fn(),
+      formatFileInfo: vi.fn((info: any) => ({
+        display: info.name + (info.isDirectory ? '/' : ''),
+        value: info.absolutePath,
+        description: info.relativePath,
+      })),
+      normalizePathInput: vi.fn((input: string) => input),
+      resolveToAbsolutePath: vi.fn((input: string) => `/home/user/project/${input}`),
+    }),
+  },
 }));
 
 describe('fileSearchPrompt', () => {
@@ -55,7 +57,7 @@ describe('fileSearchPrompt', () => {
       basePath: '/custom/path',
     });
 
-    expect(FileSearchEngine).toHaveBeenCalledWith('/custom/path', undefined);
+    expect(FileSearchEngine.create).toHaveBeenCalledWith({ basePath: '/custom/path', filter: undefined });
   });
 
   it('should pass filter to FileSearchEngine', async () => {
@@ -67,7 +69,7 @@ describe('fileSearchPrompt', () => {
       filter: '*.ts',
     });
 
-    expect(FileSearchEngine).toHaveBeenCalledWith('.', '*.ts');
+    expect(FileSearchEngine.create).toHaveBeenCalledWith({ basePath: '.', filter: '*.ts' });
   });
 
   it('should configure search prompt correctly', async () => {
@@ -97,7 +99,7 @@ describe('fileSearchPrompt', () => {
       resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
     };
 
-    vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
+    vi.mocked(FileSearchEngine.create).mockResolvedValue(mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('', { signal: new AbortController().signal });
       expect(results).toHaveLength(2);
@@ -130,7 +132,7 @@ describe('fileSearchPrompt', () => {
       resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
     };
 
-    vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
+    vi.mocked(FileSearchEngine.create).mockResolvedValue(mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('dem', { signal: new AbortController().signal });
       // Should now have 2 results: demo.txt + the manual input option
@@ -180,7 +182,7 @@ describe('fileSearchPrompt', () => {
       resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
     };
 
-    vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
+    vi.mocked(FileSearchEngine.create).mockResolvedValue(mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('design/ph', { signal: new AbortController().signal });
       // Should now have 2 results: phase1.md + the manual input option
@@ -236,7 +238,7 @@ describe('fileSearchPrompt', () => {
       resolveToAbsolutePath: vi.fn((input) => `/home/user/project/${input}`),
     };
 
-    vi.mocked(FileSearchEngine).mockImplementation(() => mockSearchEngine as any);
+    vi.mocked(FileSearchEngine.create).mockResolvedValue(mockSearchEngine as any);
     vi.mocked(search).mockImplementation(async ({ source }) => {
       const results = await source('des', { signal: new AbortController().signal });
       

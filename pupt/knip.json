@@ -19,6 +19,8 @@
   "ignoreDependencies": [
     "@semantic-release/*",
     "@commitlint/config-conventional",
+    "@inquirer/testing",
+    "glob",
     "pino-pretty",
     "yaml"
   ],
