@@ -1,3 +1,11 @@
+## [1.1.2](https://github.com/apowers313/pupt-react/compare/v1.1.1...v1.1.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* smarter search component that uses prompt metadata ([634503b](https://github.com/apowers313/pupt-react/commit/634503bc37e94b293e5a683575e2505e1a0937bc))
+* update to latest pupt-lib for bug fixes ([cf740ae](https://github.com/apowers313/pupt-react/commit/cf740ae970823618c05307904029b68755056524))
+
 ## [1.1.1](https://github.com/apowers313/pupt-react/compare/v1.1.0...v1.1.1) (2026-02-10)
 
 
