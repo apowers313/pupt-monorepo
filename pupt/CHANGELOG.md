@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/apowers313/pupt/compare/v2.2.0...v2.2.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* update to latest pupt-lib and apply bug fixes ([1806fac](https://github.com/apowers313/pupt/commit/1806fac016ef434f7d3aaa727fd9c5fa4f217beb))
+
 # [2.2.0](https://github.com/apowers313/pupt/compare/v2.1.1...v2.2.0) (2026-02-10)
 
 
