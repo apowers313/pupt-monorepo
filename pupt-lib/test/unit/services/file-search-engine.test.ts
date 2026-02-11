@@ -451,14 +451,28 @@ describe('FileSearchEngine', () => {
   });
 
   describe('createFileSearchEngine factory', () => {
-    it('should create a FileSearchEngine instance', () => {
-      const eng = createFileSearchEngine();
+    it('should create a FileSearchEngine instance', async () => {
+      const eng = await createFileSearchEngine();
 
       expect(eng).toBeInstanceOf(FileSearchEngine);
     });
 
-    it('should pass config to constructor', () => {
-      const eng = createFileSearchEngine({ basePath: '/tmp' });
+    it('should pass config to constructor', async () => {
+      const eng = await createFileSearchEngine({ basePath: '/tmp' });
+
+      expect(eng.getBasePath()).toBe(path.resolve('/tmp'));
+    });
+  });
+
+  describe('FileSearchEngine.create factory', () => {
+    it('should create a FileSearchEngine instance', async () => {
+      const eng = await FileSearchEngine.create();
+
+      expect(eng).toBeInstanceOf(FileSearchEngine);
+    });
+
+    it('should pass config to constructor', async () => {
+      const eng = await FileSearchEngine.create({ basePath: '/tmp' });
 
       expect(eng.getBasePath()).toBe(path.resolve('/tmp'));
     });

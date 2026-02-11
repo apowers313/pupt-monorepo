@@ -24,13 +24,13 @@ describe('File', () => {
     cleanupTmpDir();
   });
 
-  it('should render a TypeScript file with correct language detection', () => {
+  it('should render a TypeScript file with correct language detection', async () => {
     const filePath = join(tmpDir, 'test.ts');
     writeFileSync(filePath, 'const x = 1;');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.ts -->\n',
@@ -40,13 +40,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should render a JavaScript file with correct language detection', () => {
+  it('should render a JavaScript file with correct language detection', async () => {
     const filePath = join(tmpDir, 'test.js');
     writeFileSync(filePath, 'var y = 2;');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.js -->\n',
@@ -56,13 +56,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should render a Python file with correct language detection', () => {
+  it('should render a Python file with correct language detection', async () => {
     const filePath = join(tmpDir, 'script.py');
     writeFileSync(filePath, 'print("hello")');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- script.py -->\n',
@@ -72,13 +72,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should render a JSON file with correct language detection', () => {
+  it('should render a JSON file with correct language detection', async () => {
     const filePath = join(tmpDir, 'config.json');
     writeFileSync(filePath, '{"key": "value"}');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.json -->\n',
@@ -88,13 +88,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should render a YAML file with correct language detection', () => {
+  it('should render a YAML file with correct language detection', async () => {
     const filePath = join(tmpDir, 'config.yaml');
     writeFileSync(filePath, 'key: value');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.yaml -->\n',
@@ -104,13 +104,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should render a YML file with correct language detection', () => {
+  it('should render a YML file with correct language detection', async () => {
     const filePath = join(tmpDir, 'config.yml');
     writeFileSync(filePath, 'key: value2');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- config.yml -->\n',
@@ -120,13 +120,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should use provided language override', () => {
+  it('should use provided language override', async () => {
     const filePath = join(tmpDir, 'test.txt');
     writeFileSync(filePath, 'some code');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath, language: 'rust' }, undefined, context);
+    const result = await file.render({ path: filePath, language: 'rust' }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.txt -->\n',
@@ -136,13 +136,13 @@ describe('File', () => {
     ]);
   });
 
-  it('should handle files with unknown extensions', () => {
+  it('should handle files with unknown extensions', async () => {
     const filePath = join(tmpDir, 'test.xyz');
     writeFileSync(filePath, 'unknown format');
 
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: filePath }, undefined, context);
+    const result = await file.render({ path: filePath }, undefined, context);
 
     expect(result).toEqual([
       '<!-- test.xyz -->\n',
@@ -152,15 +152,15 @@ describe('File', () => {
     ]);
   });
 
-  it('should handle file read errors gracefully', () => {
+  it('should handle file read errors gracefully', async () => {
     const file = new File();
     const context = createRenderContext();
-    const result = file.render({ path: '/nonexistent/path/file.ts' }, undefined, context);
+    const result = await file.render({ path: '/nonexistent/path/file.ts' }, undefined, context);
 
     expect(result).toMatch(/\[Error reading file:/);
   });
 
-  it('should render C/C++ files with correct language detection', () => {
+  it('should render C/C++ files with correct language detection', async () => {
     const cPath = join(tmpDir, 'main.c');
     writeFileSync(cPath, '#include <stdio.h>');
 
@@ -176,20 +176,20 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const cResult = file.render({ path: cPath }, undefined, context);
+    const cResult = await file.render({ path: cPath }, undefined, context);
     expect(cResult[1]).toBe('```c\n');
 
-    const cppResult = file.render({ path: cppPath }, undefined, context);
+    const cppResult = await file.render({ path: cppPath }, undefined, context);
     expect(cppResult[1]).toBe('```cpp\n');
 
-    const hResult = file.render({ path: hPath }, undefined, context);
+    const hResult = await file.render({ path: hPath }, undefined, context);
     expect(hResult[1]).toBe('```c\n');
 
-    const hppResult = file.render({ path: hppPath }, undefined, context);
+    const hppResult = await file.render({ path: hppPath }, undefined, context);
     expect(hppResult[1]).toBe('```cpp\n');
   });
 
-  it('should render Go, Rust, Java files correctly', () => {
+  it('should render Go, Rust, Java files correctly', async () => {
     const goPath = join(tmpDir, 'main.go');
     writeFileSync(goPath, 'package main');
 
@@ -202,28 +202,28 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const goResult = file.render({ path: goPath }, undefined, context);
+    const goResult = await file.render({ path: goPath }, undefined, context);
     expect(goResult[1]).toBe('```go\n');
 
-    const rsResult = file.render({ path: rsPath }, undefined, context);
+    const rsResult = await file.render({ path: rsPath }, undefined, context);
     expect(rsResult[1]).toBe('```rust\n');
 
-    const javaResult = file.render({ path: javaPath }, undefined, context);
+    const javaResult = await file.render({ path: javaPath }, undefined, context);
     expect(javaResult[1]).toBe('```java\n');
   });
 
-  it('should render Ruby files correctly', () => {
+  it('should render Ruby files correctly', async () => {
     const rbPath = join(tmpDir, 'script.rb');
     writeFileSync(rbPath, 'puts "hello"');
 
     const file = new File();
     const context = createRenderContext();
 
-    const rbResult = file.render({ path: rbPath }, undefined, context);
+    const rbResult = await file.render({ path: rbPath }, undefined, context);
     expect(rbResult[1]).toBe('```ruby\n');
   });
 
-  it('should render CSS/SCSS files correctly', () => {
+  it('should render CSS/SCSS files correctly', async () => {
     const cssPath = join(tmpDir, 'style.css');
     writeFileSync(cssPath, '.class { color: red; }');
 
@@ -233,14 +233,14 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const cssResult = file.render({ path: cssPath }, undefined, context);
+    const cssResult = await file.render({ path: cssPath }, undefined, context);
     expect(cssResult[1]).toBe('```css\n');
 
-    const scssResult = file.render({ path: scssPath }, undefined, context);
+    const scssResult = await file.render({ path: scssPath }, undefined, context);
     expect(scssResult[1]).toBe('```scss\n');
   });
 
-  it('should render HTML/XML files correctly', () => {
+  it('should render HTML/XML files correctly', async () => {
     const htmlPath = join(tmpDir, 'page.html');
     writeFileSync(htmlPath, '<html></html>');
 
@@ -250,14 +250,14 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const htmlResult = file.render({ path: htmlPath }, undefined, context);
+    const htmlResult = await file.render({ path: htmlPath }, undefined, context);
     expect(htmlResult[1]).toBe('```html\n');
 
-    const xmlResult = file.render({ path: xmlPath }, undefined, context);
+    const xmlResult = await file.render({ path: xmlPath }, undefined, context);
     expect(xmlResult[1]).toBe('```xml\n');
   });
 
-  it('should render Bash/SQL files correctly', () => {
+  it('should render Bash/SQL files correctly', async () => {
     const shPath = join(tmpDir, 'script.sh');
     writeFileSync(shPath, '#!/bin/bash');
 
@@ -267,25 +267,25 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const shResult = file.render({ path: shPath }, undefined, context);
+    const shResult = await file.render({ path: shPath }, undefined, context);
     expect(shResult[1]).toBe('```bash\n');
 
-    const sqlResult = file.render({ path: sqlPath }, undefined, context);
+    const sqlResult = await file.render({ path: sqlPath }, undefined, context);
     expect(sqlResult[1]).toBe('```sql\n');
   });
 
-  it('should render Markdown files correctly', () => {
+  it('should render Markdown files correctly', async () => {
     const mdPath = join(tmpDir, 'readme.md');
     writeFileSync(mdPath, '# Title');
 
     const file = new File();
     const context = createRenderContext();
 
-    const mdResult = file.render({ path: mdPath }, undefined, context);
+    const mdResult = await file.render({ path: mdPath }, undefined, context);
     expect(mdResult[1]).toBe('```markdown\n');
   });
 
-  it('should render TSX/JSX files correctly', () => {
+  it('should render TSX/JSX files correctly', async () => {
     const tsxPath = join(tmpDir, 'component.tsx');
     writeFileSync(tsxPath, 'export function App() {}');
 
@@ -295,10 +295,10 @@ describe('File', () => {
     const file = new File();
     const context = createRenderContext();
 
-    const tsxResult = file.render({ path: tsxPath }, undefined, context);
+    const tsxResult = await file.render({ path: tsxPath }, undefined, context);
     expect(tsxResult[1]).toBe('```typescript\n');
 
-    const jsxResult = file.render({ path: jsxPath }, undefined, context);
+    const jsxResult = await file.render({ path: jsxPath }, undefined, context);
     expect(jsxResult[1]).toBe('```javascript\n');
   });
 });

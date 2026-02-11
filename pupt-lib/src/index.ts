@@ -145,7 +145,7 @@ export { createSearchEngine } from './services/search-engine';
 export type { SearchEngine } from './services/search-engine';
 
 // Export file search engine
-export { FileSearchEngine, createFileSearchEngine } from './services/file-search-engine';
+export { FileSearchEngine, createFileSearchEngine, loadNodeModules } from './services/file-search-engine';
 export type {
   FileInfo,
   FileSearchResult,

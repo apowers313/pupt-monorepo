@@ -72,26 +72,22 @@ export class File extends Component<FileProps> {
   static schema = fileSchema;
   static hoistName = true;
 
-  render({ path, language, encoding = 'utf-8' }: FileProps, _resolvedValue: void, _context: RenderContext): PuptNode {
+  async render({ path, language, encoding = 'utf-8' }: FileProps, _resolvedValue: void, _context: RenderContext): Promise<PuptNode> {
     // File reading is not available in browsers
     if (isBrowser) {
       return `[Error: File component is not available in browser environments. Path: ${path}]`;
     }
 
     try {
-      // Lazy load Node.js modules
+      // Lazy load Node.js modules using dynamic import (ESM-compatible)
       if (!fsModule) {
-        // Use require for synchronous loading (needed for render which is sync)
-        // The dynamic import pattern with await doesn't work for sync render()
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        fsModule = require('fs');
+        fsModule = await import('fs');
       }
       if (!pathModule) {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        pathModule = require('path');
+        pathModule = await import('path');
       }
 
-      const content = fsModule!.readFileSync(path, { encoding });
+      const content = fsModule.readFileSync(path, { encoding });
       const ext = getExtname(path);
       const lang = language ?? EXTENSION_TO_LANGUAGE[ext] ?? '';
       const filename = getBasename(path);

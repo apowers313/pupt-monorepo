@@ -41,21 +41,27 @@ describe('Bundle Browser Compatibility', () => {
     });
   });
 
-  describe('Node.js modules are only required dynamically', () => {
-    it('should only use dynamic require() for Node.js modules', () => {
-      // Count static vs dynamic usages
-      // Static: import X from 'os' (at top level, not in a function)
-      // Dynamic: require('os') (inside a function, called at runtime)
-
-      // Check that require() calls exist (for dynamic loading in Node.js)
+  describe('Node.js modules are loaded via dynamic import() (ESM-compatible, issue #30)', () => {
+    it('should not use require() for Node.js built-in modules', () => {
+      // require() is not available in ESM - all Node.js builtins must use import()
       const requireOsCount = (bundleContent.match(/require\(['"]os['"]\)/g) || []).length;
       const requireFsCount = (bundleContent.match(/require\(['"]fs['"]\)/g) || []).length;
       const requirePathCount = (bundleContent.match(/require\(['"]path['"]\)/g) || []).length;
 
-      // We should have some dynamic requires (for Node.js runtime)
-      expect(requireOsCount).toBeGreaterThan(0);
-      expect(requireFsCount).toBeGreaterThan(0);
-      expect(requirePathCount).toBeGreaterThan(0);
+      expect(requireOsCount).toBe(0);
+      expect(requireFsCount).toBe(0);
+      expect(requirePathCount).toBe(0);
+    });
+
+    it('should use dynamic import() for Node.js built-in modules', () => {
+      // Verify dynamic import() is used instead of require()
+      const importOsCount = (bundleContent.match(/import\(\s*['"]os['"]\s*\)/g) || []).length;
+      const importFsCount = (bundleContent.match(/import\(\s*['"]fs['"]\s*\)/g) || []).length;
+      const importPathCount = (bundleContent.match(/import\(\s*['"]path['"]\s*\)/g) || []).length;
+
+      expect(importOsCount).toBeGreaterThan(0);
+      expect(importFsCount).toBeGreaterThan(0);
+      expect(importPathCount).toBeGreaterThan(0);
     });
   });
 

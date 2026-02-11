@@ -95,6 +95,7 @@ describe('Type Declaration Exports (issue #17)', () => {
       'createSearchEngine',
       'FileSearchEngine',
       'createFileSearchEngine',
+      'loadNodeModules',
       'getBuiltinComponents',
       'getAskComponents',
       'getAskShorthand',

@@ -12,30 +12,40 @@ let fsModule: FsModule | null = null;
 let osModule: OsModule | null = null;
 
 /**
- * Get the Node.js modules. Lazily loads them on first use.
- * Throws if called in browser environment.
+ * Load Node.js modules asynchronously using dynamic import().
+ * Must be called before using getNodeModules().
+ * Safe to call multiple times (subsequent calls are no-ops).
+ */
+export async function loadNodeModules(): Promise<void> {
+  if (isBrowser) return;
+  if (pathModule && fsModule && osModule) return;
+
+  const [p, f, o] = await Promise.all([
+    import('path'),
+    import('fs'),
+    import('os'),
+  ]);
+  pathModule = p;
+  fsModule = f;
+  osModule = o;
+}
+
+/**
+ * Get the Node.js modules. Returns cached modules loaded by loadNodeModules().
+ * Throws if called in browser environment or if modules haven't been loaded.
  */
 function getNodeModules(): { path: PathModule; fs: FsModule; os: OsModule } {
   if (isBrowser) {
     throw new Error('FileSearchEngine is not available in browser environments');
   }
 
-  // Lazily load modules on first use
-  if (!pathModule) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    pathModule = require('path');
-  }
-  if (!fsModule) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    fsModule = require('fs');
-  }
-  if (!osModule) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    osModule = require('os');
+  if (!pathModule || !fsModule || !osModule) {
+    throw new Error(
+      'Node modules not loaded. Use FileSearchEngine.create() or await loadNodeModules() before constructing FileSearchEngine.',
+    );
   }
 
-  // Non-null assertion is safe here because we've just loaded the modules
-  return { path: pathModule!, fs: fsModule!, os: osModule! };
+  return { path: pathModule, fs: fsModule, os: osModule };
 }
 
 /**
@@ -114,6 +124,15 @@ export class FileSearchEngine {
   private cacheTimeout: number;
   private cacheTimestamps: Map<string, number> = new Map();
   private maxCacheEntries: number;
+
+  /**
+   * Create a FileSearchEngine instance, loading Node.js modules first.
+   * This is the preferred way to create a FileSearchEngine in ESM contexts.
+   */
+  static async create(config?: FileSearchEngineConfig): Promise<FileSearchEngine> {
+    await loadNodeModules();
+    return new FileSearchEngine(config);
+  }
 
   constructor(config: FileSearchEngineConfig = {}) {
     // Get Node.js modules (throws in browser)
@@ -441,11 +460,12 @@ export class FileSearchEngine {
 }
 
 /**
- * Create a new FileSearchEngine instance.
+ * Create a new FileSearchEngine instance, loading Node.js modules first.
  *
  * @param config - Configuration options
- * @returns FileSearchEngine instance
+ * @returns Promise resolving to FileSearchEngine instance
  */
-export function createFileSearchEngine(config?: FileSearchEngineConfig): FileSearchEngine {
+export async function createFileSearchEngine(config?: FileSearchEngineConfig): Promise<FileSearchEngine> {
+  await loadNodeModules();
   return new FileSearchEngine(config);
 }
