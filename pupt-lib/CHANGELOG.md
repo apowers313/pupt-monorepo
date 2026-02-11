@@ -1,3 +1,12 @@
+## [1.3.5](https://github.com/apowers313/pupt-lib/compare/v1.3.4...v1.3.5) (2026-02-11)
+
+
+### Bug Fixes
+
+* change require() calls to dynamic imports for ESM compatibility ([9d703b6](https://github.com/apowers313/pupt-lib/commit/9d703b6fad23fbcbd33f041bdcfc3d0507ec3c68)), closes [#30](https://github.com/apowers313/pupt-lib/issues/30)
+* preserve whitespace in prompt text ([94f08cd](https://github.com/apowers313/pupt-lib/commit/94f08cdc3343d3fd33f381da51c25b5ffbba60ea)), closes [#25](https://github.com/apowers313/pupt-lib/issues/25)
+* remove import scanning, depend on file names for syntactic sugar instead ([7f85836](https://github.com/apowers313/pupt-lib/commit/7f85836b37cc24870022595a26bee55cce1efc4a)), closes [#29](https://github.com/apowers313/pupt-lib/issues/29)
+
 ## [1.3.4](https://github.com/apowers313/pupt-lib/compare/v1.3.3...v1.3.4) (2026-02-10)
 
 
