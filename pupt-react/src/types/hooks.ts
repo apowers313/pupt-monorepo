@@ -41,6 +41,11 @@ export interface UsePromptRenderOptions {
 
   /** Whether to automatically render after transformation (default: false) */
   autoRender?: boolean;
+
+  /** Filename hint for source transformation (e.g. "prompt.prompt" or "prompt.tsx").
+   *  Controls whether pupt-lib auto-injects imports for built-in components.
+   *  Defaults to "prompt.tsx". Use "prompt.prompt" for raw JSX without imports. */
+  filename?: string;
 }
 
 /**

@@ -13,7 +13,6 @@ import { IconCopy, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { PromptRenderer } from "pupt-react";
 import type { PromptSource } from "pupt-react";
 import { useDemoContext } from "../context/DemoContext";
-import { unwrapJsx } from "../util/jsxWrapper";
 import { AskInputs } from "./AskInputs";
 
 export function PromptOutput() {
@@ -36,12 +35,14 @@ export function PromptOutput() {
     if (activePrompt.kind === "element") {
       return { type: "element", value: activePrompt.element };
     }
-    // Source mode: strip JSX wrapper for .jsx format
-    const rawSource = activePrompt.format === "jsx"
-      ? unwrapJsx(activePrompt.source)
-      : activePrompt.source;
-    return { type: "source", value: rawSource };
+    return { type: "source", value: activePrompt.source };
   }, [activePrompt]);
+
+  // Determine filename for source transformation:
+  // .prompt format gets auto-injected imports, .jsx/.tsx is a full module
+  const filename = activePrompt.kind === "source"
+    ? activePrompt.format === "jsx" ? "prompt.tsx" : "prompt.prompt"
+    : undefined;
 
   const handleInputChange = useCallback((name: string, value: unknown) => {
     setInputValues((prev) => {
@@ -56,6 +57,7 @@ export function PromptOutput() {
       source={promptSource}
       inputs={inputValues}
       environment={environmentOverrides}
+      filename={filename}
       autoRender
     >
       {({

@@ -48,6 +48,7 @@ export function usePromptRender(
     environment,
     renderOptions: customRenderOptions,
     autoRender = false,
+    filename,
   } = options;
 
   // Get context values
@@ -93,7 +94,10 @@ export function usePromptRender(
           newElement = sourceToTransform.value;
         } else {
           // Transform source code to element
-          newElement = await transformSource(sourceToTransform.value);
+          newElement = await transformSource(
+            sourceToTransform.value,
+            filename ? { filename } : undefined,
+          );
         }
 
         if (mountedRef.current) {
@@ -120,7 +124,7 @@ export function usePromptRender(
         }
       }
     },
-    []
+    [filename]
   );
 
   // Render element to text

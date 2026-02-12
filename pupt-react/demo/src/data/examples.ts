@@ -10,7 +10,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="greeting"
-  title="Hello World"
+  title="Hello World (.prompt)"
   description="A basic prompt with a single task — auto-generates Role, Format, Constraints, and Guardrails"
 >
   <Task>Say hello to the user in a friendly way.</Task>
@@ -20,7 +20,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="indexing-guide"
-  title="Role & Audience"
+  title="Role & Audience (.prompt)"
   description="Tailored role, audience level, and tone for targeted content"
   noRole
 >
@@ -49,7 +49,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="sentiment-classifier"
-  title="Few-Shot Examples"
+  title="Few-Shot Examples (.prompt)"
   description="Teach a model by example — positive and negative few-shot patterns"
   noRole
 >
@@ -82,7 +82,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="architecture-eval"
-  title="Step-by-Step Reasoning"
+  title="Step-by-Step Reasoning (.prompt)"
   description="Structured reasoning with objectives, steps, and chain-of-thought"
   noRole
 >
@@ -120,7 +120,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="travel-planner"
-  title="Rich Inputs"
+  title="Rich Inputs (.prompt)"
   description="Collect diverse user inputs — text, select, date, rating, and conditionals"
 >
   <Task>
@@ -162,7 +162,7 @@ export const EXAMPLES: PromptExample[] = [
     format: "prompt",
     source: `<Prompt
   name="adaptive-guide"
-  title="Conditional Logic"
+  title="Conditional Logic (.prompt)"
   description="Use If statements to conditionally include content"
 >
   <Task>Create a guide about React state management.</Task>
@@ -234,7 +234,7 @@ const codeSnippet = \`export function authenticate(req, res, next) {
 export default (
   <Prompt
     name="code-review"
-    title="Data & Iteration"
+    title="Data & Iteration (.tsx)"
     description="ForEach loops, Code blocks, Data sections, and a custom child-processing component"
   >
     <Task>
@@ -278,7 +278,7 @@ export default (
     format: "prompt",
     source: `<Prompt
   name="medical-info"
-  title="Guardrails & Safety"
+  title="Guardrails & Safety (.prompt)"
   description="Layered safety with guardrails, edge cases, fallbacks, and success criteria"
   noRole
   noGuardrails
@@ -346,7 +346,7 @@ Repos: \${user.public_repos} | Followers: \${user.followers}\`;
 export default (
   <Prompt
     name="github-summary"
-    title="Custom Component"
+    title="Custom Component (.tsx)"
     description="Async component with GitHub API, Ask.Text variable binding, and Style"
   >
     <Task>
@@ -369,7 +369,7 @@ export default (
 export default (
   <Prompt
     name="api-doc-generator"
-    title="Production Prompt"
+    title="Production Prompt (.tsx)"
     version="2.1.0"
     description="Generates REST API documentation from endpoint specifications"
     tags={["documentation", "api", "openapi"]}

@@ -33,6 +33,7 @@ export function PromptRenderer({
   inputs,
   renderOptions,
   environment,
+  filename,
 }: PromptRendererProps): React.ReactElement {
   const [isCopied, setIsCopied] = useState(false);
 
@@ -58,6 +59,7 @@ export function PromptRenderer({
     ...(inputs !== undefined && { inputs }),
     ...(renderOptions !== undefined && { renderOptions }),
     ...(environment !== undefined && { environment }),
+    ...(filename !== undefined && { filename }),
   });
 
   const isReady = output !== null && inputRequirements.length === 0;
