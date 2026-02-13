@@ -448,10 +448,21 @@ class Pupt {
 
 ```typescript
 interface PuptInitConfig {
-  modules?: string[];           // npm packages, URLs, or local paths
+  modules?: string[];           // npm packages, URLs, local paths, or GitHub sources
   searchConfig?: SearchEngineConfig;
 }
 ```
+
+The `modules` array accepts any of the supported source types:
+
+| Source Type | Example |
+|---|---|
+| npm package | `'@acme/prompts'` |
+| npm package with version | `'@acme/prompts@1.2.0'` |
+| Local path (relative) | `'./local-prompts/'` |
+| Local path (absolute) | `'/home/user/prompts/lib'` |
+| URL | `'https://cdn.example.com/prompts.js'` |
+| GitHub | `'github:acme/prompts#v2.0.0'` |
 
 **DiscoveredPromptWithMethods:**
 
@@ -473,7 +484,13 @@ interface DiscoveredPromptWithMethods {
 import { Pupt } from 'pupt-lib';
 
 const pupt = new Pupt({
-  modules: ['@acme/prompts', './local-prompts/'],
+  modules: [
+    '@acme/prompts',                              // npm package
+    '@acme/prompts@1.2.0',                        // npm with pinned version
+    './local-prompts/',                            // local relative path
+    'https://cdn.example.com/prompt-lib.js',      // URL
+    'github:acme/community-prompts#v2.0.0',       // GitHub repo at a tag
+  ],
 });
 
 await pupt.init();
@@ -635,20 +652,173 @@ class ModuleLoader {
 
 ## Browser Support
 
+Utilities for loading pupt-lib and npm packages in browser environments via CDN. These functions generate [import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) so that bare specifiers like `import { Prompt } from 'pupt-lib'` resolve to CDN URLs without a bundler.
+
+### Supported CDN Providers
+
+| Provider | Type | URL Pattern |
+|---|---|---|
+| `esm.sh` (default) | `'esm.sh'` | `https://esm.sh/{name}@{version}` |
+| `unpkg` | `'unpkg'` | `https://unpkg.com/{name}@{version}` |
+| `jsdelivr` | `'jsdelivr'` | `https://cdn.jsdelivr.net/npm/{name}@{version}` |
+| `skypack` | `'skypack'` | `https://cdn.skypack.dev/{name}@{version}` |
+
+### `resolveCdn(name, version, options)`
+
+Resolve a single package to its CDN URL.
+
+```typescript
+function resolveCdn(name: string, version: string, options: CdnOptions): string
+```
+
+```typescript
+import { resolveCdn } from 'pupt-lib';
+
+resolveCdn('@acme/prompts', '1.0.0', { cdn: 'esm.sh' });
+// => 'https://esm.sh/@acme/prompts@1.0.0'
+
+resolveCdn('@acme/prompts', '1.0.0', { cdn: 'jsdelivr' });
+// => 'https://cdn.jsdelivr.net/npm/@acme/prompts@1.0.0'
+
+resolveCdn('@acme/prompts', '1.0.0', {
+  cdnTemplate: 'https://my-cdn.example.com/{name}@{version}',
+});
+// => 'https://my-cdn.example.com/@acme/prompts@1.0.0'
+```
+
+### `generateImportMap(dependencies, options)`
+
+Generate an import map for a list of dependencies.
+
+```typescript
+function generateImportMap(dependencies: Dependency[], options: CdnOptions): ImportMap
+```
+
+```typescript
+import { generateImportMap } from 'pupt-lib';
+
+const importMap = generateImportMap(
+  [
+    { name: '@acme/prompts', version: '2.0.0' },
+    { name: 'my-components', version: '1.0.0' },
+  ],
+  { cdn: 'esm.sh' },
+);
+// => {
+//   imports: {
+//     '@acme/prompts': 'https://esm.sh/@acme/prompts@2.0.0',
+//     'my-components': 'https://esm.sh/my-components@1.0.0',
+//   }
+// }
+```
+
 ### `generatePuptLibImportMap(options?)`
 
-Generate an import map for using pupt-lib in the browser.
+Generate the minimal import map required to use pupt-lib in the browser. Includes entries for `pupt-lib` and `pupt-lib/jsx-runtime`.
 
 ```typescript
 function generatePuptLibImportMap(options?: PuptLibImportMapOptions): ImportMap
 ```
 
+**PuptLibImportMapOptions:**
+
+```typescript
+interface PuptLibImportMapOptions {
+  cdn?: CdnProvider;                      // CDN provider (default: 'esm.sh')
+  cdnTemplate?: string;                   // Custom URL template with {name} and {version}
+  puptLibVersion?: string;                // pupt-lib version (default: 'latest')
+  additionalDependencies?: Dependency[];  // Extra packages to include in the map
+}
+```
+
+```typescript
+import { generatePuptLibImportMap } from 'pupt-lib';
+
+// Default: esm.sh
+const importMap = generatePuptLibImportMap({ puptLibVersion: '1.3.0' });
+// => {
+//   imports: {
+//     'pupt-lib': 'https://esm.sh/pupt-lib@1.3.0',
+//     'pupt-lib/jsx-runtime': 'https://esm.sh/pupt-lib@1.3.0/jsx-runtime',
+//   }
+// }
+
+// With unpkg and additional dependencies
+const importMap = generatePuptLibImportMap({
+  puptLibVersion: '1.3.0',
+  cdn: 'unpkg',
+  additionalDependencies: [
+    { name: '@acme/prompt-components', version: '2.0.0' },
+  ],
+});
+// => {
+//   imports: {
+//     'pupt-lib': 'https://unpkg.com/pupt-lib@1.3.0',
+//     'pupt-lib/jsx-runtime': 'https://unpkg.com/pupt-lib@1.3.0/jsx-runtime',
+//     '@acme/prompt-components': 'https://unpkg.com/@acme/prompt-components@2.0.0',
+//   }
+// }
+```
+
 ### `generatePuptLibImportMapScript(options?)`
 
-Generate a `<script type="importmap">` tag for browser usage.
+Generate a `<script type="importmap">` HTML tag. Same options as `generatePuptLibImportMap`.
 
 ```typescript
 function generatePuptLibImportMapScript(options?: PuptLibImportMapOptions): string
+```
+
+```typescript
+import { generatePuptLibImportMapScript } from 'pupt-lib';
+
+const html = generatePuptLibImportMapScript({ puptLibVersion: '1.3.0' });
+// => <script type="importmap">
+//    {
+//      "imports": {
+//        "pupt-lib": "https://esm.sh/pupt-lib@1.3.0",
+//        "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.3.0/jsx-runtime"
+//      }
+//    }
+//    </script>
+```
+
+### `serializeImportMap(importMap)`
+
+Serialize an `ImportMap` object to a pretty-printed JSON string.
+
+```typescript
+function serializeImportMap(importMap: ImportMap): string
+```
+
+### `generateImportMapScript(dependencies, options)`
+
+Generate a `<script type="importmap">` HTML tag for an arbitrary list of dependencies. Same options as `generateImportMap`.
+
+```typescript
+function generateImportMapScript(dependencies: Dependency[], options: CdnOptions): string
+```
+
+### Types
+
+```typescript
+type CdnProvider = 'esm.sh' | 'unpkg' | 'jsdelivr' | 'skypack';
+
+interface CdnOptions {
+  cdn?: CdnProvider;
+  cdnTemplate?: string;       // Custom URL template with {name}, {version}, {path}
+  path?: string;               // Optional subpath within the package
+  scopes?: Record<string, Record<string, string>>;
+}
+
+interface Dependency {
+  name: string;
+  version: string;
+}
+
+interface ImportMap {
+  imports: Record<string, string>;
+  scopes?: Record<string, Record<string, string>>;
+}
 ```
 
 ---

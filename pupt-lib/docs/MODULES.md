@@ -79,17 +79,102 @@ That's it. If you just need to share components between your own files, this is 
 
 ### The `from` Attribute
 
-The `from` attribute specifies where to load the module from. pupt-lib supports four source types:
+The `from` attribute specifies where to load the module from. pupt-lib supports these source types:
 
 | Source | Example | Notes |
 |--------|---------|-------|
-| Local file | `from="./my-components"` | Relative or absolute path |
+| Local file (relative) | `from="./my-components"` | Relative to the current file |
+| Local file (absolute) | `from="/home/user/libs/components"` | Absolute path (Node.js only) |
 | npm package | `from="@acme/prompt-components"` | Installed via `npm install` |
+| npm package with version | `from="@acme/prompt-components@1.2.0"` | Pin a specific version |
 | Package subpath | `from="@acme/components/alerts"` | Specific export within a package |
 | URL | `from="https://cdn.example.com/components.js"` | Direct URL to an ES module |
 | GitHub | `from="github:acme/components#v1.0.0"` | Shorthand for GitHub raw content; `#ref` is optional (defaults to `main`) |
 
 **Local files** are the simplest — just point to a `.ts` or `.js` file in your project. **npm packages** are best for sharing across projects. **URLs** and **GitHub** sources are useful for quick sharing without publishing to npm.
+
+### Source Type Examples
+
+**Local file** — relative path to a file in your project:
+
+```xml
+<Uses component="Greeting" from="./my-components" />
+<Uses component="Layout" from="../shared/layout" />
+```
+
+```tsx
+import { Greeting } from './my-components';
+import { Layout } from '../shared/layout';
+```
+
+**npm package** — installed in `node_modules` via `npm install`:
+
+```xml
+<Uses component="Callout, Summary" from="@acme/prompt-components" />
+```
+
+```tsx
+import { Callout, Summary } from '@acme/prompt-components';
+```
+
+**npm package with version** — pin a specific version to avoid conflicts:
+
+```xml
+<Uses component="Callout" from="@acme/prompt-components@1.2.0" />
+<Uses component="Badge" from="prompt-badges@3.0.0" />
+```
+
+If two modules try to load different versions of the same package, pupt-lib will throw a version conflict error.
+
+**Package subpath** — import from a specific export within a package:
+
+```xml
+<Uses component="DangerAlert" from="@acme/components/alerts" />
+<Uses component="BarChart" from="@acme/components/charts" />
+```
+
+```tsx
+import { DangerAlert } from '@acme/components/alerts';
+import { BarChart } from '@acme/components/charts';
+```
+
+**URL** — load an ES module directly from any URL. This is also how you load npm packages via a CDN without `npm install`:
+
+```xml
+<Uses component="Badge" from="https://cdn.example.com/prompt-components/badge.js" />
+```
+
+```tsx
+import { Badge } from 'https://cdn.example.com/prompt-components/badge.js';
+```
+
+**Loading npm packages via CDN** — use a CDN URL to load a published npm package without installing it locally. This is useful for quick prototyping, browser environments, or when you don't want to manage a `node_modules` directory:
+
+```xml
+<!-- esm.sh (recommended — returns native ES modules) -->
+<Uses component="Callout" from="https://esm.sh/@acme/prompt-components@1.0.0" />
+
+<!-- unpkg -->
+<Uses component="Callout" from="https://unpkg.com/@acme/prompt-components@1.0.0" />
+
+<!-- jsdelivr -->
+<Uses component="Callout" from="https://cdn.jsdelivr.net/npm/@acme/prompt-components@1.0.0" />
+
+<!-- skypack -->
+<Uses component="Callout" from="https://cdn.skypack.dev/@acme/prompt-components@1.0.0" />
+```
+
+For browser environments, pupt-lib also provides utilities to generate [import maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) that resolve bare package specifiers to CDN URLs. See the [Browser Support](API.md#browser-support) section in the API reference.
+
+**GitHub** — shorthand for loading from a GitHub repository's raw content. The format is `github:user/repo` or `github:user/repo#ref` where `ref` is a branch, tag, or commit (defaults to `main`):
+
+```xml
+<Uses component="ReviewChecklist" from="github:acme/prompt-components" />
+<Uses component="ReviewChecklist" from="github:acme/prompt-components#v2.0.0" />
+<Uses component="ReviewChecklist" from="github:acme/prompt-components#develop" />
+```
+
+This resolves to `https://raw.githubusercontent.com/{user}/{repo}/{ref}/index.js`.
 
 ### `.prompt` vs `.tsx`
 
