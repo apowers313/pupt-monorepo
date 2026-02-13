@@ -36,8 +36,15 @@ export async function collectInputs(
     const result = await iterator.submit(value);
     if (result.valid) {
       await iterator.advance();
+    } else if (noInteractive) {
+      // In non-interactive mode, retrying with the same default will always
+      // produce the same validation failure, so throw instead of looping forever.
+      const errorMessages = result.errors.map(e => e.message).join('; ');
+      throw new Error(
+        `Validation failed for '${req.name}' in non-interactive mode: ${errorMessages}`,
+      );
     }
-    // If invalid, the loop re-prompts the current requirement
+    // If invalid in interactive mode, the loop re-prompts the current requirement
   }
 
   return iterator.getValues();
