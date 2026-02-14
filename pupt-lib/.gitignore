@@ -6,6 +6,8 @@ dist/
 
 # Test coverage
 coverage/
+coverage-node/
+coverage-browser/
 
 # Browser test failure screenshots
 __screenshots__/

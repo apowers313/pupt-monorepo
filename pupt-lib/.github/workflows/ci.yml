@@ -101,7 +101,22 @@ jobs:
           path: dist/
 
       - name: Run Node.js tests
+        if: matrix.os != 'ubuntu-latest'
         run: npm run test:ci:node
+
+      - name: Run Node.js tests (with coverage)
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run test:ci:node:cov
+        env:
+          VITEST_COVERAGE_NO_THRESHOLDS: 'true'
+
+      - name: Upload node coverage
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-node
+          path: coverage-node/lcov.info
+          retention-days: 1
 
   # Browser tests - run on Ubuntu only (Playwright)
   test-browser:
@@ -144,57 +159,44 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: Run browser tests
-        run: npm run test:ci:browser
+      - name: Run browser tests (with coverage)
+        run: npm run test:ci:browser:cov
+        env:
+          VITEST_COVERAGE_NO_THRESHOLDS: 'true'
 
-  # Coverage job - runs after all tests pass
+      - name: Upload browser coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-browser
+          path: coverage-browser/lcov.info
+          retention-days: 1
+
+  # Coverage job - merges coverage from test jobs and uploads to Coveralls
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [build, test-node, test-browser]
+    needs: [test-node, test-browser]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22.x
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-        env:
-          HUSKY: 0
-
-      - name: Download build artifacts
+      - name: Download node coverage
         uses: actions/download-artifact@v4
         with:
-          name: dist
-          path: dist/
+          name: coverage-node
+          path: coverage-node/
 
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache
+      - name: Download browser coverage
+        uses: actions/download-artifact@v4
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          name: coverage-browser
+          path: coverage-browser/
 
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium --with-deps
-
-      - name: Install Playwright deps (if cached)
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
-
-      - name: Run tests with coverage
-        run: npm run test:coverage
+      - name: Merge coverage reports
+        run: cat coverage-node/lcov.info coverage-browser/lcov.info > lcov.info
 
       - name: Upload coverage to Coveralls
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          file: lcov.info
 
   # Documentation build job
   docs-build:

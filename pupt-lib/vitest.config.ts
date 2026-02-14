@@ -5,6 +5,7 @@ import { resolve } from 'path';
 // Use a higher timeout for CI environments
 const isCI = process.env.CI === 'true';
 const testTimeout = isCI ? 30000 : 5000;
+const noThresholds = process.env.VITEST_COVERAGE_NO_THRESHOLDS === 'true';
 
 // Self-referencing aliases so components/ can import from 'pupt-lib'
 const selfRefAlias = {
@@ -73,7 +74,7 @@ export default defineConfig({
       reporter: ['text', 'json', 'html', 'lcov'],
       include: ['src/**/*.ts', 'components/**/*.tsx'],
       exclude: ['src/**/*.d.ts', 'src/types/**/*'],
-      thresholds: {
+      thresholds: noThresholds ? undefined : {
         lines: 80,
         functions: 80,
         branches: 75,

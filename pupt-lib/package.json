@@ -61,6 +61,8 @@
     "test:ci": "vitest run --no-coverage --passWithNoTests",
     "test:ci:node": "vitest run --project=node --no-coverage --passWithNoTests",
     "test:ci:browser": "vitest run --project=browser --no-coverage --passWithNoTests",
+    "test:ci:node:cov": "vitest run --project=node --coverage --coverage.reportsDirectory=coverage-node --passWithNoTests",
+    "test:ci:browser:cov": "vitest run --project=browser --coverage --coverage.reportsDirectory=coverage-browser --passWithNoTests",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src test components && tsc --noEmit && knip",
     "lint:fix": "eslint src test components --fix",
