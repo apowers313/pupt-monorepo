@@ -22,28 +22,29 @@ describe('Role', () => {
     expect(result.text).toMatch(/<role>[\s\S]*Assistant role[\s\S]*<\/role>/);
   });
 
-  it('should render expertise when provided', async () => {
+  it('should not auto-append expertise when children are provided', async () => {
     const element = jsx(Role, {
       expertise: 'TypeScript',
       children: 'Software Engineer',
     });
 
     const result = await render(element);
-    expect(result.text).toContain('TypeScript');
     expect(result.text).toContain('Software Engineer');
+    expect(result.text).not.toContain('with expertise in');
   });
 
-  it('should render domain when provided', async () => {
+  it('should not auto-append domain when children are provided', async () => {
     const element = jsx(Role, {
       domain: 'healthcare',
       children: 'Analyst',
     });
 
     const result = await render(element);
-    expect(result.text).toContain('healthcare');
+    expect(result.text).toContain('Analyst');
+    expect(result.text).not.toContain('specializing in the healthcare domain');
   });
 
-  it('should render both expertise and domain together', async () => {
+  it('should not auto-append expertise or domain when both provided with children', async () => {
     const element = jsx(Role, {
       expertise: 'data analysis',
       domain: 'finance',
@@ -51,8 +52,9 @@ describe('Role', () => {
     });
 
     const result = await render(element);
-    expect(result.text).toContain('data analysis');
-    expect(result.text).toContain('finance');
+    expect(result.text).toContain('You are an expert analyst');
+    expect(result.text).not.toContain('with expertise in');
+    expect(result.text).not.toContain('specializing in the');
   });
 
   it('should support markdown delimiter', async () => {

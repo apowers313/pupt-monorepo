@@ -34,16 +34,7 @@ export class Role extends Component<RoleProps> {
 
     // If custom children provided, use them (children override preset)
     if (this.hasContent(children)) {
-      const parts: PuptNode[] = [children];
-      if (expertise) {
-        const expertiseStr = Array.isArray(expertise) ? expertise.join(', ') : expertise;
-        parts.push(`\nwith expertise in ${expertiseStr}`);
-      }
-      if (domain) {
-        parts.push(`\nspecializing in the ${domain} domain`);
-      }
-      const content = parts.length === 1 ? parts[0] : parts;
-      return wrapWithDelimiter(content, 'role', delimiter);
+      return wrapWithDelimiter(children, 'role', delimiter);
     }
 
     // Build from preset + customizations

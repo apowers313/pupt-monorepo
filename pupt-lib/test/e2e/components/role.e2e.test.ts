@@ -19,7 +19,7 @@ describe('Role e2e', () => {
     expect(result.text).toContain('Help me write code');
   });
 
-  it('should render expertise through .prompt pipeline', async () => {
+  it('should not auto-append expertise when children provided through .prompt pipeline', async () => {
     const source = `
 <Prompt name="role-expertise" bare>
   <Role expertise="TypeScript">Software Engineer</Role>
@@ -29,11 +29,11 @@ describe('Role e2e', () => {
     const element = await createPromptFromSource(source, 'role-expertise.prompt');
     const result = await render(element);
     expect(result.ok).toBe(true);
-    expect(result.text).toContain('TypeScript');
     expect(result.text).toContain('Software Engineer');
+    expect(result.text).not.toContain('with expertise in');
   });
 
-  it('should render domain through .prompt pipeline', async () => {
+  it('should not auto-append domain when children provided through .prompt pipeline', async () => {
     const source = `
 <Prompt name="role-domain" bare>
   <Role domain="healthcare">Analyst</Role>
@@ -43,8 +43,8 @@ describe('Role e2e', () => {
     const element = await createPromptFromSource(source, 'role-domain.prompt');
     const result = await render(element);
     expect(result.ok).toBe(true);
-    expect(result.text).toContain('healthcare');
     expect(result.text).toContain('Analyst');
+    expect(result.text).not.toContain('specializing in the healthcare domain');
   });
 
   it('should render preset through .prompt pipeline', async () => {
