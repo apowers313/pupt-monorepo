@@ -1,12 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as path from 'path';
 import * as os from 'os';
+import * as nodeFs from 'node:fs/promises';
 import fs from 'fs-extra';
 import { installCommand } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { logger } from '../../src/utils/logger.js';
 
-// Mock execa
+let testDir: string;
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
+// Mock execa (still needed as a transitive dependency)
 vi.mock('execa', () => ({
   execa: vi.fn()
 }));
@@ -15,7 +24,25 @@ vi.mock('execa', () => ({
 vi.mock('simple-git', () => ({
   default: vi.fn(() => ({
     clone: vi.fn(),
-    checkIsRepo: vi.fn().mockResolvedValue(false)
+    checkIsRepo: vi.fn().mockResolvedValue(false),
+    log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
+  }))
+}));
+
+// Mock GlobalPackageManager
+const mockInstall = vi.fn();
+const mockEnsureInitialized = vi.fn();
+const mockDetectPromptDirs = vi.fn();
+const mockGetInstalledVersion = vi.fn();
+
+vi.mock('../../src/services/package-manager.js', () => ({
+  GlobalPackageManager: vi.fn().mockImplementation(() => ({
+    install: mockInstall,
+    ensureInitialized: mockEnsureInitialized,
+    detectPromptDirs: mockDetectPromptDirs,
+    getInstalledVersion: mockGetInstalledVersion,
+    getPackagesDir: () => path.join(testDir, 'data', 'packages'),
+    getNodeModulesDir: () => path.join(testDir, 'data', 'packages', 'node_modules'),
   }))
 }));
 
@@ -27,360 +54,199 @@ vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
     ConfigManager: {
       ...original.ConfigManager,
       load: vi.fn(),
-      // Keep the real contractPaths implementation
-      contractPaths: original.ConfigManager.contractPaths
+      save: vi.fn(),
     }
   };
 });
 
 vi.mock('../../src/utils/logger.js');
+
 describe('NPM Installation Integration Tests', () => {
-  let tempDir: string;
-  let originalCwd: string;
-  let mockExeca: any;
   let loggerLogSpy: any;
   let loggerErrorSpy: any;
 
   beforeEach(async () => {
-    // Save original cwd
-    originalCwd = process.cwd();
-    
     // Create temp directory
-    tempDir = path.join(os.tmpdir(), `pt-test-npm-${Date.now()}`);
-    await fs.ensureDir(tempDir);
-    process.chdir(tempDir);
-    
-    // Create initial config
-    const testConfig = {
-      version: '3.0.0',
-      promptDirs: ['./.prompts']
-    };
-    await fs.writeJson('.pt-config.json', testConfig);
-    
-    // Mock ConfigManager to use our test config
-    vi.mocked(ConfigManager.load).mockImplementation(async () => {
-      const configContent = await fs.readJson('.pt-config.json');
-      return configContent;
+    testDir = await nodeFs.mkdtemp(path.join(os.tmpdir(), `pt-test-npm-`));
+
+    // Create data directories
+    await fs.ensureDir(path.join(testDir, 'data', 'packages'));
+
+    // Mock ConfigManager
+    vi.mocked(ConfigManager.load).mockResolvedValue({
+      version: '8.0.0',
+      promptDirs: ['./.prompts'],
+      libraries: [],
+    } as any);
+    vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
+
+    // Setup default GlobalPackageManager.install mock
+    mockInstall.mockResolvedValue({
+      name: 'my-prompts',
+      version: '1.0.0',
+      promptDirs: ['prompts'],
     });
-    
-    // Create prompts directory
-    await fs.ensureDir('prompts');
-    
-    // Get mocked execa
-    const execaMock = await import('execa');
-    mockExeca = execaMock.execa as any;
-    
+
     // Setup console spies
     loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
     loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
   });
 
   afterEach(async () => {
-    // Restore console
-    
-    // Restore cwd
-    process.chdir(originalCwd);
-    
     // Clean up temp directory
-    await fs.remove(tempDir);
-    
+    await fs.remove(testDir);
+
     // Clear mocks
     vi.clearAllMocks();
   });
 
   describe('Full NPM Installation Flow', () => {
     it('should install a regular npm package', async () => {
-      // Create package.json to simulate npm project
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package
-      const packageDir = path.join('node_modules', 'my-prompts');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
+      // Mock successful install returning package info
+      mockInstall.mockResolvedValue({
         name: 'my-prompts',
         version: '1.0.0',
-        promptDir: 'templates'
+        promptDirs: ['prompts'],
       });
-      await fs.ensureDir(path.join(packageDir, 'templates'));
-      
+
       // Run install command
       await installCommand('my-prompts');
-      
-      // Verify npm install was called
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', 'my-prompts'], {
-        stdio: 'inherit'
-      });
-      
-      // Verify config was updated
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toContain(path.join('node_modules', 'my-prompts', 'templates'));
-      
+
+      // Verify GlobalPackageManager.install was called
+      expect(mockInstall).toHaveBeenCalledWith('my-prompts');
+
+      // Verify config was saved with NpmLibraryEntry
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'my-prompts',
+              type: 'npm',
+              source: 'my-prompts',
+              promptDirs: ['prompts'],
+              version: '1.0.0',
+              installedAt: expect.any(String),
+            })
+          ])
+        })
+      );
+
       // Verify console output
-      expect(loggerLogSpy).toHaveBeenCalledWith('Installing my-prompts using npm...');
-      expect(loggerLogSpy).toHaveBeenCalledWith('Successfully installed prompts from my-prompts');
+      expect(loggerLogSpy).toHaveBeenCalledWith(expect.stringContaining('my-prompts'));
     });
 
     it('should install a scoped npm package', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package
-      const packageDir = path.join('node_modules', '@myorg', 'prompts');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
+      // Mock successful install returning package info
+      mockInstall.mockResolvedValue({
         name: '@myorg/prompts',
-        version: '2.0.0'
+        version: '2.0.0',
+        promptDirs: ['prompts'],
       });
-      await fs.ensureDir(path.join(packageDir, 'prompts'));
-      
+
       // Run install command
       await installCommand('@myorg/prompts');
-      
-      // Verify npm install was called
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', '@myorg/prompts'], {
-        stdio: 'inherit'
-      });
-      
-      // Verify config was updated with default prompts directory
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toContain(path.join('node_modules', '@myorg/prompts', 'prompts'));
-    });
 
-    it('should handle missing package.json error', async () => {
-      // No package.json created
-      
-      await expect(installCommand('some-package')).rejects.toThrow(
-        'NPM package installation requires a package.json file'
+      // Verify GlobalPackageManager.install was called
+      expect(mockInstall).toHaveBeenCalledWith('@myorg/prompts');
+
+      // Verify config was saved with NpmLibraryEntry
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: '@myorg/prompts',
+              type: 'npm',
+              source: '@myorg/prompts',
+              promptDirs: ['prompts'],
+              version: '2.0.0',
+              installedAt: expect.any(String),
+            })
+          ])
+        })
       );
-      
-      // Verify npm install was not called
-      expect(mockExeca).not.toHaveBeenCalled();
     });
 
     it('should handle npm install failure', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-
       // Mock failed npm install
-      mockExeca.mockRejectedValue(new Error('npm ERR! 404 Not Found'));
+      mockInstall.mockRejectedValue(new Error('Failed to install package: npm ERR! 404 Not Found'));
 
       await expect(installCommand('non-existent-package')).rejects.toThrow(
-        'Failed to install package with npm'
+        'Failed to install package'
       );
     });
 
-    it('should not duplicate existing prompt directories', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Create config with existing path
-      const existingPath = path.join('node_modules', 'existing-package', 'prompts');
-      await fs.writeJson('.pt-config.json', {
-        version: '3.0.0',
-        promptDirs: ['./.prompts', existingPath]
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package
-      const packageDir = path.join('node_modules', 'existing-package');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
-        name: 'existing-package',
-        version: '1.0.0'
-      });
-      await fs.ensureDir(path.join(packageDir, 'prompts'));
-      
-      // Run install command
-      await installCommand('existing-package');
-      
-      // Verify config was not modified
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toHaveLength(2);
-      expect(config.promptDirs.filter(dir => dir === existingPath)).toHaveLength(1);
-      
-      // Verify appropriate console output
-      expect(loggerLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('already configured at')
+    it('should not duplicate existing library entries', async () => {
+      // Create config with existing library entry
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        version: '8.0.0',
+        promptDirs: ['./.prompts'],
+        libraries: [
+          {
+            name: 'existing-package',
+            type: 'npm',
+            source: 'existing-package',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T00:00:00.000Z',
+            version: '1.0.0',
+          }
+        ],
+      } as any);
+
+      // Run install command - should throw for duplicate
+      await expect(installCommand('existing-package')).rejects.toThrow(
+        'Package "existing-package" is already installed'
       );
+
+      // Verify config was not saved (library already exists)
+      expect(vi.mocked(ConfigManager.save)).not.toHaveBeenCalled();
+
+      // Verify install was not called (duplicate check happens before install)
+      expect(mockInstall).not.toHaveBeenCalled();
     });
 
     it('should handle invalid installation sources', async () => {
       await expect(installCommand('https://not-git-or-npm')).rejects.toThrow(
         'Invalid installation source'
       );
-      
+
       expect(loggerErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('neither a valid git URL nor an npm package name')
       );
     });
 
     it('should differentiate between git URLs and npm packages', async () => {
-      // Create package.json for npm test
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Test npm package - should use npm
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      const packageDir = path.join('node_modules', 'npm-package');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
+      // Test npm package - should use GlobalPackageManager
+      mockInstall.mockResolvedValue({
         name: 'npm-package',
-        version: '1.0.0'
+        version: '1.0.0',
+        promptDirs: ['prompts'],
       });
-      await fs.ensureDir(path.join(packageDir, 'prompts'));
-      
+
       await installCommand('npm-package');
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', 'npm-package'], expect.any(Object));
-      
+      expect(mockInstall).toHaveBeenCalledWith('npm-package');
+
       // Reset mocks
-      mockExeca.mockClear();
-      
+      mockInstall.mockClear();
+      vi.mocked(ConfigManager.save).mockClear();
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        version: '8.0.0',
+        promptDirs: ['./.prompts'],
+        libraries: []
+      } as any);
+
       // Mock simple-git to simulate successful git operation
       const simpleGitMock = await import('simple-git');
       const mockGit = {
         clone: vi.fn().mockResolvedValue(undefined),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+        log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
       };
       vi.mocked(simpleGitMock.default).mockReturnValue(mockGit as any);
-      
-      // Create git-prompts directory for git URL test
-      await fs.ensureDir('.git-prompts/repo/prompts');
-      
-      // Test git URL - should use git, not npm
+
+      // Test git URL - should use git, not GlobalPackageManager
       await installCommand('https://github.com/user/repo');
-      expect(mockExeca).not.toHaveBeenCalled(); // npm should not be called for git URLs
+      expect(mockInstall).not.toHaveBeenCalled(); // npm should not be called for git URLs
       expect(mockGit.clone).toHaveBeenCalled(); // git should be called instead
-    });
-  });
-
-  describe('Package.json Parsing', () => {
-    it('should respect custom promptDir from package.json', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package with custom promptDir
-      const packageDir = path.join('node_modules', 'custom-prompts');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
-        name: 'custom-prompts',
-        version: '1.0.0',
-        promptDir: 'my-templates'
-      });
-      await fs.ensureDir(path.join(packageDir, 'my-templates'));
-      
-      // Run install command
-      await installCommand('custom-prompts');
-      
-      // Verify config uses custom directory
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toContain(path.join('node_modules', 'custom-prompts', 'my-templates'));
-    });
-
-    it('should use default prompts directory when promptDir not specified', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package without promptDir
-      const packageDir = path.join('node_modules', 'default-prompts');
-      await fs.ensureDir(packageDir);
-      await fs.writeJson(path.join(packageDir, 'package.json'), {
-        name: 'default-prompts',
-        version: '1.0.0'
-      });
-      await fs.ensureDir(path.join(packageDir, 'prompts'));
-      
-      // Run install command
-      await installCommand('default-prompts');
-      
-      // Verify config uses default directory
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toContain(path.join('node_modules', 'default-prompts', 'prompts'));
-    });
-
-    it('should handle missing or invalid package.json in installed package', async () => {
-      // Create package.json
-      await fs.writeJson('package.json', {
-        name: 'test-project',
-        version: '1.0.0'
-      });
-      
-      // Mock successful npm install
-      mockExeca.mockResolvedValue({
-        stdout: 'added 1 package',
-        stderr: '',
-        exitCode: 0
-      });
-      
-      // Create mock installed package with no package.json
-      const packageDir = path.join('node_modules', 'no-metadata');
-      await fs.ensureDir(packageDir);
-      await fs.ensureDir(path.join(packageDir, 'prompts'));
-      
-      // Run install command - should not throw
-      await installCommand('no-metadata');
-      
-      // Verify config uses default directory
-      const config = await fs.readJson('.pt-config.json');
-      expect(config.promptDirs).toContain(path.join('node_modules', 'no-metadata', 'prompts'));
     });
   });
 });

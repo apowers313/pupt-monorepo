@@ -21,6 +21,9 @@ vi.mock('../../src/ui/interactive-search.js');
 vi.mock('../../src/history/history-manager.js');
 vi.mock('../../src/utils/logger.js');
 vi.mock('../../src/services/prompt-resolver.js');
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
 vi.mock('child_process', () => ({
   spawn: vi.fn(),
   execFile: vi.fn()

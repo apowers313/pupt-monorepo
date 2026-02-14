@@ -7,117 +7,45 @@
  * used instead of pnpm, which failed with "EUNSUPPORTEDPROTOCOL" error because
  * npm doesn't understand the `workspace:*` protocol used by pnpm workspaces.
  *
- * Fix: Modified detectPackageManager() to search up the directory tree until
- * it finds a lock file or reaches the filesystem root.
+ * Status: The detectPackageManager() and isNpmProject() functions were removed
+ * from install.ts. Package installation now uses npm directly via the
+ * installFromNpm() function. The monorepo lock file traversal functionality
+ * is no longer part of the codebase.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as fs from 'node:fs/promises';
-import * as path from 'node:path';
-import { detectPackageManager } from '../../src/commands/install.js';
-
-vi.mock('fs/promises');
+import { describe, it, expect } from 'vitest';
+import { isNpmPackage, validateNpmPackage, validateGitUrl } from '../../src/commands/install.js';
 
 describe('Monorepo Package Manager Detection - Regression Test', () => {
-  let originalCwd: string;
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    originalCwd = process.cwd();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('should detect pnpm when pnpm-lock.yaml is in a parent directory (monorepo)', async () => {
-    // Simulate being in /monorepo/packages/app where pnpm-lock.yaml is in /monorepo
-    const cwd = process.cwd();
-    const parentDir = path.dirname(cwd);
-    const grandparentDir = path.dirname(parentDir);
-
-    vi.mocked(fs.access).mockImplementation(async (filePath) => {
-      const file = String(filePath);
-
-      // pnpm-lock.yaml exists in grandparent (simulating monorepo root)
-      if (file === path.join(grandparentDir, 'pnpm-lock.yaml')) {
-        return undefined;
-      }
-
-      throw new Error('ENOENT');
+  describe('install source detection (replacement for removed detectPackageManager)', () => {
+    it('should detect valid npm package names', () => {
+      expect(isNpmPackage('my-package')).toBe(true);
+      expect(isNpmPackage('@org/my-package')).toBe(true);
+      expect(isNpmPackage('simple')).toBe(true);
     });
 
-    const result = await detectPackageManager();
-    expect(result).toBe('pnpm');
-  });
-
-  it('should detect yarn when yarn.lock is in a parent directory (monorepo)', async () => {
-    const cwd = process.cwd();
-    const parentDir = path.dirname(cwd);
-
-    vi.mocked(fs.access).mockImplementation(async (filePath) => {
-      const file = String(filePath);
-
-      // yarn.lock exists in parent directory
-      if (file === path.join(parentDir, 'yarn.lock')) {
-        return undefined;
-      }
-
-      throw new Error('ENOENT');
+    it('should reject invalid npm package names', () => {
+      expect(isNpmPackage('')).toBe(false);
+      expect(isNpmPackage('https://github.com/user/repo')).toBe(false);
+      expect(isNpmPackage('./local-path')).toBe(false);
+      expect(isNpmPackage('/absolute-path')).toBe(false);
     });
 
-    const result = await detectPackageManager();
-    expect(result).toBe('yarn');
-  });
-
-  it('should prefer pnpm over yarn when both exist at different levels', async () => {
-    const cwd = process.cwd();
-    const parentDir = path.dirname(cwd);
-    const grandparentDir = path.dirname(parentDir);
-
-    vi.mocked(fs.access).mockImplementation(async (filePath) => {
-      const file = String(filePath);
-
-      // pnpm-lock.yaml in current dir, yarn.lock in parent
-      if (file === path.join(cwd, 'pnpm-lock.yaml')) {
-        return undefined;
-      }
-      if (file === path.join(parentDir, 'yarn.lock')) {
-        return undefined;
-      }
-
-      throw new Error('ENOENT');
+    it('should validate npm package names without throwing for valid names', () => {
+      expect(() => validateNpmPackage('my-package')).not.toThrow();
+      expect(() => validateNpmPackage('@scope/package')).not.toThrow();
     });
 
-    const result = await detectPackageManager();
-    // pnpm should be detected first because we check it before yarn in the same directory
-    expect(result).toBe('pnpm');
-  });
-
-  it('should detect package-lock.json in parent directory for npm monorepos', async () => {
-    const cwd = process.cwd();
-    const parentDir = path.dirname(cwd);
-
-    vi.mocked(fs.access).mockImplementation(async (filePath) => {
-      const file = String(filePath);
-
-      // package-lock.json exists in parent directory (npm workspaces)
-      if (file === path.join(parentDir, 'package-lock.json')) {
-        return undefined;
-      }
-
-      throw new Error('ENOENT');
+    it('should throw for invalid npm package names', () => {
+      expect(() => validateNpmPackage('')).toThrow();
+      expect(() => validateNpmPackage('https://example.com')).toThrow();
     });
 
-    const result = await detectPackageManager();
-    expect(result).toBe('npm');
-  });
-
-  it('should default to npm when no lock file exists in any parent', async () => {
-    // All access calls fail
-    vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
-
-    const result = await detectPackageManager();
-    expect(result).toBe('npm');
+    it('should validate git URLs correctly', () => {
+      expect(() => validateGitUrl('https://github.com/user/repo')).not.toThrow();
+      expect(() => validateGitUrl('https://github.com/user/repo.git')).not.toThrow();
+      expect(() => validateGitUrl('')).toThrow();
+      expect(() => validateGitUrl('not-a-url')).toThrow();
+    });
   });
 });

@@ -3,7 +3,6 @@ import { program } from 'commander';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import * as path from 'node:path';
 import chalk from 'chalk';
 import { ConfigManager } from './config/config-manager.js';
 import { HistoryManager } from './history/history-manager.js';
@@ -15,19 +14,33 @@ import { editCommand } from './commands/edit.js';
 import { runCommand } from './commands/run.js';
 import { annotateCommand } from './commands/annotate.js';
 import { installCommand } from './commands/install.js';
+import { updateCommand } from './commands/update.js';
+import { uninstallCommand } from './commands/uninstall.js';
 import { helpCommand } from './commands/help.js';
 import { reviewCommand } from './commands/review.js';
 import { configCommand } from './commands/config.js';
+import { cacheCommand } from './commands/cache.js';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
+import { getDataDir } from './config/global-paths.js';
+import { configureModuleResolution } from './services/module-resolution.js';
+import { resolvePromptDirs } from './utils/prompt-dir-resolver.js';
+
+// Commander.js helper for repeatable options (e.g. -d path1 -d path2)
+function collect(val: string, acc: string[]): string[] {
+  return [...acc, val];
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
+// Configure NODE_PATH for global npm packages early
+configureModuleResolution(getDataDir());
+
 // List of valid commands for suggestions
-const VALID_COMMANDS = ['init', 'config', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'review', 'help'];
+const VALID_COMMANDS = ['init', 'config', 'cache', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'update', 'uninstall', 'review', 'help'];
 
 // Calculate Levenshtein distance between two strings
 function levenshteinDistance(a: string, b: string): number {
@@ -88,54 +101,14 @@ process.on('SIGTERM', () => {
   process.exit(143); // Standard exit code for SIGTERM
 });
 
-async function checkAndMigrateOldConfig(): Promise<void> {
-  // Skip the check in test environment or non-TTY (non-interactive) mode
-  if (process.env.NODE_ENV === 'test' || !process.stdin.isTTY) {
-    return;
-  }
-  
-  // Check for old config files in current directory
-  const oldFiles = await ConfigManager.checkForOldConfigFiles();
-  
-  if (oldFiles.length > 0) {
-    logger.warn(chalk.yellow('\n⚠️  Warning: Found old config file(s):'));
-    oldFiles.forEach(file => {
-      logger.warn(chalk.yellow(`   - ${path.basename(file)}`));
-    });
-    
-    logger.warn(chalk.yellow('\nThe config file naming has changed from .ptrc to .pt-config'));
-    logger.warn(chalk.yellow('Would you like to rename your config file(s)? (y/n): '));
-    
-    // Get user input
-    const { confirm } = await import('@inquirer/prompts');
-    const shouldRename = await confirm({
-      message: 'Rename config file(s) to new format?',
-      default: true
-    });
-    
-    if (shouldRename) {
-      for (const oldFile of oldFiles) {
-        try {
-          const newPath = await ConfigManager.renameOldConfigFile(oldFile);
-          logger.log(chalk.green(`✓ Renamed ${path.basename(oldFile)} to ${path.basename(newPath)}`));
-        } catch (error) {
-          logger.error(chalk.red(`✗ Failed to rename ${path.basename(oldFile)}: ${error instanceof Error ? error.message : String(error)}`));
-        }
-      }
-    }
-  }
-}
-
-// Check for old config files before running commands
-await checkAndMigrateOldConfig();
-
 program
   .name('pt')
   .description('CLI tool for managing AI prompts')
   .version(packageJson.version)
   .argument('[command]', 'command to run')
+  .option('-d, --prompt-dir <path>', 'Additional prompt directory (repeatable)', collect, [])
   .allowUnknownOption(true)
-  .action(async (command) => {
+  .action(async (command, options) => {
     // If a command-like argument is provided, it's likely a typo
     if (command && VALID_COMMANDS.length > 0) {
       // Check if it looks like a command (not a flag)
@@ -153,9 +126,15 @@ program
       // Capture timestamp at start of prompt processing
       const startTimestamp = new Date();
 
+      // Merge CLI prompt dirs + local .prompts/ + config dirs
+      const effectiveDirs = await resolvePromptDirs({
+        configPromptDirs: config.promptDirs,
+        cliPromptDirs: options.promptDir,
+      });
+
       // Discover, select, collect inputs, and render
       const resolved = await resolvePrompt({
-        promptDirs: config.promptDirs,
+        promptDirs: effectiveDirs,
         libraries: config.libraries,
         startTimestamp,
         environment: config.environment,
@@ -192,7 +171,8 @@ program
         await runCommand([], {
           prompt: result,
           templateInfo: resolved.templateInfo,
-          isAutoRun: true
+          isAutoRun: true,
+          promptDirOverrides: options.promptDir,
         });
       }
     } catch (error) {
@@ -221,25 +201,17 @@ program
 // Config command
 program
   .command('config')
-  .description('Show or modify configuration')
+  .description('Show current configuration')
   .option('-s, --show', 'Show current configuration with resolved paths')
-  .option('--fix-paths', 'Convert absolute paths to portable format (${projectRoot}/...)')
   .addHelpText('after', `
 Examples:
   pt config                    # Show current configuration
   pt config --show             # Same as above
-  pt config --fix-paths        # Convert absolute paths to portable format
-
-The --fix-paths option converts:
-  - Absolute paths under project root → \${projectRoot}/...
-  - Absolute paths under home → ~/...
-  - Relative paths (node_modules/...) → kept as-is
 `)
   .action(async (options) => {
     try {
       await configCommand({
         show: options.show,
-        fixPaths: options.fixPaths
       });
     } catch (error) {
       displayError(error as Error);
@@ -278,9 +250,10 @@ program
 program
   .command('add')
   .description('Create a new prompt interactively')
-  .action(async () => {
+  .option('-g, --global', 'Save to global prompt directory instead of local .prompts/')
+  .action(async (options) => {
     try {
-      await addCommand();
+      await addCommand({ global: options.global });
     } catch (error) {
       displayError(error as Error);
       process.exit(1);
@@ -307,7 +280,9 @@ program
   .usage('[tool] [args...] [-- tool-specific-args]')
   .option('-h, --history <number>', 'Use prompt from history by number')
   .option('-p, --prompt <name>', 'Use specified prompt by title or filename')
+  .option('-d, --prompt-dir <path>', 'Additional prompt directory (repeatable)', collect, [])
   .option('--no-interactive', 'Use default values for all prompt inputs')
+  .option('--no-cache', 'Bypass module cache for URL/GitHub imports')
   .helpOption('--help', 'Display help for run command')
   .addHelpText('after', `
 Examples:
@@ -329,7 +304,9 @@ Examples:
       await runCommand(allArgs, {
         historyIndex: options.history ? parseInt(options.history) : undefined,
         promptName: options.prompt,
-        noInteractive: options.interactive === false
+        promptDirOverrides: options.promptDir,
+        noInteractive: options.interactive === false,
+        noCache: options.cache === false,
       });
     } catch (error) {
       displayError(error as Error);
@@ -354,15 +331,76 @@ program
 program
   .command('install <source>')
   .description('Install prompts from a git repository or npm package')
+  .option('-n, --name <name>', 'Custom name for the installed library')
   .addHelpText('after', `
 Examples:
-  pt install https://github.com/user/prompts     # Install from GitHub
-  pt install git@github.com:user/prompts.git     # Install via SSH
-  pt install @org/prompts                        # Install from npm (coming soon)
+  pt install https://github.com/user/prompts       # Install from GitHub
+  pt install git@github.com:user/prompts.git       # Install via SSH
+  pt install https://github.com/user/repo -n mylib # Install with custom name
+  pt install @org/prompts                          # Install from npm
 `)
-  .action(async (source) => {
+  .action(async (source, options) => {
     try {
-      await installCommand(source);
+      await installCommand(source, { name: options.name });
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Update command
+program
+  .command('update [name]')
+  .description('Update installed prompt libraries')
+  .addHelpText('after', `
+Examples:
+  pt update              # Update all installed libraries
+  pt update my-prompts   # Update a specific library
+`)
+  .action(async (name) => {
+    try {
+      await updateCommand(name);
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Uninstall command
+program
+  .command('uninstall <name>')
+  .description('Remove an installed prompt library')
+  .addHelpText('after', `
+Examples:
+  pt uninstall my-prompts   # Remove a library
+`)
+  .action(async (name) => {
+    try {
+      await uninstallCommand(name);
+    } catch (error) {
+      displayError(error as Error);
+      process.exit(1);
+    }
+  });
+
+// Cache command
+program
+  .command('cache')
+  .description('Manage the module cache for URL/GitHub imports')
+  .option('-c, --clear', 'Clear all cached modules')
+  .option('-u, --url <url>', 'Target a specific URL (use with --clear)')
+  .addHelpText('after', `
+Examples:
+  pt cache                         # Show cache statistics
+  pt cache --clear                 # Clear all cached modules
+  pt cache --clear --url <url>     # Clear cache for a specific URL
+`)
+  .action(async (options) => {
+    try {
+      await cacheCommand({
+        clear: options.clear,
+        url: options.url,
+      });
     } catch (error) {
       displayError(error as Error);
       process.exit(1);

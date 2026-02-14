@@ -138,10 +138,6 @@ export class InitCommand extends BaseCommand<InitInput, void> {
         entriesToIgnore.push(input.historyDir);
       }
       
-      // Add git prompts directory
-      const gitPromptDir = config.gitPromptDir || DEFAULT_CONFIG.gitPromptDir || '.git-prompts';
-      entriesToIgnore.push(gitPromptDir);
-      
       // Add all entries to .gitignore
       for (const entry of entriesToIgnore) {
         await addToGitignore(entry);

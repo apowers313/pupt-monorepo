@@ -6,14 +6,72 @@ import chalk from 'chalk';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
+import { findLocalPromptsDir } from '../utils/prompt-dir-resolver.js';
+import { findProjectRoot } from '../utils/project-root.js';
 
-export async function addCommand(): Promise<void> {
+export interface AddCommandOptions {
+  global?: boolean;
+}
+
+export async function addCommand(options: AddCommandOptions = {}): Promise<void> {
   // Load configuration
   const config = await ConfigManager.load();
-  
-  if (!config.promptDirs || config.promptDirs.length === 0) {
-    throw errors.noPromptsFound([]);
+
+  // Determine target directory based on --global flag and local .prompts/
+  let targetDir: string;
+
+  if (options.global) {
+    // --global: use global config promptDirs
+    if (!config.promptDirs || config.promptDirs.length === 0) {
+      throw errors.noPromptsFound([]);
+    }
+    targetDir = config.promptDirs[0];
+    if (config.promptDirs.length > 1) {
+      targetDir = await select({
+        message: 'Save to global directory:',
+        choices: config.promptDirs.map(dir => ({ value: dir, name: dir }))
+      });
+    }
+  } else {
+    // Default: prefer local .prompts/ if it exists or can be created
+    const localDir = await findLocalPromptsDir();
+    if (localDir) {
+      targetDir = localDir;
+    } else {
+      // Check if we're in a project root where we could create .prompts/
+      const projectRoot = findProjectRoot(process.cwd());
+      if (projectRoot) {
+        const potentialLocal = path.join(projectRoot, '.prompts');
+        // Fall back to global if available, but offer local as option
+        if (config.promptDirs && config.promptDirs.length > 0) {
+          const allDirs = [potentialLocal, ...config.promptDirs];
+          targetDir = await select({
+            message: 'Save to directory:',
+            choices: allDirs.map(dir => ({
+              value: dir,
+              name: dir === potentialLocal ? `${dir} (local project)` : dir
+            }))
+          });
+        } else {
+          targetDir = potentialLocal;
+        }
+      } else if (config.promptDirs && config.promptDirs.length > 0) {
+        // No project root; use global config dirs
+        targetDir = config.promptDirs[0];
+        if (config.promptDirs.length > 1) {
+          targetDir = await select({
+            message: 'Save to directory:',
+            choices: config.promptDirs.map(dir => ({ value: dir, name: dir }))
+          });
+        }
+      } else {
+        throw errors.noPromptsFound([]);
+      }
+    }
   }
+
+  // Ensure target directory exists
+  await fs.ensureDir(targetDir);
 
   // Get prompt title
   const title = await input({
@@ -31,20 +89,11 @@ export async function addCommand(): Promise<void> {
     message: 'Tags (comma-separated, optional):',
     default: ''
   });
-  
+
   const tags = tagsInput
     .split(',')
     .map(l => l.trim())
     .filter(l => l.length > 0);
-
-  // Select directory if multiple
-  let targetDir = config.promptDirs[0];
-  if (config.promptDirs.length > 1) {
-    targetDir = await select({
-      message: 'Save to directory:',
-      choices: config.promptDirs.map(dir => ({ value: dir, name: dir }))
-    });
-  }
 
   const ext = '.prompt';
 

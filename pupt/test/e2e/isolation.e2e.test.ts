@@ -14,7 +14,7 @@ describe('E2E Environment Isolation', () => {
 
   it('should not find host config files when sandbox has no config', () => {
     // Run pt config with NO config file in the sandbox
-    // This proves cosmiconfig did not traverse to find the host's real config
+    // This proves the CLI did not find any config outside the sandbox
     const result = env.exec('config');
 
     expect(result.exitCode).toBe(0);
@@ -24,7 +24,7 @@ describe('E2E Environment Isolation', () => {
   it('should use config file from sandbox when present', async () => {
     await env.writeConfig({
       promptDirs: ['./.test-prompts'],
-      version: '5.0.0',
+      version: '8.0.0',
     });
 
     const result = env.exec('config');
@@ -37,7 +37,7 @@ describe('E2E Environment Isolation', () => {
   it('should resolve ~ paths to the fake home directory', async () => {
     await env.writeConfig({
       promptDirs: ['~/.pt/prompts'],
-      version: '5.0.0',
+      version: '8.0.0',
     });
 
     const result = env.exec('config');
@@ -47,17 +47,17 @@ describe('E2E Environment Isolation', () => {
     expect(result.stdout).toContain(env.homeDir);
   });
 
-  it('should use isolated working directory', async () => {
+  it('should use isolated config directory', async () => {
     await env.writeConfig({
       promptDirs: ['./.prompts'],
-      version: '5.0.0',
+      version: '8.0.0',
     });
 
     const result = env.exec('config');
 
     expect(result.exitCode).toBe(0);
-    // Config file path should be inside the sandbox
-    expect(result.stdout).toContain(env.workDir);
+    // Config file path should be inside the sandbox configDir
+    expect(result.stdout).toContain(env.configDir);
   });
 
   it('should have separate environments for each test instance', async () => {
@@ -67,7 +67,7 @@ describe('E2E Environment Isolation', () => {
       // Write config to first env
       await env.writeConfig({
         promptDirs: ['./first-env-prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Second env should NOT see first env's config

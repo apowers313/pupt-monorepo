@@ -24,6 +24,9 @@ vi.mock('util', () => ({
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/services/pupt-service.js');
 vi.mock('../../src/ui/interactive-search.js');
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
 
 describe('Edit Command Regression Test', () => {
   beforeEach(() => {

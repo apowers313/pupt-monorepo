@@ -4,13 +4,25 @@ import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
+// Import after mock setup
+const { ConfigManager } = await import('../../src/config/config-manager.js');
+
 describe('Full Integration Flow', () => {
-  let testDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
     // Create a temporary test directory
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-test-'));
+    testDir = fs.realpathSync(tempDir);
     originalCwd = process.cwd();
     process.chdir(testDir);
   });
@@ -23,8 +35,9 @@ describe('Full Integration Flow', () => {
 
   describe('Complete User Journey', () => {
     it('should support full workflow from init to annotate', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       // 1. Initialize configuration
-      const configPath = path.join(testDir, '.pt-config.json');
       const config = {
         promptDirs: ['./.prompts'],
         historyDir: './.pthistory',
@@ -34,7 +47,7 @@ describe('Full Integration Flow', () => {
         defaultCmdOptions: {},
         version: '3.0.0'
       };
-      await fs.writeJson(configPath, config);
+      await fs.writeJson(path.join(testDir, 'config.json'), config);
       await fs.ensureDir('./.prompts');
       await fs.ensureDir('./.pthistory');
 
@@ -102,13 +115,11 @@ describe('Full Integration Flow', () => {
 
   describe('Error Recovery Scenarios', () => {
     it('should handle missing configuration gracefully', async () => {
-      const { ConfigManager } = await import('../../src/config/config-manager.js');
-      const os = await import('os');
-      const path = await import('path');
+      const dataDir = path.join(testDir, 'data');
 
       // Should create default config when missing
       const config = await ConfigManager.load();
-      expect(config.promptDirs).toEqual([path.join(os.homedir(), '.pt/prompts')]);
+      expect(config.promptDirs).toEqual([path.join(dataDir, 'prompts')]);
     });
 
     it('should handle prompt files without errors', async () => {
@@ -166,7 +177,7 @@ describe('Full Integration Flow', () => {
       const minimalConfig = {
         promptDirs: ['./.prompts']
       };
-      await fs.writeJson('.pt-config.json', minimalConfig);
+      await fs.writeJson(path.join(testDir, 'config.json'), minimalConfig);
       await fs.ensureDir('./.prompts');
 
       // Create a simple prompt
@@ -191,7 +202,7 @@ describe('Full Integration Flow', () => {
         },
         version: '3.0.0'
       };
-      await fs.writeJson('.pt-config.json', fullConfig);
+      await fs.writeJson(path.join(testDir, 'config.json'), fullConfig);
       await fs.ensureDir('./templates');
 
       // Create prompt in second directory

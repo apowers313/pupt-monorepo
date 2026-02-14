@@ -3,18 +3,24 @@ import { PuptService } from '../services/pupt-service.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
+import { resolvePromptDirs } from '../utils/prompt-dir-resolver.js';
 
 export async function editCommand(): Promise<void> {
   // Load configuration
   const config = await ConfigManager.load();
 
+  // Merge local .prompts/ + config dirs
+  const effectiveDirs = await resolvePromptDirs({
+    configPromptDirs: config.promptDirs,
+  });
+
   // Discover prompts
-  const puptService = new PuptService({ promptDirs: config.promptDirs, libraries: config.libraries, environment: config.environment });
+  const puptService = new PuptService({ promptDirs: effectiveDirs, libraries: config.libraries, environment: config.environment });
   await puptService.init();
   const prompts = puptService.getPromptsAsAdapted();
   
   if (prompts.length === 0) {
-    throw errors.noPromptsFound(config.promptDirs);
+    throw errors.noPromptsFound(effectiveDirs);
   }
   
   // Interactive search

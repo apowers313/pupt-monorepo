@@ -5,6 +5,7 @@ import { ConfigManager } from '../../src/config/config-manager.js';
 import { logger } from '../../src/utils/logger.js';
 import * as gitInfo from '../../src/utils/git-info.js';
 import chalk from 'chalk';
+import path from 'node:path';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/history/history-manager.js');
@@ -1295,6 +1296,169 @@ describe('History Command', () => {
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('8.'));
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('9.'));
       expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('10.'));
+    });
+  });
+
+  describe('global history - centralized storage', () => {
+    it('should load history from global history dir configured in config', async () => {
+      const globalHistoryDir = '/home/user/.local/share/pupt/history';
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['/home/user/.local/share/pupt/prompts'],
+        historyDir: globalHistoryDir,
+        annotationDir: globalHistoryDir
+      } as any);
+
+      const mockListHistory = vi.fn().mockResolvedValue([]);
+      const mockGetTotalCount = vi.fn().mockResolvedValue(0);
+      vi.mocked(HistoryManager).mockImplementation((historyDir, annotationDir) => {
+        // Verify HistoryManager is constructed with global paths
+        expect(historyDir).toBe(globalHistoryDir);
+        expect(annotationDir).toBe(globalHistoryDir);
+        return {
+          listHistory: mockListHistory,
+          getTotalCount: mockGetTotalCount
+        } as any;
+      });
+
+      await historyCommand({ allDir: true });
+
+      expect(HistoryManager).toHaveBeenCalledWith(globalHistoryDir, globalHistoryDir);
+    });
+
+    it('should display entries from multiple projects filtered by git repo', async () => {
+      const globalHistoryDir = '/home/user/.local/share/pupt/history';
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['/home/user/.local/share/pupt/prompts'],
+        historyDir: globalHistoryDir
+      } as any);
+
+      vi.mocked(gitInfo.getGitInfo).mockResolvedValue({
+        gitDir: '/home/user/project-a/.git'
+      });
+
+      const projectAEntries = [
+        {
+          timestamp: '2024-01-15T10:00:00.000Z',
+          templatePath: '/prompts/build.prompt',
+          finalPrompt: 'Build A',
+          title: 'Build A',
+          templateContent: 'template',
+          variables: {},
+          environment: {
+            working_directory: '/home/user/project-a',
+            git_dir: '/home/user/project-a/.git',
+            os: 'linux'
+          }
+        }
+      ];
+
+      const mockListHistory = vi.fn().mockResolvedValue(projectAEntries);
+      const mockGetTotalCount = vi.fn().mockResolvedValue(1);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: mockListHistory,
+        getTotalCount: mockGetTotalCount
+      } as any));
+
+      // Default behavior (no --all-dir): filter by current git dir
+      await historyCommand({});
+
+      // Should pass git directory filter
+      expect(mockGetTotalCount).toHaveBeenCalledWith(
+        expect.objectContaining({ gitDir: '/home/user/project-a/.git', includeLegacy: true })
+      );
+      expect(mockListHistory).toHaveBeenCalledWith(
+        20,
+        expect.objectContaining({ gitDir: '/home/user/project-a/.git', includeLegacy: true })
+      );
+    });
+
+    it('should display all entries from all projects with --all-dir', async () => {
+      const globalHistoryDir = '/home/user/.local/share/pupt/history';
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['/home/user/.local/share/pupt/prompts'],
+        historyDir: globalHistoryDir
+      } as any);
+
+      const allEntries = [
+        {
+          timestamp: '2024-01-14T10:00:00.000Z',
+          templatePath: '/prompts/build.prompt',
+          finalPrompt: 'Build A',
+          title: 'Build A',
+          templateContent: 'template',
+          variables: {}
+        },
+        {
+          timestamp: '2024-01-15T10:00:00.000Z',
+          templatePath: '/prompts/test.prompt',
+          finalPrompt: 'Test B',
+          title: 'Test B',
+          templateContent: 'template',
+          variables: {}
+        }
+      ];
+
+      const mockListHistory = vi.fn().mockResolvedValue(allEntries);
+      const mockGetTotalCount = vi.fn().mockResolvedValue(2);
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        listHistory: mockListHistory,
+        getTotalCount: mockGetTotalCount
+      } as any));
+
+      await historyCommand({ allDir: true });
+
+      // Should NOT pass any filter
+      expect(mockListHistory).toHaveBeenCalledWith(20, undefined);
+      expect(mockGetTotalCount).toHaveBeenCalledWith(undefined);
+
+      // Should show "all directories" in header
+      expect(loggerSpy).toHaveBeenCalledWith(
+        chalk.bold('\nPrompt History:') + chalk.dim(' (all directories)')
+      );
+    });
+
+    it('should resolve output file path relative to global history dir', async () => {
+      const globalHistoryDir = '/home/user/.local/share/pupt/history';
+
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['/home/user/.local/share/pupt/prompts'],
+        historyDir: globalHistoryDir
+      } as any);
+
+      const mockEntry = {
+        timestamp: '2024-01-15T10:30:45.123Z',
+        templatePath: '/prompts/test.prompt',
+        templateContent: 'Template',
+        variables: {},
+        finalPrompt: 'Final prompt',
+        title: 'Test',
+        filename: '20240115-abc.json',
+        execution: {
+          output_file: '../output/20240115-100000-abc12345-output.json'
+        }
+      };
+
+      vi.mocked(HistoryManager).mockImplementation(() => ({
+        getHistoryEntry: vi.fn().mockResolvedValue(mockEntry),
+        getTotalCount: vi.fn().mockResolvedValue(10)
+      } as any));
+
+      // Mock fs.readFile for the output file
+      const fsMock = await import('fs-extra');
+      vi.spyOn(fsMock.default, 'readFile').mockResolvedValue('Output content' as any);
+
+      await historyCommand({ result: 1 });
+
+      // Output path should be resolved relative to historyDir
+      expect(fsMock.default.readFile).toHaveBeenCalledWith(
+        path.join(globalHistoryDir, '../output/20240115-100000-abc12345-output.json'),
+        'utf-8'
+      );
+
+      vi.mocked(fsMock.default.readFile).mockRestore();
     });
   });
 });

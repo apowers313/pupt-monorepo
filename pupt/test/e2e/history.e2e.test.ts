@@ -16,7 +16,7 @@ describe('pt history E2E', () => {
     it('should error when history is not configured', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
         // No historyDir
       });
 
@@ -33,7 +33,7 @@ describe('pt history E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Create empty history directory
@@ -53,7 +53,7 @@ describe('pt history E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Create history entries
@@ -119,7 +119,7 @@ describe('pt history E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writeHistoryEntry('.pt-history', '20250115-100000-abcd1234.json', {

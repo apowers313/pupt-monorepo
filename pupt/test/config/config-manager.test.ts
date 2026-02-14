@@ -1,35 +1,55 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ConfigManager } from '@/config/config-manager';
-import { clearProjectRootCache } from '@/utils/project-root';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
 
 describe('ConfigManager', () => {
   let testDir: string;
-  const originalCwd = process.cwd();
+  let dataDir: string;
+  let savedEnv: { PUPT_CONFIG_DIR?: string; PUPT_DATA_DIR?: string };
 
   beforeEach(async () => {
-    // Create temp directory and resolve to canonical path
+    // Create temp directories and resolve to canonical paths
     const tempDir = path.join(os.tmpdir(), 'pt-test-config-' + Date.now());
     await fs.ensureDir(tempDir);
-    // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
     testDir = fs.realpathSync(tempDir);
-    process.chdir(testDir);
-    // Clear project root cache between tests
-    clearProjectRootCache();
+
+    const tempDataDir = path.join(os.tmpdir(), 'pt-test-data-' + Date.now());
+    await fs.ensureDir(tempDataDir);
+    dataDir = fs.realpathSync(tempDataDir);
+
+    // Save and set env vars so ConfigManager uses our test directories
+    savedEnv = {
+      PUPT_CONFIG_DIR: process.env.PUPT_CONFIG_DIR,
+      PUPT_DATA_DIR: process.env.PUPT_DATA_DIR,
+    };
+    process.env.PUPT_CONFIG_DIR = testDir;
+    process.env.PUPT_DATA_DIR = dataDir;
   });
 
   afterEach(async () => {
-    process.chdir(originalCwd);
+    // Restore env vars
+    if (savedEnv.PUPT_CONFIG_DIR === undefined) {
+      delete process.env.PUPT_CONFIG_DIR;
+    } else {
+      process.env.PUPT_CONFIG_DIR = savedEnv.PUPT_CONFIG_DIR;
+    }
+    if (savedEnv.PUPT_DATA_DIR === undefined) {
+      delete process.env.PUPT_DATA_DIR;
+    } else {
+      process.env.PUPT_DATA_DIR = savedEnv.PUPT_DATA_DIR;
+    }
+
     await fs.remove(testDir);
+    await fs.remove(dataDir);
   });
 
   it('should load default config when no config file exists', async () => {
     const config = await ConfigManager.load();
     expect(config.promptDirs).toHaveLength(1);
-    // When no config exists, it should use default path
-    expect(config.promptDirs[0]).toBe(path.join(os.homedir(), '.pt/prompts'));
+    // Default prompt dir should use the PUPT_DATA_DIR + /prompts
+    expect(config.promptDirs[0]).toBe(path.join(dataDir, 'prompts'));
     expect(config.historyDir).toBeUndefined();
     // Default tool settings are no longer hardcoded - they come from tool detection during init
     expect(config.defaultCmd).toBeUndefined();
@@ -37,13 +57,13 @@ describe('ConfigManager', () => {
     expect(config.defaultCmdOptions).toBeUndefined();
   });
 
-  it('should load config from .pt-config.json', async () => {
+  it('should load config from config.json in global config dir', async () => {
     const testConfig = {
       promptDirs: ['./custom/prompts'],
       historyDir: './custom/history',
-      version: '3.0.0' // Add version to prevent migration
+      version: '8.0.0'
     };
-    await fs.writeJson('.pt-config.json', testConfig);
+    await fs.writeJson(path.join(testDir, 'config.json'), testConfig);
 
     const config = await ConfigManager.load();
 
@@ -51,15 +71,15 @@ describe('ConfigManager', () => {
     expect(config.historyDir).toBe(path.join(testDir, 'custom/history'));
   });
 
-  it('should load config from .pt-config.yaml', async () => {
+  it('should load config from config.yaml in global config dir', async () => {
     const yamlContent = `
 promptDirs:
   - ./yaml/prompts
   - ~/prompts
 historyDir: ~/.pt/history
-version: "2.0.0"
+version: "8.0.0"
 `;
-    await fs.writeFile('.pt-config.yaml', yamlContent);
+    await fs.writeFile(path.join(testDir, 'config.yaml'), yamlContent);
 
     const config = await ConfigManager.load();
     expect(config.promptDirs).toContain(path.join(testDir, 'yaml/prompts'));
@@ -67,41 +87,11 @@ version: "2.0.0"
     expect(config.historyDir).toBe(path.join(os.homedir(), '.pt/history'));
   });
 
-  it('should use nearest config file when multiple exist in hierarchy', async () => {
-    // Create parent config in test directory
-    await fs.writeJson('.pt-config.json', {
-      promptDirs: ['/parent/prompts'],
-      historyDir: '/parent/history',
-      version: '3.0.0'
-    });
-
-    // Create child directory and config
-    const childDir = 'child';
-    await fs.ensureDir(childDir);
-    await fs.writeJson(path.join(childDir, '.pt-config.json'), {
-      promptDirs: ['./prompts'],
-      historyDir: './history',
-      version: '3.0.0'
-    });
-
-    // Change to child directory and load config
-    process.chdir(childDir);
-    const config = await ConfigManager.load();
-
-    // Change back to parent directory
-    process.chdir('..');
-
-    // Should only use the child config (nearest one)
-    expect(config.promptDirs).toHaveLength(1);
-    expect(config.promptDirs).toContain(path.join(testDir, childDir, 'prompts'));
-    expect(config.historyDir).toBe(path.join(testDir, childDir, 'history'));
-  });
-
   it('should expand home directory paths', async () => {
-    await fs.writeJson('.pt-config.json', {
+    await fs.writeJson(path.join(testDir, 'config.json'), {
       promptDirs: ['~/prompts'],
       historyDir: '~/.pt/history',
-      version: '2.0.0'
+      version: '8.0.0'
     });
 
     const config = await ConfigManager.load();
@@ -111,7 +101,7 @@ version: "2.0.0"
   });
 
   it('should load and expand helper configurations', async () => {
-    await fs.writeJson('.pt-config.json', {
+    await fs.writeJson(path.join(testDir, 'config.json'), {
       promptDirs: ['./.prompts'],
       helpers: {
         customDate: {
@@ -123,6 +113,7 @@ version: "2.0.0"
           path: '~/helpers/fileContent.js',
         },
       },
+      version: '8.0.0',
     });
 
     const config = await ConfigManager.load();
@@ -139,107 +130,35 @@ version: "2.0.0"
     });
   });
 
-  describe('parent directory search', () => {
-    it('should find config in parent directory when no config in current directory', async () => {
-      // Create config in parent directory
-      await fs.writeJson('.pt-config.json', {
-        promptDirs: ['./prompts'],
-        historyDir: './.pthistory',
-        version: '3.0.0'
-      });
-
-      // Create subdirectory
-      const subDir = path.join(testDir, 'subdir', 'nested');
-      await fs.ensureDir(subDir);
-
-      // Change to subdirectory (no config here)
-      process.chdir(subDir);
-
-      const result = await ConfigManager.loadWithPath();
-      
-      // Config should be found in parent directory
-      expect(result.filepath).toBe(path.join(testDir, '.pt-config.json'));
-      expect(result.configDir).toBe(testDir);
-      
-      // Paths should be resolved relative to config file location
-      expect(result.config.promptDirs).toContain(path.join(testDir, 'prompts'));
-      expect(result.config.historyDir).toBe(path.join(testDir, '.pthistory'));
-    });
-
-    it('should search up to home directory for config', async () => {
-      // Create a deep directory structure
-      const deepDir = path.join(testDir, 'a', 'b', 'c', 'd', 'e');
-      await fs.ensureDir(deepDir);
-
-      // Put config at the top level
-      await fs.writeJson(path.join(testDir, '.pt-config.json'), {
-        promptDirs: ['./prompts'],
-        version: '3.0.0'
-      });
-
-      // Change to deep directory
-      process.chdir(deepDir);
-
-      const config = await ConfigManager.load();
-      
-      // Should find config at top level
-      expect(config.promptDirs).toContain(path.join(testDir, 'prompts'));
-    });
-
-    it('should stop searching at home directory', async () => {
-      // This test would require changing HOME which can be problematic
-      // So we'll test that it uses defaults when no config is found
-      const noConfigDir = path.join(testDir, 'no-config-here');
-      await fs.ensureDir(noConfigDir);
-      process.chdir(noConfigDir);
-
-      const config = await ConfigManager.load();
-      
-      // Should use default config
-      expect(config.promptDirs).toHaveLength(1);
-      expect(config.promptDirs[0]).toBe(path.join(os.homedir(), '.pt/prompts'));
-    });
-  });
-
   describe('path resolution relative to config file', () => {
     it('should resolve relative paths from config file directory', async () => {
-      // Create config in parent directory with relative paths
-      await fs.writeJson('.pt-config.json', {
+      await fs.writeJson(path.join(testDir, 'config.json'), {
         promptDirs: ['./prompts', '../shared-prompts'],
         historyDir: './.pthistory',
         annotationDir: './annotations',
-        gitPromptDir: './.git-prompts',
-        version: '3.0.0'
+        version: '8.0.0'
       });
 
-      // Create subdirectory
-      const subDir = path.join(testDir, 'project', 'src');
-      await fs.ensureDir(subDir);
-      
-      // Change to subdirectory
-      process.chdir(subDir);
-
       const result = await ConfigManager.loadWithPath();
-      
+
       // All paths should be resolved relative to the config file location (testDir)
       expect(result.config.promptDirs).toContain(path.join(testDir, 'prompts'));
       expect(result.config.promptDirs).toContain(path.resolve(testDir, '../shared-prompts'));
       expect(result.config.historyDir).toBe(path.join(testDir, '.pthistory'));
       expect(result.config.annotationDir).toBe(path.join(testDir, 'annotations'));
-      expect(result.config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
     });
 
     it('should handle absolute paths correctly', async () => {
       const absolutePaths = {
         promptDirs: ['/absolute/prompts', path.join(os.homedir(), 'my-prompts')],
         historyDir: '/var/log/pt-history',
-        version: '3.0.0'
+        version: '8.0.0'
       };
 
-      await fs.writeJson('.pt-config.json', absolutePaths);
+      await fs.writeJson(path.join(testDir, 'config.json'), absolutePaths);
 
       const config = await ConfigManager.load();
-      
+
       // Absolute paths should remain unchanged
       expect(config.promptDirs).toContain('/absolute/prompts');
       expect(config.promptDirs).toContain(path.join(os.homedir(), 'my-prompts'));
@@ -247,45 +166,36 @@ version: "2.0.0"
     });
 
     it('should resolve helper and extension paths relative to config', async () => {
-      await fs.writeJson('.pt-config.json', {
-        promptDirs: ['./prompts'], // Add required field
+      await fs.writeJson(path.join(testDir, 'config.json'), {
+        promptDirs: ['./prompts'],
         helpers: {
           myHelper: {
             type: 'file',
             path: './helpers/custom.js'
           }
         },
-        version: '3.0.0'
+        version: '8.0.0'
       });
 
-      // Create subdirectory
-      const subDir = path.join(testDir, 'sub');
-      await fs.ensureDir(subDir);
-      process.chdir(subDir);
-
       const config = await ConfigManager.load();
-      
+
       // Paths should be resolved relative to config file
       expect(config.helpers?.myHelper.path).toBe(path.join(testDir, 'helpers/custom.js'));
     });
 
     it('should handle mixed relative and absolute paths', async () => {
-      await fs.writeJson('.pt-config.json', {
+      await fs.writeJson(path.join(testDir, 'config.json'), {
         promptDirs: [
           './local-prompts',
           '/absolute/prompts',
           '~/user-prompts'
         ],
         historyDir: '../shared/.pthistory',
-        version: '3.0.0'
+        version: '8.0.0'
       });
 
-      const subDir = path.join(testDir, 'project');
-      await fs.ensureDir(subDir);
-      process.chdir(subDir);
-
       const config = await ConfigManager.load();
-      
+
       // Relative path resolved from config dir
       expect(config.promptDirs).toContain(path.join(testDir, 'local-prompts'));
       // Absolute path unchanged
@@ -297,301 +207,93 @@ version: "2.0.0"
     });
   });
 
-  describe('checkForOldConfigFiles', () => {
-    it('should find old .ptrc config files', async () => {
-      await fs.writeFile(path.join(testDir, '.ptrc'), '{}');
-      await fs.writeFile(path.join(testDir, '.ptrc.json'), '{}');
-
-      const found = await ConfigManager.checkForOldConfigFiles(testDir);
-
-      expect(found).toHaveLength(2);
-      expect(found).toContain(path.join(testDir, '.ptrc'));
-      expect(found).toContain(path.join(testDir, '.ptrc.json'));
-    });
-
-    it('should return empty array when no old config files exist', async () => {
-      const found = await ConfigManager.checkForOldConfigFiles(testDir);
-      expect(found).toHaveLength(0);
-    });
-
-    it('should check all old patterns', async () => {
-      const patterns = ['.ptrc', '.ptrc.json', '.ptrc.yaml', '.ptrc.yml', '.ptrc.js', '.ptrc.cjs'];
-      for (const p of patterns) {
-        await fs.writeFile(path.join(testDir, p), '{}');
-      }
-
-      const found = await ConfigManager.checkForOldConfigFiles(testDir);
-      expect(found).toHaveLength(6);
-    });
-  });
-
-  describe('renameOldConfigFile', () => {
-    it('should rename .ptrc to .pt-config', async () => {
-      const oldPath = path.join(testDir, '.ptrc');
-      await fs.writeFile(oldPath, '{}');
-
-      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
-
-      expect(newPath).toBe(path.join(testDir, '.pt-config'));
-      expect(await fs.pathExists(newPath)).toBe(true);
-      expect(await fs.pathExists(oldPath)).toBe(false);
-    });
-
-    it('should rename .ptrc.json to .pt-config.json', async () => {
-      const oldPath = path.join(testDir, '.ptrc.json');
-      await fs.writeFile(oldPath, '{}');
-
-      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
-
-      expect(newPath).toBe(path.join(testDir, '.pt-config.json'));
-      expect(await fs.pathExists(newPath)).toBe(true);
-    });
-
-    it('should rename .ptrc.yaml to .pt-config.yaml', async () => {
-      const oldPath = path.join(testDir, '.ptrc.yaml');
-      await fs.writeFile(oldPath, 'version: "1.0.0"');
-
-      const newPath = await ConfigManager.renameOldConfigFile(oldPath);
-      expect(newPath).toBe(path.join(testDir, '.pt-config.yaml'));
-    });
-
-    it('should throw error for unknown config pattern', async () => {
-      const unknownPath = path.join(testDir, '.ptrc.toml');
-      await expect(ConfigManager.renameOldConfigFile(unknownPath)).rejects.toThrow(
-        'Unknown config file pattern: .ptrc.toml'
-      );
-    });
-
-    it('should throw error when destination file already exists', async () => {
-      const oldPath = path.join(testDir, '.ptrc.json');
-      const newPath = path.join(testDir, '.pt-config.json');
-      await fs.writeFile(oldPath, '{}');
-      await fs.writeFile(newPath, '{}');
-
-      await expect(ConfigManager.renameOldConfigFile(oldPath)).rejects.toThrow(
-        'Cannot rename .ptrc.json to .pt-config.json: destination file already exists'
-      );
-    });
-  });
-
-  describe('contractPaths', () => {
-    it('should contract home directory paths to ~/', () => {
-      const config = {
-        promptDirs: [path.join(os.homedir(), 'prompts')],
-        historyDir: path.join(os.homedir(), '.pt/history'),
-      };
-
-      const contracted = ConfigManager.contractPaths(config as any, testDir);
-
-      expect(contracted.promptDirs[0]).toMatch(/^~\//);
-      expect(contracted.historyDir).toMatch(/^~\//);
-    });
-
-    it('should contract annotation directory', () => {
-      const config = {
-        promptDirs: ['./prompts'],
-        annotationDir: path.join(os.homedir(), '.pt/annotations'),
-      };
-
-      const contracted = ConfigManager.contractPaths(config as any, testDir);
-      expect(contracted.annotationDir).toMatch(/^~\//);
-    });
-
-    it('should contract git prompt directory', () => {
-      const config = {
-        promptDirs: ['./prompts'],
-        gitPromptDir: path.join(os.homedir(), '.git-prompts'),
-      };
-
-      const contracted = ConfigManager.contractPaths(config as any, testDir);
-      expect(contracted.gitPromptDir).toMatch(/^~\//);
-    });
-
-    it('should contract helper paths', () => {
-      const config = {
-        promptDirs: ['./prompts'],
-        helpers: {
-          myHelper: {
-            type: 'file',
-            path: path.join(os.homedir(), 'helpers/custom.js'),
-          },
-          inlineHelper: {
-            type: 'inline',
-            value: 'return 42',
-          },
-        },
-      };
-
-      const contracted = ConfigManager.contractPaths(config as any, testDir);
-      expect(contracted.helpers?.myHelper.path).toMatch(/^~\//);
-      // Inline helper should not change
-      expect(contracted.helpers?.inlineHelper.value).toBe('return 42');
-    });
-
-    it('should contract output capture directory', () => {
-      const config = {
-        promptDirs: ['./prompts'],
-        outputCapture: {
-          enabled: true,
-          directory: path.join(os.homedir(), '.pt-output'),
-        },
-      };
-
-      const contracted = ConfigManager.contractPaths(config as any, testDir);
-      expect(contracted.outputCapture?.directory).toMatch(/^~\//);
-    });
-  });
-
   describe('validation errors', () => {
     it('should throw validation error for invalid config values', async () => {
       // Write a config with an invalid value
-      await fs.writeJson('.pt-config.json', {
+      await fs.writeJson(path.join(testDir, 'config.json'), {
         promptDirs: 'not-an-array', // Should be array
-        version: '3.0.0'
+        version: '8.0.0'
       });
 
       await expect(ConfigManager.load()).rejects.toThrow();
     });
   });
 
-  describe('${projectRoot} variable expansion', () => {
-    it('should expand ${projectRoot} in historyDir', async () => {
-      // Create package.json as project marker
-      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
-
-      await fs.writeJson('.pt-config.json', {
+  describe('loadWithPath', () => {
+    it('should return filepath and configDir when config exists', async () => {
+      await fs.writeJson(path.join(testDir, 'config.json'), {
         promptDirs: ['./prompts'],
-        historyDir: '${projectRoot}/.pthistory',
-        version: '4.0.0'
+        version: '8.0.0'
       });
 
-      const config = await ConfigManager.load();
+      const result = await ConfigManager.loadWithPath();
 
-      expect(config.historyDir).toBe(path.join(testDir, '.pthistory'));
+      expect(result.filepath).toBe(path.join(testDir, 'config.json'));
+      expect(result.configDir).toBe(testDir);
     });
 
-    it('should expand ${projectRoot} in promptDirs', async () => {
-      // Create package.json as project marker
-      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+    it('should return undefined filepath and configDir when no config exists', async () => {
+      const result = await ConfigManager.loadWithPath();
 
-      await fs.writeJson('.pt-config.json', {
-        promptDirs: ['${projectRoot}/.prompts', '${projectRoot}/shared/prompts'],
-        version: '4.0.0'
-      });
+      expect(result.filepath).toBeUndefined();
+      expect(result.configDir).toBeUndefined();
+      // Should still return a valid default config
+      expect(result.config.promptDirs).toHaveLength(1);
+      expect(result.config.promptDirs[0]).toBe(path.join(dataDir, 'prompts'));
+    });
+  });
 
-      const config = await ConfigManager.load();
+  describe('save', () => {
+    it('should save config to the global config path', async () => {
+      const config = {
+        promptDirs: ['~/my-prompts'],
+        version: '8.0.0',
+      } as any;
 
-      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
-      expect(config.promptDirs).toContain(path.join(testDir, 'shared/prompts'));
+      await ConfigManager.save(config);
+
+      const configPath = path.join(testDir, 'config.json');
+      expect(await fs.pathExists(configPath)).toBe(true);
+
+      const savedConfig = await fs.readJson(configPath);
+      expect(savedConfig.promptDirs).toEqual(['~/my-prompts']);
+      expect(savedConfig.version).toBe('8.0.0');
     });
 
-    it('should expand ${projectRoot} in outputCapture.directory', async () => {
-      // Create package.json as project marker
-      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+    it('should create the config directory if it does not exist', async () => {
+      // Point to a nested directory that does not exist yet
+      const nestedDir = path.join(testDir, 'nested', 'config', 'dir');
+      process.env.PUPT_CONFIG_DIR = nestedDir;
 
-      await fs.writeJson('.pt-config.json', {
+      const config = {
         promptDirs: ['./prompts'],
-        outputCapture: {
-          enabled: true,
-          directory: '${projectRoot}/.pt-output'
-        },
-        version: '4.0.0'
-      });
+        version: '8.0.0',
+      } as any;
 
-      const config = await ConfigManager.load();
+      await ConfigManager.save(config);
 
-      expect(config.outputCapture?.directory).toBe(path.join(testDir, '.pt-output'));
+      const configPath = path.join(nestedDir, 'config.json');
+      expect(await fs.pathExists(configPath)).toBe(true);
     });
 
-    it('should expand ${projectRoot} when searching from subdirectory', async () => {
-      // Create package.json as project marker at root
-      await fs.writeJson(path.join(testDir, 'package.json'), { name: 'test-project' });
+    it('should overwrite existing config file', async () => {
+      const originalConfig = {
+        promptDirs: ['./old-prompts'],
+        version: '8.0.0',
+      };
+      await fs.writeJson(path.join(testDir, 'config.json'), originalConfig);
 
-      // Create config at root
-      await fs.writeJson('.pt-config.json', {
-        promptDirs: ['${projectRoot}/.prompts'],
-        historyDir: '${projectRoot}/.pthistory',
-        version: '4.0.0'
-      });
+      const newConfig = {
+        promptDirs: ['./new-prompts'],
+        historyDir: '~/.pt/history',
+        version: '8.0.0',
+      } as any;
 
-      // Create subdirectory
-      const subDir = path.join(testDir, 'src', 'components');
-      await fs.ensureDir(subDir);
-      process.chdir(subDir);
+      await ConfigManager.save(newConfig);
 
-      const config = await ConfigManager.load();
-
-      // Should resolve to the project root (where package.json is)
-      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
-      expect(config.historyDir).toBe(path.join(testDir, '.pthistory'));
-    });
-
-    it('should find project root with .git directory', async () => {
-      // Create .git directory as project marker
-      await fs.ensureDir(path.join(testDir, '.git'));
-
-      await fs.writeJson('.pt-config.json', {
-        promptDirs: ['${projectRoot}/.prompts'],
-        version: '4.0.0'
-      });
-
-      const config = await ConfigManager.load();
-
-      expect(config.promptDirs).toContain(path.join(testDir, '.prompts'));
-    });
-
-    it('should throw error when ${projectRoot} cannot be resolved', async () => {
-      // Create a temp directory with no project markers
-      const noProjectDir = path.join(os.tmpdir(), 'no-project-' + Date.now());
-      await fs.ensureDir(noProjectDir);
-      const resolvedNoProjectDir = fs.realpathSync(noProjectDir);
-
-      try {
-        // Create config with ${projectRoot} but no project marker
-        await fs.writeJson(path.join(resolvedNoProjectDir, '.pt-config.json'), {
-          promptDirs: ['${projectRoot}/.prompts'],
-          version: '4.0.0'
-        });
-
-        process.chdir(resolvedNoProjectDir);
-
-        await expect(ConfigManager.load()).rejects.toThrow(/Cannot resolve \$\{projectRoot\}/);
-      } finally {
-        process.chdir(testDir);
-        await fs.remove(noProjectDir);
-      }
-    });
-
-    it('should work with git worktree pointing to main repo', async () => {
-      // Create main repo structure
-      const mainRepo = path.join(testDir, 'main-repo');
-      await fs.ensureDir(path.join(mainRepo, '.git', 'worktrees', 'feature'));
-
-      // Create linked worktree directory
-      const worktreeDir = path.join(testDir, 'worktree-feature');
-      await fs.ensureDir(worktreeDir);
-
-      // Create .git file pointing to main repo's worktree dir
-      const gitdirPath = path.join(mainRepo, '.git', 'worktrees', 'feature');
-      await fs.writeFile(
-        path.join(worktreeDir, '.git'),
-        `gitdir: ${gitdirPath}`
-      );
-
-      // Create config in worktree
-      await fs.writeJson(path.join(worktreeDir, '.pt-config.json'), {
-        promptDirs: ['${projectRoot}/.prompts'],
-        historyDir: '${projectRoot}/.pthistory',
-        version: '4.0.0'
-      });
-
-      process.chdir(worktreeDir);
-
-      const config = await ConfigManager.load();
-
-      // Should resolve to main repo, not worktree
-      expect(config.promptDirs).toContain(path.join(mainRepo, '.prompts'));
-      expect(config.historyDir).toBe(path.join(mainRepo, '.pthistory'));
+      const savedConfig = await fs.readJson(path.join(testDir, 'config.json'));
+      expect(savedConfig.promptDirs).toEqual(['./new-prompts']);
+      expect(savedConfig.historyDir).toBe('~/.pt/history');
     });
   });
 });

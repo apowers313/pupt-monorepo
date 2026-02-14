@@ -16,7 +16,7 @@ describe('pt config E2E', () => {
     it('should show config when config file exists', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config');
@@ -38,7 +38,7 @@ describe('pt config E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config');
@@ -53,7 +53,7 @@ describe('pt config E2E', () => {
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
         annotationDir: './.pt-annotations',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config');
@@ -68,7 +68,7 @@ describe('pt config E2E', () => {
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'opus'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config');
@@ -82,7 +82,7 @@ describe('pt config E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         autoRun: true,
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config');
@@ -95,51 +95,13 @@ describe('pt config E2E', () => {
     it('should produce same output with --show flag', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result1 = env.exec('config');
       const result2 = env.exec('config --show');
 
       expect(result1.stdout).toBe(result2.stdout);
-    });
-  });
-
-  describe('pt config --fix-paths', () => {
-    let envWithGit: E2eTestEnvironment;
-
-    beforeEach(async () => {
-      envWithGit = await E2eTestEnvironment.create({ initGit: true });
-    });
-
-    afterEach(async () => {
-      await envWithGit.cleanup();
-    });
-
-    it('should convert absolute paths to portable format', async () => {
-      // Write config with absolute path pointing into workDir
-      const absolutePromptDir = `${envWithGit.workDir}/prompts`;
-      await envWithGit.writeConfig({
-        promptDirs: [absolutePromptDir],
-        version: '5.0.0',
-      });
-
-      const result = envWithGit.exec('config --fix-paths');
-
-      expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Config paths updated');
-
-      // Read back the config and verify it uses ${projectRoot}
-      const config = (await envWithGit.readJson('.pt-config.json')) as { promptDirs: string[] };
-      expect(config.promptDirs[0]).toContain('${projectRoot}');
-      expect(config.promptDirs[0]).not.toContain(envWithGit.workDir);
-    });
-
-    it('should error when no config file exists', () => {
-      const result = envWithGit.exec('config --fix-paths', { expectError: true });
-
-      expect(result.exitCode).not.toBe(0);
-      expect(result.stdout + result.stderr).toContain('No config file found');
     });
   });
 });

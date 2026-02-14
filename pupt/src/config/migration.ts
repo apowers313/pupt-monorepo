@@ -1,6 +1,8 @@
 import fs from 'fs-extra';
 import { Config } from '../types/config.js';
 import { DateFormats } from '../utils/date-formatter.js';
+import { getDataDir } from './global-paths.js';
+import path from 'node:path';
 
 interface ConfigMigration {
   version: string;
@@ -12,26 +14,26 @@ export const migrations: ConfigMigration[] = [
     version: '3.0.0',
     migrate: (config) => {
       const migrated = { ...config };
-      
+
       // Handle v1 format: promptDirectory -> promptDirs
       if ('promptDirectory' in config) {
         const pd = config.promptDirectory;
         migrated.promptDirs = Array.isArray(pd) ? pd : [pd as string];
         delete migrated.promptDirectory;
       }
-      
+
       // Handle v1 format: historyDirectory -> historyDir
       if ('historyDirectory' in config) {
         migrated.historyDir = config.historyDirectory;
         delete migrated.historyDirectory;
       }
-      
+
       // Handle v1 format: annotationDirectory -> annotationDir
       if ('annotationDirectory' in config) {
         migrated.annotationDir = config.annotationDirectory;
         delete migrated.annotationDirectory;
       }
-      
+
       // Rename fields
       if ('codingTool' in config) {
         migrated.defaultCmd = config.codingTool;
@@ -45,29 +47,29 @@ export const migrations: ConfigMigration[] = [
         migrated.defaultCmdOptions = config.codingToolOptions;
         delete migrated.codingToolOptions;
       }
-      
+
       // Add new fields with defaults
       migrated.version = '3.0.0';
       migrated.autoReview = migrated.autoReview ?? true;
       migrated.autoRun = migrated.autoRun ?? false;
       migrated.gitPromptDir = migrated.gitPromptDir ?? '.git-prompts';
       delete migrated.handlebarsExtensions;
-      
+
       // Set defaults for renamed fields if they don't exist
       migrated.defaultCmd = migrated.defaultCmd ?? 'claude';
       migrated.defaultCmdArgs = migrated.defaultCmdArgs ?? [];
       migrated.defaultCmdOptions = migrated.defaultCmdOptions ?? {
         'Continue with last context?': '--continue'
       };
-      
+
       // Ensure required fields exist
       migrated.promptDirs = migrated.promptDirs ?? ['./.prompts'];
-      
+
       // Preserve outputCapture settings
       if ('outputCapture' in config) {
         migrated.outputCapture = config.outputCapture;
       }
-      
+
       return migrated;
     }
   },
@@ -75,10 +77,10 @@ export const migrations: ConfigMigration[] = [
     version: '4.0.0',
     migrate: (config) => {
       const migrated = { ...config };
-      
+
       // Update version
       migrated.version = '4.0.0';
-      
+
       // Add output capture defaults if not present
       if (!migrated.outputCapture) {
         migrated.outputCapture = {
@@ -88,7 +90,7 @@ export const migrations: ConfigMigration[] = [
           retentionDays: 30
         };
       }
-      
+
       // Remove auto-annotation config (feature removed)
       delete migrated.autoAnnotate;
 
@@ -159,6 +161,72 @@ export const migrations: ConfigMigration[] = [
 
       return migrated;
     }
+  },
+  {
+    version: '8.0.0',
+    migrate: (config) => {
+      const migrated = { ...config };
+
+      // Update version
+      migrated.version = '8.0.0';
+
+      // Remove deprecated fields
+      delete migrated.gitPromptDir;
+      delete migrated.codingTool;
+      delete migrated.codingToolArgs;
+      delete migrated.codingToolOptions;
+      delete migrated.targetLlm;
+
+      // Update default paths to global paths
+      const dataDir = getDataDir();
+
+      // Update promptDirs: replace old local defaults with global default
+      const promptDirs = migrated.promptDirs as string[] | undefined;
+      if (!promptDirs || promptDirs.length === 0 ||
+          (promptDirs.length === 1 && (
+            promptDirs[0] === './.prompts' ||
+            promptDirs[0] === '.prompts'
+          ))) {
+        migrated.promptDirs = [path.join(dataDir, 'prompts')];
+      }
+
+      // Update historyDir: replace old local defaults with global default
+      const historyDir = migrated.historyDir as string | undefined;
+      if (!historyDir || historyDir === './.pthistory' || historyDir === '.pthistory') {
+        migrated.historyDir = path.join(dataDir, 'history');
+      }
+
+      // Update annotationDir: replace old local defaults with global default
+      const annotationDir = migrated.annotationDir as string | undefined;
+      if (!annotationDir || annotationDir === './.pthistory' || annotationDir === '.pthistory') {
+        migrated.annotationDir = path.join(dataDir, 'history');
+      }
+
+      // Update outputCapture: enable by default, update directory
+      const outputCapture = migrated.outputCapture as Record<string, unknown> | undefined;
+      if (outputCapture) {
+        outputCapture.enabled = true;
+        const captureDir = outputCapture.directory as string | undefined;
+        if (!captureDir || captureDir === '.pt-output' || captureDir === './.pt-output') {
+          outputCapture.directory = path.join(dataDir, 'output');
+        }
+      } else {
+        migrated.outputCapture = {
+          enabled: true,
+          directory: path.join(dataDir, 'output'),
+          maxSizeMB: 50,
+          retentionDays: 30,
+        };
+      }
+
+      // Convert old string[] libraries to empty LibraryEntry[]
+      const libraries = migrated.libraries;
+      if (Array.isArray(libraries) && libraries.length > 0 && typeof libraries[0] === 'string') {
+        migrated.libraries = [];
+      }
+
+      return migrated;
+    }
   }
 ];
 
@@ -197,6 +265,13 @@ export const migrateConfig = Object.assign(
       migrated = migrations[4].migrate(migrated);
     }
 
+    // Apply v8 migration if version is old or deprecated fields exist
+    if (!migrated.version || migrated.version < '8.0.0' ||
+        'gitPromptDir' in migrated || 'targetLlm' in migrated ||
+        'codingTool' in migrated) {
+      migrated = migrations[5].migrate(migrated);
+    }
+
     return migrated as unknown as Config;
   },
   {
@@ -221,17 +296,22 @@ export const migrateConfig = Object.assign(
         return true;
       }
 
+      // Check if gitPromptDir exists (removed in v8)
+      if ('gitPromptDir' in config) {
+        return true;
+      }
+
       // Check if version is missing or old
-      if (!config.version || config.version < '7.0.0') {
+      if (!config.version || config.version < '8.0.0') {
         return true;
       }
 
       return false;
     },
-    
+
     async createBackup(configPath: string): Promise<void> {
       const backupPath = configPath + '.backup';
-      
+
       // If backup already exists, create timestamped backup
       if (await fs.pathExists(backupPath)) {
         const now = new Date();

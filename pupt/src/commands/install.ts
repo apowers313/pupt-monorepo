@@ -1,22 +1,14 @@
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { ConfigManager } from '../config/config-manager.js';
-import { Config } from '../types/config.js';
-import fs2 from 'fs-extra';
 import simpleGit, { SimpleGit } from 'simple-git';
-import { execa } from 'execa';
-import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 import { logger } from '../utils/logger.js';
 import { cosmiconfig } from 'cosmiconfig';
+import { getDataDir } from '../config/global-paths.js';
+import { GlobalPackageManager } from '../services/package-manager.js';
+import type { GitLibraryEntry, NpmLibraryEntry } from '../types/config.js';
 
-async function saveConfig(config: Config): Promise<void> {
-  const configPath = path.join(process.cwd(), '.pt-config.json');
-  // Contract paths to portable format before saving
-  const portableConfig = ConfigManager.contractPaths(config, process.cwd());
-  await fs2.writeJson(configPath, portableConfig, { spaces: 2 });
-}
-
-async function loadConfigFromDirectory(dir: string): Promise<string[] | undefined> {
+export async function loadConfigFromDirectory(dir: string): Promise<string[] | undefined> {
   // Look for config files only in the specific directory (no traversal)
   const explorer = cosmiconfig('pt', {
     searchPlaces: [
@@ -30,7 +22,7 @@ async function loadConfigFromDirectory(dir: string): Promise<string[] | undefine
     ],
     stopDir: dir, // Don't search beyond this directory
   });
-  
+
   try {
     const result = await explorer.load(path.join(dir, '.pt-config.json'));
     if (!result) {
@@ -52,7 +44,7 @@ async function loadConfigFromDirectory(dir: string): Promise<string[] | undefine
   } catch {
     // No config found
   }
-  
+
   return undefined;
 }
 
@@ -85,15 +77,15 @@ export function validateGitUrl(url: string): void {
 export function extractRepoName(url: string): string {
   // Remove .git suffix if present
   const cleanUrl = url.replace(/\.git$/, '');
-  
+
   // Extract repo name from different URL formats
   let repoName: string;
-  
+
   if (url.includes('://')) {
     // HTTPS, git://, or file:// URLs
     const parts = cleanUrl.split('/');
     repoName = parts[parts.length - 1];
-    
+
     // For file:// URLs that might end with a slash
     if (!repoName && parts.length > 1) {
       repoName = parts[parts.length - 2];
@@ -115,28 +107,42 @@ export function extractRepoName(url: string): string {
 
 
 async function getGitInstallPath(repoName: string): Promise<string> {
-  const config = await ConfigManager.load();
-  const gitPromptDir = config.gitPromptDir || '.git-prompts';
-  const installPath = path.join(gitPromptDir, repoName);
-  
+  const dataDir = getDataDir();
+  const librariesDir = path.join(dataDir, 'libraries');
+  const installPath = path.join(librariesDir, repoName);
+
   // Ensure parent directory exists
-  await fs.mkdir(gitPromptDir, { recursive: true });
-  
+  await fs.mkdir(librariesDir, { recursive: true });
+
   return installPath;
 }
 
-export async function installFromGit(url: string, git: SimpleGit = simpleGit()): Promise<void> {
+export interface InstallFromGitOptions {
+  name?: string;
+  git?: SimpleGit;
+}
+
+export async function installFromGit(url: string, options: InstallFromGitOptions = {}): Promise<void> {
+  const git = options.git ?? simpleGit();
+
   // Validate URL
   validateGitUrl(url);
-  
-  // Extract repository name
-  const repoName = extractRepoName(url);
-  
+
+  // Determine library name
+  const libraryName = options.name ?? extractRepoName(url);
+
+  // Load our current config and check for duplicates
+  const config = await ConfigManager.load();
+  const existingLibrary = config.libraries?.find(lib => lib.name === libraryName);
+  if (existingLibrary) {
+    throw new Error(`Library "${libraryName}" is already installed. Use "pt update ${libraryName}" to update it.`);
+  }
+
   // Get installation path
-  const installPath = await getGitInstallPath(repoName);
-  
+  const installPath = await getGitInstallPath(libraryName);
+
   logger.log(`Installing prompts from ${url}...`);
-  
+
   // Clone repository with depth 1
   try {
     await git.clone(url, installPath, ['--depth', '1']);
@@ -144,53 +150,44 @@ export async function installFromGit(url: string, git: SimpleGit = simpleGit()):
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to clone repository: ${errorMessage}`);
   }
-  
-  // Update .gitignore if in git repository
-  if (await isGitRepository()) {
-    const config = await ConfigManager.load();
-    await addToGitignore(config.gitPromptDir || '.git-prompts');
-  }
-  
+
   // Try to load the installed package's config to get its promptDirs
   const installedPromptDirs = await loadConfigFromDirectory(installPath);
-  
-  // Load our current config
-  const config = await ConfigManager.load();
-  
-  // Add the installed package's promptDirs to our config
-  let addedPaths: string[] = [];
-  if (installedPromptDirs && installedPromptDirs.length > 0) {
-    for (const promptDir of installedPromptDirs) {
-      // Make the path relative to the install location
-      const fullPath = path.isAbsolute(promptDir) 
-        ? promptDir 
-        : path.join(installPath, promptDir);
-      
-      if (!config.promptDirs.includes(fullPath)) {
-        config.promptDirs.push(fullPath);
-        addedPaths.push(fullPath);
-      }
-    }
-    
-    if (addedPaths.length > 0) {
-      await saveConfig(config);
-      logger.log(`Successfully installed prompts from ${url}`);
-      addedPaths.forEach(p => logger.log(`Added prompt directory: ${p}`));
-    } else {
-      logger.log(`Prompts from ${url} already configured`);
-    }
-  } else {
-    // Fallback to default prompts directory if no promptDirs in config
-    const promptPath = path.join(installPath, 'prompts');
-    
-    if (!config.promptDirs.includes(promptPath)) {
-      config.promptDirs.push(promptPath);
-      await saveConfig(config);
-      logger.log(`Successfully installed prompts to ${promptPath}`);
-    } else {
-      logger.log(`Prompts already installed at ${promptPath}`);
-    }
+
+  // Determine promptDirs for this library
+  const promptDirs = installedPromptDirs && installedPromptDirs.length > 0
+    ? installedPromptDirs
+    : ['prompts'];
+
+  // Get the current commit hash as version
+  let version: string | undefined;
+  try {
+    const libGit = simpleGit(installPath);
+    const log = await libGit.log({ maxCount: 1 });
+    version = log.latest?.hash?.substring(0, 8);
+  } catch {
+    // Version is optional, continue without it
   }
+
+  // Create the library entry
+  const libraryEntry: GitLibraryEntry = {
+    name: libraryName,
+    type: 'git',
+    source: url,
+    promptDirs,
+    installedAt: new Date().toISOString(),
+    ...(version && { version }),
+  };
+
+  // Add library entry to config
+  if (!config.libraries) {
+    config.libraries = [];
+  }
+  config.libraries.push(libraryEntry);
+  await ConfigManager.save(config);
+
+  logger.log(`Successfully installed library "${libraryName}" from ${url}`);
+  promptDirs.forEach(dir => logger.log(`  Prompt directory: ${dir}`));
 }
 
 // NPM Package Detection
@@ -214,7 +211,7 @@ export function isNpmPackage(source: string): boolean {
   // Regular packages: alphanumeric, dash, underscore, dot
   // Scoped packages: @scope/package
   const npmPackagePattern = /^(?:@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/i;
-  
+
   // Additional validation for scoped packages
   if (source.startsWith('@')) {
     const parts = source.split('/');
@@ -222,7 +219,7 @@ export function isNpmPackage(source: string): boolean {
       return false;
     }
   }
-  
+
   return npmPackagePattern.test(source);
 }
 
@@ -236,172 +233,63 @@ export function validateNpmPackage(packageName: string): void {
   }
 }
 
-// Check if current directory is an npm project
-export async function isNpmProject(): Promise<boolean> {
-  try {
-    await fs.access('package.json');
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Package manager types and detection
-export type PackageManager = 'npm' | 'pnpm' | 'yarn';
-
-export interface PackageManagerConfig {
-  command: string;
-  installArgs: string[];
-}
-
-const PACKAGE_MANAGER_CONFIGS: Record<PackageManager, PackageManagerConfig> = {
-  pnpm: { command: 'pnpm', installArgs: ['add', '-D'] },
-  yarn: { command: 'yarn', installArgs: ['add', '-D'] },
-  npm: { command: 'npm', installArgs: ['install', '--save-dev'] },
-};
-
-// Helper to check if a file exists
-async function fileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-// Detect package manager by checking for lock files, searching up the directory tree
-export async function detectPackageManager(): Promise<PackageManager> {
-  let currentDir = process.cwd();
-  const root = path.parse(currentDir).root;
-
-  // Search up the directory tree for lock files
-  while (currentDir !== root) {
-    // Check in order of specificity: pnpm > yarn > npm
-    if (await fileExists(path.join(currentDir, 'pnpm-lock.yaml'))) {
-      return 'pnpm';
-    }
-    if (await fileExists(path.join(currentDir, 'yarn.lock'))) {
-      return 'yarn';
-    }
-    if (await fileExists(path.join(currentDir, 'package-lock.json'))) {
-      return 'npm';
-    }
-
-    // Move up one directory
-    const parentDir = path.dirname(currentDir);
-    if (parentDir === currentDir) {
-      break; // Reached root
-    }
-    currentDir = parentDir;
-  }
-
-  // Default to npm if no lock file found
-  return 'npm';
-}
-
 // Install from NPM
 export async function installFromNpm(packageName: string): Promise<void> {
   // Validate package name
   validateNpmPackage(packageName);
 
-  // Check if we're in an npm project
-  if (!await isNpmProject()) {
-    throw new Error('NPM package installation requires a package.json file. Run "npm init" first.');
-  }
+  const dataDir = getDataDir();
+  const packageManager = new GlobalPackageManager(dataDir);
 
-  // Detect the appropriate package manager
-  const packageManager = await detectPackageManager();
-  const pmConfig = PACKAGE_MANAGER_CONFIGS[packageManager];
-
-  logger.log(`Installing ${packageName} using ${packageManager}...`);
-
-  try {
-    // Install the package as a dev dependency using the detected package manager
-    await execa(pmConfig.command, [...pmConfig.installArgs, packageName], {
-      stdio: 'inherit' // Show output to user
-    });
-  } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to install package with ${packageManager}: ${errorMessage}`);
-  }
-  
-  // Get installed package path
-  const packagePath = path.join('node_modules', packageName);
-  
-  // Try to load the installed package's config to get its promptDirs
-  const installedPromptDirs = await loadConfigFromDirectory(packagePath);
-  
-  // Load our current config
+  // Check for duplicate library entries
   const config = await ConfigManager.load();
-  
-  // Add the installed package's promptDirs to our config
-  let addedPaths: string[] = [];
-  if (installedPromptDirs && installedPromptDirs.length > 0) {
-    for (const promptDir of installedPromptDirs) {
-      // Make the path relative to the package location
-      const fullPath = path.isAbsolute(promptDir) 
-        ? promptDir 
-        : path.join(packagePath, promptDir);
-      
-      if (!config.promptDirs.includes(fullPath)) {
-        config.promptDirs.push(fullPath);
-        addedPaths.push(fullPath);
-      }
+  const existingLibrary = config.libraries?.find(lib => lib.name === packageName);
+  if (existingLibrary) {
+    throw new Error(`Package "${packageName}" is already installed. Use "pt update ${packageName}" to update it.`);
+  }
+
+  // Install the package
+  const info = await packageManager.install(packageName);
+
+  // If prompts were found, add an NpmLibraryEntry to config
+  if (info.promptDirs.length > 0) {
+    const libraryEntry: NpmLibraryEntry = {
+      name: packageName,
+      type: 'npm',
+      source: packageName,
+      promptDirs: info.promptDirs,
+      installedAt: new Date().toISOString(),
+      version: info.version,
+    };
+
+    if (!config.libraries) {
+      config.libraries = [];
     }
-    
-    if (addedPaths.length > 0) {
-      await saveConfig(config);
-      logger.log(`Successfully installed prompts from ${packageName}`);
-      addedPaths.forEach(p => logger.log(`Added prompt directory: ${p}`));
-    } else {
-      logger.log(`Prompts from ${packageName} already configured`);
-    }
+    config.libraries.push(libraryEntry);
+    await ConfigManager.save(config);
+
+    logger.log(`Successfully installed prompts from ${packageName}`);
+    info.promptDirs.forEach(dir => logger.log(`  Prompt directory: ${dir}`));
   } else {
-    // Fallback to reading package.json or default prompts directory
-    let promptDir = 'prompts'; // Default prompt directory
-    
-    try {
-      // Read package.json to check for promptDir field
-      const packageJsonPath = path.join(packagePath, 'package.json');
-      const packageJsonContent = await fs.readFile(packageJsonPath, 'utf-8');
-      const packageJson = JSON.parse(packageJsonContent);
-      
-      if (packageJson.promptDir) {
-        promptDir = packageJson.promptDir;
-      }
-    } catch {
-      // If we can't read package.json, use default
-    }
-    
-    const fullPromptPath = path.join(packagePath, promptDir);
-    
-    if (!config.promptDirs.includes(fullPromptPath)) {
-      config.promptDirs.push(fullPromptPath);
-      await saveConfig(config);
-      logger.log(`Successfully installed prompts from ${packageName}`);
-      logger.log(`Added prompt directory: ${fullPromptPath}`);
-    } else {
-      logger.log(`Prompts from ${packageName} already configured at ${fullPromptPath}`);
-    }
+    logger.log(`Package ${packageName} installed (no prompt directories found - pure component package)`);
   }
 }
 
-export async function installCommand(source: string): Promise<void> {
+export async function installCommand(source: string, options?: { name?: string }): Promise<void> {
   if (!source) {
     throw new Error('Please provide a git URL or npm package name to install from');
   }
-  
+
   // Try npm first (since it's simpler to detect)
   if (isNpmPackage(source)) {
     await installFromNpm(source);
     return;
   }
-  
+
   // Try git URL
   try {
     validateGitUrl(source);
-    await installFromGit(source);
+    await installFromGit(source, { name: options?.name });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     if (errorMessage.includes('Invalid git URL')) {

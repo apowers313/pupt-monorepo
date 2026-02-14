@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { runCommand } from '../../src/commands/run.js';
 import path, { join } from 'path';
 import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
@@ -7,6 +6,15 @@ import { existsSync } from 'fs';
 import { spawn } from 'child_process';
 import { confirm, search } from '@inquirer/prompts';
 import { editorLauncher } from '../../src/utils/editor.js';
+
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
 
 vi.mock('child_process', () => ({
   spawn: vi.fn()
@@ -46,8 +54,13 @@ vi.mock('../../src/services/input-collector.js', () => ({
   collectInputs: vi.fn().mockResolvedValue(new Map()),
 }));
 
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
+
+import { runCommand } from '../../src/commands/run.js';
+
 describe('ReviewFile AutoRun Integration Tests', () => {
-  let testDir: string;
   let originalCwd: string;
   let mockSpawn: any;
 
@@ -55,8 +68,22 @@ describe('ReviewFile AutoRun Integration Tests', () => {
     originalCwd = process.cwd();
     testDir = await mkdtemp(join(tmpdir(), 'pt-reviewfile-autorun-'));
 
-    // Create prompts directory
-    await mkdir(join(testDir, '.prompts'));
+    // Create prompts directory (absolute path)
+    const promptsDir = join(testDir, '.prompts');
+    await mkdir(promptsDir);
+
+    // Write config.json to testDir (the mocked global config dir)
+    await writeFile(
+      join(testDir, 'config.json'),
+      JSON.stringify({
+        version: '8.0.0',
+        promptDirs: [promptsDir],
+        defaultCmd: 'echo',
+        autoReview: true,
+        autoRun: true,
+        libraries: [],
+      })
+    );
 
     // Mock spawn for echo command
     mockSpawn = vi.mocked(spawn);
@@ -92,17 +119,6 @@ describe('ReviewFile AutoRun Integration Tests', () => {
   });
 
   it('should run autoRun with reviewFile variables', async () => {
-    // Create config with autoRun enabled
-    await writeFile(
-      join(testDir, '.pt-config.json'),
-      JSON.stringify({
-        promptDirs: ['./.prompts'],
-        defaultCmd: 'echo',
-        autoReview: true,
-        autoRun: true
-      })
-    );
-
     // Create the output file
     await writeFile(join(testDir, 'report.txt'), 'Report content');
 
@@ -168,17 +184,6 @@ describe('ReviewFile AutoRun Integration Tests', () => {
   });
 
   it('should handle autoRun with multiple reviewFile variables', async () => {
-    // Create config with autoRun
-    await writeFile(
-      join(testDir, '.pt-config.json'),
-      JSON.stringify({
-        promptDirs: ['./.prompts'],
-        defaultCmd: 'echo',
-        autoReview: true,
-        autoRun: true
-      })
-    );
-
     // Create test files
     await writeFile(join(testDir, 'source.txt'), 'Source content');
     await writeFile(join(testDir, 'dest.txt'), 'Destination content');
@@ -212,14 +217,16 @@ describe('ReviewFile AutoRun Integration Tests', () => {
   });
 
   it('should run autoRun when autoReview is disabled', async () => {
-    // Create config with autoRun but autoReview disabled
+    // Update config with autoReview disabled
     await writeFile(
-      join(testDir, '.pt-config.json'),
+      join(testDir, 'config.json'),
       JSON.stringify({
-        promptDirs: ['./.prompts'],
+        version: '8.0.0',
+        promptDirs: [join(testDir, '.prompts')],
         defaultCmd: 'echo',
         autoReview: false,
-        autoRun: true
+        autoRun: true,
+        libraries: [],
       })
     );
 
@@ -247,13 +254,16 @@ describe('ReviewFile AutoRun Integration Tests', () => {
   });
 
   it('should handle command failure gracefully in autoRun', async () => {
+    // Update config with a command that always fails
     await writeFile(
-      join(testDir, '.pt-config.json'),
+      join(testDir, 'config.json'),
       JSON.stringify({
-        promptDirs: ['./.prompts'],
-        defaultCmd: 'false', // Command that always fails
+        version: '8.0.0',
+        promptDirs: [join(testDir, '.prompts')],
+        defaultCmd: 'false',
         autoReview: true,
-        autoRun: true
+        autoRun: true,
+        libraries: [],
       })
     );
 
@@ -308,16 +318,6 @@ describe('ReviewFile AutoRun Integration Tests', () => {
   });
 
   it('should handle non-existent files in autoRun', async () => {
-    await writeFile(
-      join(testDir, '.pt-config.json'),
-      JSON.stringify({
-        promptDirs: ['./.prompts'],
-        defaultCmd: 'echo',
-        autoReview: true,
-        autoRun: true
-      })
-    );
-
     const nonExistentPath = join(testDir, 'does-not-exist.txt');
 
     // Run with the processed prompt (simulating autoRun)

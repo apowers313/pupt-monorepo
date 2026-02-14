@@ -14,10 +14,12 @@ import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
 import crypto from 'node:crypto';
 import { isInteractiveTUI, getToolByCommand } from '../utils/tool-detection.js';
+import { resolvePromptDirs } from '../utils/prompt-dir-resolver.js';
 
 export interface RunOptions {
   historyIndex?: number;
   prompt?: string;
+  promptDirOverrides?: string[];
   skipPromptSelection?: boolean;
   templateInfo?: {
     templatePath: string;
@@ -32,6 +34,7 @@ export interface RunOptions {
   isAutoRun?: boolean;
   promptName?: string;
   noInteractive?: boolean;
+  noCache?: boolean;
 }
 
 interface ParsedArgs {
@@ -96,10 +99,10 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     } else {
       finalArgs = [...toolArgs, ...extraArgs];
     }
-  } else if ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) {
-    // Use configured tool (prefer new field name)
-    finalTool = (config.defaultCmd && config.defaultCmd.trim() !== '' ? config.defaultCmd : config.codingTool)!;
-    finalArgs = [...(config.defaultCmdArgs || config.codingToolArgs || []), ...extraArgs];
+  } else if (config.defaultCmd && config.defaultCmd.trim() !== '') {
+    // Use configured tool
+    finalTool = config.defaultCmd;
+    finalArgs = [...(config.defaultCmdArgs || []), ...extraArgs];
   } else {
     throw errors.toolNotFound('', ['claude', 'copilot', 'chat']);
   }
@@ -164,8 +167,12 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     };
   } else {
     // Normal flow - discover, select, collect inputs, render
+    const effectiveDirs = await resolvePromptDirs({
+      configPromptDirs: config.promptDirs,
+      cliPromptDirs: options.promptDirOverrides,
+    });
     const resolved = await resolvePrompt({
-      promptDirs: config.promptDirs,
+      promptDirs: effectiveDirs,
       libraries: config.libraries,
       promptName: options.promptName,
       noInteractive: options.noInteractive,
@@ -177,15 +184,15 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   }
   
   // Handle coding tool options - always prompt when using default tool with options configured
-  if (!tool && ((config.defaultCmd && config.defaultCmd.trim() !== '') || (config.codingTool && config.codingTool.trim() !== '')) && (config.defaultCmdOptions || config.codingToolOptions)) {
+  if (!tool && config.defaultCmd && config.defaultCmd.trim() !== '' && config.defaultCmdOptions) {
     // Prompt for each option
     const selectedOptions: string[] = [];
-    
+
     if (options.noInteractive) {
       // In no-interactive mode, don't add any optional flags
       logger.log(chalk.dim('Skipping tool options in non-interactive mode'));
     } else {
-      for (const [question, arg] of Object.entries(config.defaultCmdOptions || config.codingToolOptions || {})) {
+      for (const [question, arg] of Object.entries(config.defaultCmdOptions || {})) {
         const answer = await confirm({
           message: question,
           default: false
@@ -199,7 +206,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     
     // Insert options before extra args
     finalArgs = [
-      ...(config.defaultCmdArgs || config.codingToolArgs || []),
+      ...(config.defaultCmdArgs || []),
       ...selectedOptions,
       ...extraArgs
     ];

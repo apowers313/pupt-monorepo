@@ -64,7 +64,32 @@ const EnvironmentConfigSchema = z.object({
   user: UserContextConfigSchema.optional(),
 });
 
-// Main config schema
+// Git library entry schema
+const GitLibraryEntrySchema = z.object({
+  name: z.string(),
+  type: z.literal('git'),
+  source: z.string(),
+  promptDirs: z.array(z.string()),
+  installedAt: z.string(),
+  version: z.string().optional(),
+});
+
+// npm library entry schema
+const NpmLibraryEntrySchema = z.object({
+  name: z.string(),
+  type: z.literal('npm'),
+  source: z.string(),
+  promptDirs: z.array(z.string()),
+  installedAt: z.string(),
+  version: z.string(),
+});
+
+const LibraryEntrySchema = z.discriminatedUnion('type', [
+  GitLibraryEntrySchema,
+  NpmLibraryEntrySchema,
+]);
+
+// Main config schema (v8)
 export const ConfigSchema = z.object({
   promptDirs: z.array(z.string()).min(1, 'At least one prompt directory is required'),
   historyDir: z.string().optional(),
@@ -74,19 +99,12 @@ export const ConfigSchema = z.object({
   defaultCmdOptions: z.record(z.string()).optional(),
   autoReview: z.boolean().optional(),
   autoRun: z.boolean().optional(),
-  gitPromptDir: z.string().optional(),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'Version must be in semver format (x.y.z)').optional(),
   helpers: z.record(HelperConfigSchema).optional(),
   outputCapture: OutputCaptureConfigSchema.optional(),
   logLevel: z.string().optional(),
-  // pupt-lib integration fields
-  libraries: z.array(z.string()).optional(),
+  libraries: z.array(LibraryEntrySchema).optional(),
   environment: EnvironmentConfigSchema.optional(),
-  // Legacy fields (deprecated)
-  codingTool: z.string().optional(),
-  codingToolArgs: z.array(z.string()).optional(),
-  codingToolOptions: z.record(z.string()).optional(),
-  targetLlm: z.string().optional(), // Deprecated: use environment.llm.provider
 }).passthrough();
 
 // Partial config for updates
@@ -96,33 +114,41 @@ const _PartialConfigSchema = ConfigSchema.partial();
 type _ValidatedConfig = z.infer<typeof ConfigSchema>;
 type _PartialValidatedConfig = z.infer<typeof _PartialConfigSchema>;
 
-// Migration schemas for different versions
-export const ConfigV1Schema = z.object({
-  promptDirectory: z.union([z.string(), z.array(z.string())]),
-  historyDirectory: z.string().optional(),
-  annotationDirectory: z.string().optional(),
-  codingTool: z.string().optional(),
-  codingToolArgs: z.array(z.string()).optional(),
-  codingToolOptions: z.record(z.string()).optional()
-});
-
-export const ConfigV2Schema = z.object({
-  promptDirs: z.array(z.string()),
+// Pre-v8 schema (v1-v7) - allows all deprecated fields that migration will remove.
+// Covers v1 (promptDirectory), v2 (codingTool), and v3-v7 configs.
+// Note: Global config is always created at v8+, but this schema is still needed
+// for migration validation when loading older configs.
+const ConfigPreV8Schema = z.object({
+  // v2+ uses promptDirs; v1 uses promptDirectory (handled by migration)
+  promptDirs: z.array(z.string()).min(1).optional(),
+  promptDirectory: z.union([z.string(), z.array(z.string())]).optional(),
   historyDir: z.string().optional(),
+  historyDirectory: z.string().optional(),   // v1 field name
   annotationDir: z.string().optional(),
-  codingTool: z.string().optional(),
-  codingToolArgs: z.array(z.string()).optional(),
-  codingToolOptions: z.record(z.string()).optional(),
+  annotationDirectory: z.string().optional(), // v1 field name
+  defaultCmd: z.string().optional(),
+  defaultCmdArgs: z.array(z.string()).optional(),
+  defaultCmdOptions: z.record(z.string()).optional(),
   autoReview: z.boolean().optional(),
   autoRun: z.boolean().optional(),
   gitPromptDir: z.string().optional(),
-  version: z.string().optional()
-});
+  version: z.string().optional(),
+  helpers: z.record(HelperConfigSchema).optional(),
+  outputCapture: OutputCaptureConfigSchema.optional(),
+  logLevel: z.string().optional(),
+  libraries: z.union([z.array(z.string()), z.array(LibraryEntrySchema)]).optional(),
+  environment: EnvironmentConfigSchema.optional(),
+  codingTool: z.string().optional(),
+  codingToolArgs: z.array(z.string()).optional(),
+  codingToolOptions: z.record(z.string()).optional(),
+  targetLlm: z.string().optional(),
+}).passthrough();
 
 // Config file schemas (what's actually in the file)
+// Only includes pre-v8 (for migration from v3-v7) and current v8 schema.
+// Old v1/v2 schemas removed — global config is always created at v8+.
 export const ConfigFileSchema = z.union([
-  ConfigV1Schema,
-  ConfigV2Schema,
+  ConfigPreV8Schema,
   ConfigSchema
 ]);
 

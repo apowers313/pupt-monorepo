@@ -16,7 +16,7 @@ describe('pt run E2E', () => {
     it('should run with cat tool and a named prompt', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Write a pupt-lib JSX prompt (.prompt file)
@@ -33,7 +33,7 @@ describe('pt run E2E', () => {
     it('should render prompts correctly', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'greeting.prompt', `<Prompt name="greeting">
@@ -54,7 +54,7 @@ describe('pt run E2E', () => {
     it('should use default values for inputs in non-interactive mode', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Write a prompt with an input that has a default value
@@ -75,7 +75,7 @@ describe('pt run E2E', () => {
     it('should error when prompt name not found', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'exists.prompt', `<Prompt name="exists">
@@ -90,7 +90,7 @@ describe('pt run E2E', () => {
     it('should error when tool is not found', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'test.prompt', `<Prompt name="test">
@@ -110,7 +110,7 @@ describe('pt run E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         historyDir: './.pt-history',
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'saveme.prompt', `<Prompt name="saveme">
@@ -131,7 +131,7 @@ describe('pt run E2E', () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
         // No historyDir
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'nosave.prompt', `<Prompt name="nosave">
@@ -152,7 +152,7 @@ describe('pt run E2E', () => {
     it('should find prompts by name attribute', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // In pupt-lib, the `name` prop on Prompt is used for matching
@@ -170,7 +170,7 @@ describe('pt run E2E', () => {
     it('should find prompts by filename without extension', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // When name is the same as filename, can find by either
@@ -188,7 +188,7 @@ describe('pt run E2E', () => {
     it('should search multiple prompt directories', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts', './.more-prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       await env.writePrompt('.prompts', 'first.prompt', `<Prompt name="first">

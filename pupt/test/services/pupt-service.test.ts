@@ -444,6 +444,169 @@ export default function Test() { return <div>test</div>; }
       expect(service.getPrompts()[0].name).toBe('valid');
     });
   });
+
+  describe('library discovery', () => {
+    let libraryDir: string;
+    let originalPuptDataDir: string | undefined;
+
+    beforeEach(async () => {
+      originalPuptDataDir = process.env.PUPT_DATA_DIR;
+      // Point data dir to our temp dir so libraries resolve under tempDir/libraries/
+      process.env.PUPT_DATA_DIR = tempDir;
+      libraryDir = path.join(tempDir, 'libraries', 'test-lib', 'prompts');
+      await fs.ensureDir(libraryDir);
+    });
+
+    afterEach(() => {
+      if (originalPuptDataDir === undefined) {
+        delete process.env.PUPT_DATA_DIR;
+      } else {
+        process.env.PUPT_DATA_DIR = originalPuptDataDir;
+      }
+    });
+
+    it('should discover prompts from git library promptDirs', async () => {
+      await fs.writeFile(path.join(libraryDir, 'lib-prompt.prompt'), `
+<Prompt name="lib-prompt" description="Library prompt">
+  <Task>From library</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [],
+        libraries: [
+          {
+            name: 'test-lib',
+            type: 'git',
+            source: 'https://github.com/user/test-lib',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T10:30:00.000Z',
+          },
+        ],
+      });
+      await service.init();
+
+      const prompts = service.getPrompts();
+      expect(prompts).toHaveLength(1);
+      expect(prompts[0].name).toBe('lib-prompt');
+    });
+
+    it('should discover prompts from both user promptDirs and library promptDirs', async () => {
+      // User prompt
+      await writePromptFile('user-prompt.prompt', `
+<Prompt name="user-prompt" description="User prompt">
+  <Task>From user</Task>
+</Prompt>
+      `);
+
+      // Library prompt
+      await fs.writeFile(path.join(libraryDir, 'lib-prompt.prompt'), `
+<Prompt name="lib-prompt" description="Library prompt">
+  <Task>From library</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [tempDir],
+        libraries: [
+          {
+            name: 'test-lib',
+            type: 'git',
+            source: 'https://github.com/user/test-lib',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T10:30:00.000Z',
+          },
+        ],
+      });
+      await service.init();
+
+      const prompts = service.getPrompts();
+      const names = prompts.map(p => p.name).sort();
+      // User prompt + library prompt (library's internal lib-prompt.prompt)
+      expect(names).toContain('user-prompt');
+      expect(names).toContain('lib-prompt');
+    });
+
+    it('should resolve library paths from {dataDir}/libraries/{name}/{promptDir}', async () => {
+      await fs.writeFile(path.join(libraryDir, 'test.prompt'), `
+<Prompt name="resolved-prompt" description="Resolved">
+  <Task>Resolved content</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [],
+        libraries: [
+          {
+            name: 'test-lib',
+            type: 'git',
+            source: 'https://github.com/user/test-lib',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T10:30:00.000Z',
+          },
+        ],
+      });
+      await service.init();
+
+      const prompt = service.getPrompt('resolved-prompt');
+      expect(prompt).toBeDefined();
+      const promptPath = service.getPromptPath('resolved-prompt');
+      expect(promptPath).toContain(path.join('libraries', 'test-lib', 'prompts'));
+    });
+
+    it('should skip libraries with missing directories', async () => {
+      const service = new PuptService({
+        promptDirs: [],
+        libraries: [
+          {
+            name: 'missing-lib',
+            type: 'git',
+            source: 'https://github.com/user/missing-lib',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T10:30:00.000Z',
+          },
+        ],
+      });
+      await service.init();
+
+      expect(service.getPrompts()).toHaveLength(0);
+    });
+
+    it('should handle libraries with multiple promptDirs', async () => {
+      const extraDir = path.join(tempDir, 'libraries', 'multi-lib', 'extra-prompts');
+      const mainDir = path.join(tempDir, 'libraries', 'multi-lib', 'prompts');
+      await fs.ensureDir(mainDir);
+      await fs.ensureDir(extraDir);
+
+      await fs.writeFile(path.join(mainDir, 'main.prompt'), `
+<Prompt name="main-prompt" description="Main">
+  <Task>Main</Task>
+</Prompt>
+      `);
+      await fs.writeFile(path.join(extraDir, 'extra.prompt'), `
+<Prompt name="extra-prompt" description="Extra">
+  <Task>Extra</Task>
+</Prompt>
+      `);
+
+      const service = new PuptService({
+        promptDirs: [],
+        libraries: [
+          {
+            name: 'multi-lib',
+            type: 'git',
+            source: 'https://github.com/user/multi-lib',
+            promptDirs: ['prompts', 'extra-prompts'],
+            installedAt: '2024-01-15T10:30:00.000Z',
+          },
+        ],
+      });
+      await service.init();
+
+      const names = service.getPrompts().map(p => p.name).sort();
+      expect(names).toEqual(['extra-prompt', 'main-prompt']);
+    });
+  });
 });
 
 describe('fromDiscoveredPrompt', () => {

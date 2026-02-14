@@ -60,6 +60,45 @@ export interface EnvironmentConfig {
   user?: UserContextConfig;
 }
 
+export interface OutputCaptureConfig {
+  enabled: boolean;
+  directory?: string;
+  maxSizeMB?: number;
+  retentionDays?: number;
+}
+
+export interface HelperConfig {
+  type: 'inline' | 'file';
+  value?: string;
+  path?: string;
+}
+
+/**
+ * Git library entry for installed prompt libraries.
+ */
+export interface GitLibraryEntry {
+  name: string;
+  type: 'git';
+  source: string;
+  promptDirs: string[];
+  installedAt: string;
+  version?: string;
+}
+
+/**
+ * npm library entry for installed npm prompt packages.
+ */
+export interface NpmLibraryEntry {
+  name: string;
+  type: 'npm';
+  source: string;
+  promptDirs: string[];
+  installedAt: string;
+  version: string;
+}
+
+export type LibraryEntry = GitLibraryEntry | NpmLibraryEntry;
+
 export interface Config {
   promptDirs: string[];
   historyDir?: string;
@@ -69,44 +108,23 @@ export interface Config {
   defaultCmdOptions?: Record<string, string>;
   autoReview?: boolean;
   autoRun?: boolean;
-  gitPromptDir?: string;
   version?: string;
   helpers?: Record<string, HelperConfig>;
   logLevel?: string;
   outputCapture?: OutputCaptureConfig;
-  libraries?: string[];   // npm packages providing pupt-lib prompts
+  libraries?: LibraryEntry[];
   /** Environment configuration for prompt rendering (LLM, output format, code language, etc.) */
   environment?: EnvironmentConfig;
-  // Legacy fields for backward compatibility (will be migrated)
-  codingTool?: string;
-  codingToolArgs?: string[];
-  codingToolOptions?: Record<string, string>;
-  /** @deprecated Use environment.llm.provider instead */
-  targetLlm?: string;
-}
-
-interface OutputCaptureConfig {
-  enabled: boolean;
-  directory?: string;
-  maxSizeMB?: number;
-  retentionDays?: number;
-}
-
-interface HelperConfig {
-  type: 'inline' | 'file';
-  value?: string;
-  path?: string;
 }
 
 export const DEFAULT_CONFIG: Partial<Config> = {
   autoReview: true,
   autoRun: false,
-  gitPromptDir: '.git-prompts',
-  version: '7.0.0',
+  version: '8.0.0',
   outputCapture: {
-    enabled: false,
-    directory: '.pt-output',
+    enabled: true,
     maxSizeMB: 50,
     retentionDays: 30
   },
+  libraries: [],
 };

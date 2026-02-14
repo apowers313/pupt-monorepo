@@ -3,10 +3,10 @@ import { PuptService } from './pupt-service.js';
 import type { Config } from '../types/config.js';
 import type { HistoryEntry } from '../types/history.js';
 import type { ParsedAnnotation, AnnotationMetadata } from '../types/annotations.js';
-import type { 
-  ReviewData, 
-  ReviewOptions, 
-  PromptReviewData, 
+import type {
+  ReviewData,
+  ReviewOptions,
+  PromptReviewData,
   UsageStatistics,
   ExecutionOutcomes,
   DataCompleteness,
@@ -17,6 +17,7 @@ import path from 'path';
 import yaml from 'js-yaml';
 import { AnnotationAnalyzer } from '../annotations/annotation-analyzer.js';
 import type { EnhancedHistoryEntry } from '../types/history.js';
+import { getDataDir } from '../config/global-paths.js';
 
 export class ReviewDataBuilder {
   private historyManager: HistoryManager;
@@ -24,7 +25,7 @@ export class ReviewDataBuilder {
   private annotationAnalyzer: AnnotationAnalyzer;
 
   constructor(private config: Config) {
-    this.historyManager = new HistoryManager(config.historyDir || './history', config.annotationDir);
+    this.historyManager = new HistoryManager(config.historyDir || path.join(getDataDir(), 'history'), config.annotationDir);
     this.puptService = new PuptService({ promptDirs: config.promptDirs || ['./prompts'], libraries: config.libraries, environment: config.environment });
     this.annotationAnalyzer = new AnnotationAnalyzer();
   }

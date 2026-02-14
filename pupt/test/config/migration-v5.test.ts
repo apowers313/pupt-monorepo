@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { migrateConfig, migrations } from '../../src/config/migration.js';
+import { describe, it, expect, vi } from 'vitest';
+
+const mockDataDir = '/mock/data';
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => '/mock/config',
+  getDataDir: () => mockDataDir,
+  getCacheDir: () => '/mock/cache',
+  getConfigPath: () => '/mock/config/config.json',
+}));
+
+// Import after mock setup
+const { migrateConfig, migrations } = await import('../../src/config/migration.js');
 
 describe('Config Migration v4 → v5', () => {
   it('should migrate v4 config to v5', () => {
@@ -9,7 +19,7 @@ describe('Config Migration v4 → v5', () => {
       outputCapture: { enabled: false },
     };
     const migrated = migrateConfig(v4Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
   });
 
   it('should preserve existing fields during migration', () => {
@@ -37,14 +47,15 @@ describe('Config Migration v4 → v5', () => {
     expect(migrated.libraries).toEqual([]);
   });
 
-  it('should preserve existing libraries if already set', () => {
+  it('should convert old string libraries to empty array', () => {
     const migrated = migrateConfig({
       version: '4.0.0',
       promptDirs: ['./prompts'],
       libraries: ['@company/prompts'],
       outputCapture: { enabled: false },
     });
-    expect(migrated.libraries).toEqual(['@company/prompts']);
+    // v8 migration converts old string[] libraries to empty LibraryEntry[]
+    expect(migrated.libraries).toEqual([]);
   });
 
   it('should migrate targetLlm to environment.llm.provider', () => {
@@ -80,9 +91,16 @@ describe('Config Migration v4 → v5', () => {
     })).toBe(true);
   });
 
-  it('should not migrate v7 config', () => {
+  it('should detect v7 config needs migration to v8', () => {
     expect(migrateConfig.needsMigration({
       version: '7.0.0',
+      promptDirs: ['./prompts'],
+    })).toBe(true);
+  });
+
+  it('should not migrate v8 config', () => {
+    expect(migrateConfig.needsMigration({
+      version: '8.0.0',
       promptDirs: ['./prompts'],
     })).toBe(false);
   });
@@ -95,7 +113,7 @@ describe('Config Migration v4 → v5', () => {
       autoRun: false,
     };
     const migrated = migrateConfig(v3Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
     expect(migrated.outputCapture).toBeDefined();
     expect(migrated.autoAnnotate).toBeUndefined();
     expect(migrated.libraries).toEqual([]);

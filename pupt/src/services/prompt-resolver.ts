@@ -5,7 +5,7 @@ import { collectInputs } from './input-collector.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import type { EnvironmentConfig } from '../types/config.js';
+import type { EnvironmentConfig, LibraryEntry } from '../types/config.js';
 
 export interface ResolvedPrompt {
   text: string;
@@ -23,7 +23,7 @@ export interface ResolvedPrompt {
 
 export interface ResolvePromptOptions {
   promptDirs: string[];
-  libraries?: string[];
+  libraries?: LibraryEntry[];
   promptName?: string;
   noInteractive?: boolean;
   startTimestamp?: Date;

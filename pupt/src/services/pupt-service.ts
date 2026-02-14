@@ -22,7 +22,8 @@ import * as puptLib from 'pupt-lib';
 import { jsx, jsxs } from 'pupt-lib/jsx-runtime';
 import { PUPT_LIB_EXTENSIONS, detectPromptFormat } from '../utils/prompt-format.js';
 import { Prompt, fromDiscoveredPrompt } from '../types/prompt.js';
-import type { EnvironmentConfig } from '../types/config.js';
+import type { EnvironmentConfig, LibraryEntry } from '../types/config.js';
+import { getDataDir } from '../config/global-paths.js';
 
 // Shared transformer instance — first async call loads Babel,
 // then subsequent sync calls work without await.
@@ -184,7 +185,7 @@ function createPromptWithMethods(
 
 export interface PuptServiceConfig {
   promptDirs: string[];
-  libraries?: string[];
+  libraries?: LibraryEntry[];
   /** Environment configuration for prompt rendering */
   environment?: EnvironmentConfig;
 }
@@ -214,10 +215,35 @@ export class PuptService {
 
     const allEntries: DiscoveredEntry[] = [];
 
+    // Discover prompts from user promptDirs
     for (const dir of this.config.promptDirs) {
       if (await fs.pathExists(dir)) {
         const entries = await this.discoverPromptsInDir(dir, dir);
         allEntries.push(...entries);
+      }
+    }
+
+    // Discover prompts from library entries
+    if (this.config.libraries) {
+      const dataDir = getDataDir();
+      for (const library of this.config.libraries) {
+        for (const promptDir of library.promptDirs) {
+          let resolvedDir: string;
+          if (library.type === 'git') {
+            resolvedDir = path.join(dataDir, 'libraries', library.name, promptDir);
+          } else if (library.type === 'npm') {
+            resolvedDir = path.join(dataDir, 'packages', 'node_modules', library.name, promptDir);
+          } else {
+            resolvedDir = promptDir;
+          }
+
+          if (await fs.pathExists(resolvedDir)) {
+            const entries = await this.discoverPromptsInDir(resolvedDir, resolvedDir);
+            allEntries.push(...entries);
+          } else {
+            logger.warn(`Warning: Library "${library.name}" prompt directory not found: ${resolvedDir}`);
+          }
+        }
       }
     }
 

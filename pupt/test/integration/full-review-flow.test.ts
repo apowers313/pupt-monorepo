@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
-import { ConfigManager } from '../../src/config/config-manager.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
@@ -10,12 +9,24 @@ import { PatternDetector } from '../../src/services/pattern-detector.js';
 import type { Config } from '../../src/types/index.js';
 import type { EnhancedHistoryEntry } from '../../src/types/history.js';
 
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
+// Import ConfigManager after mock setup
+const { ConfigManager } = await import('../../src/config/config-manager.js');
+
 describe('Full Review Flow Integration', () => {
-  let testDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-review-flow-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-review-flow-test-'));
+    testDir = fs.realpathSync(tempDir);
     originalCwd = process.cwd();
     process.chdir(testDir);
   });
@@ -25,7 +36,7 @@ describe('Full Review Flow Integration', () => {
     await fs.remove(testDir);
   });
 
-  describe('Complete workflow: execute → capture → annotate → review', () => {
+  describe('Complete workflow: execute -> capture -> annotate -> review', () => {
     it('should capture output, create annotation, and generate review data', async () => {
       // Setup: Create config with output capture and auto-annotation enabled
       const config: Config = {
@@ -44,7 +55,7 @@ describe('Full Review Flow Integration', () => {
       };
 
       await fs.ensureDir('.prompts');
-      await fs.writeJson('.pt-config.json', config);
+      await fs.writeJson(path.join(testDir, 'config.json'), config);
       await fs.ensureDir(config.historyDir!);
       await fs.ensureDir(config.annotationDir!);
       await fs.ensureDir(config.outputCapture!.directory!);
@@ -64,13 +75,13 @@ Execute this test: {{input}}`;
         outputDirectory: config.outputCapture!.directory,
         maxOutputSize: (config.outputCapture!.maxSizeMB || 10) * 1024 * 1024
       });
-      
+
       // Create mock output file (simulating captured output)
       const outputContent = `Executing test prompt...
 Running tests...
 ERROR: Test failed!
 Completed with errors.`;
-      
+
       const timestamp = new Date();
       const outputFile = path.join(config.outputCapture!.directory!, `output-${Date.now()}.txt`);
       await fs.writeFile(outputFile, outputContent);
@@ -144,7 +155,7 @@ Completed with errors.`;
 
       // Step 3: Review data generation
       const reviewDataBuilder = new ReviewDataBuilder(config);
-      
+
       const reviewData = await reviewDataBuilder.buildReviewData({});
 
       // Verify review data structure
@@ -152,7 +163,7 @@ Completed with errors.`;
       expect(reviewData.metadata).toBeDefined();
       expect(reviewData.metadata.total_prompts).toBeGreaterThanOrEqual(1);
       expect(reviewData.metadata.total_executions).toBeGreaterThanOrEqual(1);
-      
+
       // Should have data completeness metrics
       expect(reviewData.metadata.data_completeness).toBeDefined();
       expect(reviewData.metadata.data_completeness.with_annotations).toBeGreaterThan(0);
@@ -166,18 +177,18 @@ Completed with errors.`;
       expect(promptData.name).toBe('test-prompt');
       expect(promptData.usage_statistics.total_runs).toBe(1);
       expect(promptData.usage_statistics.annotated_runs).toBe(1);
-      
+
       // Should have execution outcomes
       expect(promptData.execution_outcomes.failure).toBe(1);
-      
+
       // Output capture integration is not yet implemented in ReviewDataBuilder
       expect(promptData.captured_outputs).toHaveLength(0);
-      
+
       // Should have user annotations
       expect(promptData.user_annotations).toHaveLength(1);
       expect(promptData.user_annotations[0].status).toBe('failure');
       expect(promptData.user_annotations[0].auto_detected).toBe(true);
-      
+
       // Should detect patterns
       expect(promptData.detected_patterns).toBeDefined();
       // Pattern detection would work if we had multiple similar annotations
@@ -226,7 +237,7 @@ Completed with errors.`;
       };
 
       await fs.ensureDir('.prompts');
-      await fs.writeJson('.pt-config.json', config);
+      await fs.writeJson(path.join(testDir, 'config.json'), config);
       await fs.ensureDir(config.historyDir!);
       await fs.ensureDir(config.annotationDir!);
       await fs.ensureDir(config.outputCapture!.directory!);
@@ -261,7 +272,7 @@ Output file: {{outputFile}}`;
       };
 
       await fs.ensureDir('.prompts');
-      await fs.writeJson('.pt-config.json', config);
+      await fs.writeJson(path.join(testDir, 'config.json'), config);
       await fs.ensureDir(config.historyDir!);
       await fs.ensureDir(config.annotationDir!);
 
@@ -314,7 +325,7 @@ Output file: {{outputFile}}`;
       const reviewData = await reviewDataBuilder.buildReviewData({});
 
       // Pattern detection is not yet integrated into ReviewDataBuilder
-      // The PatternDetector service exists but isn't called by ReviewDataBuilder  
+      // The PatternDetector service exists but isn't called by ReviewDataBuilder
       expect(reviewData.prompts[0].detected_patterns).toBeDefined();
       expect(reviewData.prompts[0].detected_patterns).toEqual([]);
 
@@ -332,11 +343,15 @@ Output file: {{outputFile}}`;
         historyDir: './.pt-history',
         annotationDir: './.pt-annotations',
         defaultCmd: 'echo',
-        version: '4.0.0'
+        version: '8.0.0',
+        outputCapture: {
+          enabled: true
+        },
+        libraries: [],
       };
 
       await fs.ensureDir('.prompts');
-      await fs.writeJson('.pt-config.json', config);
+      await fs.writeJson(path.join(testDir, 'config.json'), config);
       await fs.ensureDir(config.historyDir!);
       await fs.ensureDir(config.annotationDir!);
 
@@ -374,7 +389,7 @@ Test the CLI review command`;
 
       // Import and run the review command
       const { reviewCommand } = await import('../../src/commands/review.js');
-      
+
       // Capture stdout output
       const originalWrite = process.stdout.write;
       let output = '';

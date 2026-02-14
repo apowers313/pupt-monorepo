@@ -2,11 +2,19 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
-import { historyCommand } from '../../src/commands/history.js';
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { Config } from '../../src/types/config.js';
 import { vi } from 'vitest';
 import * as logger from '../../src/utils/logger.js';
+
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
 
 // Mock the logger to capture output
 vi.mock('../../src/utils/logger.js', () => ({
@@ -18,17 +26,20 @@ vi.mock('../../src/utils/logger.js', () => ({
   }
 }));
 
+// Import after mock setup
+const { historyCommand } = await import('../../src/commands/history.js');
+
 describe('History Command with Annotations Integration', () => {
-  let testDir: string;
   let originalCwd: string;
   let logSpy: any;
 
   beforeEach(async () => {
     // Create temporary test directory
-    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-history-annotations-test-'));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-history-annotations-test-'));
+    testDir = fs.realpathSync(tempDir);
     originalCwd = process.cwd();
     process.chdir(testDir);
-    
+
     // Reset logger mock
     logSpy = vi.mocked(logger.logger.log);
     logSpy.mockClear();
@@ -45,12 +56,16 @@ describe('History Command with Annotations Integration', () => {
       promptDirs: ['./.prompts'],
       historyDir: './.history',
       annotationDir: './.history',
-      version: '4.0.0'
+      version: '8.0.0',
+      outputCapture: {
+        enabled: true
+      },
+      libraries: [],
     };
-    
+
     await fs.ensureDir('./.prompts');
     await fs.ensureDir('./.history');
-    await fs.writeJson('.pt-config.json', config);
+    await fs.writeJson(path.join(testDir, 'config.json'), config);
 
     // Create a history entry
     const historyManager = new HistoryManager('./.history', './.history');
@@ -89,8 +104,8 @@ describe('History Command with Annotations Integration', () => {
     await historyCommand({ entry: 1, annotations: true });
 
     // Verify the output
-    const output = logSpy.mock.calls.map(call => call[0]).join('\n');
-    
+    const output = logSpy.mock.calls.map((call: any[]) => call[0]).join('\n');
+
     // Check for formatted annotation display
     expect(output).toContain('Annotations:');
     expect(output).toContain('Status: success');
@@ -111,12 +126,16 @@ describe('History Command with Annotations Integration', () => {
       promptDirs: ['./.prompts'],
       historyDir: './.history',
       annotationDir: './.history',
-      version: '4.0.0'
+      version: '8.0.0',
+      outputCapture: {
+        enabled: true
+      },
+      libraries: [],
     };
-    
+
     await fs.ensureDir('./.prompts');
     await fs.ensureDir('./.history');
-    await fs.writeJson('.pt-config.json', config);
+    await fs.writeJson(path.join(testDir, 'config.json'), config);
 
     // Create a history entry
     const historyManager = new HistoryManager('./.history', './.history');
@@ -157,7 +176,7 @@ describe('History Command with Annotations Integration', () => {
       annotation1,
       { spaces: 2 }
     );
-    
+
     await fs.writeJson(
       path.join('./.history', historyFilename.replace('.json', '-annotation-2.json')),
       annotation2,
@@ -168,17 +187,17 @@ describe('History Command with Annotations Integration', () => {
     await historyCommand({ entry: 1, annotations: true });
 
     // Verify the output
-    const output = logSpy.mock.calls.map(call => call[0]).join('\n');
-    
+    const output = logSpy.mock.calls.map((call: any[]) => call[0]).join('\n');
+
     // Check for both annotations
     expect(output).toContain('Status: partial');
     expect(output).toContain('First attempt - partial success');
     expect(output).toContain('Issues Identified:');
     expect(output).toContain('[high] verification_gap: Tests were not run');
-    
+
     // Check separator between annotations
     expect(output).toMatch(/---+.*---+/s);
-    
+
     // Check second annotation
     expect(output).toContain('Status: failure');
     expect(output).toContain('Second attempt - complete failure');
@@ -190,14 +209,16 @@ describe('History Command with Annotations Integration', () => {
       promptDirs: ['./.prompts'],
       historyDir: './.history',
       annotationDir: './.history',
-      version: '4.0.0'
+      version: '8.0.0',
+      outputCapture: {
+        enabled: true
+      },
+      libraries: [],
     };
-    
+
     await fs.ensureDir('./.prompts');
     await fs.ensureDir('./.history');
-    
-    // Temporarily disable automatic migration by not writing config yet
-    
+
     // Create a history entry
     const historyManager = new HistoryManager('./.history', './.history');
     const historyFilename = await historyManager.savePrompt({
@@ -226,14 +247,14 @@ This is a legacy markdown annotation that should still be displayed.`;
     );
 
     // Now write config to trigger migration
-    await fs.writeJson('.pt-config.json', config);
+    await fs.writeJson(path.join(testDir, 'config.json'), config);
 
     // Run history command with annotations
     await historyCommand({ entry: 1, annotations: true });
 
     // Verify the output
-    const output = logSpy.mock.calls.map(call => call[0]).join('\n');
-    
+    const output = logSpy.mock.calls.map((call: any[]) => call[0]).join('\n');
+
     // The markdown file will be migrated to JSON, so check for JSON formatted output
     expect(output).toContain('Annotations:');
     expect(output).toContain('Status: success');

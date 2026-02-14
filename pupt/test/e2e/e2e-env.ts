@@ -27,8 +27,9 @@ export interface E2eExecOptions {
  * E2eTestEnvironment provides an isolated sandbox for e2e testing of the pt CLI.
  *
  * Key isolation features:
- * - Creates a unique temp directory as fake HOME (cosmiconfig stopDir)
- * - workDir is inside homeDir, so config search never escapes the sandbox
+ * - Creates a unique temp directory as fake HOME
+ * - configDir is set via PUPT_CONFIG_DIR env var to isolate config loading
+ * - workDir is inside homeDir for working directory isolation
  * - Sets HOME, NODE_ENV=test, NO_COLOR=1 in child process env
  * - Clears XDG_CONFIG_HOME and XDG_DATA_HOME to prevent leakage
  */
@@ -37,12 +38,15 @@ export class E2eTestEnvironment {
   readonly homeDir: string;
   /** Working directory inside the sandbox (child of homeDir) */
   readonly workDir: string;
+  /** Global config directory (set via PUPT_CONFIG_DIR) */
+  readonly configDir: string;
   /** Absolute path to the compiled CLI */
   readonly cliPath: string;
 
-  private constructor(homeDir: string, workDir: string, cliPath: string) {
+  private constructor(homeDir: string, workDir: string, configDir: string, cliPath: string) {
     this.homeDir = homeDir;
     this.workDir = workDir;
+    this.configDir = configDir;
     this.cliPath = cliPath;
   }
 
@@ -58,9 +62,11 @@ export class E2eTestEnvironment {
       `pt-e2e-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
     const workDir = path.join(homeDir, 'project');
+    const configDir = path.join(homeDir, '.config', 'pupt');
     const cliPath = path.resolve(__dirname, '../../dist/cli.js');
 
     await fs.ensureDir(workDir);
+    await fs.ensureDir(configDir);
 
     if (options.initGit) {
       execSync('git init', { cwd: workDir, stdio: 'ignore' });
@@ -68,12 +74,13 @@ export class E2eTestEnvironment {
       execSync('git config user.name "Test"', { cwd: workDir, stdio: 'ignore' });
     }
 
-    return new E2eTestEnvironment(homeDir, workDir, cliPath);
+    return new E2eTestEnvironment(homeDir, workDir, configDir, cliPath);
   }
 
   /**
    * Execute a pt command with full environment isolation.
    * - HOME is set to this.homeDir (makes os.homedir() return fake home)
+   * - PUPT_CONFIG_DIR points to isolated config directory
    * - cwd is set to this.workDir (or options.cwd)
    * - NODE_ENV=test (prevents old config migration prompt)
    * - NO_COLOR=1, FORCE_COLOR=0 to suppress ANSI codes
@@ -88,6 +95,7 @@ export class E2eTestEnvironment {
       ...process.env,
       HOME: this.homeDir,
       USERPROFILE: this.homeDir, // Windows compatibility
+      PUPT_CONFIG_DIR: this.configDir,
       NODE_ENV: 'test',
       NO_COLOR: '1',
       FORCE_COLOR: '0',
@@ -120,9 +128,28 @@ export class E2eTestEnvironment {
     }
   }
 
-  /** Write a .pt-config.json in the workDir */
+  /** Write a config.json in the global config directory (configDir).
+   * Relative paths in promptDirs, historyDir, and annotationDir are
+   * automatically resolved against workDir so that the CLI finds them
+   * correctly (config paths are resolved relative to the config file
+   * directory, not the working directory).
+   */
   async writeConfig(config: Record<string, unknown>): Promise<void> {
-    await fs.writeJson(path.join(this.workDir, '.pt-config.json'), config, { spaces: 2 });
+    await fs.ensureDir(this.configDir);
+    // Resolve relative paths in well-known fields against workDir
+    const resolved = { ...config };
+    if (Array.isArray(resolved.promptDirs)) {
+      resolved.promptDirs = (resolved.promptDirs as string[]).map(d =>
+        d.startsWith('/') || d.startsWith('~') ? d : path.join(this.workDir, d)
+      );
+    }
+    if (typeof resolved.historyDir === 'string' && !resolved.historyDir.startsWith('/') && !resolved.historyDir.startsWith('~')) {
+      resolved.historyDir = path.join(this.workDir, resolved.historyDir);
+    }
+    if (typeof resolved.annotationDir === 'string' && !resolved.annotationDir.startsWith('/') && !resolved.annotationDir.startsWith('~')) {
+      resolved.annotationDir = path.join(this.workDir, resolved.annotationDir);
+    }
+    await fs.writeJson(path.join(this.configDir, 'config.json'), resolved, { spaces: 2 });
   }
 
   /** Create a prompt file in a given directory (relative to workDir) */
@@ -151,6 +178,11 @@ export class E2eTestEnvironment {
   /** Read a JSON file from the workDir */
   async readJson(relativePath: string): Promise<unknown> {
     return fs.readJson(path.join(this.workDir, relativePath));
+  }
+
+  /** Read the config.json from the configDir */
+  async readConfigJson(): Promise<unknown> {
+    return fs.readJson(path.join(this.configDir, 'config.json'));
   }
 
   /** Check if a file exists in workDir */

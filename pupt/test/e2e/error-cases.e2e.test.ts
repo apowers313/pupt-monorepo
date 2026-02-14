@@ -47,11 +47,12 @@ describe('pt error cases E2E', () => {
 
   describe('invalid config', () => {
     it('should handle malformed JSON config gracefully', async () => {
-      // Write invalid JSON directly to the file
+      // Write invalid JSON directly to the config file in configDir
       const fs = await import('fs-extra');
       const path = await import('path');
+      await fs.ensureDir(env.configDir);
       await fs.writeFile(
-        path.join(env.workDir, '.pt-config.json'),
+        path.join(env.configDir, 'config.json'),
         '{ invalid json }'
       );
 
@@ -61,12 +62,13 @@ describe('pt error cases E2E', () => {
     });
 
     it('should handle config with invalid schema', async () => {
-      // Write config with invalid types
+      // Write config with invalid types to configDir
       const fs = await import('fs-extra');
       const path = await import('path');
-      await fs.writeJson(path.join(env.workDir, '.pt-config.json'), {
+      await fs.ensureDir(env.configDir);
+      await fs.writeJson(path.join(env.configDir, 'config.json'), {
         promptDirs: 123, // Should be array
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       const result = env.exec('config', { expectError: true });
@@ -79,7 +81,7 @@ describe('pt error cases E2E', () => {
     it('should handle missing prompt directory gracefully', async () => {
       await env.writeConfig({
         promptDirs: ['./nonexistent-prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
 
       // Config should show the directory as not existing
@@ -94,7 +96,7 @@ describe('pt error cases E2E', () => {
     it('should error when running with nonexistent prompt', async () => {
       await env.writeConfig({
         promptDirs: ['./.prompts'],
-        version: '5.0.0',
+        version: '8.0.0',
       });
       // Create a valid prompt, but search for a different name
       await env.writePrompt('.prompts', 'exists.prompt', `<Prompt name="exists">

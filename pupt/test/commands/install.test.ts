@@ -4,22 +4,48 @@ import * as path from 'node:path';
 import fs2 from 'fs-extra';
 import { logger } from '../../src/utils/logger.js';
 
+let testDir: string;
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
 // Mock simple-git before importing install commands
 vi.mock('simple-git', () => ({
   default: vi.fn(() => ({
     clone: vi.fn(),
-    checkIsRepo: vi.fn()
+    checkIsRepo: vi.fn(),
+    log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
   }))
 }));
 
-// Mock execa
+// Mock execa (still needed for non-npm paths)
 vi.mock('execa', () => ({
   execa: vi.fn(),
   $: vi.fn()
 }));
 
+// Mock GlobalPackageManager
+const mockInstall = vi.fn();
+const mockEnsureInitialized = vi.fn();
+const mockDetectPromptDirs = vi.fn();
+const mockGetInstalledVersion = vi.fn();
+
+vi.mock('../../src/services/package-manager.js', () => ({
+  GlobalPackageManager: vi.fn().mockImplementation(() => ({
+    install: mockInstall,
+    ensureInitialized: mockEnsureInitialized,
+    detectPromptDirs: mockDetectPromptDirs,
+    getInstalledVersion: mockGetInstalledVersion,
+    getPackagesDir: () => path.join(testDir, 'data', 'packages'),
+    getNodeModulesDir: () => path.join(testDir, 'data', 'packages', 'node_modules'),
+  }))
+}));
+
 // Now import after mocking
-import { validateGitUrl, extractRepoName, installFromGit, detectPackageManager, type PackageManager } from '../../src/commands/install.js';
+import { validateGitUrl, extractRepoName, installFromGit, isNpmPackage, validateNpmPackage, installFromNpm } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import simpleGit from 'simple-git';
 
@@ -31,8 +57,7 @@ vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
     ConfigManager: {
       ...original.ConfigManager,
       load: vi.fn(),
-      // Keep the real contractPaths implementation
-      contractPaths: original.ConfigManager.contractPaths
+      save: vi.fn(),
     }
   };
 });
@@ -45,6 +70,7 @@ describe('Install Command', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    testDir = '/tmp/test-pupt-install';
     loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
     loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
   });
@@ -158,227 +184,165 @@ describe('Install Command', () => {
 
   describe('Git Operations', () => {
     let mockGit: any;
-    
+    const dataDir = '/tmp/test-pupt-install/data';
+    const librariesDir = path.join(dataDir, 'libraries');
+
     beforeEach(() => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: []
       } as any);
-      
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
+
       // Create a fresh mock git instance for each test
       mockGit = {
         clone: vi.fn().mockResolvedValue(undefined),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+        log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
       };
-      
+
       vi.mocked(simpleGit).mockReturnValue(mockGit);
     });
 
-    it('should construct correct git clone command', async () => {
+    it('should clone repo into {dataDir}/libraries/{name}/', async () => {
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('File not found'));
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
-      await installFromGit('https://github.com/user/test-prompts');
+      await installFromGit('https://github.com/user/test-prompts', { git: mockGit });
 
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/test-prompts',
-        path.join('.git-prompts', 'test-prompts'),
+        path.join(librariesDir, 'test-prompts'),
         ['--depth', '1']
       );
     });
 
-    it('should use shallow clone with depth 1', async () => {
+    it('should extract library name from URL', async () => {
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('File not found'));
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
-      await installFromGit('https://github.com/user/repo');
+      await installFromGit('https://github.com/user/my-awesome-prompts.git', { git: mockGit });
+
+      expect(mockGit.clone).toHaveBeenCalledWith(
+        'https://github.com/user/my-awesome-prompts.git',
+        path.join(librariesDir, 'my-awesome-prompts'),
+        ['--depth', '1']
+      );
+    });
+
+    it('should support --name flag for custom name', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+
+      await installFromGit('https://github.com/user/repo', { git: mockGit, name: 'custom-name' });
 
       expect(mockGit.clone).toHaveBeenCalledWith(
         'https://github.com/user/repo',
-        path.join('.git-prompts', 'repo'),
+        path.join(librariesDir, 'custom-name'),
         ['--depth', '1']
       );
     });
 
-    it('should create git prompt directory if it doesn\'t exist', async () => {
+    it('should add GitLibraryEntry to global config', async () => {
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('File not found'));
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
-      await installFromGit('https://github.com/user/repo');
+      await installFromGit('https://github.com/user/test-prompts', { git: mockGit });
 
-      expect(vi.mocked(fs.mkdir)).toHaveBeenCalledWith('.git-prompts', { recursive: true });
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'test-prompts',
+              type: 'git',
+              source: 'https://github.com/user/test-prompts',
+              promptDirs: ['prompts'],
+            })
+          ])
+        })
+      );
+    });
+
+    it('should fall back to ["prompts"] if no config in repo', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+
+      await installFromGit('https://github.com/user/repo', { git: mockGit });
+
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              promptDirs: ['prompts'],
+            })
+          ])
+        })
+      );
+    });
+
+    it('should error if library name already exists', async () => {
+      vi.mocked(ConfigManager.load).mockResolvedValue({
+        promptDirs: ['./.prompts'],
+        version: '8.0.0',
+        libraries: [
+          {
+            name: 'repo',
+            type: 'git',
+            source: 'https://github.com/other/repo',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15',
+          }
+        ]
+      } as any);
+
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+
+      await expect(
+        installFromGit('https://github.com/user/repo', { git: mockGit })
+      ).rejects.toThrow('Library "repo" is already installed');
+    });
+
+    it('should use shallow clone (--depth 1)', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+
+      await installFromGit('https://github.com/user/repo', { git: mockGit });
+
+      expect(mockGit.clone).toHaveBeenCalledWith(
+        'https://github.com/user/repo',
+        path.join(librariesDir, 'repo'),
+        ['--depth', '1']
+      );
+    });
+
+    it('should create libraries directory if it doesn\'t exist', async () => {
+      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
+
+      await installFromGit('https://github.com/user/repo', { git: mockGit });
+
+      expect(vi.mocked(fs.mkdir)).toHaveBeenCalledWith(librariesDir, { recursive: true });
     });
 
     it('should handle git clone errors', async () => {
       mockGit.clone.mockRejectedValue(new Error('fatal: Authentication failed'));
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
 
-      await expect(installFromGit('https://github.com/user/private-repo')).rejects.toThrow('Failed to clone repository');
-    });
-
-    it('should update .gitignore if in git repository', async () => {
-      mockGit.checkIsRepo.mockResolvedValue(true);
-      
-      vi.mocked(fs.readFile).mockResolvedValue('# Existing content\nnode_modules/\n');
-      vi.mocked(fs2.readFile).mockResolvedValue('# Existing content\nnode_modules/\n');
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeFile).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      await installFromGit('https://github.com/user/repo');
-
-      expect(vi.mocked(fs2.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('.gitignore'),
-        expect.stringContaining('.git-prompts'),
-        'utf-8'
-      );
-      expect(vi.mocked(fs2.writeFile)).toHaveBeenCalledWith(
-        expect.stringContaining('.gitignore'),
-        expect.stringContaining('# PUPT'),
-        'utf-8'
-      );
-    });
-
-    it('should not duplicate .gitignore entries', async () => {
-      mockGit.checkIsRepo.mockResolvedValue(true);
-      
-      vi.mocked(fs.readFile).mockResolvedValue('# Existing\n.git-prompts\n');
-      vi.mocked(fs2.readFile).mockResolvedValue('# Existing\n.git-prompts\n');
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      await installFromGit('https://github.com/user/repo');
-
-      // Should not write to .gitignore since entry already exists
-      expect(vi.mocked(fs2.writeFile)).not.toHaveBeenCalled();
-    });
-
-    it('should not update .gitignore if not in git repository', async () => {
-      mockGit.checkIsRepo.mockResolvedValue(false);
-      
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      await installFromGit('https://github.com/user/repo');
-
-      // Should not create .gitignore since we're not in a git repo
-      expect(vi.mocked(fs.writeFile)).not.toHaveBeenCalledWith(
-        '.gitignore',
-        expect.any(String),
-        'utf-8'
-      );
-    });
-  });
-
-  describe('Config Updates', () => {
-    let mockGit: any;
-    
-    beforeEach(() => {
-      mockGit = {
-        clone: vi.fn().mockResolvedValue(undefined),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
-      };
-      
-      vi.mocked(simpleGit).mockReturnValue(mockGit);
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-    });
-
-    it('should add cloned prompts directory to config', async () => {
-      const initialConfig = {
-        promptDirs: ['./.prompts'],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
-      };
-
-      vi.mocked(ConfigManager.load).mockResolvedValue(initialConfig as any);
-
-      await installFromGit('https://github.com/user/my-prompts');
-
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
-        expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            './.prompts',
-            path.join('.git-prompts', 'my-prompts', 'prompts')
-          ])
-        }),
-        { spaces: 2 }
-      );
-    });
-
-    it('should not duplicate prompt directories in config', async () => {
-      const existingPath = path.join('.git-prompts', 'existing-repo', 'prompts');
-      const initialConfig = {
-        promptDirs: ['./.prompts', existingPath],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
-      };
-
-      vi.mocked(ConfigManager.load).mockResolvedValue(initialConfig as any);
-
-      await installFromGit('https://github.com/user/existing-repo');
-
-      expect(vi.mocked(fs2.writeJson)).not.toHaveBeenCalled();
-    });
-
-    it('should handle custom gitPromptDir from config', async () => {
-      const initialConfig = {
-        promptDirs: ['./.prompts'],
-        gitPromptDir: '.custom-git-prompts',
-        version: '3.0.0'
-      };
-
-      vi.mocked(ConfigManager.load).mockResolvedValue(initialConfig as any);
-
-      await installFromGit('https://github.com/user/repo');
-
-      expect(mockGit.clone).toHaveBeenCalledWith(
-        'https://github.com/user/repo',
-        path.join('.custom-git-prompts', 'repo'),
-        ['--depth', '1']
-      );
-
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
-        expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('.custom-git-prompts', 'repo', 'prompts')
-          ])
-        }),
-        { spaces: 2 }
-      );
+      await expect(installFromGit('https://github.com/user/private-repo', { git: mockGit })).rejects.toThrow('Failed to clone repository');
     });
   });
 
   describe('NPM Package Detection', () => {
     describe('isNpmPackage', () => {
-      it('should detect regular npm package names', async () => {
-        const { isNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should detect regular npm package names', () => {
         expect(isNpmPackage('express')).toBe(true);
         expect(isNpmPackage('lodash')).toBe(true);
         expect(isNpmPackage('react')).toBe(true);
         expect(isNpmPackage('vue')).toBe(true);
       });
 
-      it('should detect scoped npm package names', async () => {
-        const { isNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should detect scoped npm package names', () => {
         expect(isNpmPackage('@babel/core')).toBe(true);
         expect(isNpmPackage('@types/node')).toBe(true);
         expect(isNpmPackage('@angular/cli')).toBe(true);
         expect(isNpmPackage('@my-org/my-package')).toBe(true);
       });
 
-      it('should reject invalid package names', async () => {
-        const { isNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should reject invalid package names', () => {
         expect(isNpmPackage('https://github.com/user/repo')).toBe(false);
         expect(isNpmPackage('git@github.com:user/repo.git')).toBe(false);
         expect(isNpmPackage('../local/path')).toBe(false);
@@ -391,16 +355,14 @@ describe('Install Command', () => {
         expect(isNpmPackage(' ')).toBe(false);
       });
 
-      it('should handle edge cases', async () => {
-        const { isNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should handle edge cases', () => {
         // Valid edge cases
         expect(isNpmPackage('a')).toBe(true); // single character
         expect(isNpmPackage('package-with-dashes')).toBe(true);
         expect(isNpmPackage('package_with_underscores')).toBe(true);
         expect(isNpmPackage('package.with.dots')).toBe(true);
         expect(isNpmPackage('package123')).toBe(true);
-        
+
         // Invalid edge cases
         expect(isNpmPackage('-starts-with-dash')).toBe(false);
         expect(isNpmPackage('.starts-with-dot')).toBe(false);
@@ -412,17 +374,13 @@ describe('Install Command', () => {
     });
 
     describe('validateNpmPackage', () => {
-      it('should accept valid package names', async () => {
-        const { validateNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should accept valid package names', () => {
         expect(() => validateNpmPackage('express')).not.toThrow();
         expect(() => validateNpmPackage('@types/node')).not.toThrow();
         expect(() => validateNpmPackage('my-package')).not.toThrow();
       });
 
-      it('should reject invalid package names with helpful errors', async () => {
-        const { validateNpmPackage } = await import('../../src/commands/install.js');
-        
+      it('should reject invalid package names with helpful errors', () => {
         expect(() => validateNpmPackage('')).toThrow('Package name cannot be empty');
         expect(() => validateNpmPackage('https://github.com/user/repo')).toThrow('Invalid npm package name');
         expect(() => validateNpmPackage('../local/path')).toThrow('Invalid npm package name');
@@ -430,333 +388,93 @@ describe('Install Command', () => {
     });
   });
 
-  describe('Package Manager Detection', () => {
-    describe('detectPackageManager', () => {
-      it('should detect pnpm when pnpm-lock.yaml exists', async () => {
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (String(filePath).endsWith('pnpm-lock.yaml')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-
-        const result = await detectPackageManager();
-        expect(result).toBe('pnpm');
-      });
-
-      it('should detect yarn when yarn.lock exists', async () => {
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (String(filePath).endsWith('yarn.lock')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-
-        const result = await detectPackageManager();
-        expect(result).toBe('yarn');
-      });
-
-      it('should default to npm when package-lock.json exists', async () => {
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          if (String(filePath).endsWith('package-lock.json')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-
-        const result = await detectPackageManager();
-        expect(result).toBe('npm');
-      });
-
-      it('should default to npm when no lock file exists', async () => {
-        vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
-
-        const result = await detectPackageManager();
-        expect(result).toBe('npm');
-      });
-
-      it('should prefer pnpm over yarn when both lock files exist', async () => {
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          if (file.endsWith('pnpm-lock.yaml') || file.endsWith('yarn.lock')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-
-        const result = await detectPackageManager();
-        expect(result).toBe('pnpm');
-      });
-
-      it('should find lock file in parent directory (monorepo support)', async () => {
-        // Simulate: cwd is /project/packages/app, pnpm-lock.yaml is in /project
-        const cwd = process.cwd();
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          // Only return success for pnpm-lock.yaml in a parent directory
-          if (file.endsWith('pnpm-lock.yaml') && !file.startsWith(cwd + path.sep)) {
-            return undefined;
-          }
-          // Also allow if it's exactly at cwd parent level
-          const parentDir = path.dirname(cwd);
-          if (file === path.join(parentDir, 'pnpm-lock.yaml')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-
-        const result = await detectPackageManager();
-        expect(result).toBe('pnpm');
-      });
-    });
-  });
-
   describe('NPM Operations', () => {
-    let mockExeca: any;
-
     beforeEach(async () => {
-      // Import execa mock
-      const execaMock = await import('execa');
-      mockExeca = execaMock.execa as any;
-
-      // Setup default mocks
-      vi.mocked(mockExeca).mockResolvedValue({
-        stdout: '',
-        stderr: '',
-        exitCode: 0
-      } as any);
-
-      vi.mocked(fs.access).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockResolvedValue('{}');
-    });
-
-    describe('isNpmProject', () => {
-      it('should detect npm project by package.json presence', async () => {
-        const { isNpmProject } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        expect(await isNpmProject()).toBe(true);
-        
-        expect(vi.mocked(fs.access)).toHaveBeenCalledWith('package.json');
+      // Setup default mock for GlobalPackageManager.install
+      mockInstall.mockResolvedValue({
+        name: '@my-org/prompt-pack',
+        version: '1.0.0',
+        promptDirs: ['prompts'],
       });
 
-      it('should return false when package.json is missing', async () => {
-        const { isNpmProject } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
-        expect(await isNpmProject()).toBe(false);
-      });
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
     });
 
     describe('installFromNpm', () => {
       beforeEach(() => {
         vi.mocked(ConfigManager.load).mockResolvedValue({
           promptDirs: ['./.prompts'],
-          npmPromptDir: 'node_modules',
-          version: '3.0.0'
+          version: '8.0.0',
+          libraries: [],
         } as any);
       });
 
-      it('should install npm package using npm when no lock file exists', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-
-        // Mock: package.json exists, but no lock files
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          if (file === 'package.json' || file.endsWith('package.json')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
+      it('should install npm package via GlobalPackageManager', async () => {
+        mockInstall.mockResolvedValue({
+          name: '@my-org/prompt-pack',
+          version: '1.0.0',
+          promptDirs: ['prompts'],
         });
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
         await installFromNpm('@my-org/prompt-pack');
 
-        expect(mockExeca).toHaveBeenCalledWith('npm', ['install', '--save-dev', '@my-org/prompt-pack'], {
-          stdio: 'inherit'
-        });
+        expect(mockInstall).toHaveBeenCalledWith('@my-org/prompt-pack');
       });
 
-      it('should install package using pnpm when pnpm-lock.yaml exists', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-
-        // Mock: package.json and pnpm-lock.yaml exist
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          if (file === 'package.json' || file.endsWith('pnpm-lock.yaml')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
+      it('should save config with NpmLibraryEntry in libraries array', async () => {
+        mockInstall.mockResolvedValue({
+          name: '@my-org/prompt-pack',
+          version: '2.3.1',
+          promptDirs: ['prompts'],
         });
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
         await installFromNpm('@my-org/prompt-pack');
 
-        expect(mockExeca).toHaveBeenCalledWith('pnpm', ['add', '-D', '@my-org/prompt-pack'], {
-          stdio: 'inherit'
-        });
-      });
-
-      it('should install package using yarn when yarn.lock exists', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-
-        // Mock: package.json and yarn.lock exist
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          if (file === 'package.json' || file.endsWith('yarn.lock')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-        await installFromNpm('@my-org/prompt-pack');
-
-        expect(mockExeca).toHaveBeenCalledWith('yarn', ['add', '-D', '@my-org/prompt-pack'], {
-          stdio: 'inherit'
-        });
-      });
-
-      it('should handle installation in non-npm projects', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT')); // no package.json
-        
-        await expect(installFromNpm('some-package')).rejects.toThrow(
-          'NPM package installation requires a package.json file'
-        );
-      });
-
-      it('should parse package.json to find prompt directory', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile)
-          .mockImplementation(async (filePath) => {
-            if (filePath === 'package.json') {
-              return '{}'; // Project package.json
-            } else if (filePath === path.join('node_modules', '@my-org/prompt-pack', 'package.json')) {
-              return JSON.stringify({
+        expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
+          expect.objectContaining({
+            libraries: expect.arrayContaining([
+              expect.objectContaining({
                 name: '@my-org/prompt-pack',
-                promptDir: 'custom-prompts'
-              });
-            }
-            throw new Error('Unexpected file read');
-          });
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-        
-        await installFromNpm('@my-org/prompt-pack');
-        
-        expect(vi.mocked(fs.readFile)).toHaveBeenCalledWith(
-          path.join('node_modules', '@my-org/prompt-pack', 'package.json'),
-          'utf-8'
-        );
-        
-        expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.pt-config.json'),
-          expect.objectContaining({
-            promptDirs: expect.arrayContaining([
-              path.join('node_modules', '@my-org/prompt-pack', 'custom-prompts')
+                type: 'npm',
+                source: '@my-org/prompt-pack',
+                promptDirs: ['prompts'],
+                version: '2.3.1',
+                installedAt: expect.any(String),
+              })
             ])
-          }),
-          { spaces: 2 }
-        );
-      });
-
-      it('should update config with correct npm package path', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile)
-          .mockImplementation(async (filePath) => {
-            if (filePath === 'package.json') {
-              return '{}'; // Project package.json
-            } else if (filePath === path.join('node_modules', '@my-org/prompt-pack', 'package.json')) {
-              return JSON.stringify({
-                name: '@my-org/prompt-pack',
-                promptDir: 'prompts'
-              });
-            }
-            throw new Error('Unexpected file read');
-          });
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-        
-        await installFromNpm('@my-org/prompt-pack');
-        
-        expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.pt-config.json'),
-          expect.objectContaining({
-            promptDirs: expect.arrayContaining([
-              './.prompts',
-              path.join('node_modules', '@my-org/prompt-pack', 'prompts')
-            ])
-          }),
-          { spaces: 2 }
-        );
-      });
-
-      it('should use default prompts directory when promptDir not specified', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile)
-          .mockResolvedValueOnce('{}') // isNpmProject check
-          .mockResolvedValueOnce(JSON.stringify({
-            name: 'simple-prompts'
-          }));
-        vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-        
-        await installFromNpm('simple-prompts');
-        
-        expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-          expect.stringContaining('.pt-config.json'),
-          expect.objectContaining({
-            promptDirs: expect.arrayContaining([
-              path.join('node_modules', 'simple-prompts', 'prompts')
-            ])
-          }),
-          { spaces: 2 }
+          })
         );
       });
 
       it('should handle npm install errors', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-
-        // Mock: package.json exists, but no lock files
-        vi.mocked(fs.access).mockImplementation(async (filePath) => {
-          const file = String(filePath);
-          if (file === 'package.json' || file.endsWith('package.json')) {
-            return undefined;
-          }
-          throw new Error('ENOENT');
-        });
-        mockExeca.mockRejectedValue(new Error('npm ERR! 404 Not Found'));
+        mockInstall.mockRejectedValue(new Error('Failed to install package: npm ERR! 404 Not Found'));
 
         await expect(installFromNpm('non-existent-package')).rejects.toThrow(
-          'Failed to install package with npm'
+          'Failed to install package'
         );
       });
 
-      it('should not duplicate existing prompt directories', async () => {
-        const { installFromNpm } = await import('../../src/commands/install.js');
-        
-        const existingPath = path.join('node_modules', 'existing-package', 'prompts');
+      it('should not install duplicate library entries', async () => {
         vi.mocked(ConfigManager.load).mockResolvedValue({
-          promptDirs: ['./.prompts', existingPath],
-          npmPromptDir: 'node_modules',
-          version: '3.0.0'
+          promptDirs: ['./.prompts'],
+          version: '8.0.0',
+          libraries: [
+            {
+              name: 'existing-package',
+              type: 'npm',
+              source: 'existing-package',
+              promptDirs: ['prompts'],
+              installedAt: '2024-01-15T00:00:00.000Z',
+              version: '1.0.0',
+            }
+          ],
         } as any);
-        
-        vi.mocked(fs.access).mockResolvedValue(undefined);
-        vi.mocked(fs.readFile)
-          .mockResolvedValueOnce('{}')
-          .mockResolvedValueOnce(JSON.stringify({
-            name: 'existing-package'
-          }));
-        
-        await installFromNpm('existing-package');
-        
-        expect(vi.mocked(fs2.writeJson)).not.toHaveBeenCalled();
+
+        await expect(installFromNpm('existing-package')).rejects.toThrow(
+          'Package "existing-package" is already installed'
+        );
+
+        expect(vi.mocked(ConfigManager.save)).not.toHaveBeenCalled();
       });
     });
   });

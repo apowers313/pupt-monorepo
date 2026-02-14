@@ -1,8 +1,18 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
-import { migrateConfig, migrations } from '../../src/config/migration.js';
-import { ConfigSchema, ConfigV1Schema, ConfigV2Schema } from '../../src/schemas/config-schema.js';
+import { ConfigSchema } from '../../src/schemas/config-schema.js';
+
+const mockDataDir = '/mock/data';
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => '/mock/config',
+  getDataDir: () => mockDataDir,
+  getCacheDir: () => '/mock/cache',
+  getConfigPath: () => '/mock/config/config.json',
+}));
+
+// Import after mock setup
+const { migrateConfig, migrations } = await import('../../src/config/migration.js');
 
 describe('Config Migration', () => {
   const tempDir = path.join(process.cwd(), '.test-temp-migration');
@@ -33,7 +43,7 @@ describe('Config Migration', () => {
       expect(migrated.defaultCmd).toBe('mycli');
       expect(migrated.defaultCmdArgs).toEqual(['--flag']);
       expect(migrated.defaultCmdOptions).toEqual({ 'Some option': '--opt' });
-      expect(migrated.version).toBe('7.0.0');
+      expect(migrated.version).toBe('8.0.0');
       expect('codingTool' in migrated).toBe(false);
       expect('codingToolArgs' in migrated).toBe(false);
       expect('codingToolOptions' in migrated).toBe(false);
@@ -46,10 +56,11 @@ describe('Config Migration', () => {
 
       const migrated = migrateConfig(oldConfig);
 
-      expect(migrated.version).toBe('7.0.0');
+      expect(migrated.version).toBe('8.0.0');
       expect(migrated.autoReview).toBe(true);
       expect(migrated.autoRun).toBe(false);
-      expect(migrated.gitPromptDir).toBe('.git-prompts');
+      // gitPromptDir is removed in v8 migration
+      expect('gitPromptDir' in migrated).toBe(false);
       expect(migrated.defaultCmd).toBe('claude');
       expect(migrated.defaultCmdArgs).toEqual([]);
       expect(migrated.defaultCmdOptions).toEqual({
@@ -80,7 +91,8 @@ describe('Config Migration', () => {
 
       const migrated = migrateConfig(config);
 
-      expect(migrated.promptDirs).toEqual(['./.prompts']);
+      // v8 migration replaces default './.prompts' with global data dir path
+      expect(migrated.promptDirs).toEqual([path.join(mockDataDir, 'prompts')]);
     });
 
     it('should validate migrated config with Zod schema', () => {
@@ -115,11 +127,11 @@ describe('Config Migration', () => {
 
     it('should return false for up-to-date configs', () => {
       const config = {
-        version: '7.0.0',
+        version: '8.0.0',
         promptDirs: ['./.prompts'],
         defaultCmd: 'claude',
         outputCapture: {
-          enabled: false
+          enabled: true
         }
       };
 
@@ -206,17 +218,17 @@ describe('Config Migration', () => {
 
       legacyConfigs.forEach((legacy, index) => {
         const migrated = migrateConfig(legacy);
-        
+
         // Should have required fields
         expect(migrated.promptDirs).toBeDefined();
         expect(Array.isArray(migrated.promptDirs)).toBe(true);
-        expect(migrated.version).toBe('7.0.0');
+        expect(migrated.version).toBe('8.0.0');
 
         // Should not have legacy fields
         expect('promptDirectory' in migrated).toBe(false);
         expect('historyDirectory' in migrated).toBe(false);
         expect('codingTool' in migrated).toBe(false);
-        
+
         // Should have new field names
         if ('historyDirectory' in legacy) {
           expect(migrated.historyDir).toBeDefined();
@@ -229,7 +241,7 @@ describe('Config Migration', () => {
   });
 
   describe('schema validation', () => {
-    it('should accept valid v1 configs', () => {
+    it('should migrate v1 config format correctly', () => {
       const v1Config = {
         promptDirectory: './.prompts',
         historyDirectory: './.history',
@@ -237,11 +249,14 @@ describe('Config Migration', () => {
         codingToolArgs: ['--wait']
       };
 
-      const result = ConfigV1Schema.safeParse(v1Config);
+      const migrated = migrateConfig(v1Config);
+      const result = ConfigSchema.safeParse(migrated);
       expect(result.success).toBe(true);
+      expect(migrated.promptDirs).toBeDefined();
+      expect(migrated.defaultCmd).toBe('code');
     });
 
-    it('should accept valid v2 configs', () => {
+    it('should migrate v2 config format correctly', () => {
       const v2Config = {
         promptDirs: ['./.prompts'],
         historyDir: './.history',
@@ -250,8 +265,10 @@ describe('Config Migration', () => {
         version: '2.0.0'
       };
 
-      const result = ConfigV2Schema.safeParse(v2Config);
+      const migrated = migrateConfig(v2Config);
+      const result = ConfigSchema.safeParse(migrated);
       expect(result.success).toBe(true);
+      expect(migrated.defaultCmd).toBe('code');
     });
 
     it('should accept valid v3 configs', () => {

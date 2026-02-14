@@ -8,6 +8,9 @@ import { logger } from '../../src/utils/logger.js';
 vi.mock('../../src/services/review-data-builder.js');
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/utils/logger.js');
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
 
 describe('Review Command', () => {
   let mockReviewDataBuilder: any;

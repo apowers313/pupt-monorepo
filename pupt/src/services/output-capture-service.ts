@@ -3,6 +3,7 @@ import stripAnsi from 'strip-ansi';
 import fs from 'fs-extra';
 import path from 'path';
 import { logger } from '../utils/logger.js';
+import { getDataDir } from '../config/global-paths.js';
 
 // Helper to get high-precision timestamp
 function getHighPrecisionTimestamp(): bigint {
@@ -92,7 +93,7 @@ export class OutputCaptureService {
 
   constructor(options: OutputCaptureOptions = {}) {
     this.options = {
-      outputDirectory: options.outputDirectory || './.history',
+      outputDirectory: options.outputDirectory || path.join(getDataDir(), 'output'),
       maxOutputSize: options.maxOutputSize || this.defaultMaxSize
     };
   }

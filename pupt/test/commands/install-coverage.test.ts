@@ -4,11 +4,20 @@ import * as path from 'node:path';
 import fs2 from 'fs-extra';
 import { logger } from '../../src/utils/logger.js';
 
+let testDir: string;
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
 // Mock simple-git before importing install commands
 vi.mock('simple-git', () => ({
   default: vi.fn(() => ({
     clone: vi.fn(),
-    checkIsRepo: vi.fn()
+    checkIsRepo: vi.fn(),
+    log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
   }))
 }));
 
@@ -18,11 +27,28 @@ vi.mock('execa', () => ({
   $: vi.fn()
 }));
 
-// Mock cosmiconfig
+// Mock cosmiconfig (still used by installFromGit's loadConfigFromDirectory)
 vi.mock('cosmiconfig', () => ({
   cosmiconfig: vi.fn(() => ({
     load: vi.fn(),
     search: vi.fn()
+  }))
+}));
+
+// Mock GlobalPackageManager
+const mockInstall = vi.fn();
+const mockEnsureInitialized = vi.fn();
+const mockDetectPromptDirs = vi.fn();
+const mockGetInstalledVersion = vi.fn();
+
+vi.mock('../../src/services/package-manager.js', () => ({
+  GlobalPackageManager: vi.fn().mockImplementation(() => ({
+    install: mockInstall,
+    ensureInitialized: mockEnsureInitialized,
+    detectPromptDirs: mockDetectPromptDirs,
+    getInstalledVersion: mockGetInstalledVersion,
+    getPackagesDir: () => path.join(testDir, 'data', 'packages'),
+    getNodeModulesDir: () => path.join(testDir, 'data', 'packages', 'node_modules'),
   }))
 }));
 
@@ -33,7 +59,6 @@ import {
   installCommand,
   isNpmPackage,
   extractRepoName,
-  detectPackageManager,
 } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import simpleGit from 'simple-git';
@@ -47,7 +72,7 @@ vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
     ConfigManager: {
       ...original.ConfigManager,
       load: vi.fn(),
-      contractPaths: original.ConfigManager.contractPaths
+      save: vi.fn(),
     }
   };
 });
@@ -55,11 +80,26 @@ vi.mock('fs-extra');
 vi.mock('../../src/utils/logger.js');
 
 describe('Install Command - Coverage Improvements', () => {
-  beforeEach(() => {
+  const dataDir = () => path.join(testDir, 'data');
+  const librariesDir = () => path.join(dataDir(), 'libraries');
+
+  beforeEach(async () => {
     vi.clearAllMocks();
+    testDir = '/tmp/test-pupt-coverage';
     vi.mocked(logger.log).mockImplementation(() => {});
     vi.mocked(logger.warn).mockImplementation(() => {});
     vi.mocked(logger.error).mockImplementation(() => {});
+
+    // Re-apply GlobalPackageManager mock implementation after vi.restoreAllMocks()
+    const { GlobalPackageManager } = await import('../../src/services/package-manager.js');
+    vi.mocked(GlobalPackageManager).mockImplementation(() => ({
+      install: mockInstall,
+      ensureInitialized: mockEnsureInitialized,
+      detectPromptDirs: mockDetectPromptDirs,
+      getInstalledVersion: mockGetInstalledVersion,
+      getPackagesDir: () => path.join(testDir, 'data', 'packages'),
+      getNodeModulesDir: () => path.join(testDir, 'data', 'packages', 'node_modules'),
+    }) as any);
   });
 
   afterEach(() => {
@@ -74,36 +114,40 @@ describe('Install Command - Coverage Improvements', () => {
     });
 
     it('should route npm packages to installFromNpm', async () => {
-      // Mock: package.json exists, npm install works
-      vi.mocked(fs.access).mockResolvedValue(undefined);
-      vi.mocked(fs.readFile).mockResolvedValue('{}');
+      // Mock GlobalPackageManager.install to return package info
+      mockInstall.mockResolvedValue({
+        name: 'some-package',
+        version: '1.0.0',
+        promptDirs: ['prompts'],
+      });
+
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: [],
       } as any);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-      const { execa } = await import('execa');
-      vi.mocked(execa as any).mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 });
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
 
       // Should not throw
       await installFromNpm('some-package');
 
-      expect(vi.mocked(execa as any)).toHaveBeenCalled();
+      expect(mockInstall).toHaveBeenCalledWith('some-package');
     });
 
     it('should route git URLs to installFromGit', async () => {
       const mockGit = {
         clone: vi.fn().mockResolvedValue(undefined),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+        log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345' } }),
       };
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: []
       } as any);
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
 
       await installCommand('https://github.com/user/repo');
 
@@ -122,13 +166,14 @@ describe('Install Command - Coverage Improvements', () => {
     it('should propagate non-URL errors from installFromGit', async () => {
       const mockGit = {
         clone: vi.fn().mockRejectedValue(new Error('Network error')),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+        log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345' } }),
       };
       vi.mocked(simpleGit).mockReturnValue(mockGit as any);
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: []
       } as any);
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
 
@@ -139,270 +184,133 @@ describe('Install Command - Coverage Improvements', () => {
   });
 
   describe('installFromNpm - full flow', () => {
-    let mockExeca: any;
-
     beforeEach(async () => {
-      const execaMod = await import('execa');
-      mockExeca = execaMod.execa as any;
-      vi.mocked(mockExeca).mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 });
+      mockInstall.mockResolvedValue({
+        name: 'my-pkg',
+        version: '1.0.0',
+        promptDirs: ['prompts'],
+      });
 
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: [],
       } as any);
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
     });
 
     it('should reject invalid package names', async () => {
       await expect(installFromNpm('')).rejects.toThrow('Package name cannot be empty');
     });
 
-    it('should require package.json to exist', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('ENOENT'));
-
-      await expect(installFromNpm('valid-package')).rejects.toThrow(
-        'NPM package installation requires a package.json file'
-      );
-    });
-
-    it('should handle execa failure gracefully', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
-      vi.mocked(mockExeca).mockRejectedValue(new Error('Command not found'));
+    it('should handle install failure gracefully', async () => {
+      mockInstall.mockRejectedValue(new Error('Failed to install package: Command not found'));
 
       await expect(installFromNpm('my-package')).rejects.toThrow(
-        'Failed to install package with npm'
+        'Failed to install package'
       );
     });
 
-    it('should load installed package config with promptDirs', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
+    it('should create NpmLibraryEntry with detected promptDirs', async () => {
+      // Mock GlobalPackageManager.install returning multiple prompt dirs
+      // (this simulates the case where .pt-config.json in the package has multiple promptDirs)
+      mockInstall.mockResolvedValue({
+        name: 'my-pkg',
+        version: '1.2.0',
+        promptDirs: ['prompts', 'extra-prompts'],
       });
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      // Mock cosmiconfig to return promptDirs from the installed package
-      const mockExplorer = {
-        load: vi.fn().mockImplementation(async (configPath: string) => {
-          if (configPath.includes(path.join('node_modules', 'my-pkg', '.pt-config.json'))) {
-            return {
-              config: {
-                promptDirs: ['prompts', 'extra-prompts']
-              }
-            };
-          }
-          return null;
-        }),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
 
       await installFromNpm('my-pkg');
 
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
         expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('node_modules', 'my-pkg', 'prompts'),
-            path.join('node_modules', 'my-pkg', 'extra-prompts')
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'my-pkg',
+              type: 'npm',
+              source: 'my-pkg',
+              promptDirs: ['prompts', 'extra-prompts'],
+              version: '1.2.0',
+              installedAt: expect.any(String),
+            })
           ])
-        }),
-        { spaces: 2 }
+        })
       );
     });
 
-    it('should skip already-configured prompt dirs from installed package', async () => {
-      const existingPath = path.join('node_modules', 'my-pkg', 'prompts');
+    it('should reject duplicate library entries', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./.prompts', existingPath],
-        version: '3.0.0'
+        promptDirs: ['./.prompts'],
+        version: '8.0.0',
+        libraries: [
+          {
+            name: 'my-pkg',
+            type: 'npm',
+            source: 'my-pkg',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T00:00:00.000Z',
+            version: '1.0.0',
+          }
+        ],
       } as any);
 
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
-
-      const mockExplorer = {
-        load: vi.fn().mockImplementation(async (configPath: string) => {
-          if (configPath.includes('.pt-config.json')) {
-            return {
-              config: {
-                promptDirs: ['prompts']
-              }
-            };
-          }
-          return null;
-        }),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      await installFromNpm('my-pkg');
-
-      // Should log "already configured"
-      expect(vi.mocked(logger.log)).toHaveBeenCalledWith(
-        expect.stringContaining('already configured')
+      await expect(installFromNpm('my-pkg')).rejects.toThrow(
+        'Package "my-pkg" is already installed'
       );
-      // Should NOT write config
-      expect(vi.mocked(fs2.writeJson)).not.toHaveBeenCalled();
+
+      // Should NOT call install or save config
+      expect(mockInstall).not.toHaveBeenCalled();
+      expect(vi.mocked(ConfigManager.save)).not.toHaveBeenCalled();
     });
 
-    it('should fall back to package.json promptDir field when no config', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      // cosmiconfig returns null (no config found in installed package)
-      const mockExplorer = {
-        load: vi.fn().mockResolvedValue(null),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      // package.json has a custom promptDir
-      vi.mocked(fs.readFile).mockImplementation(async (filePath) => {
-        if (String(filePath).includes(path.join('node_modules', 'my-pkg', 'package.json'))) {
-          return JSON.stringify({ name: 'my-pkg', promptDir: 'custom-dir' });
-        }
-        return '{}';
+    it('should create NpmLibraryEntry with default prompts directory', async () => {
+      // GlobalPackageManager.install returns the detected prompts dir
+      mockInstall.mockResolvedValue({
+        name: 'my-pkg',
+        version: '1.0.0',
+        promptDirs: ['prompts'],
       });
 
       await installFromNpm('my-pkg');
 
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
         expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('node_modules', 'my-pkg', 'custom-dir')
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'my-pkg',
+              type: 'npm',
+              source: 'my-pkg',
+              promptDirs: ['prompts'],
+              version: '1.0.0',
+              installedAt: expect.any(String),
+            })
           ])
-        }),
-        { spaces: 2 }
+        })
       );
     });
 
-    it('should use default "prompts" dir when package.json has no promptDir', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      const mockExplorer = {
-        load: vi.fn().mockResolvedValue(null),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      // Package.json without promptDir
-      vi.mocked(fs.readFile).mockImplementation(async (filePath) => {
-        if (String(filePath).includes(path.join('node_modules', 'basic-pkg', 'package.json'))) {
-          return JSON.stringify({ name: 'basic-pkg' });
-        }
-        return '{}';
-      });
-
-      await installFromNpm('basic-pkg');
-
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
-        expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('node_modules', 'basic-pkg', 'prompts')
-          ])
-        }),
-        { spaces: 2 }
-      );
-    });
-
-    it('should handle unreadable package.json in installed package', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
-
-      const mockExplorer = {
-        load: vi.fn().mockResolvedValue(null),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      // Package.json read fails
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'));
-
-      await installFromNpm('missing-pkg');
-
-      // Should still fall back to default prompts directory
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
-        expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('node_modules', 'missing-pkg', 'prompts')
-          ])
-        }),
-        { spaces: 2 }
-      );
-    });
-
-    it('should not duplicate when default prompt path already exists', async () => {
-      const existingPath = path.join('node_modules', 'dup-pkg', 'prompts');
+    it('should not duplicate when library name already exists', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./.prompts', existingPath],
-        version: '3.0.0'
+        promptDirs: ['./.prompts'],
+        version: '8.0.0',
+        libraries: [
+          {
+            name: 'dup-pkg',
+            type: 'npm',
+            source: 'dup-pkg',
+            promptDirs: ['prompts'],
+            installedAt: '2024-01-15T00:00:00.000Z',
+            version: '1.0.0',
+          }
+        ],
       } as any);
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        if (String(filePath) === 'package.json') return undefined;
-        throw new Error('ENOENT');
-      });
 
-      const mockExplorer = {
-        load: vi.fn().mockResolvedValue(null),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('ENOENT'));
-
-      await installFromNpm('dup-pkg');
-
-      // Should not write since path already exists
-      expect(vi.mocked(fs2.writeJson)).not.toHaveBeenCalled();
-      expect(vi.mocked(logger.log)).toHaveBeenCalledWith(
-        expect.stringContaining('already configured')
+      await expect(installFromNpm('dup-pkg')).rejects.toThrow(
+        'Package "dup-pkg" is already installed'
       );
-    });
-  });
 
-  describe('detectPackageManager - additional cases', () => {
-    it('should prefer pnpm over npm when both exist', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        const file = String(filePath);
-        if (file.endsWith('pnpm-lock.yaml') || file.endsWith('package-lock.json')) {
-          return undefined;
-        }
-        throw new Error('ENOENT');
-      });
-
-      const result = await detectPackageManager();
-      expect(result).toBe('pnpm');
-    });
-
-    it('should prefer yarn over npm when both exist', async () => {
-      vi.mocked(fs.access).mockImplementation(async (filePath) => {
-        const file = String(filePath);
-        if (file.endsWith('yarn.lock') || file.endsWith('package-lock.json')) {
-          return undefined;
-        }
-        throw new Error('ENOENT');
-      });
-
-      const result = await detectPackageManager();
-      expect(result).toBe('yarn');
+      // Should not save since library already exists
+      expect(vi.mocked(ConfigManager.save)).not.toHaveBeenCalled();
     });
   });
 
@@ -460,24 +368,27 @@ describe('Install Command - Coverage Improvements', () => {
     beforeEach(() => {
       mockGit = {
         clone: vi.fn().mockResolvedValue(undefined),
-        checkIsRepo: vi.fn().mockResolvedValue(false)
+        checkIsRepo: vi.fn().mockResolvedValue(false),
+        log: vi.fn().mockResolvedValue({ latest: { hash: 'abc12345deadbeef' } }),
       };
       vi.mocked(simpleGit).mockReturnValue(mockGit);
       vi.mocked(fs.mkdir).mockResolvedValue(undefined);
-      vi.mocked(fs2.writeJson).mockResolvedValue(undefined);
+      vi.mocked(ConfigManager.save).mockResolvedValue(undefined);
     });
 
-    it('should add installed package promptDirs to config', async () => {
+    it('should read .pt-config.json from cloned repo for promptDirs', async () => {
       vi.mocked(ConfigManager.load).mockResolvedValue({
         promptDirs: ['./.prompts'],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
+        version: '8.0.0',
+        libraries: []
       } as any);
+
+      const installPath = path.join(librariesDir(), 'my-repo');
 
       // Mock cosmiconfig to return promptDirs from the cloned repo
       const mockExplorer = {
         load: vi.fn().mockImplementation(async (configPath: string) => {
-          if (configPath.includes(path.join('.git-prompts', 'my-repo', '.pt-config.json'))) {
+          if (configPath.includes(path.join(installPath, '.pt-config.json'))) {
             return {
               config: {
                 promptDirs: ['src/prompts', 'lib/prompts']
@@ -490,48 +401,17 @@ describe('Install Command - Coverage Improvements', () => {
       };
       vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
 
-      await installFromGit('https://github.com/user/my-repo');
+      await installFromGit('https://github.com/user/my-repo', { git: mockGit });
 
-      expect(vi.mocked(fs2.writeJson)).toHaveBeenCalledWith(
-        expect.stringContaining('.pt-config.json'),
+      expect(vi.mocked(ConfigManager.save)).toHaveBeenCalledWith(
         expect.objectContaining({
-          promptDirs: expect.arrayContaining([
-            path.join('.git-prompts', 'my-repo', 'src/prompts'),
-            path.join('.git-prompts', 'my-repo', 'lib/prompts')
+          libraries: expect.arrayContaining([
+            expect.objectContaining({
+              name: 'my-repo',
+              promptDirs: ['src/prompts', 'lib/prompts'],
+            })
           ])
-        }),
-        { spaces: 2 }
-      );
-    });
-
-    it('should skip promptDirs already in config', async () => {
-      const existingPath = path.join('.git-prompts', 'my-repo', 'src/prompts');
-      vi.mocked(ConfigManager.load).mockResolvedValue({
-        promptDirs: ['./.prompts', existingPath],
-        gitPromptDir: '.git-prompts',
-        version: '3.0.0'
-      } as any);
-
-      const mockExplorer = {
-        load: vi.fn().mockImplementation(async (configPath: string) => {
-          if (configPath.includes('.pt-config.json')) {
-            return {
-              config: {
-                promptDirs: ['src/prompts']
-              }
-            };
-          }
-          return null;
-        }),
-        search: vi.fn()
-      };
-      vi.mocked(cosmiconfig).mockReturnValue(mockExplorer as any);
-
-      await installFromGit('https://github.com/user/my-repo');
-
-      // All paths already in config => "already configured" message
-      expect(vi.mocked(logger.log)).toHaveBeenCalledWith(
-        expect.stringContaining('already configured')
+        })
       );
     });
   });

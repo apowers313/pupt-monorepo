@@ -1,11 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
-import { ConfigManager } from '../../src/config/config-manager.js';
+
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
+
+// Import after mock setup
+const { ConfigManager } = await import('../../src/config/config-manager.js');
 
 describe('Config Migration Integration', () => {
-  let testDir: string;
   let originalCwd: string;
 
   beforeEach(async () => {
@@ -23,9 +33,9 @@ describe('Config Migration Integration', () => {
 
   describe('Full Migration Flow', () => {
     it('should migrate old config when running pt init', async () => {
-      // Create old config file
+      // Create old config file in global config dir
       const oldConfig = {
-        promptDirs: ['./.prompts', './templates'],
+        promptDirs: ['./custom-prompts', './templates'],
         historyDir: './.history',
         annotationDir: './.annotations',
         codingTool: 'claude',
@@ -38,12 +48,12 @@ describe('Config Migration Integration', () => {
           upper: { type: 'inline', value: 's => s.toUpperCase()' }
         }
       };
-      
-      await fs.writeJson('.pt-config.json', oldConfig);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), oldConfig);
+
       // Load config (triggers migration)
       const config = await ConfigManager.load();
-      
+
       // Check that new fields exist
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
@@ -51,98 +61,104 @@ describe('Config Migration Integration', () => {
         'Continue with last session?': '--continue',
         'Enable web search?': '--web'
       });
-      expect(config.version).toBe('7.0.0');
+      expect(config.version).toBe('8.0.0');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
-      expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
+
+      // gitPromptDir is removed in v8
+      expect((config as any).gitPromptDir).toBeUndefined();
 
       // Check that old fields are removed from runtime config
-      expect(config.codingTool).toBeUndefined();
-      expect(config.codingToolArgs).toBeUndefined();
-      expect(config.codingToolOptions).toBeUndefined();
-      
-      // Check that other fields are preserved
-      expect(config.promptDirs).toContain(path.resolve('./.prompts'));
-      expect(config.promptDirs).toContain(path.resolve('./templates'));
-      expect(config.historyDir).toBe(path.resolve('./.history'));
-      expect(config.annotationDir).toBe(path.resolve('./.annotations'));
+      expect((config as any).codingTool).toBeUndefined();
+      expect((config as any).codingToolArgs).toBeUndefined();
+      expect((config as any).codingToolOptions).toBeUndefined();
+
+      // Check that other fields are preserved (custom non-default paths)
+      expect(config.promptDirs).toContain(path.resolve(testDir, './custom-prompts'));
+      expect(config.promptDirs).toContain(path.resolve(testDir, './templates'));
+      expect(config.historyDir).toBe(path.resolve(testDir, './.history'));
+      expect(config.annotationDir).toBe(path.resolve(testDir, './.annotations'));
       expect(config.helpers?.upper).toEqual({ type: 'inline', value: 's => s.toUpperCase()' });
-      
+
       // Check that config file was updated
-      const savedConfig = await fs.readJson('.pt-config.json');
+      const savedConfig = await fs.readJson(path.join(testDir, 'config.json'));
       expect(savedConfig.defaultCmd).toBe('claude');
       expect(savedConfig.defaultCmdArgs).toEqual(['--model', 'sonnet-3.5']);
       expect(savedConfig.defaultCmdOptions).toBeDefined();
-      expect(savedConfig.version).toBe('7.0.0');
+      expect(savedConfig.version).toBe('8.0.0');
 
       // Check that backup was created
-      const backupPath = '.pt-config.json.backup';
+      const backupPath = path.join(testDir, 'config.json.backup');
       expect(await fs.pathExists(backupPath)).toBe(true);
-      
+
       const backup = await fs.readJson(backupPath);
       expect(backup.codingTool).toBe('claude');
       expect(backup.version).toBeUndefined();
     });
 
     it('should handle multiple migrations without data loss', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       // First migration
       const oldConfig = {
         promptDirs: ['./.prompts'],
         codingTool: 'gpt',
         codingToolArgs: ['--api-key', 'sk-123']
       };
-      
-      await fs.writeJson('.pt-config.json', oldConfig);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), oldConfig);
+
       // First load
       let config = await ConfigManager.load();
       expect(config.defaultCmd).toBe('gpt');
       expect(config.defaultCmdArgs).toEqual(['--api-key', 'sk-123']);
-      
+
       // Second load (should not re-migrate)
       config = await ConfigManager.load();
       expect(config.defaultCmd).toBe('gpt');
-      expect(config.version).toBe('7.0.0');
-      
+      expect(config.version).toBe('8.0.0');
+
       // Verify only one backup exists
-      const backupPath = '.pt-config.json.backup';
+      const backupPath = path.join(testDir, 'config.json.backup');
       expect(await fs.pathExists(backupPath)).toBe(true);
-      expect(await fs.pathExists('.pt-config.json.backup.1')).toBe(false);
+      expect(await fs.pathExists(path.join(testDir, 'config.json.backup.1'))).toBe(false);
     });
 
     it('should create timestamped backup for subsequent migrations', async () => {
       // Create initial config and backup
-      await fs.writeJson('.pt-config.json', { promptDirs: ['./.prompts'] });
-      await fs.writeFile('.pt-config.json.backup', 'existing backup');
-      
+      await fs.writeJson(path.join(testDir, 'config.json'), { promptDirs: ['./.prompts'] });
+      await fs.writeFile(path.join(testDir, 'config.json.backup'), 'existing backup');
+
       // Create old config that needs migration
       const oldConfig = {
         promptDirs: ['./.prompts'],
         codingTool: 'claude'
       };
-      await fs.writeJson('.pt-config.json', oldConfig);
-      
+      await fs.writeJson(path.join(testDir, 'config.json'), oldConfig);
+
       // Trigger migration
       await ConfigManager.load();
-      
+
       // Check that timestamped backup was created
-      const files = await fs.readdir('.');
-      const timestampedBackup = files.find(f => f.match(/^\.pt-config\.json\.backup\.\d{14}$/));
+      const files = await fs.readdir(testDir);
+      const timestampedBackup = files.find(f => f.match(/^config\.json\.backup\.\d{14}$/));
       expect(timestampedBackup).toBeDefined();
     });
 
     it('should handle partial configs correctly', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       // Config with only some old fields
       const partialOldConfig = {
         promptDirs: ['./.prompts'],
         codingTool: 'echo'
         // No args or options
       };
-      
-      await fs.writeJson('.pt-config.json', partialOldConfig);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), partialOldConfig);
+
       const config = await ConfigManager.load();
-      
+
       expect(config.defaultCmd).toBe('echo');
       expect(config.defaultCmdArgs).toEqual([]);
       expect(config.defaultCmdOptions).toEqual({
@@ -154,7 +170,7 @@ describe('Config Migration Integration', () => {
 
     it('should allow custom fields during migration with passthrough schema', async () => {
       const configWithCustomFields = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         codingTool: 'claude',
         // Custom fields
         customField1: 'value1',
@@ -162,37 +178,39 @@ describe('Config Migration Integration', () => {
           field2: 'value2'
         }
       };
-      
-      await fs.writeJson('.pt-config.json', configWithCustomFields);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), configWithCustomFields);
+
       // Should not throw - passthrough schema allows custom fields
       const loaded = await ConfigManager.load();
       expect(loaded.defaultCmd).toBe('claude'); // migrated from codingTool
-      
+
       // Check that custom fields are preserved in the file
-      const savedConfig = await fs.readJson('.pt-config.json');
+      const savedConfig = await fs.readJson(path.join(testDir, 'config.json'));
       expect(savedConfig.customField1).toBe('value1');
       expect(savedConfig.customNested.field2).toBe('value2');
     });
 
     it('should not migrate already-migrated configs', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       const newConfig = {
-        promptDirs: ['./.prompts'],
+        promptDirs: [path.join(dataDir, 'prompts')],
         defaultCmd: 'claude',
         defaultCmdArgs: ['--model', 'sonnet'],
-        version: '7.0.0',
+        version: '8.0.0',
         libraries: [],
         outputCapture: {
-          enabled: false
+          enabled: true
         },
       };
 
-      await fs.writeJson('.pt-config.json', newConfig);
+      await fs.writeJson(path.join(testDir, 'config.json'), newConfig);
 
       const config = await ConfigManager.load();
 
       // Should not create backup for already migrated config
-      expect(await fs.pathExists('.pt-config.json.backup')).toBe(false);
+      expect(await fs.pathExists(path.join(testDir, 'config.json.backup'))).toBe(false);
 
       // Config should remain unchanged
       expect(config.defaultCmd).toBe('claude');
@@ -210,30 +228,32 @@ codingToolArgs:
 codingToolOptions:
   Continue?: --continue
 `;
-      
-      await fs.writeFile('.pt-config.yaml', yamlContent);
-      
+
+      await fs.writeFile(path.join(testDir, 'config.yaml'), yamlContent);
+
       const config = await ConfigManager.load();
-      
+
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual(['--model', 'sonnet']);
       expect(config.defaultCmdOptions).toEqual({ 'Continue?': '--continue' });
-      
+
       // YAML files should not be automatically updated
       // (cosmiconfig doesn't support writing YAML)
-      const updatedYaml = await fs.readFile('.pt-config.yaml', 'utf8');
+      const updatedYaml = await fs.readFile(path.join(testDir, 'config.yaml'), 'utf8');
       expect(updatedYaml).toBe(yamlContent);
     });
 
     it('should apply defaults during migration', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       const minimalOldConfig = {
         promptDirs: ['./.prompts']
       };
-      
-      await fs.writeJson('.pt-config.json', minimalOldConfig);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), minimalOldConfig);
+
       const config = await ConfigManager.load();
-      
+
       // Should have all default values
       expect(config.defaultCmd).toBe('claude');
       expect(config.defaultCmdArgs).toEqual([]);
@@ -242,8 +262,9 @@ codingToolOptions:
       });
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
-      expect(config.gitPromptDir).toBe(path.join(testDir, '.git-prompts'));
-      expect(config.version).toBe('7.0.0');
+      // gitPromptDir is removed in v8
+      expect((config as any).gitPromptDir).toBeUndefined();
+      expect(config.version).toBe('8.0.0');
     });
   });
 
@@ -251,26 +272,28 @@ codingToolOptions:
     it('should support migration from mixed old and new fields', async () => {
       // This test ensures migration handles configs with both old and new fields
       const mixedConfig = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         // Old field names (will be migrated)
         codingTool: 'oldtool',
         // Without version, migration will be triggered
       };
-      
-      await fs.writeJson('.pt-config.json', mixedConfig);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), mixedConfig);
+
       const config = await ConfigManager.load();
-      
+
       // Old field should be migrated to new field
       expect(config.defaultCmd).toBe('oldtool');
-      expect(config.codingTool).toBeUndefined();
+      expect((config as any).codingTool).toBeUndefined();
     });
   });
 
   describe('V3 to V4 Migration', () => {
-    it('should handle migration from v3 to v4 with output capture defaults', async () => {
+    it('should handle migration from v3 to v8 with output capture defaults', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       const v3Config = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         defaultCmd: 'claude',
         defaultCmdArgs: [],
         version: '3.0.0',
@@ -278,27 +301,27 @@ codingToolOptions:
         autoRun: false,
         gitPromptDir: '.git-prompts'
       };
-      
-      await fs.writeJson('.pt-config.json', v3Config);
-      
-      const config = await ConfigManager.load();
-      
-      // Should update version to 5.0.0 (migrates through v4 to v5)
-      expect(config.version).toBe('7.0.0');
 
-      // Should have output capture defaults
-      expect(config.outputCapture).toEqual({
-        enabled: false,
-        directory: path.join(testDir, '.pt-output'),
-        maxSizeMB: 50,
-        retentionDays: 30
-      });
-      
+      await fs.writeJson(path.join(testDir, 'config.json'), v3Config);
+
+      const config = await ConfigManager.load();
+
+      // Should update version to 8.0.0 (migrates through v4, v5, v6, v7, v8)
+      expect(config.version).toBe('8.0.0');
+
+      // Should have output capture defaults (v8 enables by default)
+      expect(config.outputCapture).toBeDefined();
+      expect(config.outputCapture!.enabled).toBe(true);
+      expect(config.outputCapture!.maxSizeMB).toBe(50);
+      expect(config.outputCapture!.retentionDays).toBe(30);
+
       // autoAnnotate should be removed during migration
-      expect(config.autoAnnotate).toBeUndefined();
+      expect((config as any).autoAnnotate).toBeUndefined();
+
+      // gitPromptDir removed in v8
+      expect((config as any).gitPromptDir).toBeUndefined();
 
       // Existing fields should be preserved
-      expect(config.promptDirs).toContain(path.resolve('./.prompts'));
       expect(config.defaultCmd).toBe('claude');
       expect(config.autoReview).toBe(true);
       expect(config.autoRun).toBe(false);
@@ -306,7 +329,7 @@ codingToolOptions:
 
     it('should preserve existing output capture settings during v4 migration', async () => {
       const v3ConfigWithOutputCapture = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         defaultCmd: 'claude',
         version: '3.0.0',
         outputCapture: {
@@ -316,14 +339,14 @@ codingToolOptions:
           retentionDays: 7
         }
       };
-      
-      await fs.writeJson('.pt-config.json', v3ConfigWithOutputCapture);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), v3ConfigWithOutputCapture);
+
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('7.0.0');
+      expect(config.version).toBe('8.0.0');
 
-      // Should preserve user's output capture settings
+      // Should preserve user's output capture settings (v8 enables by default)
       expect(config.outputCapture).toEqual({
         enabled: true,
         directory: path.resolve(path.join(os.homedir(), 'my-output')),
@@ -332,32 +355,34 @@ codingToolOptions:
       });
     });
 
-    it('should create backup when migrating from v3 to v4', async () => {
+    it('should create backup when migrating from v3 to v8', async () => {
       const v3Config = {
         promptDirs: ['./.prompts'],
         version: '3.0.0'
       };
-      
-      await fs.writeJson('.pt-config.json', v3Config);
-      
+
+      await fs.writeJson(path.join(testDir, 'config.json'), v3Config);
+
       await ConfigManager.load();
-      
+
       // Check that backup was created
-      const backupPath = '.pt-config.json.backup';
+      const backupPath = path.join(testDir, 'config.json.backup');
       expect(await fs.pathExists(backupPath)).toBe(true);
-      
+
       const backup = await fs.readJson(backupPath);
       expect(backup.version).toBe('3.0.0');
     });
 
-    it('should migrate v4 configs to v5', async () => {
+    it('should migrate v4 configs to v8', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       const v4Config = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         defaultCmd: 'claude',
         version: '4.0.0',
         outputCapture: {
           enabled: true,
-          directory: './.pt-output'
+          directory: '~/my-output'
         },
         autoAnnotate: {
           enabled: true,
@@ -366,35 +391,37 @@ codingToolOptions:
         }
       };
 
-      await fs.writeJson('.pt-config.json', v4Config);
+      await fs.writeJson(path.join(testDir, 'config.json'), v4Config);
 
       const config = await ConfigManager.load();
 
-      // Should migrate v4 to v5
-      expect(config.version).toBe('7.0.0');
+      // Should migrate v4 to v8
+      expect(config.version).toBe('8.0.0');
       expect(config.libraries).toEqual([]);
 
       // Existing fields should be preserved
       expect(config.outputCapture?.enabled).toBe(true);
       // autoAnnotate is removed during migration
-      expect(config.autoAnnotate).toBeUndefined();
+      expect((config as any).autoAnnotate).toBeUndefined();
     });
 
     it('should handle partial v3 configs correctly', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       const partialV3Config = {
-        promptDirs: ['./.prompts'],
+        promptDirs: ['./custom-prompts'],
         version: '3.0.0'
         // Missing many optional fields
       };
 
-      await fs.writeJson('.pt-config.json', partialV3Config);
+      await fs.writeJson(path.join(testDir, 'config.json'), partialV3Config);
 
       const config = await ConfigManager.load();
 
-      expect(config.version).toBe('7.0.0');
+      expect(config.version).toBe('8.0.0');
       expect(config.outputCapture).toBeDefined();
       // autoAnnotate is removed during migration
-      expect(config.autoAnnotate).toBeUndefined();
+      expect((config as any).autoAnnotate).toBeUndefined();
 
       // V3 migration doesn't add defaultCmd if it's missing, only renames codingTool
       // So defaultCmd will be undefined for partial configs
@@ -404,10 +431,10 @@ codingToolOptions:
     });
 
     it('should migrate v4.0.0 configs that are missing required v4 fields', async () => {
+      const dataDir = path.join(testDir, 'data');
+
       // Regression test: A config that claims to be v4.0.0 but is missing
       // the outputCapture and autoAnnotate fields that were added in v4.0.0
-      // This can happen if a config was manually edited or created before
-      // those fields were added to the v4 migration
       const incompleteV4Config = {
         promptDirs: ['/home/user/.pt/prompts', 'node_modules/pupt/prompts'],
         autoReview: true,
@@ -417,24 +444,22 @@ codingToolOptions:
         // Missing outputCapture
       };
 
-      await fs.writeJson('.pt-config.json', incompleteV4Config);
+      await fs.writeJson(path.join(testDir, 'config.json'), incompleteV4Config);
 
       const config = await ConfigManager.load();
 
-      // Should be migrated to v5.0.0
-      expect(config.version).toBe('7.0.0');
+      // Should be migrated to v8.0.0
+      expect(config.version).toBe('8.0.0');
 
-      // Should add missing v4 fields with defaults
+      // Should have output capture (v8 enables by default)
       expect(config.outputCapture).toBeDefined();
-      expect(config.outputCapture).toEqual({
-        enabled: false,
-        directory: path.join(testDir, '.pt-output'),
-        maxSizeMB: 50,
-        retentionDays: 30
-      });
+      expect(config.outputCapture!.enabled).toBe(true);
 
       // autoAnnotate is removed during migration
-      expect(config.autoAnnotate).toBeUndefined();
+      expect((config as any).autoAnnotate).toBeUndefined();
+
+      // gitPromptDir is removed in v8
+      expect((config as any).gitPromptDir).toBeUndefined();
 
       // Existing fields should be preserved
       expect(config.autoReview).toBe(true);
@@ -444,8 +469,8 @@ codingToolOptions:
 
   describe('Error Handling', () => {
     it('should handle corrupted config gracefully', async () => {
-      await fs.writeFile('.pt-config.json', '{ invalid json');
-      
+      await fs.writeFile(path.join(testDir, 'config.json'), '{ invalid json');
+
       // Should throw a meaningful error
       await expect(ConfigManager.load()).rejects.toThrow();
     });
@@ -454,25 +479,28 @@ codingToolOptions:
       // Create config in a read-only directory scenario
       const readOnlyDir = path.join(testDir, 'readonly');
       await fs.ensureDir(readOnlyDir);
-      process.chdir(readOnlyDir);
-      
+
+      // We need to temporarily override testDir for the mock to use the read-only dir
+      const savedTestDir = testDir;
+      testDir = readOnlyDir;
+
       const oldConfig = {
         promptDirs: ['./.prompts'],
         codingTool: 'claude'
       };
-      
-      await fs.writeJson('.pt-config.json', oldConfig);
-      
+
+      await fs.writeJson(path.join(readOnlyDir, 'config.json'), oldConfig);
+
       // Make directory read-only
       await fs.chmod(readOnlyDir, 0o555);
-      
+
       try {
         // Should still load config even if backup fails
         const config = await ConfigManager.load();
         expect(config.defaultCmd).toBe('claude');
       } finally {
-        // Restore permissions
-        process.chdir(testDir);
+        // Restore permissions and testDir
+        testDir = savedTestDir;
         await fs.chmod(readOnlyDir, 0o755);
       }
     });

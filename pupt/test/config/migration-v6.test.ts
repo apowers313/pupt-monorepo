@@ -1,5 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { migrateConfig, migrations } from '../../src/config/migration.js';
+import { describe, it, expect, vi } from 'vitest';
+
+const mockDataDir = '/mock/data';
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => '/mock/config',
+  getDataDir: () => mockDataDir,
+  getCacheDir: () => '/mock/cache',
+  getConfigPath: () => '/mock/config/config.json',
+}));
+
+// Import after mock setup
+const { migrateConfig, migrations } = await import('../../src/config/migration.js');
 
 describe('Config Migration v5 → v6', () => {
   it('should migrate v5 config to v6', () => {
@@ -9,7 +19,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
   });
 
   it('should migrate targetLlm to environment.llm.provider', () => {
@@ -20,7 +30,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     expect(migrated.environment?.llm?.provider).toBe('anthropic');
   });
@@ -37,7 +47,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     // provider should come from targetLlm since environment.llm.provider wasn't set
     expect(migrated.environment?.llm?.provider).toBe('anthropic');
@@ -58,7 +68,7 @@ describe('Config Migration v5 → v6', () => {
       libraries: [],
     };
     const migrated = migrateConfig(v5Config);
-    expect(migrated.version).toBe('7.0.0');
+    expect(migrated.version).toBe('8.0.0');
     expect(migrated.targetLlm).toBeUndefined();
     // provider should not be overwritten since it was already set
     expect(migrated.environment?.llm?.provider).toBe('openai');
@@ -80,9 +90,16 @@ describe('Config Migration v5 → v6', () => {
     })).toBe(true);
   });
 
-  it('should not migrate v7 config', () => {
+  it('should detect v7 config needs migration to v8', () => {
     expect(migrateConfig.needsMigration({
       version: '7.0.0',
+      promptDirs: ['./prompts'],
+    })).toBe(true);
+  });
+
+  it('should not migrate v8 config', () => {
+    expect(migrateConfig.needsMigration({
+      version: '8.0.0',
       promptDirs: ['./prompts'],
     })).toBe(false);
   });
@@ -101,17 +118,20 @@ describe('Config Migration v5 → v6', () => {
       defaultCmdArgs: ['--print'],
       autoReview: true,
       autoRun: false,
-      outputCapture: { enabled: true },
+      outputCapture: { enabled: false },
       libraries: ['@company/prompts'],
     };
     const migrated = migrateConfig(v5Config);
+    // Custom multi-element promptDirs are preserved (not replaced with global default)
     expect(migrated.promptDirs).toEqual(['./prompts', '~/my-prompts']);
     expect(migrated.historyDir).toBe('~/.pt-history');
     expect(migrated.defaultCmd).toBe('claude');
     expect(migrated.defaultCmdArgs).toEqual(['--print']);
     expect(migrated.autoReview).toBe(true);
     expect(migrated.autoRun).toBe(false);
+    // v8 migration sets outputCapture.enabled to true
     expect(migrated.outputCapture?.enabled).toBe(true);
-    expect(migrated.libraries).toEqual(['@company/prompts']);
+    // v8 migration converts old string[] libraries to empty LibraryEntry[]
+    expect(migrated.libraries).toEqual([]);
   });
 });

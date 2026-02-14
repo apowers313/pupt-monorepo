@@ -3,53 +3,29 @@ import fs from 'fs-extra';
 import path from 'node:path';
 import chalk from 'chalk';
 import { DEFAULT_CONFIG } from '../types/config.js';
-import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 import { detectInstalledTools, getToolByName } from '../utils/tool-detection.js';
 import { logger } from '../utils/logger.js';
+import { getConfigPath, getDataDir } from '../config/global-paths.js';
 
 export async function initCommand(): Promise<void> {
+  const configPath = getConfigPath();
+  const dataDir = getDataDir();
+
   // Check for existing config
-  const configPath = path.join(process.cwd(), '.pt-config.json');
   if (await fs.pathExists(configPath)) {
-    const overwrite = await confirm({
-      message: 'Config file already exists. Overwrite?',
+    const reconfigure = await confirm({
+      message: 'Global config already exists. Reconfigure?',
       default: false
     });
-    if (!overwrite) return;
+    if (!reconfigure) return;
   }
 
-  // Prompt for configuration
+  // Prompt for prompt directory
+  const defaultPromptDir = path.join(dataDir, 'prompts');
   const promptDir = await input({
     message: 'Where should prompts be stored?',
-    default: './.prompts'
+    default: defaultPromptDir
   });
-
-  const enableHistory = await confirm({
-    message: 'Enable prompt history?',
-    default: true
-  });
-
-  let historyDir: string | undefined;
-  let annotationDir: string | undefined;
-
-  if (enableHistory) {
-    historyDir = await input({
-      message: 'Where should history be stored?',
-      default: './.pthistory'
-    });
-
-    const enableAnnotations = await confirm({
-      message: 'Enable history annotations?',
-      default: true
-    });
-
-    if (enableAnnotations) {
-      annotationDir = await input({
-        message: 'Where should annotations be stored?',
-        default: './.pthistory'
-      });
-    }
-  }
 
   // Ask about output capture
   const enableOutputCapture = await confirm({
@@ -58,27 +34,17 @@ export async function initCommand(): Promise<void> {
   });
 
   // Create directories
-  const outputCaptureDir = enableOutputCapture ? (historyDir || '.pt-output') : undefined;
-  const dirsToCreate = [promptDir];
-  if (historyDir) dirsToCreate.push(historyDir);
-  if (annotationDir && annotationDir !== historyDir) dirsToCreate.push(annotationDir);
-  if (outputCaptureDir && outputCaptureDir !== historyDir) dirsToCreate.push(outputCaptureDir);
-
-  for (const dir of dirsToCreate) {
-    if (!dir) continue; // Skip undefined or empty directories
-    const resolvedDir = dir.startsWith('~')
-      ? path.join(process.env.HOME || '', dir.slice(2))
-      : path.resolve(dir);
-    await fs.ensureDir(resolvedDir);
-  }
+  const promptDirResolved = promptDir.startsWith('~')
+    ? path.join(process.env.HOME || '', promptDir.slice(2))
+    : path.resolve(promptDir);
+  await fs.ensureDir(promptDirResolved);
 
   // Detect installed tools and prompt for default command
   const installedTools = detectInstalledTools();
-  let selectedTool: string | undefined;
   let defaultCmd: string | undefined;
   let defaultCmdArgs: string[] | undefined;
   let defaultCmdOptions: Record<string, string> | undefined;
-  let autoRun = false; // Default to false
+  let autoRun = false;
 
   if (installedTools.length > 0) {
     const toolChoices = [
@@ -89,7 +55,7 @@ export async function initCommand(): Promise<void> {
       { name: 'None', value: 'none' }
     ];
 
-    selectedTool = await select({
+    const selectedTool = await select({
       message: 'Select a default AI tool to use with prompts:',
       choices: toolChoices
     });
@@ -100,64 +66,45 @@ export async function initCommand(): Promise<void> {
         defaultCmd = toolConfig.command;
         defaultCmdArgs = toolConfig.defaultArgs;
         defaultCmdOptions = toolConfig.defaultOptions;
-        autoRun = true; // Set autoRun to true when a tool is selected
+        autoRun = true;
       }
     }
   }
 
   // Generate config
-  // Create base config from DEFAULT_CONFIG, excluding tool-specific settings
-  const { defaultCmd: _, defaultCmdArgs: __, defaultCmdOptions: ___, autoRun: ____, ...baseDefaults } = DEFAULT_CONFIG;
-  
+  const historyDir = path.join(dataDir, 'history');
+  const outputDir = path.join(dataDir, 'output');
+
   const config = {
-    ...baseDefaults,
     promptDirs: [promptDir],
-    ...(historyDir && { historyDir }),
-    ...(annotationDir && { annotationDir }),
+    historyDir,
+    annotationDir: historyDir,
     ...(defaultCmd && { defaultCmd }),
     ...(defaultCmdArgs && defaultCmdArgs.length > 0 && { defaultCmdArgs }),
     ...(defaultCmdOptions && Object.keys(defaultCmdOptions).length > 0 && { defaultCmdOptions }),
-    autoRun, // Always set autoRun based on tool selection
+    autoReview: DEFAULT_CONFIG.autoReview,
+    autoRun,
+    version: '8.0.0',
     outputCapture: {
       enabled: enableOutputCapture,
-      directory: outputCaptureDir || '.pt-output',
+      directory: outputDir,
       maxSizeMB: 50,
       retentionDays: 30
-    }
+    },
+    libraries: [],
   };
 
-  // Save config
+  // Ensure config directory exists and save config
+  await fs.ensureDir(path.dirname(configPath));
   await fs.writeJson(configPath, config, { spaces: 2 });
 
-  // Add to .gitignore if in git repository
-  if (await isGitRepository()) {
-    const entriesToIgnore: string[] = [];
-    
-    // Add config backup file
-    entriesToIgnore.push('.pt-config.json.backup');
-    
-    // Add history directory if it's a local directory
-    if (historyDir && !path.isAbsolute(historyDir) && !historyDir.startsWith('~')) {
-      // Remove leading ./ for cleaner gitignore entries
-      const normalizedHistoryDir = historyDir.replace(/^\.\//, '');
-      entriesToIgnore.push(normalizedHistoryDir);
-    }
-    
-    // Add output capture directory if it's local and different from history dir
-    if (outputCaptureDir && outputCaptureDir !== historyDir && !path.isAbsolute(outputCaptureDir) && !outputCaptureDir.startsWith('~')) {
-      const normalizedOutputDir = outputCaptureDir.replace(/^\.\//, '');
-      entriesToIgnore.push(normalizedOutputDir);
-    }
-
-    // Add git prompts directory
-    const gitPromptDir = config.gitPromptDir || DEFAULT_CONFIG.gitPromptDir || '.git-prompts';
-    entriesToIgnore.push(gitPromptDir);
-    
-    // Add all entries to .gitignore
-    for (const entry of entriesToIgnore) {
-      await addToGitignore(entry);
-    }
+  // Create data directories
+  await fs.ensureDir(historyDir);
+  if (enableOutputCapture) {
+    await fs.ensureDir(outputDir);
   }
 
-  logger.log(chalk.green('✓ Configuration created successfully!'));
+  logger.log(chalk.green('\u2713 Configuration created successfully!'));
+  logger.log(chalk.gray(`  Config: ${configPath}`));
+  logger.log(chalk.gray(`  Prompts: ${promptDir}`));
 }

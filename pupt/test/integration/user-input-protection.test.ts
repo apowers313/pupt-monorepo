@@ -2,8 +2,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import os from 'node:os';
-import { runCommand } from '../../src/commands/run.js';
 import * as inquirerPrompts from '@inquirer/prompts';
+
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
 
 vi.mock('@inquirer/prompts', () => ({
   input: vi.fn(),
@@ -50,42 +58,42 @@ vi.mock('../../src/services/input-collector.js', () => ({
   collectInputs: vi.fn().mockResolvedValue(new Map()),
 }));
 
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
+
+import { runCommand } from '../../src/commands/run.js';
+
 describe('User Input Protection from Handlebars Processing', () => {
-  let tempDir: string;
   let promptsDir: string;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
     // Create temp directory
-    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-test-'));
-    promptsDir = path.join(tempDir, 'prompts');
+    testDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pt-test-'));
+    promptsDir = path.join(testDir, 'prompts');
     await fs.mkdir(promptsDir);
 
-    // Create config
+    // Write config.json to testDir (the mocked global config dir)
     const config = {
+      version: '8.0.0',
       promptDirs: [promptsDir],
-      codingTool: 'echo',
-      codingToolArgs: []
+      defaultCmd: 'echo',
+      libraries: [],
     };
     await fs.writeFile(
-      path.join(tempDir, '.pt-config.json'),
+      path.join(testDir, 'config.json'),
       JSON.stringify(config, null, 2)
     );
-
-    // Change to temp directory
-    process.chdir(tempDir);
   });
 
   afterEach(async () => {
-    // Change out of the test directory before trying to remove it
-    process.chdir(os.tmpdir());
-
     // On Windows, files might still be in use, so retry removal
     const maxRetries = 3;
     for (let i = 0; i < maxRetries; i++) {
       try {
-        await fs.rm(tempDir, { recursive: true, force: true });
+        await fs.rm(testDir, { recursive: true, force: true });
         break;
       } catch (error) {
         if (i === maxRetries - 1) throw error;

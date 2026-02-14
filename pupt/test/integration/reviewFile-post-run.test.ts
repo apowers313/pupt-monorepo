@@ -1,12 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { runCommand } from '../../src/commands/run.js';
-import { join } from 'path';
+import path, { join } from 'path';
 import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
 import { tmpdir } from 'os';
 import { existsSync } from 'fs';
 import { spawn } from 'child_process';
 import { confirm, search } from '@inquirer/prompts';
 import { editorLauncher } from '../../src/utils/editor.js';
+
+let testDir: string;
+
+vi.mock('@/config/global-paths', () => ({
+  getConfigDir: () => testDir,
+  getDataDir: () => path.join(testDir, 'data'),
+  getCacheDir: () => path.join(testDir, 'cache'),
+  getConfigPath: () => path.join(testDir, 'config.json'),
+}));
 
 vi.mock('child_process', () => ({
   spawn: vi.fn()
@@ -53,8 +61,13 @@ vi.mock('../../src/ui/interactive-search.js', () => ({
   }))
 }));
 
+vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
+  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+}));
+
+import { runCommand } from '../../src/commands/run.js';
+
 describe('ReviewFile Post-Run Integration Tests', () => {
-  let testDir: string;
   let originalCwd: string;
   let mockSpawn: any;
 
@@ -62,19 +75,22 @@ describe('ReviewFile Post-Run Integration Tests', () => {
     originalCwd = process.cwd();
     testDir = await mkdtemp(join(tmpdir(), 'pt-reviewfile-postrun-'));
 
-    // Create config
+    // Create prompts directory (absolute path)
+    const promptsDir = join(testDir, '.prompts');
+    await mkdir(promptsDir);
+
+    // Write config.json to testDir (the mocked global config dir)
     await writeFile(
-      join(testDir, '.pt-config.json'),
+      join(testDir, 'config.json'),
       JSON.stringify({
-        promptDirs: ['./.prompts'],
+        version: '8.0.0',
+        promptDirs: [promptsDir],
         defaultCmd: 'echo',
         defaultCmdOptions: {},
-        autoReview: true
+        autoReview: true,
+        libraries: [],
       })
     );
-
-    // Create prompts directory
-    await mkdir(join(testDir, '.prompts'));
 
     // Mock spawn for echo command
     mockSpawn = vi.mocked(spawn);
@@ -279,12 +295,14 @@ describe('ReviewFile Post-Run Integration Tests', () => {
     it('should respect autoReview=false setting', async () => {
       // Update config to disable autoReview
       await writeFile(
-        join(testDir, '.pt-config.json'),
+        join(testDir, 'config.json'),
         JSON.stringify({
-          promptDirs: ['./.prompts'],
+          version: '8.0.0',
+          promptDirs: [join(testDir, '.prompts')],
           defaultCmd: 'echo',
           defaultCmdOptions: {},
-          autoReview: false
+          autoReview: false,
+          libraries: [],
         })
       );
 
