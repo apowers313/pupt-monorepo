@@ -76,6 +76,7 @@ export default defineConfig({
             link: '/components/post-execution',
           },
           { text: 'Utility', link: '/components/utility' },
+          { text: 'Meta', link: '/components/meta' },
           { text: 'Presets', link: '/components/presets' },
         ],
       },
