@@ -33,6 +33,9 @@ tmp/
 *.tmp
 *~
 
+# VitePress
+docs/.vitepress/cache/
+
 # PUPT
 .pt-config.json.backup
 .pthistory
