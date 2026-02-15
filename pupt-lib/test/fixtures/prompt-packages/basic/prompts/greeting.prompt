@@ -1,0 +1,4 @@
+<Prompt name="greeting" description="A simple greeting" tags={["test"]}>
+  <Role>You are a friendly assistant.</Role>
+  <Task>Greet the user warmly.</Task>
+</Prompt>

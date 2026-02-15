@@ -1,0 +1,5 @@
+{
+  "name": "test-prompt-package",
+  "version": "1.0.0",
+  "description": "A mock npm package with prompts for testing"
+}

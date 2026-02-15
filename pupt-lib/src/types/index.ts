@@ -76,9 +76,17 @@ export type {
 
 // Module types
 export type {
+  ModuleEntry,
   PuptConfig,
   PuptLibrary,
   DiscoveredPrompt,
   LibraryLoadResult,
   PuptInitConfig,
 } from './module';
+
+// Prompt source types
+export type {
+  DiscoveredPromptFile,
+  PromptSource,
+} from './prompt-source';
+export { isPromptSource } from './prompt-source';

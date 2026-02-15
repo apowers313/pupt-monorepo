@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Pupt } from '../../src/api';
+import type { PromptSource } from '../../src/types/prompt-source';
 
 describe('Pupt', () => {
   it('should initialize with modules', async () => {
@@ -219,5 +220,77 @@ describe('DiscoveredPrompt', () => {
     expect(prompt?.description).toBe('A simple test prompt');
     expect(prompt?.tags).toContain('test');
     expect(prompt?.tags).toContain('example');
+  });
+});
+
+describe('Pupt with mixed module entries', () => {
+  it('should accept PromptSource instances alongside strings', async () => {
+    const mockSource: PromptSource = {
+      async getPrompts() {
+        return [{ filename: 'custom.prompt', content: '<Prompt name="custom"><Task>Test</Task></Prompt>' }];
+      },
+    };
+    const pupt = new Pupt({ modules: [mockSource] });
+    await pupt.init();
+    expect(pupt.getPrompt('custom')).toBeDefined();
+    expect(pupt.getPrompt('custom')!.name).toBe('custom');
+  });
+
+  it('should accept PromptSource instances mixed with string modules', async () => {
+    const mockSource: PromptSource = {
+      async getPrompts() {
+        return [{ filename: 'dynamic.prompt', content: '<Prompt name="dynamic" tags={["dynamic"]}><Task>Dynamic task</Task></Prompt>' }];
+      },
+    };
+    const pupt = new Pupt({
+      modules: [
+        './test/fixtures/prompt-packages/basic',
+        mockSource,
+      ],
+    });
+    await pupt.init();
+
+    // Should have prompts from both sources
+    const allPrompts = pupt.getPrompts();
+    expect(allPrompts.length).toBeGreaterThanOrEqual(3); // 2 from basic + 1 from mockSource
+
+    expect(pupt.getPrompt('greeting')).toBeDefined();
+    expect(pupt.getPrompt('dynamic')).toBeDefined();
+  });
+
+  it('should accept { source, config } package references', async () => {
+    const pupt = new Pupt({
+      modules: [
+        {
+          source: './test/fixtures/prompt-sources/mock-source',
+          config: { path: 'test/fixtures/prompt-packages/basic' },
+        },
+      ],
+    });
+    await pupt.init();
+
+    const prompts = pupt.getPrompts();
+    expect(prompts.length).toBeGreaterThan(0);
+    expect(pupt.getPrompt('greeting')).toBeDefined();
+  });
+
+  it('should render prompts from PromptSource instances', async () => {
+    const mockSource: PromptSource = {
+      async getPrompts() {
+        return [{
+          filename: 'renderable.prompt',
+          content: '<Prompt name="renderable"><Role>You are helpful.</Role><Task>Help the user.</Task></Prompt>',
+        }];
+      },
+    };
+    const pupt = new Pupt({ modules: [mockSource] });
+    await pupt.init();
+
+    const prompt = pupt.getPrompt('renderable');
+    expect(prompt).toBeDefined();
+
+    const result = await prompt!.render();
+    expect(result.ok).toBe(true);
+    expect(result.text.length).toBeGreaterThan(0);
   });
 });

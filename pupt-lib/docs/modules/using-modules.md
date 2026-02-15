@@ -154,5 +154,7 @@ squares = [x**2 for x in range(10)]
 
 ## What to Learn Next
 
-- [Publishing Modules](/modules/publishing) -- Share your own tags and prompts
+- [Prompts vs. Components](/modules/prompts-vs-components) -- Understand the two concepts
+- [Prompt Sources](/modules/prompt-sources) -- How prompts are discovered from different locations
+- [Publishing](/modules/publishing) -- Share your own tags and prompts
 - [Tags Overview](/components/) -- Browse all built-in tags

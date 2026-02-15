@@ -83,7 +83,9 @@ export default defineConfig({
       {
         text: 'Sharing',
         items: [
+          { text: 'Prompts vs. Components', link: '/modules/prompts-vs-components' },
           { text: 'Using Modules', link: '/modules/using-modules' },
+          { text: 'Prompt Sources', link: '/modules/prompt-sources' },
           { text: 'Publishing', link: '/modules/publishing' },
         ],
       },
@@ -101,6 +103,10 @@ export default defineConfig({
           {
             text: 'Creating Modules',
             link: '/developers/creating-modules',
+          },
+          {
+            text: 'Custom Prompt Sources',
+            link: '/developers/custom-sources',
           },
           { text: 'API Reference', link: '/developers/api' },
           { text: 'Variables Reference', link: '/developers/variables' },

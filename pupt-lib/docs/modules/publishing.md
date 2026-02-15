@@ -1,6 +1,6 @@
 # Publishing Modules
 
-You can share your custom tags and prompts with others by publishing them as npm packages, sharing files directly, or hosting on GitHub.
+You can share your custom tags and prompts with others. Publish them as npm packages, share files directly, or host them on GitHub.
 
 ## Sharing a Single File
 
@@ -76,9 +76,11 @@ Users can then import your tags:
 
 ## Publishing Prompts
 
-You can also share complete prompts, not just individual tags. A prompt package bundles `.prompt` files together so others can install and use them right away.
+You can also share complete prompts, not just individual tags. A prompt package bundles `.prompt` files together so others can install and use them right away. No build step or JavaScript knowledge is required.
 
-### Prompt Package
+### Prompt-Only Package
+
+Place `.prompt` files in a `prompts/` directory at the package root. No `main` or `exports` fields are needed:
 
 ```
 my-prompts/
@@ -97,13 +99,64 @@ my-prompts/
   "type": "module",
   "peerDependencies": {
     "pupt-lib": "^1.0.0"
-  }
+  },
+  "files": [
+    "prompts",
+    "README.md",
+    "LICENSE"
+  ]
 }
 ```
 
+The `prompts/` directory convention means the module loader discovers your `.prompt` files automatically with no configuration.
+
+### Package with Both Prompts and Components
+
+If your package ships both prompts and custom tags, include both the `prompts/` directory and a JS entry point:
+
+```
+my-toolkit/
+├── package.json
+├── prompts/
+│   └── review.prompt
+├── src/
+│   ├── index.ts
+│   └── Callout.tsx
+└── dist/
+    └── index.js
+```
+
+```json
+{
+  "name": "@acme/toolkit",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "pupt-lib": "^1.0.0"
+  },
+  "files": [
+    "prompts",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}
+```
+
+The module loader handles both. It scans `prompts/` for `.prompt` files and loads the JS entry point for custom tags.
+
 ### Tips for Good Prompt Packages
 
-Give each prompt a unique `name` so users can tell them apart. Add `description` and `tags` to make your prompts easy to find and search. If your prompts collect user input, add clear `label` text to all inputs so people know what to fill in. Test that every prompt produces the output you expect before publishing.
+- Give each prompt a unique `name` so users can tell them apart
+- Add `description` and `tags` to make your prompts easy to find and search
+- If your prompts collect user input, add clear `label` text so people know what to fill in
+- Test that every prompt produces the output you expect before publishing
 
 ## Declaring Capabilities
 
@@ -138,4 +191,7 @@ Before you publish, run through this list:
 ## What to Learn Next
 
 - [Using Modules](/modules/using-modules) -- Import and use shared tags
-- [Writing Tags](/developers/first-component) -- Build your own custom tags (for developers)
+- [Prompts vs. Components](/modules/prompts-vs-components) -- Understand the two concepts
+- [Prompt Sources](/modules/prompt-sources) -- How prompts are discovered
+- [Custom Sources](/developers/custom-sources) -- Build your own prompt source
+- [Writing Tags](/developers/first-component) -- Build your own custom tags

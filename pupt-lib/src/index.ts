@@ -40,12 +40,17 @@ export type {
   SearchResult,
   SearchResultMatch,
   SearchEngineConfig,
+  ModuleEntry,
   PuptConfig,
   PuptLibrary,
   DiscoveredPrompt,
   LibraryLoadResult,
   PuptInitConfig,
+  DiscoveredPromptFile,
+  PromptSource,
 } from './types';
+
+export { isPromptSource } from './types';
 
 // Export context utilities
 export {
@@ -107,7 +112,11 @@ import { setComponentExportsThunk } from './services/component-discovery';
 
 // Export module loading services
 export { ModuleLoader } from './services/module-loader';
-export type { SourceType, LoadedLibrary, ParsedPackageSource } from './services/module-loader';
+export type { SourceType, LoadedLibrary, CompiledPrompt, ParsedPackageSource } from './services/module-loader';
+
+// Export prompt sources
+export { LocalPromptSource, NpmLocalPromptSource, GitHubPromptSource, parseGitHubSource, NpmRegistryPromptSource } from './services/prompt-sources';
+export type { GitHubPromptSourceOptions } from './services/prompt-sources';
 
 // Export browser support utilities
 export {

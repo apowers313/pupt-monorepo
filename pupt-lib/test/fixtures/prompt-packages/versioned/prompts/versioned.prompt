@@ -1,0 +1,4 @@
+<Prompt name="versioned-prompt" description="A versioned prompt" tags={["versioned"]} version="1.2.0">
+  <Role>You are a versioned assistant.</Role>
+  <Task>Demonstrate version tracking.</Task>
+</Prompt>

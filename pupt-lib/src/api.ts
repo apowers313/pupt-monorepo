@@ -5,8 +5,10 @@ import type {
   RenderOptions,
   RenderResult,
   PuptElement,
+  ModuleEntry,
 } from './types';
 import { isPuptElement } from './types/element';
+import { isPromptSource } from './types/prompt-source';
 import { PROPS } from './types/symbols';
 import { createSearchEngine, type SearchEngine } from './services/search-engine';
 import { render } from './render';
@@ -17,6 +19,7 @@ import { ModuleLoader } from './services/module-loader';
  * A discovered prompt with render and input iterator capabilities
  */
 export interface DiscoveredPromptWithMethods {
+  id: string;
   name: string;
   description: string;
   tags: string[];
@@ -33,6 +36,7 @@ export class Pupt {
   private moduleLoader = new ModuleLoader();
   private searchEngine: SearchEngine;
   private prompts: DiscoveredPromptWithMethods[] = [];
+  private warnings: string[] = [];
   private initialized = false;
 
   constructor(private config: PuptInitConfig) {
@@ -69,6 +73,10 @@ export class Pupt {
     return this.prompts.find(p => p.name === name);
   }
 
+  getPromptById(id: string): DiscoveredPromptWithMethods | undefined {
+    return this.prompts.find(p => p.id === id);
+  }
+
   searchPrompts(query: string, options?: Partial<SearchOptions>): SearchResult[] {
     return this.searchEngine.search(query, options);
   }
@@ -81,45 +89,106 @@ export class Pupt {
     return this.prompts.filter(p => p.tags.includes(tag));
   }
 
+  getWarnings(): string[] {
+    return [...this.warnings];
+  }
+
   private async discoverPrompts(): Promise<DiscoveredPromptWithMethods[]> {
     const discovered: DiscoveredPromptWithMethods[] = [];
+    const processedLibraries = new Set<string>();
 
     // Go through all configured modules and find prompts
-    for (const source of this.config.modules ?? []) {
-      const library = await this.moduleLoader.load(source);
-
-      // Use the module loader to load the module again for prompt detection
-      // The module is cached, so this is fast
+    for (const entry of this.config.modules ?? []) {
       try {
-        // Get the raw module exports
-        const moduleExports = await this.loadModuleExports(source);
+        // Deduplicate string and { source, config } entries
+        const dedupKey = this.getEntryDedupKey(entry);
+        if (dedupKey !== null) {
+          if (processedLibraries.has(dedupKey)) {
+            continue;
+          }
+          processedLibraries.add(dedupKey);
+        }
 
-        // Find all PuptElements that are prompts (have a name prop)
-        for (const [, value] of Object.entries(moduleExports)) {
-          if (this.isPromptElement(value)) {
-            const element = value as PuptElement;
-            const props = element[PROPS] as {
-              name: string;
-              description?: string;
-              tags?: string[];
-            };
+        const library = await this.moduleLoader.loadEntry(entry);
 
-            const prompt = this.createDiscoveredPrompt(
-              props.name,
-              props.description ?? '',
-              props.tags ?? [],
-              library.name,
-              element,
-            );
-            discovered.push(prompt);
+        // 1. Discover prompts from compiled .prompt files (via PromptSource)
+        for (const compiled of Object.values(library.prompts)) {
+          const prompt = this.createDiscoveredPrompt(
+            compiled.id,
+            compiled.name,
+            compiled.description,
+            compiled.tags,
+            library.name,
+            compiled.element,
+          );
+          discovered.push(prompt);
+        }
+
+        // 2. Discover prompts from JS module exports (existing behavior)
+        // Only applicable for string entries that can be imported as JS modules
+        if (typeof entry === 'string' && !isPromptSource(entry)) {
+          try {
+            const moduleExports = await this.loadModuleExports(entry);
+
+            for (const [, value] of Object.entries(moduleExports)) {
+              if (this.isPromptElement(value)) {
+                const element = value as PuptElement;
+                const props = element[PROPS] as {
+                  name: string;
+                  description?: string;
+                  tags?: string[];
+                };
+
+                const prompt = this.createDiscoveredPrompt(
+                  crypto.randomUUID(),
+                  props.name,
+                  props.description ?? '',
+                  props.tags ?? [],
+                  library.name,
+                  element,
+                );
+                discovered.push(prompt);
+              }
+            }
+          } catch {
+            // Skip modules that can't be loaded for prompt detection
           }
         }
-      } catch {
-        // Skip modules that can't be loaded for prompt detection
+      } catch (error) {
+        const sourceId = typeof entry === 'string'
+          ? entry
+          : isPromptSource(entry)
+            ? (entry.constructor?.name ?? 'PromptSource')
+            : `{ source: ${(entry as { source: string }).source} }`;
+        const message = error instanceof Error ? error.message : String(error);
+        this.warnings.push(`Failed to load module "${sourceId}": ${message}`);
       }
     }
 
     return discovered;
+  }
+
+  /**
+   * Get a deduplication key for a module entry.
+   * Returns null for PromptSource instances (cannot be deduplicated).
+   */
+  private getEntryDedupKey(entry: ModuleEntry): string | null {
+    if (typeof entry === 'string') {
+      return this.moduleLoader.normalizeSource(entry);
+    }
+
+    if (isPromptSource(entry)) {
+      // PromptSource instances cannot be deduplicated — no reliable identity comparison
+      return null;
+    }
+
+    // { source, config } objects: serialize as a stable key
+    if (typeof entry === 'object' && entry !== null && 'source' in entry && 'config' in entry) {
+      const ref = entry as { source: string; config: Record<string, unknown> };
+      return `pkg:${ref.source}:${JSON.stringify(ref.config)}`;
+    }
+
+    return null;
   }
 
   private async loadModuleExports(source: string): Promise<Record<string, unknown>> {
@@ -150,6 +219,7 @@ export class Pupt {
   }
 
   private createDiscoveredPrompt(
+    id: string,
     name: string,
     description: string,
     tags: string[],
@@ -157,6 +227,7 @@ export class Pupt {
     element: PuptElement,
   ): DiscoveredPromptWithMethods {
     return {
+      id,
       name,
       description,
       tags,

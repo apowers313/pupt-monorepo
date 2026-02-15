@@ -1,6 +1,18 @@
 // Module and library types for pupt-lib
 
 import type { ComponentType } from './element';
+import type { PromptSource } from './prompt-source';
+
+/**
+ * A module entry can be:
+ * - A string (routed to built-in sources: local path, npm, URL, or GitHub)
+ * - A PromptSource instance (self-resolving prompt discovery)
+ * - A package reference with dynamic source loader and config
+ */
+export type ModuleEntry =
+  | string
+  | PromptSource
+  | { source: string; config: Record<string, unknown> };
 
 /**
  * Configuration for a pupt library
@@ -52,7 +64,7 @@ export interface LibraryLoadResult {
  * Configuration for initializing the Pupt class
  */
 export interface PuptInitConfig {
-  modules?: string[];
+  modules?: ModuleEntry[];
   searchConfig?: {
     threshold?: number;
     weights?: {

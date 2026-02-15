@@ -1,0 +1,4 @@
+<Prompt name="code-review" description="An alternative code review" tags={["alt"]}>
+  <Role>You are an alternative reviewer.</Role>
+  <Task>Review code with a different perspective.</Task>
+</Prompt>

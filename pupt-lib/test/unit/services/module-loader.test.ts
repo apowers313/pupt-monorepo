@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ModuleLoader } from '../../../src/services/module-loader';
 import { Component } from '../../../src/component';
 import { jsx } from '../../../src/jsx-runtime';
+import type { PromptSource } from '../../../src/types/prompt-source';
 
 // Create test components extending Component
 class TestComponent extends Component<{ children?: unknown }> {
@@ -375,6 +376,104 @@ describe('ModuleLoader', () => {
 
       // The name is extracted by extractNameFromPath internally
       expect(loadSpy).toHaveBeenCalledWith('./some/path/to/my-module');
+    });
+  });
+
+  describe('ModuleEntry polymorphism', () => {
+    it('should accept a PromptSource instance via loadEntry', async () => {
+      const mockSource: PromptSource = {
+        async getPrompts() {
+          return [{ filename: 'test.prompt', content: '<Prompt name="test"><Task>Do stuff</Task></Prompt>' }];
+        },
+      };
+      const library = await loader.loadEntry(mockSource);
+      expect(Object.keys(library.prompts)).toContain('test');
+      expect(library.prompts['test'].name).toBe('test');
+    });
+
+    it('should accept a string via loadEntry (delegates to load)', async () => {
+      const loadSpy = vi.spyOn(loader, 'load');
+      loadSpy.mockResolvedValue({
+        name: 'test-lib',
+        components: {},
+        prompts: {},
+        dependencies: [],
+      });
+
+      await loader.loadEntry('some-package');
+      expect(loadSpy).toHaveBeenCalledWith('some-package');
+    });
+
+    it('should accept { source, config } package references via loadEntry', async () => {
+      const library = await loader.loadPackageReference({
+        source: './test/fixtures/prompt-sources/mock-source',
+        config: { path: 'test/fixtures/prompt-packages/basic' },
+      });
+      expect(Object.keys(library.prompts).length).toBeGreaterThan(0);
+      expect(library.prompts['greeting']).toBeDefined();
+      expect(library.prompts['code-review']).toBeDefined();
+    });
+
+    it('should throw for invalid module entry', async () => {
+      await expect(
+        loader.loadEntry(42 as never),
+      ).rejects.toThrow('Invalid module entry');
+    });
+  });
+
+  describe('loadPromptSource', () => {
+    it('should compile discovered .prompt files into CompiledPrompts', async () => {
+      const mockSource: PromptSource = {
+        async getPrompts() {
+          return [
+            { filename: 'one.prompt', content: '<Prompt name="one"><Task>First task</Task></Prompt>' },
+            { filename: 'two.prompt', content: '<Prompt name="two"><Task>Second task</Task></Prompt>' },
+          ];
+        },
+      };
+      const library = await loader.loadPromptSource(mockSource);
+      expect(Object.keys(library.prompts)).toHaveLength(2);
+      expect(library.prompts['one'].name).toBe('one');
+      expect(library.prompts['one'].id).toMatch(/^[0-9a-f-]+$/);
+      expect(library.prompts['two'].name).toBe('two');
+      expect(library.prompts['two'].id).toMatch(/^[0-9a-f-]+$/);
+      // IDs should be unique
+      expect(library.prompts['one'].id).not.toBe(library.prompts['two'].id);
+      expect(library.components).toEqual({});
+    });
+
+    it('should accept optional name parameter', async () => {
+      const mockSource: PromptSource = {
+        async getPrompts() {
+          return [{ filename: 'test.prompt', content: '<Prompt name="test"><Task>Do stuff</Task></Prompt>' }];
+        },
+      };
+      const library = await loader.loadPromptSource(mockSource, 'custom-source');
+      expect(library.name).toBe('custom-source');
+    });
+
+    it('should use filename as name when prompt has no name prop', async () => {
+      const mockSource: PromptSource = {
+        async getPrompts() {
+          return [
+            { filename: 'unnamed.prompt', content: '<Prompt><Task>A task</Task></Prompt>' },
+          ];
+        },
+      };
+      const library = await loader.loadPromptSource(mockSource);
+      expect(library.prompts['unnamed']).toBeDefined();
+      expect(library.prompts['unnamed'].name).toBe('unnamed');
+    });
+  });
+
+  describe('prompt discovery from local module', () => {
+    it('should include both components and prompts from same source', async () => {
+      const library = await loader.load('./test/fixtures/prompt-packages/with-components');
+      expect(Object.keys(library.components).length).toBeGreaterThan(0);
+      expect(library.components).toHaveProperty('Greeting');
+      expect(Object.keys(library.prompts).length).toBeGreaterThan(0);
+      expect(library.prompts['helper']).toBeDefined();
+      expect(library.prompts['helper'].name).toBe('helper');
     });
   });
 });

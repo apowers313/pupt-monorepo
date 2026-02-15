@@ -139,7 +139,7 @@ describe('ModuleLoader Integration Tests', () => {
       const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
       loadUrlSpy.mockResolvedValue({
         name: 'github-lib-v2',
-        components: {},
+        components: { GitHubComponent: MockComponent },
         dependencies: [],
       });
 
