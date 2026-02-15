@@ -1,3 +1,10 @@
+## [1.3.7](https://github.com/apowers313/pupt-lib/compare/v1.3.6...v1.3.7) (2026-02-15)
+
+
+### Bug Fixes
+
+* more verbose module loading api ([625b431](https://github.com/apowers313/pupt-lib/commit/625b431e8713e2ad66325a1ccbc7d45c4c7e2a97))
+
 ## [1.3.6](https://github.com/apowers313/pupt-lib/compare/v1.3.5...v1.3.6) (2026-02-15)
 
 
