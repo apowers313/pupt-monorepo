@@ -126,26 +126,37 @@ describe('Init Command', () => {
     });
 
     it('should create history directory', async () => {
+      const historyDir = path.join(dataDir, 'history');
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue(path.join(dataDir, 'prompts'));
+        .mockResolvedValueOnce(path.join(dataDir, 'prompts'))
+        .mockResolvedValueOnce(historyDir)
+        .mockResolvedValueOnce(historyDir)
+        .mockResolvedValueOnce(path.join(dataDir, 'output'));
       vi.mocked(inquirerPrompts.confirm)
-        .mockResolvedValue(true); // Enable output capture
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(true)   // Enable annotations
+        .mockResolvedValueOnce(true);  // Enable output capture
 
       await initCommand();
 
-      const historyDir = path.join(dataDir, 'history');
       expect(await fs.pathExists(historyDir)).toBe(true);
     });
 
     it('should create output directory when output capture is enabled', async () => {
+      const outputDir = path.join(dataDir, 'output');
+      const historyDir = path.join(dataDir, 'history');
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue(path.join(dataDir, 'prompts'));
+        .mockResolvedValueOnce(path.join(dataDir, 'prompts'))
+        .mockResolvedValueOnce(historyDir)
+        .mockResolvedValueOnce(historyDir)
+        .mockResolvedValueOnce(outputDir);
       vi.mocked(inquirerPrompts.confirm)
-        .mockResolvedValue(true); // Enable output capture
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(true)   // Enable annotations
+        .mockResolvedValueOnce(true);  // Enable output capture
 
       await initCommand();
 
-      const outputDir = path.join(dataDir, 'output');
       expect(await fs.pathExists(outputDir)).toBe(true);
     });
 
@@ -324,15 +335,20 @@ describe('Init Command', () => {
     });
 
     it('should include historyDir and annotationDir pointing to data history', async () => {
+      const expectedHistoryDir = path.join(dataDir, 'history');
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue(path.join(dataDir, 'prompts'));
+        .mockResolvedValueOnce(path.join(dataDir, 'prompts'))
+        .mockResolvedValueOnce(expectedHistoryDir)
+        .mockResolvedValueOnce(expectedHistoryDir)
+        .mockResolvedValueOnce(path.join(dataDir, 'output'));
       vi.mocked(inquirerPrompts.confirm)
-        .mockResolvedValue(true); // Enable output capture
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(true)   // Enable annotations
+        .mockResolvedValueOnce(true);  // Enable output capture
 
       await initCommand();
 
       const config = await fs.readJson(configPath);
-      const expectedHistoryDir = path.join(dataDir, 'history');
       expect(config.historyDir).toBe(expectedHistoryDir);
       expect(config.annotationDir).toBe(expectedHistoryDir);
     });
@@ -371,10 +387,16 @@ describe('Init Command', () => {
 
   describe('config completeness', () => {
     it('should create config with all required fields', async () => {
+      const expectedHistoryDir = path.join(dataDir, 'history');
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue(path.join(dataDir, 'prompts'));
+        .mockResolvedValueOnce(path.join(dataDir, 'prompts'))
+        .mockResolvedValueOnce(expectedHistoryDir)
+        .mockResolvedValueOnce(expectedHistoryDir)
+        .mockResolvedValueOnce(path.join(dataDir, 'output'));
       vi.mocked(inquirerPrompts.confirm)
-        .mockResolvedValue(true); // Enable output capture
+        .mockResolvedValueOnce(true)   // Enable history
+        .mockResolvedValueOnce(true)   // Enable annotations
+        .mockResolvedValueOnce(true);  // Enable output capture
 
       await initCommand();
 
@@ -391,8 +413,8 @@ describe('Init Command', () => {
       expect(config.outputCapture.directory).toBe(path.join(dataDir, 'output'));
 
       // Should have historyDir and annotationDir
-      expect(config.historyDir).toBe(path.join(dataDir, 'history'));
-      expect(config.annotationDir).toBe(path.join(dataDir, 'history'));
+      expect(config.historyDir).toBe(expectedHistoryDir);
+      expect(config.annotationDir).toBe(expectedHistoryDir);
 
       // Should have libraries as empty array
       expect(config.libraries).toEqual([]);
@@ -401,16 +423,35 @@ describe('Init Command', () => {
       expect(config.autoAnnotate).toBeUndefined();
     });
 
-    it('should set outputCapture.enabled to false when user declines', async () => {
+    it('should not include outputCapture when user declines', async () => {
+      const expectedHistoryDir = path.join(dataDir, 'history');
       vi.mocked(inquirerPrompts.input)
-        .mockResolvedValue(path.join(dataDir, 'prompts'));
+        .mockResolvedValueOnce(path.join(dataDir, 'prompts'))
+        .mockResolvedValueOnce(expectedHistoryDir)
+        .mockResolvedValueOnce(expectedHistoryDir);
       vi.mocked(inquirerPrompts.confirm)
-        .mockResolvedValue(false); // Decline output capture
+        .mockResolvedValueOnce(true)    // Enable history
+        .mockResolvedValueOnce(true)    // Enable annotations
+        .mockResolvedValueOnce(false);  // Decline output capture
 
       await initCommand();
 
       const config = await fs.readJson(configPath);
-      expect(config.outputCapture.enabled).toBe(false);
+      expect(config.outputCapture).toBeUndefined();
+    });
+
+    it('should not include history or outputCapture when history is disabled', async () => {
+      vi.mocked(inquirerPrompts.input)
+        .mockResolvedValue(path.join(dataDir, 'prompts'));
+      vi.mocked(inquirerPrompts.confirm)
+        .mockResolvedValueOnce(false);  // Disable history
+
+      await initCommand();
+
+      const config = await fs.readJson(configPath);
+      expect(config.historyDir).toBeUndefined();
+      expect(config.annotationDir).toBeUndefined();
+      expect(config.outputCapture).toBeUndefined();
     });
   });
 });

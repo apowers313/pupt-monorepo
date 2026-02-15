@@ -27,11 +27,50 @@ export async function initCommand(): Promise<void> {
     default: defaultPromptDir
   });
 
-  // Ask about output capture
-  const enableOutputCapture = await confirm({
-    message: 'Capture command output?',
+  // Ask about history
+  const enableHistory = await confirm({
+    message: 'Enable prompt history?',
     default: true
   });
+
+  let historyDir: string | undefined;
+  let annotationDir: string | undefined;
+  let enableOutputCapture = false;
+  let outputDir: string | undefined;
+
+  if (enableHistory) {
+    const defaultHistoryDir = path.join(dataDir, 'history');
+    historyDir = await input({
+      message: 'Where should history be stored?',
+      default: defaultHistoryDir
+    });
+
+    const enableAnnotations = await confirm({
+      message: 'Enable history annotations?',
+      default: true
+    });
+
+    if (enableAnnotations) {
+      annotationDir = await input({
+        message: 'Where should annotations be stored?',
+        default: historyDir
+      });
+    }
+
+    // Ask about output capture
+    enableOutputCapture = await confirm({
+      message: 'Capture command output?',
+      default: true
+    });
+
+    if (enableOutputCapture) {
+      const defaultOutputDir = path.join(dataDir, 'output');
+      outputDir = await input({
+        message: 'Where should captured output be stored?',
+        default: defaultOutputDir
+      });
+    }
+  }
 
   // Create directories
   const promptDirResolved = promptDir.startsWith('~')
@@ -72,35 +111,40 @@ export async function initCommand(): Promise<void> {
   }
 
   // Generate config
-  const historyDir = path.join(dataDir, 'history');
-  const outputDir = path.join(dataDir, 'output');
-
-  const config = {
+  const config: Record<string, unknown> = {
     promptDirs: [promptDir],
-    historyDir,
-    annotationDir: historyDir,
+    ...(historyDir && { historyDir }),
+    ...(annotationDir && { annotationDir }),
     ...(defaultCmd && { defaultCmd }),
     ...(defaultCmdArgs && defaultCmdArgs.length > 0 && { defaultCmdArgs }),
     ...(defaultCmdOptions && Object.keys(defaultCmdOptions).length > 0 && { defaultCmdOptions }),
     autoReview: DEFAULT_CONFIG.autoReview,
     autoRun,
     version: '8.0.0',
-    outputCapture: {
-      enabled: enableOutputCapture,
+    libraries: [],
+  };
+
+  if (enableOutputCapture && outputDir) {
+    config.outputCapture = {
+      enabled: true,
       directory: outputDir,
       maxSizeMB: 50,
       retentionDays: 30
-    },
-    libraries: [],
-  };
+    };
+  }
 
   // Ensure config directory exists and save config
   await fs.ensureDir(path.dirname(configPath));
   await fs.writeJson(configPath, config, { spaces: 2 });
 
   // Create data directories
-  await fs.ensureDir(historyDir);
-  if (enableOutputCapture) {
+  if (historyDir) {
+    await fs.ensureDir(historyDir);
+  }
+  if (annotationDir && annotationDir !== historyDir) {
+    await fs.ensureDir(annotationDir);
+  }
+  if (enableOutputCapture && outputDir) {
     await fs.ensureDir(outputDir);
   }
 
