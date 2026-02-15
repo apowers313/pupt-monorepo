@@ -63,28 +63,13 @@ function generateImports(): string {
 }
 
 /**
- * Extract <Uses> elements from source so they can be placed at module level.
- *
- * <Uses> is a framework construct that the babel plugin transforms into import
- * declarations. It must appear at the module level (not inside an expression),
- * so we extract it before wrapping the rest with export default.
- */
-function extractUses(source: string): { uses: string[]; remaining: string } {
-  const uses: string[] = [];
-  const remaining = source.replace(/^\s*<Uses\s[^>]*\/>\s*$/gm, (match) => {
-    uses.push(match.trim());
-    return '';
-  });
-  return { uses, remaining };
-}
-
-/**
  * Preprocess source code for .prompt files.
  *
  * .prompt files always receive:
  * - Import injection for all built-in components
- * - Extraction of <Uses> elements to module level (for the babel plugin)
- * - Export default wrapping around the remaining JSX content
+ * - Fragment wrapping around the content (so the uses-to-import Babel plugin
+ *   can find and transform any <Uses> elements within the JSX tree)
+ * - Export default wrapping
  *
  * Non-.prompt files are returned unchanged.
  *
@@ -101,12 +86,12 @@ export function preprocessSource(source: string, options: PreprocessOptions): st
 
   const imports = generateImports();
 
-  // Extract <Uses> elements — they must remain at module level for the
-  // uses-to-import babel plugin to transform them into import declarations
-  const { uses, remaining } = extractUses(source);
-  const usesSection = uses.length > 0 ? uses.join('\n') + '\n\n' : '';
+  // Wrap the entire content in a Fragment. The uses-to-import Babel plugin
+  // visits all JSXElement nodes in the tree, so <Uses> elements anywhere
+  // in the JSX will be found, transformed into imports, and removed.
+  // The Fragment wrapper ensures that multiple top-level elements (including
+  // <Uses> elements) are valid JSX.
+  const result = `export default (\n<>\n${source}\n</>\n);`;
 
-  const result = `export default (\n${remaining}\n);`;
-
-  return `// Preprocessed from: ${filename}\n${imports}\n\n${usesSection}${result}`;
+  return `// Preprocessed from: ${filename}\n${imports}\n\n${result}`;
 }

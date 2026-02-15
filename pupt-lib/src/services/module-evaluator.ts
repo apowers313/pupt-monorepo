@@ -110,52 +110,145 @@ async function resolveBareSpecifier(specifier: string): Promise<string> {
 }
 
 /**
+ * Babel packages for AST-based import rewriting (loaded lazily).
+ * Only parser and generator are needed — traversal is done manually to
+ * avoid issues with @babel/traverse and error-recovery AST nodes.
+ */
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AstNode = any;
+
+let babelPackagesCache: {
+  parse: (code: string, options: Record<string, unknown>) => AstNode;
+  generate: (ast: AstNode) => { code: string };
+} | null = null;
+
+/**
+ * Load Babel's bundled parser and generator from @babel/standalone.
+ */
+async function loadBabelPackages(): Promise<NonNullable<typeof babelPackagesCache>> {
+  if (babelPackagesCache) return babelPackagesCache;
+
+  const babelModule = await import('@babel/standalone');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const Babel = (babelModule.default || babelModule) as any;
+  const { parser, generator: generatorMod } = Babel.packages;
+
+  // generator may be a module object with a .default property
+  const generate = typeof generatorMod === 'function' ? generatorMod : generatorMod.default;
+
+  babelPackagesCache = {
+    parse: parser.parse.bind(parser),
+    generate,
+  };
+  return babelPackagesCache;
+}
+
+/**
+ * Recursively walk an AST node and call the visitor on each node that has a `type`.
+ */
+function walkAst(node: AstNode, visitor: (n: AstNode) => void): void {
+  if (!node || typeof node !== 'object') return;
+  if (node.type) {
+    visitor(node);
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    const child = node[key];
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        if (item && typeof item === 'object' && item.type) {
+          walkAst(item, visitor);
+        }
+      }
+    } else if (child && typeof child === 'object' && child.type) {
+      walkAst(child, visitor);
+    }
+  }
+}
+
+/**
  * Rewrite all bare specifiers in the code to absolute file:// URLs.
- * This allows the code to be evaluated from anywhere (data URL, temp file, etc.)
- * without relying on Node.js module resolution.
+ * Uses AST parsing to only modify actual import declarations and dynamic import()
+ * calls, ignoring import-like text in string literals or comments.
  */
 async function rewriteAllImports(code: string): Promise<string> {
-  // Match import statements: import ... from 'specifier'
-  // and dynamic imports: import('specifier')
-  const importRegex = /from\s+['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  const { parse, generate } = await loadBabelPackages();
 
-  // Collect all unique specifiers
-  const specifiers = new Set<string>();
-  let match;
-  while ((match = importRegex.exec(code)) !== null) {
-    const specifier = match[1] || match[2];
-    if (isBareSpecifier(specifier)) {
-      specifiers.add(specifier);
+  // Parse the already-transformed JS code into an AST.
+  // Use errorRecovery to tolerate duplicate import bindings that can arise
+  // when .prompt auto-imports and <Uses> imports overlap (e.g., both import
+  // Prompt from 'pupt-lib'). We only need the AST for import rewriting.
+  const ast = parse(code, { sourceType: 'module', errorRecovery: true });
+
+  // Collect AST nodes that contain bare specifiers
+  const nodesToRewrite: Array<{ node: { value: string }; specifier: string }> = [];
+
+  // Top-level import declarations
+  for (const stmt of ast.program.body) {
+    if (stmt.type === 'ImportDeclaration' && stmt.source) {
+      const specifier = stmt.source.value;
+      if (isBareSpecifier(specifier)) {
+        nodesToRewrite.push({ node: stmt.source, specifier });
+      }
     }
   }
 
-  // Resolve all specifiers to absolute paths
+  // Dynamic imports anywhere in the code: import('specifier')
+  walkAst(ast, (node: AstNode) => {
+    if (
+      node.type === 'CallExpression' &&
+      node.callee?.type === 'Import' &&
+      node.arguments?.length > 0 &&
+      node.arguments[0].type === 'StringLiteral'
+    ) {
+      const specifier = node.arguments[0].value;
+      if (isBareSpecifier(specifier)) {
+        nodesToRewrite.push({ node: node.arguments[0], specifier });
+      }
+    }
+  });
+
+  // If nothing to rewrite, return unchanged
+  if (nodesToRewrite.length === 0) {
+    return code;
+  }
+
+  // Resolve all unique specifiers to absolute file:// URLs
+  const uniqueSpecifiers = new Set(nodesToRewrite.map(n => n.specifier));
   const resolutions = new Map<string, string>();
-  for (const specifier of specifiers) {
+  for (const specifier of uniqueSpecifiers) {
     const resolved = await resolveBareSpecifier(specifier);
     resolutions.set(specifier, resolved);
   }
 
-  // Rewrite the code
-  let rewritten = code;
-  for (const [specifier, resolved] of resolutions) {
-    // Escape special regex characters in specifier
-    const escaped = specifier.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-    // Replace in static imports: from 'specifier' or from "specifier"
-    rewritten = rewritten.replace(
-      new RegExp(`from\\s+(['"])${escaped}\\1`, 'g'),
-      `from $1${resolved}$1`,
-    );
-
-    // Replace in dynamic imports: import('specifier') or import("specifier")
-    rewritten = rewritten.replace(
-      new RegExp(`import\\s*\\(\\s*(['"])${escaped}\\1\\s*\\)`, 'g'),
-      `import($1${resolved}$1)`,
-    );
+  // Mutate AST nodes in place with resolved paths
+  for (const { node, specifier } of nodesToRewrite) {
+    const resolved = resolutions.get(specifier);
+    if (resolved) {
+      node.value = resolved;
+    }
   }
 
-  return rewritten;
+  // Generate code from modified AST
+  return generate(ast).code;
+}
+
+/**
+ * Evaluate JavaScript code as an ES module in Node.js.
+ * Since all bare specifiers are rewritten to absolute paths,
+ * we can use a simple temp file in /tmp.
+ */
+/**
+ * Rewrite imports with filename context for error messages.
+ */
+async function rewriteImportsForFile(code: string, filename: string): Promise<string> {
+  try {
+    return await rewriteAllImports(code);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to evaluate module ${filename}: ${message}`);
+  }
 }
 
 /**
@@ -171,7 +264,7 @@ async function evaluateInNode(code: string, filename: string): Promise<unknown> 
   const { pathToFileURL } = await import('url');
 
   // Rewrite all bare specifiers to absolute file:// URLs
-  const rewrittenCode = await rewriteAllImports(code);
+  const rewrittenCode = await rewriteImportsForFile(code, filename);
 
   // Create a unique temp file (can be anywhere since imports are absolute)
   const hash = crypto.createHash('md5').update(rewrittenCode).digest('hex').slice(0, 8);

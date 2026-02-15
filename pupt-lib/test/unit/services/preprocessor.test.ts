@@ -212,6 +212,55 @@ export default <Prompt />;
       expect(result).toContain('import {');
       expect(result).toContain('export default (');
     });
+
+    it('should wrap content in a Fragment', () => {
+      const source = '<Prompt name="test" />';
+      const result = preprocessSource(source, { filename: 'test.prompt' });
+
+      expect(result).toContain('<>');
+      expect(result).toContain('</>');
+    });
+
+    it('should include <Uses> inside the Fragment (not extracted)', () => {
+      const source = `<Uses component="Foo" from="foo-pkg" />
+<Prompt name="test">
+  <Task>Hello</Task>
+</Prompt>`;
+      const result = preprocessSource(source, { filename: 'test.prompt' });
+
+      // <Uses> should remain in the source, inside the Fragment wrapper
+      expect(result).toContain('<Uses component="Foo" from="foo-pkg" />');
+      expect(result).toContain('<>');
+      expect(result).toContain('</>');
+    });
+
+    it('should handle multiple <Uses> elements in .prompt files', () => {
+      const source = `<Uses component="Foo" from="foo-pkg" />
+<Uses component="Bar" from="bar-pkg" />
+<Prompt name="test">
+  <Task>Hello</Task>
+</Prompt>`;
+      const result = preprocessSource(source, { filename: 'test.prompt' });
+
+      expect(result).toContain('<Uses component="Foo" from="foo-pkg" />');
+      expect(result).toContain('<Uses component="Bar" from="bar-pkg" />');
+    });
+
+    it('should not treat <Uses>-like text in prompt content specially', () => {
+      const source = `<Prompt name="test">
+  <Task>
+    To import a component, use:
+    <Uses component="X" from="y" />
+    This is just example text.
+  </Task>
+</Prompt>`;
+      const result = preprocessSource(source, { filename: 'test.prompt' });
+
+      // The preprocessor should NOT strip this — it just wraps in Fragment.
+      // The Babel plugin will handle actual <Uses> elements in the AST.
+      expect(result).toContain('<Uses component="X" from="y" />');
+      expect(result).toContain('export default (');
+    });
   });
 });
 

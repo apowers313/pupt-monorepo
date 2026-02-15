@@ -193,6 +193,38 @@ describe('evaluateModule', () => {
     });
   });
 
+  describe('import-like text in string literals (regression)', () => {
+    it('should not rewrite import-like text inside string literals', async () => {
+      const code = `
+        const example = "import { useState } from 'react';";
+        const guide = 'Use: from "lodash" to import lodash';
+        export default { example, guide };
+      `;
+
+      const result = await evaluateModule(code, { filename: 'string-imports.mjs' });
+
+      // The string values should be preserved exactly — not rewritten to file:// URLs
+      expect((result.default as { example: string }).example).toBe(
+        "import { useState } from 'react';",
+      );
+      expect((result.default as { guide: string }).guide).toBe(
+        'Use: from "lodash" to import lodash',
+      );
+    });
+
+    it('should not rewrite import-like text inside template literals', async () => {
+      const code = `
+        const pkg = 'zod';
+        const example = \`import { z } from '\${pkg}';\`;
+        export default example;
+      `;
+
+      const result = await evaluateModule(code, { filename: 'template-imports.mjs' });
+
+      expect(result.default).toBe("import { z } from 'zod';");
+    });
+  });
+
   describe('complex code patterns', () => {
     it('should handle async/await', async () => {
       const code = `

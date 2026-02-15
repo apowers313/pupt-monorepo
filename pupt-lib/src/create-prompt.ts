@@ -3,10 +3,12 @@
  * Supports both .tsx files (with standard imports) and .prompt files (with auto-imports).
  */
 
-import { Transformer } from './services/transformer';
+import { Transformer, type TransformOptions } from './services/transformer';
 import { evaluateModule } from './services/module-evaluator';
-import { preprocessSource } from './services/preprocessor';
-import type { PuptElement, ComponentType } from './types';
+import { preprocessSource, isPromptFile } from './services/preprocessor';
+import { Fragment } from './jsx-runtime';
+import { TYPE, CHILDREN } from './types/symbols';
+import type { PuptElement, ComponentType, PuptNode } from './types';
 
 /**
  * Custom component registration for browser environments.
@@ -120,51 +122,29 @@ export async function createPromptFromSource(
 
   // Preprocess to inject imports and/or export default if needed
   // preprocessSource is smart enough to return source unchanged if no preprocessing needed
-  let processedSource = preprocessSource(source, { filename });
+  const processedSource = preprocessSource(source, { filename });
 
-  // If custom components are provided, inject them via globalThis
-  // This is primarily for browser environments where custom components
-  // can't be imported via the module system
+  // If custom components are provided, inject them via globalThis.
+  // The custom-component-injection Babel plugin handles inserting the
+  // destructuring declaration at the AST level, avoiding regex-based
+  // string matching that could be confused by import-like prompt content.
   if (components && Object.keys(components).length > 0) {
-    // Set up the global registry
     globalThis[CUSTOM_COMPONENTS_GLOBAL] = components;
-
-    // Inject code to extract custom components from globalThis
-    const componentNames = Object.keys(components);
-    const extractCode = `const { ${componentNames.join(', ')} } = globalThis.${CUSTOM_COMPONENTS_GLOBAL};\n`;
-
-    // Find the end of all import statements
-    // We need to handle multi-line imports like:
-    // import {
-    //   Foo,
-    //   Bar,
-    // } from 'package';
-    let lastImportEnd = 0;
-
-    // Match complete import statements including multi-line ones
-    // Import pattern: import ... from '...' or import '...'
-    const fullImportRegex = /import\s+(?:(?:\{[^}]*\}|[^;{]*)\s+from\s+)?['"][^'"]+['"];?/g;
-    let match;
-    while ((match = fullImportRegex.exec(processedSource)) !== null) {
-      const matchEnd = match.index + match[0].length;
-      if (matchEnd > lastImportEnd) {
-        lastImportEnd = matchEnd;
-      }
-    }
-
-    if (lastImportEnd > 0) {
-      // Insert after imports
-      processedSource = processedSource.slice(0, lastImportEnd) + '\n' + extractCode + processedSource.slice(lastImportEnd);
-    } else {
-      // No imports, prepend at the beginning
-      processedSource = extractCode + processedSource;
-    }
   }
 
+  // Build extra plugins for the Babel transform
+  const extraPlugins: TransformOptions['extraPlugins'] =
+    components && Object.keys(components).length > 0
+      ? [['custom-component-injection', {
+        componentNames: Object.keys(components),
+        globalKey: CUSTOM_COMPONENTS_GLOBAL,
+      }]]
+      : undefined;
+
   try {
-    // Transform with Babel (TypeScript + JSX + Uses→import plugin)
+    // Transform with Babel (TypeScript + JSX + Uses→import plugin + optional custom components)
     const transformer = new Transformer();
-    const code = await transformer.transformSourceAsync(processedSource, filename);
+    const code = await transformer.transformSourceAsync(processedSource, filename, { extraPlugins });
 
     // Evaluate as ES module
     const module = await evaluateModule(code, { filename });
@@ -173,7 +153,26 @@ export async function createPromptFromSource(
       throw new Error(`${filename} must have a default export`);
     }
 
-    return module.default as PuptElement;
+    let element = module.default as PuptElement;
+
+    // The preprocessor wraps .prompt file content in a Fragment (<>...</>)
+    // to allow multiple top-level elements (including <Uses>). After the
+    // uses-to-import plugin removes <Uses> elements, the Fragment may
+    // contain a single child — unwrap it to preserve the expected element
+    // tree structure (e.g., Prompt at the root, not Fragment > Prompt).
+    if (isPromptFile(filename) && element && element[TYPE] === Fragment) {
+      const children = element[CHILDREN] as PuptNode[];
+      // Filter out whitespace-only text nodes that come from newlines
+      // between the Fragment tags and the actual content
+      const meaningful = children.filter(
+        child => !(typeof child === 'string' && child.trim() === ''),
+      );
+      if (meaningful.length === 1) {
+        element = meaningful[0] as PuptElement;
+      }
+    }
+
+    return element;
   } finally {
     // Clean up the global registry
     if (components) {
