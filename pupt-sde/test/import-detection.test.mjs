@@ -5,7 +5,7 @@ import { fileURLToPath } from "url";
 import { loadPromptSource } from "./helpers/prompt-test-utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROMPTS_DIR = join(__dirname, "..", "src", "prompts");
+const PROMPTS_DIR = join(__dirname, "..", "prompts");
 
 // Mirrors the internal preprocessor check: /^\s*import\s+/m
 // Returns true if source has NO import statements (needs auto-import injection).

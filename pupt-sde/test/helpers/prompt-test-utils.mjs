@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 import { createPromptFromSource, render } from "pupt-lib";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROMPTS_DIR = join(__dirname, "..", "..", "src", "prompts");
+const PROMPTS_DIR = join(__dirname, "..", "..", "prompts");
 
 export async function loadPromptSource(filename) {
   return readFile(join(PROMPTS_DIR, filename), "utf-8");
