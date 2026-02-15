@@ -1,3 +1,4 @@
+import path from 'path';
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Pupt } from '../../../src/api';
 import type { PromptSource } from '../../../src/types/prompt-source';
@@ -78,7 +79,7 @@ describe('normalizeSource', () => {
   it('should normalize local paths by prepending cwd', () => {
     const result = loader.normalizeSource('./test/fixtures/prompt-packages/basic');
     expect(result).toContain('test/fixtures/prompt-packages/basic');
-    // Should contain an absolute-looking path
-    expect(result.startsWith('/')).toBe(true);
+    // Should contain an absolute path (works on both POSIX and Windows)
+    expect(path.isAbsolute(result)).toBe(true);
   });
 });
