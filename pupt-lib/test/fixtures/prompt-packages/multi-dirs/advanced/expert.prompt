@@ -1,0 +1,4 @@
+<Prompt name="expert" description="An expert prompt" tags={["test", "advanced"]}>
+  <Role>You are an expert.</Role>
+  <Task>Do advanced things.</Task>
+</Prompt>

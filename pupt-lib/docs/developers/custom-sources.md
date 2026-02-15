@@ -129,7 +129,7 @@ pupt-lib dynamically imports the `source` package and instantiates its default e
 
 ## Built-In Sources Use the Same Interface
 
-The built-in sources implement the same `PromptSource` interface. When the module loader encounters a string in the modules array, it instantiates the appropriate built-in source and calls `getPrompts()` on it -- exactly as it does for custom sources.
+The built-in sources implement the same `PromptSource` interface. When the module loader encounters a `ResolvedModuleEntry` in the modules array, it routes by the `type` field to the appropriate built-in source and calls `getPrompts()` on it -- exactly as it does for custom sources.
 
 This means:
 

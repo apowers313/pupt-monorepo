@@ -1,0 +1,3 @@
+<Prompt name="basic" description="A basic prompt" tags={["test"]}>
+  <Task>Do basic things.</Task>
+</Prompt>

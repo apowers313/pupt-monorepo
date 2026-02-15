@@ -5,7 +5,7 @@ import type { PromptSource } from '../../src/types/prompt-source';
 describe('Pupt', () => {
   it('should initialize with modules', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -17,7 +17,7 @@ describe('Pupt', () => {
 
   it('should return discovered prompts', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -30,7 +30,7 @@ describe('Pupt', () => {
 
   it('should get prompt by name', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -43,7 +43,7 @@ describe('Pupt', () => {
 
   it('should search prompts', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -55,7 +55,7 @@ describe('Pupt', () => {
 
   it('should get prompts by tag', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -67,7 +67,7 @@ describe('Pupt', () => {
 
   it('should return empty array for non-existent tag', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -80,7 +80,7 @@ describe('Pupt', () => {
 
   it('should return undefined for non-existent prompt', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -92,7 +92,7 @@ describe('Pupt', () => {
 
   it('should not re-initialize if already initialized', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -106,7 +106,7 @@ describe('Pupt', () => {
 
   it('should get all available tags', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -121,7 +121,7 @@ describe('Pupt', () => {
 describe('Pupt.getPrompts with tag filter', () => {
   it('should filter prompts by tags', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -137,7 +137,7 @@ describe('Pupt.getPrompts with tag filter', () => {
 
   it('should filter by multiple tags (AND logic)', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -153,7 +153,7 @@ describe('Pupt.getPrompts with tag filter', () => {
 
   it('should return empty array when no prompts match all tags', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -167,7 +167,7 @@ describe('Pupt.getPrompts with tag filter', () => {
 describe('DiscoveredPrompt', () => {
   it('should render with correct scope', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -180,7 +180,7 @@ describe('DiscoveredPrompt', () => {
 
   it('should render with Map inputs', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -195,7 +195,7 @@ describe('DiscoveredPrompt', () => {
 
   it('should provide input iterator', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -210,7 +210,7 @@ describe('DiscoveredPrompt', () => {
 
   it('should have description and tags', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -224,7 +224,7 @@ describe('DiscoveredPrompt', () => {
 });
 
 describe('Pupt with mixed module entries', () => {
-  it('should accept PromptSource instances alongside strings', async () => {
+  it('should accept PromptSource instances alongside ResolvedModuleEntry', async () => {
     const mockSource: PromptSource = {
       async getPrompts() {
         return [{ filename: 'custom.prompt', content: '<Prompt name="custom"><Task>Test</Task></Prompt>' }];
@@ -236,7 +236,7 @@ describe('Pupt with mixed module entries', () => {
     expect(pupt.getPrompt('custom')!.name).toBe('custom');
   });
 
-  it('should accept PromptSource instances mixed with string modules', async () => {
+  it('should accept PromptSource instances mixed with ResolvedModuleEntry modules', async () => {
     const mockSource: PromptSource = {
       async getPrompts() {
         return [{ filename: 'dynamic.prompt', content: '<Prompt name="dynamic" tags={["dynamic"]}><Task>Dynamic task</Task></Prompt>' }];
@@ -244,7 +244,7 @@ describe('Pupt with mixed module entries', () => {
     };
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },
         mockSource,
       ],
     });

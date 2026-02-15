@@ -35,7 +35,7 @@ describe('CDN URL routing', () => {
     );
 
     const pupt = new Pupt({
-      modules: ['https://registry.npmjs.org/mock-prompt-pkg/-/mock-prompt-pkg-1.0.0.tgz'],
+      modules: [{ name: 'mock-prompt-pkg', type: 'url' as const, source: 'https://registry.npmjs.org/mock-prompt-pkg/-/mock-prompt-pkg-1.0.0.tgz' }],
     });
     await pupt.init();
     expect(pupt.getPrompts().length).toBeGreaterThan(0);
@@ -57,7 +57,7 @@ describe('CDN URL routing', () => {
     );
 
     const pupt = new Pupt({
-      modules: ['https://cdn.jsdelivr.net/npm/mock-prompt-pkg@1.0.0'],
+      modules: [{ name: 'mock-prompt-pkg', type: 'url' as const, source: 'https://cdn.jsdelivr.net/npm/mock-prompt-pkg@1.0.0' }],
     });
     await pupt.init();
     expect(pupt.getPrompts().length).toBeGreaterThan(0);

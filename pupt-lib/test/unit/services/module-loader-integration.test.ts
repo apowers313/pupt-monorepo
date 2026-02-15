@@ -11,6 +11,7 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { ModuleLoader } from '../../../src/services/module-loader';
 import { Component } from '../../../src/component';
+import type { ResolvedModuleEntry } from '../../../src/types/module';
 
 // Test component for mocked modules
 class MockComponent extends Component<{ message?: string }> {
@@ -18,22 +19,6 @@ class MockComponent extends Component<{ message?: string }> {
     return props.message ?? 'Mock component output';
   }
 }
-
-// JavaScript module code that exports a component
-const createModuleCode = (componentName: string, output: string) => `
-  // Simulated ES module
-  const COMPONENT_MARKER = Symbol.for('pupt-lib:component:v1');
-
-  class ${componentName} {
-    static [COMPONENT_MARKER] = true;
-    render(props) {
-      return '${output}';
-    }
-  }
-
-  export { ${componentName} };
-  export const dependencies = [];
-`;
 
 // MSW server for HTTP mocking
 const server = setupServer();
@@ -54,47 +39,27 @@ describe('ModuleLoader Integration Tests', () => {
 
   describe('URL module loading', () => {
     it('should load module from HTTPS URL', async () => {
-      // Setup MSW handler for the URL
-      server.use(
-        http.get('https://cdn.example.com/my-lib.js', () => {
-          return new HttpResponse(
-            createModuleCode('UrlComponent', 'Hello from URL!'),
-            {
-              headers: { 'Content-Type': 'application/javascript' },
-            },
-          );
-        }),
-      );
-
       const loader = new ModuleLoader();
 
-      // Mock the internal import to use our test data
+      // Mock the internal loadUrl to use our test data
       const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
       loadUrlSpy.mockResolvedValue({
         name: 'my-lib',
         components: { UrlComponent: MockComponent },
+        prompts: {},
         dependencies: [],
       });
 
-      const library = await loader.load('https://cdn.example.com/my-lib.js');
+      const entry: ResolvedModuleEntry = {
+        name: 'my-lib',
+        type: 'url',
+        source: 'https://cdn.example.com/my-lib.js',
+      };
+
+      const library = await loader.loadResolvedEntry(entry);
 
       expect(library.name).toBe('my-lib');
       expect(library.components).toHaveProperty('UrlComponent');
-    });
-
-    it('should extract name from URL path', async () => {
-      const loader = new ModuleLoader();
-
-      const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
-      loadUrlSpy.mockResolvedValue({
-        name: 'fancy-lib',
-        components: { FancyComponent: MockComponent },
-        dependencies: [],
-      });
-
-      const library = await loader.load('https://esm.sh/fancy-lib@1.0.0');
-
-      expect(library.components).toHaveProperty('FancyComponent');
     });
 
     it('should handle URL loading errors gracefully', async () => {
@@ -105,27 +70,39 @@ describe('ModuleLoader Integration Tests', () => {
       );
 
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'missing',
+        type: 'url',
+        source: 'https://cdn.example.com/missing.js',
+      };
 
       // Don't mock - let it fail naturally
       await expect(
-        loader.load('https://cdn.example.com/missing.js'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow();
     });
   });
 
-  describe('GitHub module loading', () => {
+  describe('Git module loading', () => {
     it('should construct correct raw GitHub URL', async () => {
       const loader = new ModuleLoader();
 
-      // Spy on loadUrl to capture the URL that loadGithub constructs
+      // Spy on loadUrl to capture the URL that loadGit constructs
       const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
       loadUrlSpy.mockResolvedValue({
         name: 'github-lib',
         components: { GitHubComponent: MockComponent },
+        prompts: {},
         dependencies: [],
       });
 
-      await loader.load('github:acme/prompts');
+      const entry: ResolvedModuleEntry = {
+        name: 'prompts',
+        type: 'git',
+        source: 'https://github.com/acme/prompts',
+      };
+
+      await loader.loadResolvedEntry(entry);
 
       // Verify loadUrl was called with the correct raw GitHub URL
       expect(loadUrlSpy).toHaveBeenCalledWith(
@@ -140,10 +117,17 @@ describe('ModuleLoader Integration Tests', () => {
       loadUrlSpy.mockResolvedValue({
         name: 'github-lib-v2',
         components: { GitHubComponent: MockComponent },
+        prompts: {},
         dependencies: [],
       });
 
-      await loader.load('github:user/repo#v2.0.0');
+      const entry: ResolvedModuleEntry = {
+        name: 'repo',
+        type: 'git',
+        source: 'https://github.com/user/repo#v2.0.0',
+      };
+
+      await loader.loadResolvedEntry(entry);
 
       expect(loadUrlSpy).toHaveBeenCalledWith(
         'https://raw.githubusercontent.com/user/repo/v2.0.0/index.js',
@@ -153,9 +137,15 @@ describe('ModuleLoader Integration Tests', () => {
     it('should reject invalid GitHub source format', async () => {
       const loader = new ModuleLoader();
 
+      const entry: ResolvedModuleEntry = {
+        name: 'invalid',
+        type: 'git',
+        source: 'https://not-github.com/invalid-format',
+      };
+
       await expect(
-        loader.load('github:invalid-format'),
-      ).rejects.toThrow('Invalid GitHub source format');
+        loader.loadResolvedEntry(entry),
+      ).rejects.toThrow('Cannot extract GitHub owner/repo');
     });
   });
 
@@ -163,18 +153,24 @@ describe('ModuleLoader Integration Tests', () => {
     it('should load npm package by name', async () => {
       const loader = new ModuleLoader();
 
-      // Mock the loadNpm method
       const loadNpmSpy = vi.spyOn(loader as never, 'loadNpm');
       loadNpmSpy.mockResolvedValue({
         name: 'lodash',
         components: {},
+        prompts: {},
         dependencies: [],
       });
 
-      const library = await loader.load('lodash');
+      const entry: ResolvedModuleEntry = {
+        name: 'lodash',
+        type: 'npm',
+        source: 'lodash',
+      };
+
+      const library = await loader.loadResolvedEntry(entry);
 
       expect(library.name).toBe('lodash');
-      expect(loadNpmSpy).toHaveBeenCalledWith('lodash');
+      expect(loadNpmSpy).toHaveBeenCalledWith('lodash', undefined);
     });
 
     it('should load scoped npm package', async () => {
@@ -184,28 +180,20 @@ describe('ModuleLoader Integration Tests', () => {
       loadNpmSpy.mockResolvedValue({
         name: '@acme/components',
         components: { Button: MockComponent, Input: MockComponent },
+        prompts: {},
         dependencies: [],
       });
 
-      const library = await loader.load('@acme/components');
+      const entry: ResolvedModuleEntry = {
+        name: 'acme-components',
+        type: 'npm',
+        source: '@acme/components',
+      };
 
-      expect(library.name).toBe('@acme/components');
+      const library = await loader.loadResolvedEntry(entry);
+
+      expect(library.name).toBe('acme-components');
       expect(Object.keys(library.components)).toHaveLength(2);
-    });
-
-    it('should handle npm package with version', async () => {
-      const loader = new ModuleLoader();
-
-      const loadNpmSpy = vi.spyOn(loader as never, 'loadNpm');
-      loadNpmSpy.mockResolvedValue({
-        name: '@acme/prompts',
-        components: { Prompt: MockComponent },
-        dependencies: [],
-      });
-
-      await loader.load('@acme/prompts@2.0.0');
-
-      expect(loadNpmSpy).toHaveBeenCalledWith('@acme/prompts@2.0.0');
     });
 
     it('should detect and return module dependencies', async () => {
@@ -215,10 +203,17 @@ describe('ModuleLoader Integration Tests', () => {
       loadNpmSpy.mockResolvedValue({
         name: 'with-deps',
         components: { Main: MockComponent },
+        prompts: {},
         dependencies: ['@acme/base', '@acme/utils'],
       });
 
-      const library = await loader.load('with-deps');
+      const entry: ResolvedModuleEntry = {
+        name: 'with-deps',
+        type: 'npm',
+        source: 'with-deps',
+      };
+
+      const library = await loader.loadResolvedEntry(entry);
 
       expect(library.dependencies).toEqual(['@acme/base', '@acme/utils']);
     });
@@ -228,29 +223,23 @@ describe('ModuleLoader Integration Tests', () => {
     it('should load local module and detect components', async () => {
       const loader = new ModuleLoader();
 
-      // This uses the real loadLocal implementation
-      const library = await loader.load('./test/fixtures/libraries/test-lib/index.ts');
+      const entry: ResolvedModuleEntry = {
+        name: 'test-lib',
+        type: 'local',
+        source: './test/fixtures/libraries/test-lib/index.ts',
+      };
+
+      const library = await loader.loadResolvedEntry(entry);
 
       expect(library.components).toHaveProperty('SimpleGreeting');
       expect(library.components).toHaveProperty('SimpleTask');
       expect(library.dependencies).toEqual([]);
-    });
-
-    it('should handle relative paths correctly', async () => {
-      const loader = new ModuleLoader();
-
-      // Both should resolve to the same module
-      const lib1 = await loader.load('./test/fixtures/libraries/test-lib/index.ts');
-
-      expect(lib1.components).toHaveProperty('SimpleGreeting');
     });
   });
 
   describe('extractNameFromUrl', () => {
     it('should extract package name from CDN URLs', async () => {
       const loader = new ModuleLoader();
-
-      // Access the private method for testing
       const extractName = (loader as never)['extractNameFromUrl'].bind(loader);
 
       expect(extractName('https://esm.sh/lodash@4.17.21')).toBe('lodash@4.17.21');
@@ -279,17 +268,13 @@ describe('ModuleLoader Integration Tests', () => {
 });
 
 describe('ModuleLoader with real dynamic imports', () => {
-  // These tests use vi.doMock to mock the actual dynamic import behavior
-
   it('should use vi.doMock for npm package simulation', async () => {
-    // Create a mock module
     vi.doMock('fake-npm-package', () => ({
       default: MockComponent,
       FakeComponent: MockComponent,
       dependencies: [],
     }));
 
-    // Now dynamic import will get the mocked version
     const fakeModule = await import('fake-npm-package');
 
     expect(fakeModule.FakeComponent).toBeDefined();

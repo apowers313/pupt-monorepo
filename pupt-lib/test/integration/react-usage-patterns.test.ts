@@ -9,7 +9,7 @@ describe('pupt-react integration patterns', () => {
         return [{ filename: 'react-test.prompt', content: '<Prompt name="react-test"><Task>Test</Task></Prompt>' }];
       },
     };
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/basic', customSource] });
+    const pupt = new Pupt({ modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }, customSource] });
     await pupt.init();
     const all = pupt.getPrompts();
     expect(all.find(p => p.name === 'react-test')).toBeDefined();
@@ -27,7 +27,7 @@ describe('pupt-react integration patterns', () => {
 
   it('should make prompts searchable by name, description, and tags', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
     // Search by tag
@@ -38,7 +38,7 @@ describe('pupt-react integration patterns', () => {
 
   it('should expose prompt elements for custom rendering pipelines', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
 
@@ -50,7 +50,7 @@ describe('pupt-react integration patterns', () => {
 
   it('should expose input iterators for building form UIs', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
 
@@ -73,7 +73,7 @@ describe('pupt-react integration patterns', () => {
 
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },
         inlineSource,
       ],
     });

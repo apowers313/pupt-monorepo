@@ -4,10 +4,10 @@ import type { PromptSource } from '../../src/types/prompt-source';
 import type { ModuleEntry } from '../../src/types/module';
 
 describe('CLI integration patterns', () => {
-  it('should support a modules array mixing strings and package references', async () => {
+  it('should support a modules array mixing entry types and package references', async () => {
     // Simulates what the CLI passes after reading .pt-config.json
     const modules: ModuleEntry[] = [
-      './test/fixtures/prompt-packages/basic',
+      { name: 'basic', type: 'local', source: './test/fixtures/prompt-packages/basic' },
       { source: './test/fixtures/prompt-sources/mock-source', config: { path: 'test/fixtures/prompt-packages/basic' } },
     ];
     const pupt = new Pupt({ modules });
@@ -19,7 +19,7 @@ describe('CLI integration patterns', () => {
   it('should support promptDirs-style local paths as module string entries', async () => {
     // Old promptDirs paths work identically as module entries
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
     expect(pupt.getPrompts().length).toBeGreaterThan(0);
@@ -27,7 +27,7 @@ describe('CLI integration patterns', () => {
 
   it('should expose searchPrompts() for CLI prompt discovery UI', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
     const results = pupt.searchPrompts('review');
@@ -38,7 +38,7 @@ describe('CLI integration patterns', () => {
     const failingSource: PromptSource = {
       async getPrompts() { throw new Error('Source unavailable'); },
     };
-    const pupt = new Pupt({ modules: [failingSource, './test/fixtures/prompt-packages/basic'] });
+    const pupt = new Pupt({ modules: [failingSource, { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }] });
     await pupt.init();
     expect(pupt.getWarnings()).toHaveLength(1);
     expect(pupt.getPrompts().length).toBeGreaterThan(0); // working source still loaded
@@ -46,7 +46,7 @@ describe('CLI integration patterns', () => {
 
   it('should support getPromptById() for precise prompt selection in CLI', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
     const prompts = pupt.getPrompts();
@@ -61,7 +61,7 @@ describe('CLI integration patterns', () => {
 
   it('should support tag-based filtering for CLI category navigation', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
 
@@ -78,7 +78,7 @@ describe('CLI integration patterns', () => {
 
   it('should render prompts discovered through the API', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
+      modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }],
     });
     await pupt.init();
 

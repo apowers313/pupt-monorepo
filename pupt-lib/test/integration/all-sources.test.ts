@@ -12,7 +12,7 @@ describe('all prompt sources together', () => {
 
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',  // local
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },  // local
         customSource,                              // PromptSource instance
       ],
     });
@@ -39,7 +39,7 @@ describe('all prompt sources together', () => {
 
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },
         failingSource,
         workingSource,
       ],
@@ -67,7 +67,7 @@ describe('all prompt sources together', () => {
 
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },
         customSource,
       ],
     });
@@ -95,7 +95,7 @@ describe('all prompt sources together', () => {
 
     const pupt = new Pupt({
       modules: [
-        './test/fixtures/prompt-packages/basic',
+        { name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' },
         customSource,
       ],
     });

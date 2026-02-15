@@ -1,7 +1,8 @@
 import { isComponentClass } from '../component';
-import type { ComponentType, PuptElement, ModuleEntry } from '../types';
+import type { ComponentType, PuptElement, ModuleEntry, ResolvedModuleEntry } from '../types';
 import type { PromptSource, DiscoveredPromptFile } from '../types/prompt-source';
 import { isPromptSource } from '../types/prompt-source';
+import { isResolvedModuleEntry } from '../types/module';
 import { isPuptElement } from '../types/element';
 import { PROPS } from '../types/symbols';
 import { createPromptFromSource } from '../create-prompt';
@@ -22,11 +23,6 @@ async function resolveLocalPath(source: string): Promise<string> {
   const absolutePath = path.resolve(process.cwd(), source);
   return url.pathToFileURL(absolutePath).href;
 }
-
-/**
- * Represents the source type of a module
- */
-export type SourceType = 'npm' | 'url' | 'github' | 'local';
 
 /** A compiled prompt from a discovered .prompt file */
 export interface CompiledPrompt {
@@ -66,23 +62,8 @@ export class ModuleLoader {
   private versions = new Map<string, string>();
 
   /**
-   * Determine the source type from a source string
-   */
-  resolveSourceType(source: string): SourceType {
-    if (source.startsWith('https://') || source.startsWith('http://') || source.startsWith('data:')) {
-      return 'url';
-    }
-    if (source.startsWith('github:')) {
-      return 'github';
-    }
-    if (source.startsWith('./') || source.startsWith('/') || source.startsWith('../')) {
-      return 'local';
-    }
-    return 'npm';
-  }
-
-  /**
-   * Parse a package source string into name and version
+   * Parse a package source string into name and version.
+   * Handles scoped packages (@scope/name@version) and regular packages (name@version).
    */
   parsePackageSource(source: string): ParsedPackageSource {
     // Handle scoped packages: @scope/package@version
@@ -110,63 +91,16 @@ export class ModuleLoader {
   }
 
   /**
-   * Load a module from the given source.
-   * Handles deduplication and version conflict detection.
-   */
-  async load(source: string): Promise<LoadedLibrary> {
-    const normalizedSource = this.normalizeSource(source);
-    const parsed = this.parsePackageSource(source);
-
-    // Check for version conflicts
-    if (parsed.version) {
-      const existingVersion = this.versions.get(parsed.name);
-      if (existingVersion && existingVersion !== parsed.version) {
-        throw new Error(
-          `Version conflict for ${parsed.name}: trying to load ${parsed.version} but ${existingVersion} is already loaded`,
-        );
-      }
-    }
-
-    // Already loaded?
-    if (this.loaded.has(normalizedSource)) {
-      return this.loaded.get(normalizedSource)!;
-    }
-
-    // Currently loading?
-    if (this.loading.has(normalizedSource)) {
-      return this.loading.get(normalizedSource)!;
-    }
-
-    // Start loading — use original source for doLoad, normalized only for cache key
-    const promise = this.doLoad(source);
-    this.loading.set(normalizedSource, promise);
-
-    try {
-      const library = await promise;
-      this.loaded.set(normalizedSource, library);
-
-      // Track version
-      if (parsed.version) {
-        this.versions.set(parsed.name, parsed.version);
-      }
-
-      return library;
-    } finally {
-      this.loading.delete(normalizedSource);
-    }
-  }
-
-  /**
-   * Load a module entry of any type (string, PromptSource, or package reference).
+   * Load a module entry (ResolvedModuleEntry, PromptSource, or package reference).
    * Dispatches to the appropriate loading strategy based on entry type.
    */
   async loadEntry(entry: ModuleEntry): Promise<LoadedLibrary> {
-    if (typeof entry === 'string') {
-      return this.load(entry);
-    }
-
     if (isPromptSource(entry)) {
       return this.loadPromptSource(entry);
+    }
+
+    if (isResolvedModuleEntry(entry)) {
+      return this.loadResolvedEntry(entry);
     }
 
     // Package reference: { source, config }
@@ -174,7 +108,53 @@ export class ModuleLoader {
       return this.loadPackageReference(entry as { source: string; config: Record<string, unknown> });
     }
 
-    throw new Error('Invalid module entry: must be a string, PromptSource, or { source, config } object');
+    throw new Error('Invalid module entry: must be a ResolvedModuleEntry, PromptSource, or { source, config } object');
+  }
+
+  /**
+   * Load a module from a ResolvedModuleEntry.
+   * Uses the explicit `type` field for routing and passes `promptDirs` through
+   * to the appropriate prompt source.
+   */
+  async loadResolvedEntry(entry: ResolvedModuleEntry): Promise<LoadedLibrary> {
+    const { name, type, source, promptDirs, version } = entry;
+
+    // Check dedup cache using the normalized source
+    const normalizedSource = this.normalizeSource(source, type);
+    if (this.loaded.has(normalizedSource)) {
+      return this.loaded.get(normalizedSource)!;
+    }
+    if (this.loading.has(normalizedSource)) {
+      return this.loading.get(normalizedSource)!;
+    }
+
+    // Version conflict check
+    if (version) {
+      const existingVersion = this.versions.get(name);
+      if (existingVersion && existingVersion !== version) {
+        throw new Error(
+          `Version conflict for ${name}: trying to load ${version} but ${existingVersion} is already loaded`,
+        );
+      }
+    }
+
+    const promise = this.doLoad(type, source, promptDirs);
+    this.loading.set(normalizedSource, promise);
+
+    try {
+      const library = await promise;
+      // Override the auto-detected name with the explicit name
+      library.name = name;
+      this.loaded.set(normalizedSource, library);
+
+      if (version) {
+        this.versions.set(name, version);
+      }
+
+      return library;
+    } finally {
+      this.loading.delete(normalizedSource);
+    }
   }
 
   /**
@@ -260,6 +240,71 @@ export class ModuleLoader {
   }
 
   /**
+   * Normalize a source string for consistent deduplication.
+   * Resolves relative paths to absolute, normalizes package names to lowercase.
+   */
+  normalizeSource(source: string, type: ResolvedModuleEntry['type']): string {
+    if (type === 'local' && isNode) {
+      try {
+        if (source.startsWith('./') || source.startsWith('../')) {
+          const cwd = process.cwd();
+          return `${cwd}/${source}`.replace(/\/\.\//g, '/');
+        }
+      } catch {
+        // Fallback to raw source
+      }
+    }
+
+    if (type === 'npm') {
+      const parsed = this.parsePackageSource(source);
+      const normalizedName = parsed.name.toLowerCase();
+      return parsed.version ? `${normalizedName}@${parsed.version}` : normalizedName;
+    }
+
+    return source;
+  }
+
+  /**
+   * Discover and compile .prompt files from a PromptSource.
+   * Each file is compiled through createPromptFromSource() and metadata extracted.
+   */
+  async discoverAndCompilePrompts(source: PromptSource): Promise<Record<string, CompiledPrompt>> {
+    const files = await source.getPrompts();
+    return this.compilePromptFiles(files);
+  }
+
+  /**
+   * Clear all loaded modules (useful for testing)
+   */
+  clear(): void {
+    this.loaded.clear();
+    this.loading.clear();
+    this.versions.clear();
+  }
+
+  /**
+   * Convert detected PuptElement prompts from JS exports into CompiledPrompt records.
+   */
+  private convertDetectedPrompts(
+    detectedPrompts: Record<string, PuptElement>,
+  ): Record<string, CompiledPrompt> {
+    const prompts: Record<string, CompiledPrompt> = {};
+    for (const [exportName, element] of Object.entries(detectedPrompts)) {
+      const props = element[PROPS] as { name?: string; description?: string; tags?: string[]; version?: string } | null;
+      const name = props?.name ?? exportName;
+      prompts[name] = {
+        element,
+        id: crypto.randomUUID(),
+        name,
+        description: props?.description ?? '',
+        tags: props?.tags ?? [],
+        version: props?.version,
+      };
+    }
+    return prompts;
+  }
+
+  /**
    * Check if a value is a PuptElement with a name prop (indicates a Prompt)
    */
   private isPromptElement(value: unknown): boolean {
@@ -272,70 +317,6 @@ export class ModuleLoader {
       typeof props === 'object' &&
       'name' in props
     );
-  }
-
-  /**
-   * Normalize a source string for consistent deduplication.
-   * Resolves relative paths to absolute, normalizes package names to lowercase.
-   */
-  normalizeSource(source: string): string {
-    const sourceType = this.resolveSourceType(source);
-
-    if (sourceType === 'local' && isNode) {
-      // Resolve relative paths to absolute for consistent dedup
-      // Use synchronous path resolution (no async needed for path.resolve)
-      try {
-        // Dynamic import of 'path' is async, but we can use a simpler approach
-        // since path.resolve just does string manipulation on POSIX-like paths
-        if (source.startsWith('./') || source.startsWith('../')) {
-          // Normalize by removing ./ prefix and collapsing ..
-          // This ensures './foo' and 'foo' are treated the same
-          const cwd = process.cwd();
-          return `${cwd}/${source}`.replace(/\/\.\//g, '/');
-        }
-      } catch {
-        // Fallback to raw source
-      }
-    }
-
-    if (sourceType === 'npm') {
-      // Normalize package names to lowercase for consistent dedup
-      const parsed = this.parsePackageSource(source);
-      const normalizedName = parsed.name.toLowerCase();
-      return parsed.version ? `${normalizedName}@${parsed.version}` : normalizedName;
-    }
-
-    return source;
-  }
-
-  /**
-   * Actually load the module from the source.
-   * This is the internal implementation that can be mocked in tests.
-   */
-  private async doLoad(source: string): Promise<LoadedLibrary> {
-    const sourceType = this.resolveSourceType(source);
-
-    switch (sourceType) {
-      case 'local':
-        return this.loadLocal(source);
-      case 'npm':
-        return this.loadNpm(source);
-      case 'url':
-        return this.loadUrl(source);
-      case 'github':
-        return this.loadGithub(source);
-      default:
-        throw new Error(`Unsupported source type: ${sourceType}`);
-    }
-  }
-
-  /**
-   * Discover and compile .prompt files from a PromptSource.
-   * Each file is compiled through createPromptFromSource() and metadata extracted.
-   */
-  async discoverAndCompilePrompts(source: PromptSource): Promise<Record<string, CompiledPrompt>> {
-    const files = await source.getPrompts();
-    return this.compilePromptFiles(files);
   }
 
   /**
@@ -362,9 +343,31 @@ export class ModuleLoader {
   }
 
   /**
+   * Internal load dispatch using explicit type and passing promptDirs to prompt sources.
+   */
+  private async doLoad(
+    type: ResolvedModuleEntry['type'],
+    source: string,
+    promptDirs?: string[],
+  ): Promise<LoadedLibrary> {
+    switch (type) {
+      case 'local':
+        return this.loadLocal(source, promptDirs);
+      case 'npm':
+        return this.loadNpm(source, promptDirs);
+      case 'url':
+        return this.loadUrl(source);
+      case 'git':
+        return this.loadGit(source, promptDirs);
+      default:
+        throw new Error(`Unsupported module type: ${type}`);
+    }
+  }
+
+  /**
    * Load a local module
    */
-  private async loadLocal(source: string): Promise<LoadedLibrary> {
+  private async loadLocal(source: string, promptDirs?: string[]): Promise<LoadedLibrary> {
     let components: Record<string, ComponentType> = {};
     let dependencies: string[] = [];
     let prompts: Record<string, CompiledPrompt> = {};
@@ -375,16 +378,20 @@ export class ModuleLoader {
       const module = await import(/* @vite-ignore */ resolvedPath);
       components = this.detectComponents(module);
       dependencies = module.dependencies ?? [];
+      // Also detect prompt elements from JS exports
+      const jsPrompts = this.detectPrompts(module);
+      prompts = this.convertDetectedPrompts(jsPrompts);
     } catch {
       // No JS module found — that's fine, we may still have .prompt files
     }
 
-    // Try to discover .prompt files
+    // Try to discover .prompt files (.prompt files take precedence over JS exports)
     if (isNode) {
       try {
         const { LocalPromptSource } = await import('./prompt-sources/local-prompt-source');
-        const promptSource = new LocalPromptSource(source);
-        prompts = await this.discoverAndCompilePrompts(promptSource);
+        const promptSource = new LocalPromptSource(source, { promptDirs });
+        const filePrompts = await this.discoverAndCompilePrompts(promptSource);
+        prompts = { ...prompts, ...filePrompts };
       } catch {
         // No .prompt files found — that's fine
       }
@@ -409,7 +416,7 @@ export class ModuleLoader {
    * Load an npm package.
    * Tries to import as a JS module and additionally discovers .prompt files.
    */
-  private async loadNpm(source: string): Promise<LoadedLibrary> {
+  private async loadNpm(source: string, promptDirs?: string[]): Promise<LoadedLibrary> {
     const parsed = this.parsePackageSource(source);
     let components: Record<string, ComponentType> = {};
     let dependencies: string[] = [];
@@ -422,16 +429,20 @@ export class ModuleLoader {
       components = this.detectComponents(module);
       dependencies = module.dependencies ?? [];
       jsLoaded = true;
+      // Also detect prompt elements from JS exports
+      const jsPrompts = this.detectPrompts(module);
+      prompts = this.convertDetectedPrompts(jsPrompts);
     } catch {
       // JS module not found — may still have .prompt files
     }
 
-    // Try to discover .prompt files from the npm package
+    // Try to discover .prompt files from the npm package (.prompt files take precedence)
     if (isNode) {
       try {
         const { NpmLocalPromptSource } = await import('./prompt-sources/npm-local-prompt-source');
-        const promptSource = new NpmLocalPromptSource(parsed.name);
-        prompts = await this.discoverAndCompilePrompts(promptSource);
+        const promptSource = new NpmLocalPromptSource(parsed.name, { promptDirs });
+        const filePrompts = await this.discoverAndCompilePrompts(promptSource);
+        prompts = { ...prompts, ...filePrompts };
       } catch {
         // No .prompt files found — that's fine
       }
@@ -517,43 +528,47 @@ export class ModuleLoader {
   }
 
   /**
-   * Load a module from GitHub.
-   * Tries to import index.js and additionally discovers .prompt files via GitHubPromptSource.
+   * Load a module from a Git source (GitHub URL).
+   * Extracts owner/repo from the URL, tries JS import and .prompt file discovery.
    */
-  private async loadGithub(source: string): Promise<LoadedLibrary> {
-    // Parse github:user/repo#ref format
-    const match = source.match(/^github:([^/]+)\/([^#]+)(?:#(.+))?$/);
+  private async loadGit(source: string, promptDirs?: string[]): Promise<LoadedLibrary> {
+    // Extract owner/repo from various git URL formats
+    const match = source.match(/github\.com[/:]([^/]+)\/([^/.#]+)/);
     if (!match) {
-      throw new Error(`Invalid GitHub source format: ${source}`);
+      throw new Error(`Cannot extract GitHub owner/repo from source: ${source}`);
     }
 
-    const [, user, repo, ref] = match;
+    const [, owner, repo] = match;
+
+    // Extract ref from URL fragment if present (e.g., "...#v1.0")
+    const hashIndex = source.indexOf('#');
+    const ref = hashIndex !== -1 ? source.slice(hashIndex + 1) : undefined;
+
     let components: Record<string, ComponentType> = {};
     let dependencies: string[] = [];
     let prompts: Record<string, CompiledPrompt> = {};
 
     // Try to import as a JS module from GitHub
     try {
-      const url = `https://raw.githubusercontent.com/${user}/${repo}/${ref ?? 'main'}/index.js`;
+      const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref ?? 'main'}/index.js`;
       const library = await this.loadUrl(url);
       components = library.components;
       dependencies = library.dependencies;
     } catch {
-      // No JS module found — that's fine, we may still have .prompt files
+      // No JS module found — that's fine
     }
 
-    // Try to discover .prompt files via GitHubPromptSource
+    // Discover .prompt files via GitHubPromptSource
     try {
       const { GitHubPromptSource } = await import('./prompt-sources/github-prompt-source');
-      const ownerRepo = `${user}/${repo}`;
-      const options = ref ? { ref } : undefined;
+      const ownerRepo = `${owner}/${repo}`;
+      const options = { ref, promptDirs };
       const promptSource = new GitHubPromptSource(ownerRepo, options);
       prompts = await this.discoverAndCompilePrompts(promptSource);
     } catch {
       // No .prompt files found — that's fine
     }
 
-    // If we found neither components nor prompts, throw
     if (Object.keys(components).length === 0 && Object.keys(prompts).length === 0) {
       throw new Error(
         `Failed to load GitHub module "${source}": no JS module or .prompt files found`,
@@ -561,7 +576,7 @@ export class ModuleLoader {
     }
 
     return {
-      name: `${user}/${repo}`,
+      name: `${owner}/${repo}`,
       components,
       prompts,
       dependencies,
@@ -588,14 +603,5 @@ export class ModuleLoader {
     } catch {
       return 'unknown';
     }
-  }
-
-  /**
-   * Clear all loaded modules (useful for testing)
-   */
-  clear(): void {
-    this.loaded.clear();
-    this.loading.clear();
-    this.versions.clear();
   }
 }

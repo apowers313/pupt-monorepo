@@ -385,16 +385,31 @@ The `modules` array passed to `Pupt` accepts three shapes:
 
 ```typescript
 type ModuleEntry =
-  | string                          // routed to built-in sources
+  | ResolvedModuleEntry             // explicit type + metadata (primary format)
   | PromptSource                    // self-resolving instance
   | { source: string; config: Record<string, unknown> };  // dynamic package load
 
+interface ResolvedModuleEntry {
+  name: string;                     // display name
+  type: 'git' | 'npm' | 'local' | 'url';  // explicit source type
+  source: string;                   // the source identifier
+  promptDirs?: string[];            // override default 'prompts/' convention
+  version?: string;                 // semver, commit hash, etc.
+}
+
 const pupt = new Pupt({
   modules: [
-    // 1. String — handled by built-in sources
-    'pupt-sde',                    // npm package
-    'github:user/repo',            // GitHub repo
-    './local-prompts',             // local directory
+    // 1. ResolvedModuleEntry — explicit type routing (primary format)
+    { name: 'pupt-sde', type: 'npm', source: 'pupt-sde' },
+    { name: 'repo', type: 'git', source: 'https://github.com/user/repo' },
+    { name: 'local-prompts', type: 'local', source: './local-prompts' },
+    {
+      name: 'team-prompts',
+      type: 'git',
+      source: 'https://github.com/team/prompts',
+      promptDirs: ['prompts', 'advanced-prompts'],
+      version: 'abc12345',
+    },
 
     // 2. PromptSource instance — for programmatic use
     new S3PromptSource({ bucket: 'my-prompts', prefix: 'sde/' }),
@@ -405,7 +420,7 @@ const pupt = new Pupt({
 });
 ```
 
-**String entries** are routed to the appropriate built-in source based on format detection (bare name → npm, `github:` prefix → GitHub, URL → CDN, relative path → local).
+**ResolvedModuleEntry** objects are the primary format. The explicit `type` field routes to the appropriate loader, `promptDirs` overrides the default `prompts/` convention, and `version` enables staleness and conflict detection. This is the bridge between pupt's library management and pupt-lib's module loading.
 
 **PromptSource instances** are called directly — they already know how to get their prompts. This is the natural approach for programmatic use (pupt-react, application code).
 
@@ -413,13 +428,30 @@ const pupt = new Pupt({
 
 ### Config File Examples
 
-#### pupt CLI (`.pt-config.json`)
+#### pupt CLI — with installed libraries
+
+When `pupt` uses `pt install` to manage libraries, it converts its `LibraryEntry[]` tracking format into `ResolvedModuleEntry[]` before passing to pupt-lib. This gives pupt-lib all the resolved metadata without pupt-lib needing to own install/tracking concerns:
+
+```typescript
+// pupt converts its libraries config into ResolvedModuleEntry[]
+const modules: ModuleEntry[] = config.libraries.map(lib => ({
+  name: lib.name,
+  type: lib.type,              // 'git' | 'npm'
+  source: lib.source,          // git URL or npm package name
+  promptDirs: lib.promptDirs,  // e.g., ['prompts', 'advanced-prompts']
+  version: lib.version,        // commit hash or semver
+}));
+
+const pupt = new Pupt({ modules });
+```
+
+#### pupt CLI — simple config (`.pt-config.json`)
 
 ```json
 {
   "modules": [
-    "pupt-sde",
-    "github:user/community-prompts#v2.0",
+    { "name": "pupt-sde", "type": "npm", "source": "pupt-sde" },
+    { "name": "community-prompts", "type": "git", "source": "https://github.com/user/community-prompts", "version": "v2.0" },
     { "source": "pupt-source-s3", "config": { "bucket": "team-prompts", "region": "us-east-1" } }
   ]
 }
@@ -432,13 +464,13 @@ The CLI reads this config and passes the `modules` array directly to `new Pupt({
 ```tsx
 // Programmatic — source instances
 <PuptLibraryProvider modules={[
-  'pupt-sde',
+  { name: 'pupt-sde', type: 'npm', source: 'pupt-sde' },
   new RestApiSource({ url: 'https://api.example.com/prompts' }),
 ]}>
 
 // Or from config — package references
 <PuptLibraryProvider modules={[
-  'pupt-sde',
+  { name: 'pupt-sde', type: 'npm', source: 'pupt-sde' },
   { source: 'pupt-source-rest', config: { url: 'https://api.example.com/prompts' } },
 ]}>
 ```

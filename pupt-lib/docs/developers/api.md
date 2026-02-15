@@ -422,21 +422,32 @@ class Pupt {
 
 ```typescript
 interface PuptInitConfig {
-  modules?: string[];
+  modules?: ModuleEntry[];
   searchConfig?: SearchEngineConfig;
 }
 ```
 
-The `modules` array accepts any supported source type:
+The `modules` array accepts three entry shapes:
 
-| Source Type | Example |
-|---|---|
-| npm package | `'@acme/prompts'` |
-| npm + version | `'@acme/prompts@1.2.0'` |
-| Local path (relative) | `'./local-prompts/'` |
-| Local path (absolute) | `'/home/user/prompts/lib'` |
-| URL | `'https://cdn.example.com/prompts.js'` |
-| GitHub | `'github:acme/prompts#v2.0.0'` |
+| Entry Shape | Description | Example |
+|---|---|---|
+| `ResolvedModuleEntry` | Explicit type + source (primary format) | `{ name: 'lib', type: 'git', source: '...' }` |
+| `PromptSource` | Custom source instance (programmatic use) | `new S3PromptSource({ bucket: '...' })` |
+| `{ source, config }` | Dynamic package loader (config-file-driven) | `{ source: 'pupt-source-s3', config: { ... } }` |
+
+**ResolvedModuleEntry** is the primary format. The `type` field determines where pupt-lib looks for prompts. This is also the format that tools like `pupt` produce after installing and tracking libraries:
+
+```typescript
+interface ResolvedModuleEntry {
+  name: string;                              // display name
+  type: 'git' | 'npm' | 'local' | 'url';    // explicit source type
+  source: string;                            // source identifier
+  promptDirs?: string[];                     // override default 'prompts/' convention
+  version?: string;                          // semver, commit hash, etc.
+}
+```
+
+See [Custom Sources](/developers/custom-sources) for `PromptSource` and `{ source, config }` details. See [Prompt Sources](/modules/prompt-sources) for how entries are routed.
 
 **DiscoveredPromptWithMethods:**
 
@@ -458,7 +469,10 @@ interface DiscoveredPromptWithMethods {
 import { Pupt } from 'pupt-lib';
 
 const pupt = new Pupt({
-  modules: ['@acme/prompts', './local-prompts/'],
+  modules: [
+    { name: 'acme-prompts', type: 'npm', source: '@acme/prompts' },
+    { name: 'local-prompts', type: 'local', source: './local-prompts/' },
+  ],
 });
 
 await pupt.init();
@@ -619,11 +633,14 @@ class Transformer {
 
 ### `ModuleLoader`
 
-Loads prompt libraries from npm packages, URLs, or local paths. The `Pupt` class uses this internally; you only need it directly if you are building custom library-loading logic.
+Loads prompt libraries from npm packages, URLs, local paths, or Git repositories. The `Pupt` class uses this internally; you only need it directly if you are building custom library-loading logic.
 
 ```typescript
 class ModuleLoader {
-  async load(source: string): Promise<LoadedLibrary>;
+  async loadEntry(entry: ModuleEntry): Promise<LoadedLibrary>;
+  async loadResolvedEntry(entry: ResolvedModuleEntry): Promise<LoadedLibrary>;
+  async loadPromptSource(source: PromptSource, name?: string): Promise<LoadedLibrary>;
+  clear(): void;
 }
 ```
 

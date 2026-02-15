@@ -10,6 +10,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { ModuleLoader } from '../../../src/services/module-loader';
+import type { ResolvedModuleEntry } from '../../../src/types/module';
 
 // MSW server for HTTP mocking
 const server = setupServer();
@@ -31,19 +32,27 @@ describe('ModuleLoader Real Code Paths', () => {
   describe('loadLocal - local module loading errors', () => {
     it('should fail gracefully for non-existent local file', async () => {
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'nonexistent',
+        type: 'local',
+        source: './this/path/does/not/exist.ts',
+      };
 
       await expect(
-        loader.load('./this/path/does/not/exist.ts'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load local module/);
     });
 
     it('should fail for file with syntax errors', async () => {
-      // This would need a real file with syntax errors
-      // For now, we just verify the error path works with non-existent files
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'nonexistent',
+        type: 'local',
+        source: './nonexistent/module.js',
+      };
 
       await expect(
-        loader.load('./nonexistent/module.js'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load local module/);
     });
   });
@@ -60,9 +69,15 @@ describe('ModuleLoader Real Code Paths', () => {
       const base64 = Buffer.from(moduleCode).toString('base64');
       const dataUrl = `data:text/javascript;base64,${base64}`;
 
-      const library = await loader.load(dataUrl);
+      const entry: ResolvedModuleEntry = {
+        name: 'data-url-lib',
+        type: 'url',
+        source: dataUrl,
+      };
 
-      expect(library.name).toBeDefined();
+      const library = await loader.loadResolvedEntry(entry);
+
+      expect(library.name).toBe('data-url-lib');
       expect(library.dependencies).toEqual([]);
     });
   });
@@ -78,10 +93,14 @@ describe('ModuleLoader Real Code Paths', () => {
       );
 
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'not-a-module',
+        type: 'url',
+        source: 'https://example.com/not-a-module.txt',
+      };
 
-      // This should fail because it can't be imported as a module
       await expect(
-        loader.load('https://example.com/not-a-module.txt'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load module from URL/);
     });
 
@@ -93,9 +112,14 @@ describe('ModuleLoader Real Code Paths', () => {
       );
 
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'missing',
+        type: 'url',
+        source: 'https://example.com/missing.js',
+      };
 
       await expect(
-        loader.load('https://example.com/missing.js'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load module from URL/);
     });
 
@@ -107,23 +131,34 @@ describe('ModuleLoader Real Code Paths', () => {
       );
 
       const loader = new ModuleLoader();
+      const entry: ResolvedModuleEntry = {
+        name: 'error',
+        type: 'url',
+        source: 'https://example.com/error.js',
+      };
 
       await expect(
-        loader.load('https://example.com/error.js'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load module from URL/);
     });
   });
 
-  describe('loadGithub - GitHub URL construction', () => {
-    it('should construct correct URL for github:user/repo format', async () => {
+  describe('loadGit - GitHub URL parsing', () => {
+    it('should construct correct URL for GitHub source', async () => {
       const loader = new ModuleLoader();
 
       // Mock loadUrl to capture the URL
       const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
       loadUrlSpy.mockRejectedValue(new Error('Intentional test failure'));
 
+      const entry: ResolvedModuleEntry = {
+        name: 'myrepo',
+        type: 'git',
+        source: 'https://github.com/myuser/myrepo',
+      };
+
       try {
-        await loader.load('github:myuser/myrepo');
+        await loader.loadResolvedEntry(entry);
       } catch {
         // Expected to fail
       }
@@ -133,14 +168,20 @@ describe('ModuleLoader Real Code Paths', () => {
       );
     });
 
-    it('should use ref when provided in github:user/repo#ref format', async () => {
+    it('should use ref when provided in URL fragment', async () => {
       const loader = new ModuleLoader();
 
       const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
       loadUrlSpy.mockRejectedValue(new Error('Intentional test failure'));
 
+      const entry: ResolvedModuleEntry = {
+        name: 'lib',
+        type: 'git',
+        source: 'https://github.com/org/lib#v1.2.3',
+      };
+
       try {
-        await loader.load('github:org/lib#v1.2.3');
+        await loader.loadResolvedEntry(entry);
       } catch {
         // Expected to fail
       }
@@ -150,34 +191,17 @@ describe('ModuleLoader Real Code Paths', () => {
       );
     });
 
-    it('should use branch name as ref', async () => {
+    it('should reject non-GitHub git sources', async () => {
       const loader = new ModuleLoader();
 
-      const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
-      loadUrlSpy.mockRejectedValue(new Error('Intentional test failure'));
+      const entry: ResolvedModuleEntry = {
+        name: 'gitlab-lib',
+        type: 'git',
+        source: 'https://gitlab.com/user/repo',
+      };
 
-      try {
-        await loader.load('github:company/project#develop');
-      } catch {
-        // Expected to fail
-      }
-
-      expect(loadUrlSpy).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/company/project/develop/index.js',
-      );
-    });
-
-    it('should reject malformed github: URLs', async () => {
-      const loader = new ModuleLoader();
-
-      // Missing repo
-      await expect(loader.load('github:useronly')).rejects.toThrow(
-        'Invalid GitHub source format',
-      );
-
-      // Empty
-      await expect(loader.load('github:')).rejects.toThrow(
-        'Invalid GitHub source format',
+      await expect(loader.loadResolvedEntry(entry)).rejects.toThrow(
+        'Cannot extract GitHub owner/repo',
       );
     });
   });
@@ -186,12 +210,16 @@ describe('ModuleLoader Real Code Paths', () => {
     it('should successfully load a real npm package', async () => {
       const loader = new ModuleLoader();
 
-      // Load a package that's definitely installed (vitest is our test runner)
-      // We use 'path' which is a Node.js built-in
-      const library = await loader.load('path');
+      // Load a package that's definitely installed (path is a Node.js built-in)
+      const entry: ResolvedModuleEntry = {
+        name: 'path',
+        type: 'npm',
+        source: 'path',
+      };
+
+      const library = await loader.loadResolvedEntry(entry);
 
       expect(library.name).toBe('path');
-      // Built-in modules won't have our Component classes, so components should be empty
       expect(library.components).toBeDefined();
       expect(library.dependencies).toEqual([]);
     });
@@ -199,17 +227,28 @@ describe('ModuleLoader Real Code Paths', () => {
     it('should fail gracefully for non-existent npm package', async () => {
       const loader = new ModuleLoader();
 
-      // This package shouldn't exist
+      const entry: ResolvedModuleEntry = {
+        name: 'nonexistent',
+        type: 'npm',
+        source: 'this-package-definitely-does-not-exist-12345',
+      };
+
       await expect(
-        loader.load('this-package-definitely-does-not-exist-12345'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load npm package/);
     });
 
     it('should fail for scoped package that does not exist', async () => {
       const loader = new ModuleLoader();
 
+      const entry: ResolvedModuleEntry = {
+        name: 'nonexistent-scoped',
+        type: 'npm',
+        source: '@nonexistent-scope/nonexistent-package',
+      };
+
       await expect(
-        loader.load('@nonexistent-scope/nonexistent-package'),
+        loader.loadResolvedEntry(entry),
       ).rejects.toThrow(/Failed to load npm package/);
     });
   });
@@ -248,7 +287,6 @@ describe('ModuleLoader Real Code Paths', () => {
     });
 
     it('should handle URLs with query strings', () => {
-      // URL.pathname correctly strips query strings
       const result = extractName('https://example.com/lib.js?v=1');
       expect(result).toBe('lib');
     });
@@ -278,7 +316,6 @@ describe('ModuleLoader Real Code Paths', () => {
     });
 
     it('should handle paths ending with slash', () => {
-      // Empty last segment returns 'unknown'
       expect(extractName('./path/to/')).toBe('unknown');
     });
 
@@ -292,22 +329,29 @@ describe('ModuleLoader Real Code Paths', () => {
     it('should clear loaded modules cache', async () => {
       const loader = new ModuleLoader();
 
-      // Mock to track calls
       const doLoadSpy = vi.spyOn(loader as never, 'doLoad');
       doLoadSpy.mockResolvedValue({
         name: 'test',
         components: {},
+        prompts: {},
         dependencies: [],
       });
 
+      const entry: ResolvedModuleEntry = {
+        name: 'test-pkg',
+        type: 'npm',
+        source: '@test/pkg',
+        version: '1.0.0',
+      };
+
       // Load twice - should be cached
-      await loader.load('@test/pkg@1.0.0');
-      await loader.load('@test/pkg@1.0.0');
+      await loader.loadResolvedEntry(entry);
+      await loader.loadResolvedEntry(entry);
       expect(doLoadSpy).toHaveBeenCalledTimes(1);
 
       // Clear and load again
       loader.clear();
-      await loader.load('@test/pkg@1.0.0');
+      await loader.loadResolvedEntry(entry);
       expect(doLoadSpy).toHaveBeenCalledTimes(2);
     });
 
@@ -318,52 +362,32 @@ describe('ModuleLoader Real Code Paths', () => {
       doLoadSpy.mockResolvedValue({
         name: 'pkg',
         components: {},
+        prompts: {},
         dependencies: [],
       });
 
+      const entry1: ResolvedModuleEntry = {
+        name: 'test-pkg',
+        type: 'npm',
+        source: '@test/pkg',
+        version: '1.0.0',
+      };
+
       // Load version 1
-      await loader.load('@test/pkg@1.0.0');
+      await loader.loadResolvedEntry(entry1);
 
       // Version 2 would normally conflict
-      await expect(loader.load('@test/pkg@2.0.0')).rejects.toThrow('Version conflict');
+      const entry2: ResolvedModuleEntry = {
+        name: 'test-pkg',
+        type: 'npm',
+        source: '@test/pkg-other',
+        version: '2.0.0',
+      };
+      await expect(loader.loadResolvedEntry(entry2)).rejects.toThrow('Version conflict');
 
       // Clear and try again - should work now
       loader.clear();
-      await expect(loader.load('@test/pkg@2.0.0')).resolves.toBeDefined();
+      await expect(loader.loadResolvedEntry(entry2)).resolves.toBeDefined();
     });
-  });
-});
-
-describe('ModuleLoader source type routing', () => {
-  it('should route to correct loader based on source type', async () => {
-    const loader = new ModuleLoader();
-
-    // Spy on all internal loaders
-    const loadLocalSpy = vi.spyOn(loader as never, 'loadLocal');
-    const loadNpmSpy = vi.spyOn(loader as never, 'loadNpm');
-    const loadUrlSpy = vi.spyOn(loader as never, 'loadUrl');
-    const loadGithubSpy = vi.spyOn(loader as never, 'loadGithub');
-
-    // Mock all to prevent actual loading
-    loadLocalSpy.mockResolvedValue({ name: 'local', components: {}, dependencies: [] });
-    loadNpmSpy.mockResolvedValue({ name: 'npm', components: {}, dependencies: [] });
-    loadUrlSpy.mockResolvedValue({ name: 'url', components: {}, dependencies: [] });
-    loadGithubSpy.mockResolvedValue({ name: 'github', components: {}, dependencies: [] });
-
-    // Test each source type
-    await loader.load('./local/path');
-    expect(loadLocalSpy).toHaveBeenCalled();
-
-    loader.clear();
-    await loader.load('npm-package');
-    expect(loadNpmSpy).toHaveBeenCalled();
-
-    loader.clear();
-    await loader.load('https://cdn.example.com/lib.js');
-    expect(loadUrlSpy).toHaveBeenCalled();
-
-    loader.clear();
-    await loader.load('github:user/repo');
-    expect(loadGithubSpy).toHaveBeenCalled();
   });
 });

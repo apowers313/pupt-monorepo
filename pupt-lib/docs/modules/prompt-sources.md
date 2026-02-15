@@ -21,34 +21,47 @@ my-prompt-package/
 
 When given a package root path, pupt-lib checks for a `prompts/` subdirectory and scans for `.prompt` files there. This convention works for all source types -- local directories, npm packages, and GitHub repositories.
 
+This default can be overridden per-module using the `promptDirs` field in a `ResolvedModuleEntry`, which lets you scan multiple directories or directories with non-standard names (e.g., `["prompts", "advanced-prompts", "templates"]`).
+
 ## How Modules Are Routed
 
 The format of each entry in the `modules` array determines where pupt-lib looks:
 
-| Entry format | Where it looks | Example |
+| Entry type | Where it looks | Example |
 |---|---|---|
-| Local path | Scans the directory (or its `prompts/` subdirectory) | `./my-prompts` |
-| npm package name | Scans `node_modules/pkg/prompts/` | `pupt-sde` |
-| CDN or tarball URL | Downloads the package and extracts `prompts/` | `https://cdn.jsdelivr.net/npm/pupt-sde@1.0.0` |
-| GitHub reference | Uses the GitHub API to find `prompts/` | `github:user/repo#v1.0.0` |
+| `local` | Scans the directory (or its `prompts/` subdirectory) | `{ name: 'my-prompts', type: 'local', source: './my-prompts' }` |
+| `npm` | Scans `node_modules/pkg/prompts/` | `{ name: 'pupt-sde', type: 'npm', source: 'pupt-sde' }` |
+| `url` | Downloads the package and extracts `prompts/` | `{ name: 'pupt-sde', type: 'url', source: 'https://...' }` |
+| `git` | Uses the GitHub API to find `prompts/` | `{ name: 'repo', type: 'git', source: 'https://github.com/user/repo' }` |
 
-All sources follow the same `prompts/` directory convention. The discovered `.prompt` files are compiled and made searchable automatically.
+All sources follow the same `prompts/` directory convention by default. The discovered `.prompt` files are compiled and made searchable automatically.
 
 ## Configuring Modules
 
-### String entries
+### Module entries
 
-The simplest approach. pupt-lib figures out the source type from the format:
+Each entry in the `modules` array is a `ResolvedModuleEntry` with an explicit `type` field that determines where pupt-lib looks for prompts:
 
 ```json
 {
   "modules": [
-    "./local-prompts",
-    "pupt-sde",
-    "github:user/community-prompts#v2.0"
+    {
+      "name": "pupt-sde",
+      "type": "npm",
+      "source": "pupt-sde"
+    },
+    {
+      "name": "team-prompts",
+      "type": "git",
+      "source": "https://github.com/team/prompts",
+      "promptDirs": ["prompts", "advanced-prompts"],
+      "version": "abc12345"
+    }
   ]
 }
 ```
+
+The `type` field (`git`, `npm`, `local`, `url`) routes directly to the appropriate source. When `promptDirs` is provided, those directories are scanned instead of the default `prompts/`. See the [API reference](/developers/api#pupt-class) for the full `ResolvedModuleEntry` type.
 
 ### Custom sources
 
@@ -57,7 +70,7 @@ For sources that aren't covered by the built-in types (like S3, a REST API, or a
 ```json
 {
   "modules": [
-    "pupt-sde",
+    { "name": "pupt-sde", "type": "npm", "source": "pupt-sde" },
     { "source": "pupt-source-s3", "config": { "bucket": "team-prompts", "region": "us-east-1" } }
   ]
 }

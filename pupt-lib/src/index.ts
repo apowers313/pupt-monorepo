@@ -112,7 +112,7 @@ import { setComponentExportsThunk } from './services/component-discovery';
 
 // Export module loading services
 export { ModuleLoader } from './services/module-loader';
-export type { SourceType, LoadedLibrary, CompiledPrompt, ParsedPackageSource } from './services/module-loader';
+export type { LoadedLibrary, CompiledPrompt, ParsedPackageSource } from './services/module-loader';
 
 // Export prompt sources
 export { LocalPromptSource, NpmLocalPromptSource, GitHubPromptSource, parseGitHubSource, NpmRegistryPromptSource } from './services/prompt-sources';

@@ -472,21 +472,19 @@ class Pupt {
 
 ```typescript
 interface PuptInitConfig {
-  modules?: string[];           // npm packages, URLs, local paths, or GitHub sources
+  modules?: ModuleEntry[];      // ResolvedModuleEntry, PromptSource, or { source, config }
   searchConfig?: SearchEngineConfig;
 }
 ```
 
-The `modules` array accepts any of the supported source types:
+The `modules` array accepts `ResolvedModuleEntry` objects with an explicit `type` field:
 
 | Source Type | Example |
 |---|---|
-| npm package | `'@acme/prompts'` |
-| npm package with version | `'@acme/prompts@1.2.0'` |
-| Local path (relative) | `'./local-prompts/'` |
-| Local path (absolute) | `'/home/user/prompts/lib'` |
-| URL | `'https://cdn.example.com/prompts.js'` |
-| GitHub | `'github:acme/prompts#v2.0.0'` |
+| npm package | `{ name: 'acme-prompts', type: 'npm', source: '@acme/prompts' }` |
+| Local path | `{ name: 'local', type: 'local', source: './local-prompts/' }` |
+| URL | `{ name: 'cdn-lib', type: 'url', source: 'https://cdn.example.com/prompts.js' }` |
+| GitHub | `{ name: 'community', type: 'git', source: 'https://github.com/acme/prompts' }` |
 
 **DiscoveredPromptWithMethods:**
 
@@ -509,11 +507,9 @@ import { Pupt } from 'pupt-lib';
 
 const pupt = new Pupt({
   modules: [
-    '@acme/prompts',                              // npm package
-    '@acme/prompts@1.2.0',                        // npm with pinned version
-    './local-prompts/',                            // local relative path
-    'https://cdn.example.com/prompt-lib.js',      // URL
-    'github:acme/community-prompts#v2.0.0',       // GitHub repo at a tag
+    { name: 'acme-prompts', type: 'npm', source: '@acme/prompts' },
+    { name: 'local-prompts', type: 'local', source: './local-prompts/' },
+    { name: 'community', type: 'git', source: 'https://github.com/acme/community-prompts' },
   ],
 });
 

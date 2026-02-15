@@ -34,11 +34,11 @@ describe('ModuleLoader error isolation', () => {
     expect(warnings[0]).toContain('Network timeout');
   });
 
-  it('should not fail entirely when one string module source fails', async () => {
+  it('should not fail entirely when one module source fails', async () => {
     const pupt = new Pupt({
       modules: [
-        'non-existent-package-xyz',
-        './test/fixtures/prompt-packages/basic',
+        { name: 'nonexistent', type: 'npm', source: 'non-existent-package-xyz' },
+        { name: 'basic', type: 'local', source: './test/fixtures/prompt-packages/basic' },
       ],
     });
     await pupt.init();
@@ -93,14 +93,14 @@ describe('ModuleLoader error isolation', () => {
     expect(pupt.getWarnings()).toHaveLength(1);
   });
 
-  it('should include source identifier in warning for string modules', async () => {
+  it('should include source identifier in warning for ResolvedModuleEntry', async () => {
     const pupt = new Pupt({
-      modules: ['non-existent-package-xyz'],
+      modules: [{ name: 'nonexistent', type: 'npm', source: 'non-existent-package-xyz' }],
     });
     await pupt.init();
 
     const warnings = pupt.getWarnings();
     expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toContain('non-existent-package-xyz');
+    expect(warnings[0]).toContain('nonexistent');
   });
 });

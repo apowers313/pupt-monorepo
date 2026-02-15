@@ -6,6 +6,8 @@ export interface GitHubPromptSourceOptions {
   ref?: string;
   /** GitHub personal access token for private repos or to avoid rate limiting. */
   token?: string;
+  /** Explicit prompt directories to scan (relative to repo root). Overrides default 'prompts/'. */
+  promptDirs?: string[];
 }
 
 /** A Git tree entry from the GitHub API */
@@ -58,6 +60,7 @@ export class GitHubPromptSource implements PromptSource {
   private repo: string;
   private ref: string;
   private token?: string;
+  private promptDirs?: string[];
 
   constructor(ownerRepo: string, options?: GitHubPromptSourceOptions) {
     const parsed = parseGitHubSource(ownerRepo);
@@ -65,6 +68,7 @@ export class GitHubPromptSource implements PromptSource {
     this.repo = parsed.repo;
     this.ref = options?.ref ?? parsed.ref ?? 'main';
     this.token = options?.token;
+    this.promptDirs = options?.promptDirs;
   }
 
   async getPrompts(): Promise<DiscoveredPromptFile[]> {
@@ -116,10 +120,14 @@ export class GitHubPromptSource implements PromptSource {
   }
 
   private filterPromptFiles(tree: GitTreeEntry[]): GitTreeEntry[] {
+    const dirs = this.promptDirs ?? ['prompts'];
     return tree.filter(
       entry => entry.type === 'blob' &&
-        entry.path.startsWith('prompts/') &&
-        entry.path.endsWith('.prompt'),
+        entry.path.endsWith('.prompt') &&
+        dirs.some(dir => {
+          const prefix = dir.endsWith('/') ? dir : `${dir}/`;
+          return entry.path.startsWith(prefix);
+        }),
     );
   }
 

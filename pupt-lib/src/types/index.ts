@@ -77,12 +77,14 @@ export type {
 // Module types
 export type {
   ModuleEntry,
+  ResolvedModuleEntry,
   PuptConfig,
   PuptLibrary,
   DiscoveredPrompt,
   LibraryLoadResult,
   PuptInitConfig,
 } from './module';
+export { isResolvedModuleEntry } from './module';
 
 // Prompt source types
 export type {

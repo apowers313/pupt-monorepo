@@ -3,7 +3,7 @@ import { Pupt } from '../../src/api';
 
 describe('LocalPromptSource integration', () => {
   it('should discover, compile, and render a .prompt file from a local directory', async () => {
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/basic'] });
+    const pupt = new Pupt({ modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }] });
     await pupt.init();
     const prompts = pupt.getPrompts();
     expect(prompts.length).toBeGreaterThan(0);
@@ -19,7 +19,7 @@ describe('LocalPromptSource integration', () => {
   });
 
   it('should discover multiple prompts from same directory', async () => {
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/basic'] });
+    const pupt = new Pupt({ modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }] });
     await pupt.init();
     const prompts = pupt.getPrompts();
 
@@ -30,7 +30,7 @@ describe('LocalPromptSource integration', () => {
   });
 
   it('should make discovered prompts searchable', async () => {
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/basic'] });
+    const pupt = new Pupt({ modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }] });
     await pupt.init();
 
     const results = pupt.searchPrompts('greeting');
@@ -38,7 +38,7 @@ describe('LocalPromptSource integration', () => {
   });
 
   it('should support tag filtering on discovered prompts', async () => {
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/basic'] });
+    const pupt = new Pupt({ modules: [{ name: 'basic', type: 'local' as const, source: './test/fixtures/prompt-packages/basic' }] });
     await pupt.init();
 
     const codePrompts = pupt.getPrompts({ tags: ['code'] });
@@ -49,7 +49,7 @@ describe('LocalPromptSource integration', () => {
   it('should handle empty prompt directories gracefully', async () => {
     // The empty directory has no .prompt files and no JS module,
     // so the module loader should skip it with a warning (error isolation)
-    const pupt = new Pupt({ modules: ['./test/fixtures/prompt-packages/empty'] });
+    const pupt = new Pupt({ modules: [{ name: 'empty', type: 'local' as const, source: './test/fixtures/prompt-packages/empty' }] });
     await pupt.init();
     expect(pupt.getPrompts()).toHaveLength(0);
     expect(pupt.getWarnings().length).toBeGreaterThan(0);

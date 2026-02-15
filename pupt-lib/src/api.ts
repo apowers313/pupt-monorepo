@@ -9,6 +9,7 @@ import type {
 } from './types';
 import { isPuptElement } from './types/element';
 import { isPromptSource } from './types/prompt-source';
+import { isResolvedModuleEntry } from './types/module';
 import { PROPS } from './types/symbols';
 import { createSearchEngine, type SearchEngine } from './services/search-engine';
 import { render } from './render';
@@ -100,7 +101,7 @@ export class Pupt {
     // Go through all configured modules and find prompts
     for (const entry of this.config.modules ?? []) {
       try {
-        // Deduplicate string and { source, config } entries
+        // Deduplicate entries
         const dedupKey = this.getEntryDedupKey(entry);
         if (dedupKey !== null) {
           if (processedLibraries.has(dedupKey)) {
@@ -111,7 +112,7 @@ export class Pupt {
 
         const library = await this.moduleLoader.loadEntry(entry);
 
-        // 1. Discover prompts from compiled .prompt files (via PromptSource)
+        // Discover prompts from compiled .prompt files (via PromptSource)
         for (const compiled of Object.values(library.prompts)) {
           const prompt = this.createDiscoveredPrompt(
             compiled.id,
@@ -123,43 +124,8 @@ export class Pupt {
           );
           discovered.push(prompt);
         }
-
-        // 2. Discover prompts from JS module exports (existing behavior)
-        // Only applicable for string entries that can be imported as JS modules
-        if (typeof entry === 'string' && !isPromptSource(entry)) {
-          try {
-            const moduleExports = await this.loadModuleExports(entry);
-
-            for (const [, value] of Object.entries(moduleExports)) {
-              if (this.isPromptElement(value)) {
-                const element = value as PuptElement;
-                const props = element[PROPS] as {
-                  name: string;
-                  description?: string;
-                  tags?: string[];
-                };
-
-                const prompt = this.createDiscoveredPrompt(
-                  crypto.randomUUID(),
-                  props.name,
-                  props.description ?? '',
-                  props.tags ?? [],
-                  library.name,
-                  element,
-                );
-                discovered.push(prompt);
-              }
-            }
-          } catch {
-            // Skip modules that can't be loaded for prompt detection
-          }
-        }
       } catch (error) {
-        const sourceId = typeof entry === 'string'
-          ? entry
-          : isPromptSource(entry)
-            ? (entry.constructor?.name ?? 'PromptSource')
-            : `{ source: ${(entry as { source: string }).source} }`;
+        const sourceId = this.getEntryDisplayName(entry);
         const message = error instanceof Error ? error.message : String(error);
         this.warnings.push(`Failed to load module "${sourceId}": ${message}`);
       }
@@ -173,13 +139,13 @@ export class Pupt {
    * Returns null for PromptSource instances (cannot be deduplicated).
    */
   private getEntryDedupKey(entry: ModuleEntry): string | null {
-    if (typeof entry === 'string') {
-      return this.moduleLoader.normalizeSource(entry);
-    }
-
     if (isPromptSource(entry)) {
       // PromptSource instances cannot be deduplicated — no reliable identity comparison
       return null;
+    }
+
+    if (isResolvedModuleEntry(entry)) {
+      return this.moduleLoader.normalizeSource(entry.source, entry.type);
     }
 
     // { source, config } objects: serialize as a stable key
@@ -191,19 +157,23 @@ export class Pupt {
     return null;
   }
 
-  private async loadModuleExports(source: string): Promise<Record<string, unknown>> {
-    // For local paths, resolve from CWD
-    const isNode = typeof process !== 'undefined' && process.versions?.node;
-
-    if (isNode && (source.startsWith('./') || source.startsWith('/') || source.startsWith('../'))) {
-      const path = await import('path');
-      const url = await import('url');
-      const absolutePath = path.resolve(process.cwd(), source);
-      const fileUrl = url.pathToFileURL(absolutePath).href;
-      return await import(/* @vite-ignore */ fileUrl);
+  /**
+   * Get a human-readable display name for a module entry (used in error messages).
+   */
+  private getEntryDisplayName(entry: ModuleEntry): string {
+    if (isPromptSource(entry)) {
+      return entry.constructor?.name ?? 'PromptSource';
     }
 
-    return await import(source);
+    if (isResolvedModuleEntry(entry)) {
+      return entry.name;
+    }
+
+    if (typeof entry === 'object' && entry !== null && 'source' in entry) {
+      return `{ source: ${(entry as { source: string }).source} }`;
+    }
+
+    return 'unknown';
   }
 
   private isPromptElement(value: unknown): boolean {

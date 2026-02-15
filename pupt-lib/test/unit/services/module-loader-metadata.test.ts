@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ModuleLoader } from '../../../src/services/module-loader';
 import { Pupt } from '../../../src/api';
 import type { PromptSource } from '../../../src/types/prompt-source';
+import type { ResolvedModuleEntry } from '../../../src/types/module';
+
+const basicEntry: ResolvedModuleEntry = {
+  name: 'basic',
+  type: 'local',
+  source: './test/fixtures/prompt-packages/basic',
+};
+
+const versionedEntry: ResolvedModuleEntry = {
+  name: 'versioned',
+  type: 'local',
+  source: './test/fixtures/prompt-packages/versioned',
+};
 
 describe('prompt metadata', () => {
   let loader: ModuleLoader;
@@ -11,7 +24,7 @@ describe('prompt metadata', () => {
   });
 
   it('should assign a unique ID to each discovered prompt', async () => {
-    const library = await loader.load('./test/fixtures/prompt-packages/basic');
+    const library = await loader.loadResolvedEntry(basicEntry);
     const prompts = Object.values(library.prompts);
     const ids = prompts.map(p => p.id);
     expect(new Set(ids).size).toBe(ids.length); // all unique
@@ -19,12 +32,12 @@ describe('prompt metadata', () => {
   });
 
   it('should extract version from prompt metadata when present', async () => {
-    const library = await loader.load('./test/fixtures/prompt-packages/versioned');
+    const library = await loader.loadResolvedEntry(versionedEntry);
     expect(library.prompts['versioned-prompt'].version).toBe('1.2.0');
   });
 
   it('should set version to undefined when not specified in prompt', async () => {
-    const library = await loader.load('./test/fixtures/prompt-packages/basic');
+    const library = await loader.loadResolvedEntry(basicEntry);
     const prompt = Object.values(library.prompts)[0];
     expect(prompt.version).toBeUndefined();
   });
@@ -50,9 +63,7 @@ describe('prompt metadata', () => {
   });
 
   it('should expose id on discovered prompts via Pupt API', async () => {
-    const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
-    });
+    const pupt = new Pupt({ modules: [basicEntry] });
     await pupt.init();
     const prompts = pupt.getPrompts();
     expect(prompts.length).toBeGreaterThan(0);
@@ -64,9 +75,7 @@ describe('prompt metadata', () => {
   });
 
   it('should support getPromptById() for precise lookup', async () => {
-    const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
-    });
+    const pupt = new Pupt({ modules: [basicEntry] });
     await pupt.init();
     const prompts = pupt.getPrompts();
     const firstPrompt = prompts[0];
@@ -77,15 +86,13 @@ describe('prompt metadata', () => {
   });
 
   it('should return undefined from getPromptById() for non-existent ID', async () => {
-    const pupt = new Pupt({
-      modules: ['./test/fixtures/prompt-packages/basic'],
-    });
+    const pupt = new Pupt({ modules: [basicEntry] });
     await pupt.init();
     expect(pupt.getPromptById('non-existent-id')).toBeUndefined();
   });
 
   it('should extract description and tags from prompt metadata', async () => {
-    const library = await loader.load('./test/fixtures/prompt-packages/basic');
+    const library = await loader.loadResolvedEntry(basicEntry);
     const greeting = library.prompts['greeting'];
     expect(greeting.description).toBe('A simple greeting');
     expect(greeting.tags).toContain('test');

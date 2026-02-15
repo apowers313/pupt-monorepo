@@ -4,7 +4,7 @@ import { Pupt } from '../../src/api';
 describe('Full Workflow', () => {
   it('should load, discover, collect inputs, and render', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -29,7 +29,7 @@ describe('Full Workflow', () => {
 
   it('should support full discovery and search workflow', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
@@ -56,7 +56,7 @@ describe('Full Workflow', () => {
 
   it('should handle prompts with input requirements', async () => {
     const pupt = new Pupt({
-      modules: ['./test/fixtures/libraries/test-lib'],
+      modules: [{ name: 'test-lib', type: 'local' as const, source: './test/fixtures/libraries/test-lib' }],
     });
 
     await pupt.init();
