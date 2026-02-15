@@ -1,3 +1,10 @@
+## [1.3.8](https://github.com/apowers313/pupt-lib/compare/v1.3.7...v1.3.8) (2026-02-15)
+
+
+### Bug Fixes
+
+* make git branch an option for module loading ([436f2b0](https://github.com/apowers313/pupt-lib/commit/436f2b0d0cc1dd1b9fba5d3e3d5e00877099dcd0))
+
 ## [1.3.7](https://github.com/apowers313/pupt-lib/compare/v1.3.6...v1.3.7) (2026-02-15)
 
 
