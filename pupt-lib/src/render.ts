@@ -1,4 +1,5 @@
 import type { PuptElement, PuptNode, RenderResult, RenderOptions, RenderContext, PostExecutionAction, RenderError } from './types';
+import { isWarningCode } from './types/render';
 import { Fragment } from './jsx-runtime';
 import { isComponentClass, Component } from './component';
 import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
@@ -157,6 +158,8 @@ export async function render(
     inputs = new Map(),
     env = DEFAULT_ENVIRONMENT,
     trim = true,
+    throwOnWarnings = false,
+    ignoreWarnings = [],
   } = options;
 
   const postExecution: PostExecutionAction[] = [];
@@ -184,15 +187,29 @@ export async function render(
   const text = await renderNode(element, state);
   const trimmedText = trim ? text.trim() : text;
 
-  // Separate non-fatal warnings from hard errors
-  const warnings = errors.filter(e => e.code === 'validation_warning');
-  const hardErrors = errors.filter(e => e.code !== 'validation_warning');
+  // Separate non-fatal warnings from hard errors, applying ignore/promote options
+  const ignoreSet = new Set(ignoreWarnings);
+  const warnings: RenderError[] = [];
+  const hardErrors: RenderError[] = [];
+
+  for (const err of errors) {
+    if (isWarningCode(err.code)) {
+      if (ignoreSet.has(err.code)) continue;
+      if (throwOnWarnings) {
+        hardErrors.push(err);
+      } else {
+        warnings.push(err);
+      }
+    } else {
+      hardErrors.push(err);
+    }
+  }
 
   if (hardErrors.length > 0) {
     return {
       ok: false,
       text: trimmedText,
-      errors,
+      errors: [...hardErrors, ...warnings],
       postExecution,
     };
   }

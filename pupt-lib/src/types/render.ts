@@ -9,6 +9,10 @@ export interface RenderOptions {
   trim?: boolean;
   inputs?: Map<string, unknown> | Record<string, unknown>;
   env?: EnvironmentContext;
+  /** When true, warnings (codes matching `warn_*`) are promoted to hard errors, causing `ok: false` */
+  throwOnWarnings?: boolean;
+  /** Warning codes to suppress entirely (e.g. `['warn_missing_task']`) */
+  ignoreWarnings?: string[];
 }
 
 /**
@@ -37,7 +41,7 @@ export interface RenderError {
 export interface RenderSuccess {
   ok: true;
   text: string;
-  /** Non-fatal validation warnings (code: 'validation_warning') */
+  /** Non-fatal validation warnings (codes starting with `warn_` or legacy `validation_warning`) */
   errors?: RenderError[];
   postExecution: PostExecutionAction[];
 }
@@ -92,4 +96,13 @@ export interface RunCommandAction {
   command: string;
   cwd?: string;
   env?: Record<string, string>;
+}
+
+/**
+ * Check whether a RenderError code represents a warning rather than a hard error.
+ * Warning codes use the `warn_` prefix by convention, with `validation_warning`
+ * supported as a legacy alias.
+ */
+export function isWarningCode(code: string): boolean {
+  return code.startsWith('warn_') || code === 'validation_warning';
 }

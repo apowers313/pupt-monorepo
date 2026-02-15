@@ -56,6 +56,8 @@ export type {
   RunCommandAction,
 } from './render';
 
+export { isWarningCode } from './render';
+
 // Input types
 export type {
   InputRequirement,

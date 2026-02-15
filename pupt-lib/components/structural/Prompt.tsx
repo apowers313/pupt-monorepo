@@ -13,6 +13,7 @@ import { Guardrails } from './Guardrails';
 import { EdgeCases } from './EdgeCases';
 import { Fallbacks } from './Fallbacks';
 import { References } from './References';
+import { ChainOfThought } from '../reasoning/ChainOfThought';
 
 const promptDefaultsObjectSchema = z.object({
   role: z.boolean().optional(),
@@ -105,7 +106,7 @@ export class Prompt extends Component<PromptProps> {
         component: 'Prompt',
         prop: null,
         message: 'Prompt has no Task child. Consider adding a <Task> element to define the objective.',
-        code: 'validation_warning',
+        code: 'warn_missing_task',
         path: [],
       });
     }
@@ -120,6 +121,25 @@ export class Prompt extends Component<PromptProps> {
     const hasEdgeCases = findChildrenOfType(childArray, EdgeCases).length > 0;
     const hasFallbacks = findChildrenOfType(childArray, Fallbacks).length > 0;
     const hasReferences = findChildrenOfType(childArray, References).length > 0;
+
+    // Detect conflicting Format strict + ChainOfThought showReasoning
+    if (hasFormat) {
+      const formatElements = findChildrenOfType(childArray, Format) as PuptElement[];
+      const cotElements = findChildrenOfType(childArray, ChainOfThought) as PuptElement[];
+      if (cotElements.length > 0) {
+        const formatIsStrict = formatElements.some(el => (el[PROPS] as Record<string, unknown>).strict === true);
+        const cotShowsReasoning = cotElements.some(el => (el[PROPS] as Record<string, unknown>).showReasoning !== false);
+        if (formatIsStrict && cotShowsReasoning) {
+          context.errors.push({
+            component: 'Prompt',
+            prop: null,
+            message: '<Format strict> and <ChainOfThought showReasoning> produce contradictory instructions. Format strict tells the LLM to return ONLY formatted output, while ChainOfThought asks it to show reasoning. Consider setting showReasoning={false} or removing strict.',
+            code: 'warn_conflicting_instructions',
+            path: [],
+          });
+        }
+      }
+    }
 
     const sections: PuptNode[] = [];
 

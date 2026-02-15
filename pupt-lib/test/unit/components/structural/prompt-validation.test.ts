@@ -72,7 +72,7 @@ describe('Prompt validation', () => {
     const result = await render(element);
     const warning = result.errors?.find(e => e.message.includes('Task'));
     expect(warning).toBeDefined();
-    expect(warning?.code).toBe('validation_warning');
+    expect(warning?.code).toBe('warn_missing_task');
     expect(warning?.component).toBe('Prompt');
   });
 });

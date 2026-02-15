@@ -55,6 +55,7 @@ export {
   createEnvironment,
   createRuntimeConfig,
   ensureRuntimeCacheReady,
+  isWarningCode,
 } from './types';
 
 // Export Component base class

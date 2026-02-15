@@ -28,6 +28,8 @@ async function render(element: PuptElement, options?: RenderOptions): Promise<Re
 | `inputs?` | `Map<string, unknown> \| Record<string, unknown>` | `new Map()` | Input values for Ask components |
 | `env?` | `EnvironmentContext` | `DEFAULT_ENVIRONMENT` | Environment configuration |
 | `trim?` | `boolean` | `true` | Trim whitespace from output |
+| `throwOnWarnings?` | `boolean` | `false` | Promote warnings to hard errors (`ok: false`) |
+| `ignoreWarnings?` | `string[]` | `[]` | Warning codes to suppress entirely |
 
 **Returns:** `Promise<RenderResult>` — a discriminated union on `ok`:
 
@@ -55,6 +57,28 @@ if (result.ok) {
   console.log(result.text);
 }
 ```
+
+**Warnings:**
+
+Warning codes use the `warn_` prefix convention. When `ok` is `true`, any warnings appear in the `errors` array. You can control warning behavior with two options:
+
+- **Suppress specific warnings** with `ignoreWarnings` — the warning is dropped entirely:
+  ```typescript
+  const result = await render(element, { ignoreWarnings: ['warn_missing_task'] });
+  ```
+- **Promote warnings to errors** with `throwOnWarnings` — all warnings cause `ok: false`:
+  ```typescript
+  const result = await render(element, { throwOnWarnings: true });
+  ```
+
+Current warning codes:
+
+| Code | Component | Condition |
+|------|-----------|-----------|
+| `warn_missing_task` | Prompt | No `<Task>` child found |
+| `warn_conflicting_instructions` | Prompt | `<Format strict>` and `<ChainOfThought showReasoning>` used together |
+
+Use `isWarningCode(code)` to check whether a `RenderError` code is a warning.
 
 ### `createPrompt(filePath, options?)`
 
