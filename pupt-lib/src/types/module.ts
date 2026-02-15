@@ -20,6 +20,8 @@ export interface ResolvedModuleEntry {
   promptDirs?: string[];
   /** Version string (semver for npm, commit hash for git, etc.) */
   version?: string;
+  /** Git branch name (only used for type: 'git'). Defaults to 'master'. */
+  branch?: string;
 }
 
 /**

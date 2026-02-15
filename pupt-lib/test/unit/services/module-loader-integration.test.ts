@@ -106,7 +106,7 @@ describe('ModuleLoader Integration Tests', () => {
 
       // Verify loadUrl was called with the correct raw GitHub URL
       expect(loadUrlSpy).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/acme/prompts/main/index.js',
+        'https://raw.githubusercontent.com/acme/prompts/master/index.js',
       );
     });
 

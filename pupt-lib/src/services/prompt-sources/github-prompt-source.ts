@@ -66,7 +66,7 @@ export class GitHubPromptSource implements PromptSource {
     const parsed = parseGitHubSource(ownerRepo);
     this.owner = parsed.owner;
     this.repo = parsed.repo;
-    this.ref = options?.ref ?? parsed.ref ?? 'main';
+    this.ref = options?.ref ?? parsed.ref ?? 'master';
     this.token = options?.token;
     this.promptDirs = options?.promptDirs;
   }

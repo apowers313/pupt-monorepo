@@ -159,7 +159,7 @@ describe('ResolvedModuleEntry', () => {
 
       const library = await loader.loadEntry(entry);
 
-      expect(loadGitSpy).toHaveBeenCalledWith('https://github.com/user/repo', undefined);
+      expect(loadGitSpy).toHaveBeenCalledWith('https://github.com/user/repo', undefined, undefined);
       expect(library.name).toBe('git-lib');
     });
 
@@ -226,6 +226,7 @@ describe('ResolvedModuleEntry', () => {
       expect(loadGitSpy).toHaveBeenCalledWith(
         'https://github.com/user/repo',
         ['prompts', 'templates'],
+        undefined,
       );
     });
 

@@ -95,13 +95,13 @@ describe('GitHubPromptSource', () => {
     expect(treeCall?.[0].toString()).toContain('/git/trees/v1.0.0');
   });
 
-  it('should default to main branch', async () => {
+  it('should default to master branch', async () => {
     fetchSpy.mockImplementation(async (input: RequestInfo | URL) => {
       const url = input.toString();
-      if (url.includes('/git/trees/main')) {
+      if (url.includes('/git/trees/master')) {
         return new Response(JSON.stringify(mockTreeResponse), { status: 200 });
       }
-      if (url.includes('/main/')) {
+      if (url.includes('/master/')) {
         if (url.includes('greeting.prompt')) {
           return new Response(greetingContent, { status: 200 });
         }
@@ -117,11 +117,11 @@ describe('GitHubPromptSource', () => {
 
     expect(prompts).toHaveLength(2);
 
-    // Verify default ref is 'main'
+    // Verify default ref is 'master'
     const treeCall = fetchSpy.mock.calls.find(
       call => call[0].toString().includes('/git/trees/'),
     );
-    expect(treeCall?.[0].toString()).toContain('/git/trees/main');
+    expect(treeCall?.[0].toString()).toContain('/git/trees/master');
   });
 
   it('should return empty array for repos without prompts/ directory', async () => {

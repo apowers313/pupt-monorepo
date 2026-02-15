@@ -164,7 +164,7 @@ describe('ModuleLoader Real Code Paths', () => {
       }
 
       expect(loadUrlSpy).toHaveBeenCalledWith(
-        'https://raw.githubusercontent.com/myuser/myrepo/main/index.js',
+        'https://raw.githubusercontent.com/myuser/myrepo/master/index.js',
       );
     });
 

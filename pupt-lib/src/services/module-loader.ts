@@ -117,7 +117,7 @@ export class ModuleLoader {
    * to the appropriate prompt source.
    */
   async loadResolvedEntry(entry: ResolvedModuleEntry): Promise<LoadedLibrary> {
-    const { name, type, source, promptDirs, version } = entry;
+    const { name, type, source, promptDirs, version, branch } = entry;
 
     // Check dedup cache using the normalized source
     const normalizedSource = this.normalizeSource(source, type);
@@ -138,7 +138,7 @@ export class ModuleLoader {
       }
     }
 
-    const promise = this.doLoad(type, source, promptDirs);
+    const promise = this.doLoad(type, source, promptDirs, branch);
     this.loading.set(normalizedSource, promise);
 
     try {
@@ -349,6 +349,7 @@ export class ModuleLoader {
     type: ResolvedModuleEntry['type'],
     source: string,
     promptDirs?: string[],
+    branch?: string,
   ): Promise<LoadedLibrary> {
     switch (type) {
       case 'local':
@@ -358,7 +359,7 @@ export class ModuleLoader {
       case 'url':
         return this.loadUrl(source);
       case 'git':
-        return this.loadGit(source, promptDirs);
+        return this.loadGit(source, promptDirs, branch);
       default:
         throw new Error(`Unsupported module type: ${type}`);
     }
@@ -531,7 +532,7 @@ export class ModuleLoader {
    * Load a module from a Git source (GitHub URL).
    * Extracts owner/repo from the URL, tries JS import and .prompt file discovery.
    */
-  private async loadGit(source: string, promptDirs?: string[]): Promise<LoadedLibrary> {
+  private async loadGit(source: string, promptDirs?: string[], branch?: string): Promise<LoadedLibrary> {
     // Extract owner/repo from various git URL formats
     const match = source.match(/github\.com[/:]([^/]+)\/([^/.#]+)/);
     if (!match) {
@@ -540,9 +541,10 @@ export class ModuleLoader {
 
     const [, owner, repo] = match;
 
-    // Extract ref from URL fragment if present (e.g., "...#v1.0")
+    // Branch priority: explicit branch param > URL fragment > default 'master'
     const hashIndex = source.indexOf('#');
-    const ref = hashIndex !== -1 ? source.slice(hashIndex + 1) : undefined;
+    const fragmentRef = hashIndex !== -1 ? source.slice(hashIndex + 1) : undefined;
+    const ref = branch ?? fragmentRef;
 
     let components: Record<string, ComponentType> = {};
     let dependencies: string[] = [];
@@ -550,7 +552,7 @@ export class ModuleLoader {
 
     // Try to import as a JS module from GitHub
     try {
-      const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref ?? 'main'}/index.js`;
+      const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref ?? 'master'}/index.js`;
       const library = await this.loadUrl(url);
       components = library.components;
       dependencies = library.dependencies;
