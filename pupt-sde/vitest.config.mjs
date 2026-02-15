@@ -5,5 +5,8 @@ export default defineConfig({
     include: ["test/**/*.test.mjs"],
     testTimeout: 10000,
     pool: "forks",
+    env: {
+      TZ: "UTC",
+    },
   },
 });
