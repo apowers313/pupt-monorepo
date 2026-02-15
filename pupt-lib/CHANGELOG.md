@@ -1,3 +1,12 @@
+## [1.3.6](https://github.com/apowers313/pupt-lib/compare/v1.3.5...v1.3.6) (2026-02-15)
+
+
+### Bug Fixes
+
+* detect conflicting Format strict + ChainOfThought instructions ([f030f34](https://github.com/apowers313/pupt-lib/commit/f030f3408b9389b3e13ff1720c78254fc0b4e4f9)), closes [#36](https://github.com/apowers313/pupt-lib/issues/36)
+* refactor prompt and component modules ([55c62e1](https://github.com/apowers313/pupt-lib/commit/55c62e1d0e862a68a482023377a68d3716eaf595))
+* stop Role from appending disjointed text when children are specified ([b3e5e8e](https://github.com/apowers313/pupt-lib/commit/b3e5e8e9fcafc92f18f71efc996cfe1438505f87)), closes [#37](https://github.com/apowers313/pupt-lib/issues/37)
+
 ## [1.3.5](https://github.com/apowers313/pupt-lib/compare/v1.3.4...v1.3.5) (2026-02-11)
 
 
