@@ -1,0 +1,11 @@
+#!/bin/sh
+# Pre-push hook: runs lint (including knip) and fast tests
+#
+# This script runs build, lint, knip, and fast tests (no browser/chromatic tests)
+# to catch issues before pushing to remote.
+#
+# To skip this hook: git push --no-verify
+# To run manually: pnpm run prepush:fast
+
+# Run the prepush validation script
+pnpm run prepush:fast

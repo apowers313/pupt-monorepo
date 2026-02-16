@@ -1,0 +1,5 @@
+packages:
+    - "pupt"
+    - "pupt-lib"
+    - "pupt-react"
+    - "pupt-sde"

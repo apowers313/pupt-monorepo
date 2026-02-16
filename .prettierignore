@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+coverage/
+
+# Generated files
+*.min.js
+*.bundle.js
+
+# Package manager
+pnpm-lock.yaml
+
+# Git
+.git/
+
+# Temporary files
+tmp/
+
+# Design documents (markdown with intentional formatting)
+design/
+
+# Documentation builds
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+
+# Claude config
+.claude/

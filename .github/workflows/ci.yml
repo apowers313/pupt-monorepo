@@ -1,0 +1,221 @@
+name: CI
+
+on:
+    push:
+        branches: [master]
+    pull_request:
+
+jobs:
+    # Lint PR titles with commitlint
+    lint-pr:
+        name: Lint PR Title
+        if: github.event_name == 'pull_request'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.x
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Lint PR title
+              run: echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint
+
+    # Build job - runs once, shares artifacts with test shards
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.x
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Security audit
+              run: pnpm audit --audit-level=high
+
+            - name: Cache Nx
+              uses: actions/cache@v4
+              with:
+                  path: .nx/cache
+                  key: nx-${{ runner.os }}-build-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+                  restore-keys: |
+                      nx-${{ runner.os }}-build-${{ hashFiles('pnpm-lock.yaml') }}-
+                      nx-${{ runner.os }}-build-
+
+            # PR: Build and lint affected packages only
+            - name: Build affected (PR)
+              if: github.event_name == 'pull_request'
+              run: pnpm exec nx affected -t build --parallel=3
+
+            - name: Lint affected (PR)
+              if: github.event_name == 'pull_request'
+              run: pnpm exec nx affected -t lint --parallel=3
+
+            # Master: Build and lint all packages
+            - name: Build all (master)
+              if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+              run: pnpm exec nx run-many -t build --parallel=3
+
+            - name: Lint all (master)
+              if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+              run: pnpm exec nx run-many -t lint --parallel=3
+
+            - name: Upload pupt-lib build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-pupt-lib
+                  path: pupt-lib/dist/
+                  retention-days: 1
+
+            - name: Upload pupt build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-pupt
+                  path: pupt/dist/
+                  retention-days: 1
+
+            - name: Upload pupt-react build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-pupt-react
+                  path: pupt-react/dist/
+                  retention-days: 1
+
+    # Sharded test jobs - run in parallel, collect coverage
+    test:
+        name: Test (${{ matrix.shard }})
+        needs: build
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                shard:
+                    - pupt
+                    - pupt-lib-node
+                    - pupt-lib-browser
+                    - pupt-react
+                    - pupt-sde
+                include:
+                    - shard: pupt
+                      package: pupt
+                      test-command: cd pupt && pnpm exec vitest run --no-coverage
+                      needs-browser: false
+                    - shard: pupt-lib-node
+                      package: pupt-lib
+                      test-command: cd pupt-lib && pnpm exec vitest run --project=node --coverage
+                      needs-browser: false
+                    - shard: pupt-lib-browser
+                      package: pupt-lib
+                      test-command: cd pupt-lib && pnpm exec vitest run --project=browser --coverage
+                      needs-browser: true
+                    - shard: pupt-react
+                      package: pupt-react
+                      test-command: cd pupt-react && pnpm exec vitest run --coverage
+                      needs-browser: true
+                    - shard: pupt-sde
+                      package: pupt-sde
+                      test-command: cd pupt-sde && pnpm exec vitest run
+                      needs-browser: false
+
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.x
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Download pupt-lib build
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-lib
+                  path: pupt-lib/dist/
+
+            - name: Download pupt build
+              if: matrix.shard == 'pupt'
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt
+                  path: pupt/dist/
+
+            - name: Download pupt-react build
+              if: matrix.shard == 'pupt-react'
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-react
+                  path: pupt-react/dist/
+
+            - name: Cache Playwright browsers
+              if: matrix.needs-browser
+              uses: actions/cache@v4
+              id: playwright-cache
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+            - name: Install Playwright browsers
+              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit != 'true'
+              run: pnpm exec playwright install chromium --with-deps
+
+            - name: Install Playwright deps (if cached)
+              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit == 'true'
+              run: pnpm exec playwright install-deps chromium
+
+            - name: Run tests
+              run: ${{ matrix.test-command }}
+
+            - name: Upload coverage
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-${{ matrix.shard }}
+                  path: ${{ matrix.package }}/coverage/lcov.info
+                  retention-days: 1
+                  if-no-files-found: ignore
+
+    # Gate job - ensures all required checks pass before release
+    all-checks:
+        name: All Checks Pass
+        needs: [test]
+        if: always()
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check all jobs passed
+              run: |
+                  if [[ "${{ needs.test.result }}" != "success" ]]; then
+                    echo "Test job failed"
+                    exit 1
+                  fi
+                  echo "All checks passed!"
