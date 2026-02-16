@@ -1,0 +1,56 @@
+{
+  "name": "pupt-sde",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --passWithNoTests",
+    "lint": "eslint test/",
+    "check": "npm run lint && npm run test",
+    "prepare": "husky",
+    "commit": "cz"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/apowers313/pupt-sde"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "files": [
+    "prompts",
+    "README.md",
+    "LICENSE"
+  ],
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.4",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "commitizen": "^4.3.1",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^10.0.0",
+    "husky": "^9.1.7",
+    "pupt": "^2.2.1",
+    "semantic-release": "^25.0.3",
+    "vitest": "^3.0.4"
+  },
+  "peerDependencies": {
+    "pupt-lib": "^1.3.5"
+  }
+}

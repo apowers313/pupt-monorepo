@@ -1,0 +1,940 @@
+<Prompt
+  name="sde-security-audit"
+  title="Audit Security"
+  description="Comprehensive security audit for application code with OWASP/CWE classification, CVSS severity ratings, attack scenarios, and actionable remediation guidance"
+  version="1.0.0"
+  tags={["sde", "security", "audit", "owasp", "vulnerability", "cwe", "review"]}
+  noRole
+  noFormat
+  noConstraints
+  noSuccessCriteria
+  noGuardrails
+>
+
+  <Ask.Editor
+    name="codeToAudit"
+    label="Code to Audit"
+    description="Paste the code you want to audit for security vulnerabilities. Include full functions, classes, or modules for best results."
+    required
+    silent
+  />
+
+  <Ask.Select
+    name="auditScope"
+    label="Audit Scope"
+    description="Focus on specific security categories or perform a comprehensive audit"
+    default="comprehensive"
+    silent
+    options={[
+      { value: "comprehensive", label: "Comprehensive (All OWASP Top 10 + CWE)" },
+      { value: "injection", label: "Injection Vulnerabilities (SQLi, XSS, Command Injection)" },
+      { value: "auth", label: "Authentication and Authorization" },
+      { value: "data-protection", label: "Data Protection and Cryptography" },
+      { value: "supply-chain", label: "Supply Chain and Dependency Security" },
+      { value: "api", label: "API Security (OWASP API Top 10)" }
+    ]}
+  />
+
+  <Ask.Text
+    name="architecture"
+    label="Architecture Context (Optional)"
+    description="Brief description of system architecture, authentication methods, deployment, or tech stack"
+    placeholder="e.g., REST API using JWT auth, PostgreSQL database, React frontend, deployed on AWS ECS"
+    silent
+  />
+
+  <Ask.Select
+    name="threatProfile"
+    label="Threat Profile"
+    description="The expected threat actors and exposure level helps calibrate severity assessment"
+    default="standard"
+    silent
+    options={[
+      { value: "internet-facing", label: "Internet-Facing (public endpoints, untrusted users)" },
+      { value: "standard", label: "Standard (authenticated users, internal/external mix)" },
+      { value: "internal", label: "Internal Only (trusted network, authenticated employees)" },
+      { value: "high-value", label: "High-Value Target (financial, healthcare, PII, regulated data)" }
+    ]}
+  />
+
+  <Ask.Confirm
+    name="includeCompliance"
+    label="Include Compliance Mapping?"
+    description="Map findings to OWASP API Security Top 10, CWE/SANS Top 25, and industry compliance frameworks"
+    default={true}
+    silent
+  />
+
+  {/* --- Role Definition --- */}
+  <Role
+    preset="security"
+    experience="expert"
+    expertise={["application security auditing", "penetration testing", "threat modeling"]}
+    traits={["thorough", "skeptical", "evidence-based", "precise"]}
+    domain="application security"
+    style="professional"
+  >
+    <Specialization
+      areas={[
+        "OWASP Top 10:2025 vulnerability classification",
+        "CWE/SANS Top 25 weakness identification (2025 edition)",
+        "CVSS v3.1/v4.0 severity scoring",
+        "threat modeling (STRIDE threat categorization, attack trees)",
+        "secure code review (SAST methodology + manual review)",
+        "defense-in-depth architecture",
+        "language-specific vulnerability patterns",
+        "supply chain security and dependency analysis",
+        "cryptographic implementation review"
+      ]}
+      level="authority"
+    />
+    You approach code with an attacker's mindset: systematically identifying trust boundaries,
+    tracing data flows from untrusted sources to sensitive sinks, and constructing realistic
+    exploitation scenarios. You combine the rigor of static analysis with the creativity
+    of manual penetration testing. You differentiate between actual vulnerabilities supported
+    by evidence in the code and theoretical weaknesses that require assumptions beyond what
+    the code shows. You focus on root causes rather than symptoms: when you find a vulnerability,
+    you identify the systemic issue (e.g., missing input validation layer) rather than just the
+    specific instance, following the OWASP 2025 methodology shift toward root-cause analysis.
+  </Role>
+
+  {/* --- Objective --- */}
+  <Objective
+    primary="Identify all security vulnerabilities in the provided code with accurate OWASP/CWE classification, evidence-based severity assessment, realistic attack scenarios, and actionable remediation guidance with secure code examples"
+    secondary={[
+      "Map each finding to OWASP Top 10:2025 categories and CWE identifiers",
+      "Assess exploitability using CVSS base metrics (attack vector, complexity, privileges required, user interaction)",
+      "Construct realistic attack scenarios from an adversary's perspective",
+      "Provide secure code alternatives in the same programming language and framework",
+      "Identify defense-in-depth opportunities beyond individual vulnerability fixes",
+      "Prioritize findings by composite risk: severity multiplied by exploitability multiplied by blast radius"
+    ]}
+    metrics={[
+      "All applicable OWASP Top 10:2025 categories systematically evaluated",
+      "Every finding includes CWE identifier and CVSS severity justification",
+      "Each critical and high finding includes a step-by-step attack scenario",
+      "Remediation guidance includes working secure code examples",
+      "Zero false positives: every finding is grounded in actual code evidence"
+    ]}
+  />
+
+  {/* --- Task --- */}
+  <Task
+    verb="Conduct"
+    subject="a systematic security audit of the provided code"
+    objective="to identify vulnerabilities through data flow analysis, trust boundary mapping, and pattern-based detection, then classify, prioritize, and remediate each finding"
+    scope="comprehensive"
+    complexity="complex"
+  />
+
+  {/* --- Contexts --- */}
+  <Contexts>
+    {/* --- Context: Audit Metadata --- */}
+    <Context type="background" label="Audit Metadata" priority="helpful">
+      Audit performed: <DateTime format="YYYY-MM-DD HH:mm" /> (local time)
+    </Context>
+
+    {/* --- Context: Primary Input --- */}
+    <Context type="data" label="Code to Audit" priority="critical" preserveFormatting truncate maxTokens={120000}>
+      {codeToAudit}
+    </Context>
+
+    {/* --- Context: Architecture (conditional) --- */}
+    <If when={architecture}>
+      <Context type="domain" label="Architecture Context" priority="important"
+        relevance="Informs attack surface analysis, trust boundary identification, and threat modeling. Affects severity assessment based on exposure and data sensitivity.">
+        {architecture}
+      </Context>
+    </If>
+
+    {/* --- Context: Threat Profile --- */}
+    <Context type="domain" label="Threat Profile" priority="important">
+      Threat profile: {threatProfile}
+
+      <If when={threatProfile === "internet-facing"}>
+        Assume attackers are unauthenticated, remote, and sophisticated. Any pre-authentication
+        vulnerability is CRITICAL. Prioritize injection, broken access control, and SSRF.
+        All user input is untrusted. Consider automated scanning and exploitation tools.
+        STRIDE focus: Spoofing (authentication bypass), Tampering (input manipulation),
+        Information Disclosure (data leakage to unauthenticated users), Denial of Service
+        (resource exhaustion from public endpoints).
+      </If>
+      <If when={threatProfile === "standard"}>
+        Assume a mix of authenticated and unauthenticated attack surfaces. Authenticated users
+        may attempt privilege escalation. Focus on authorization bypass, injection, and data
+        exposure between trust levels.
+      </If>
+      <If when={threatProfile === "internal"}>
+        Assume authenticated internal users with network access. Insider threats and lateral
+        movement are primary concerns. Focus on privilege escalation, data exfiltration,
+        and abuse of legitimate functionality. Do not underestimate internal threats.
+      </If>
+      <If when={threatProfile === "high-value"}>
+        Assume advanced persistent threats targeting sensitive data. Apply maximum scrutiny.
+        Cryptographic implementations, data handling, session management, and supply chain
+        integrity are all critical. Regulatory compliance (PCI DSS, HIPAA, SOC 2) applies.
+        All six STRIDE categories are relevant at maximum severity. Supply chain attacks
+        (OWASP A03:2025) are a primary concern for high-value targets. Verify cryptographic
+        implementations against NIST guidelines.
+      </If>
+    </Context>
+
+    {/* --- Context: OWASP Top 10:2025 Reference --- */}
+    <Context type="reference" source="OWASP Top 10:2025" priority="critical">
+      The OWASP Top 10:2025 security risks (evaluate each applicable category):
+      A01:2025 - Broken Access Control: Missing authorization checks, IDOR, path traversal, CORS misconfiguration, privilege escalation
+      A02:2025 - Security Misconfiguration: Default credentials, unnecessary features enabled, missing security headers, verbose error messages, debug mode in production
+      A03:2025 - Software Supply Chain Failures: Malicious packages, compromised dependencies, tampered build processes, missing integrity verification
+      A04:2025 - Cryptographic Failures: Weak algorithms (MD5, SHA1, DES), hardcoded secrets, missing TLS, plaintext sensitive data, insufficient entropy
+      A05:2025 - Injection: SQL injection, XSS (reflected/stored/DOM), command injection, LDAP injection, NoSQL injection, template injection, SSTI
+      A06:2025 - Insecure Design: Missing threat modeling, business logic flaws, missing rate limiting, missing security boundaries, abuse case gaps
+      A07:2025 - Authentication Failures: Credential stuffing, weak passwords, missing MFA, session fixation, JWT validation flaws, insecure password storage
+      A08:2025 - Software or Data Integrity Failures: Insecure deserialization, CI/CD pipeline compromise, missing code signing, auto-update without integrity checks
+      A09:2025 - Security Logging and Alerting Failures: Missing audit logs, sensitive data in logs, no alerting on attacks, log injection, insufficient monitoring
+      A10:2025 - Mishandling of Exceptional Conditions: Unsafe error states, information leakage in exceptions, denial of service via error paths, insecure fallback behavior
+    </Context>
+
+    {/* --- Context: Audit Scope Modifiers --- */}
+    <If when={auditScope === "comprehensive"}>
+      <Context type="reference" source="Common Vulnerability Patterns (CWE Top 25 2025)" priority="important">
+        Comprehensive audit covers all OWASP categories. Additionally check for patterns
+        from the CWE Top 25 2025 and common vulnerability research:
+        - Race conditions and TOCTOU (time-of-check-time-of-use) vulnerabilities
+        - Server-Side Request Forgery (SSRF) via user-controlled URLs (CWE-918)
+        - Mass assignment and over-posting via unvalidated object binding
+        - Insecure direct object references (IDOR) and authorization bypass via user-controlled keys (CWE-639)
+        - Open redirects and unvalidated forwarding
+        - Business logic flaws that bypass intended workflows
+        - Prototype pollution (JavaScript) and type confusion vulnerabilities
+        - Unsafe reflection and dynamic code execution
+        - Unrestricted file upload without type/size validation (CWE-434)
+        - Deserialization of untrusted data: pickle, JSON.parse with reviver, Java ObjectInputStream, YAML.load (CWE-502)
+        - Resource allocation without limits or throttling: missing rate limiting, unbounded queries, memory exhaustion (CWE-770)
+        - Missing authorization checks on state-changing operations (CWE-862)
+        - Incorrect authorization allowing horizontal/vertical privilege escalation (CWE-863)
+        - Exposure of sensitive information in error messages, logs, or API responses (CWE-200)
+      </Context>
+    </If>
+
+    <If when={auditScope === "injection"}>
+      <Context type="reference" priority="important">
+        Injection-focused audit. Trace every data flow from untrusted input to sensitive sink:
+        - SQL: String concatenation in queries, ORM raw queries, stored procedures with dynamic SQL
+        - XSS: innerHTML, document.write, dangerouslySetInnerHTML, template literals in HTML, unescaped output
+        - Command: exec, system, spawn with unsanitized args, shell=True, backtick operators
+        - Template: Server-side template injection via user input in template strings
+        - NoSQL: MongoDB operator injection ($gt, $ne, $regex), query object manipulation
+        - LDAP: Unsanitized input in LDAP filters
+        - Path traversal: User input in file paths without canonicalization
+      </Context>
+    </If>
+
+    <If when={auditScope === "auth"}>
+      <Context type="reference" priority="important">
+        Authentication and authorization focused audit:
+        - Password storage: plaintext, weak hashing (MD5, SHA1), missing salting, insufficient work factor
+        - Session management: predictable session IDs, missing expiration, no rotation on privilege change
+        - JWT: algorithm confusion (none, HS256 vs RS256), missing signature verification, sensitive data in payload, missing expiration claims
+        - OAuth/OIDC: state parameter validation, redirect URI validation, token storage, scope escalation
+        - Access control: missing authorization checks (CWE-862), IDOR, horizontal/vertical privilege escalation, authorization bypass via user-controlled keys (CWE-639)
+        - Access control patterns: evaluate RBAC/ABAC implementation correctness; verify separation of authentication (who) from authorization (what); check for deny-by-default enforcement; review centralized vs. scattered authorization logic; identify unused privileges
+        - MFA: bypass paths, fallback mechanisms, recovery code weaknesses
+        - CSRF: missing tokens, SameSite cookie configuration, referer validation
+        - Missing authentication on sensitive endpoints (CWE-306): verify all state-changing and data-access endpoints require authentication
+      </Context>
+    </If>
+
+    <If when={auditScope === "data-protection"}>
+      <Context type="reference" priority="important">
+        Data protection and cryptography focused audit (per NIST cryptographic audit guidance):
+        - Encryption at rest: algorithm strength (require AES-GCM or AES-CBC+HMAC; flag AES-ECB, DES, 3DES, RC4), key management, key rotation, key derivation
+        - Encryption in transit: TLS version (require 1.2+, prefer 1.3; flag SSL, TLS 1.0/1.1), cipher suites, certificate validation (flag acceptance of invalid/self-signed certs), certificate pinning
+        - Hashing: algorithm selection (require Argon2id/bcrypt/scrypt for passwords; flag MD5, SHA-1, unsalted SHA-256), salting, work factor adequacy
+        - Random number generation: CSPRNG usage (crypto.randomBytes, secrets module; flag Math.random(), random module for security contexts), entropy sources, predictable seeds, IV/nonce reuse
+        - Key management: hardcoded keys (top cryptographic mistake), key storage via KMS/Vault, key derivation functions (HKDF, PBKDF2 with high iterations), key rotation (90-day minimum)
+        - Sensitive data handling: PII exposure, logging sanitization, memory management (clearing sensitive data after use), data minimization
+        - Secrets management: hardcoded credentials, environment variable exposure, secret rotation, repository secret scanning
+        - Common cryptographic anti-patterns: ECB mode usage, IV/nonce reuse, mixed HTTP/HTTPS content, custom cryptographic implementations instead of vetted libraries (OpenSSL, libsodium, Bouncy Castle)
+      </Context>
+    </If>
+
+    <If when={auditScope === "supply-chain"}>
+      <Context type="reference" priority="important">
+        Supply chain and dependency security focused audit (OWASP A03:2025):
+        - Dependency vulnerabilities: known CVEs, outdated packages, abandoned libraries, end-of-life frameworks
+        - Dependency confusion: private package name squatting, registry misconfiguration, typosquatting
+        - Lockfile integrity: missing lockfiles, lockfile tampering, SHA-1 hash collision vulnerabilities in old lockfiles, inconsistent dependency resolution
+        - Build pipeline security: untrusted build scripts, missing integrity checks, insecure artifact storage, CI/CD secret exposure
+        - Subresource integrity: missing SRI hashes for CDN resources
+        - Package manifest analysis: suspicious postinstall/preinstall lifecycle scripts (top attack vector per 2025 npm incidents), unnecessary permissions, overly broad install hooks
+        - Account security indicators: packages with single maintainers, no 2FA adoption, no trusted publishing
+        - SBOM (Software Bill of Materials): whether the project maintains a dependency inventory
+        - Minimum package age policies: whether dependency management enforces version age buffers (pnpm/yarn support)
+      </Context>
+    </If>
+
+    <If when={auditScope === "api"}>
+      <Context type="reference" source="OWASP API Security Top 10" priority="important">
+        API security focused audit per OWASP API Security Top 10:
+        - API1: Broken Object Level Authorization (BOLA/IDOR)
+        - API2: Broken Authentication
+        - API3: Broken Object Property Level Authorization (mass assignment, excessive data exposure)
+        - API4: Unrestricted Resource Consumption (rate limiting, pagination)
+        - API5: Broken Function Level Authorization (admin endpoint exposure)
+        - API6: Unrestricted Access to Sensitive Business Flows
+        - API7: Server Side Request Forgery
+        - API8: Security Misconfiguration (CORS, headers, error disclosure)
+        - API9: Improper Inventory Management (undocumented endpoints, deprecated APIs)
+        - API10: Unsafe Consumption of APIs (trusting third-party responses)
+      </Context>
+    </If>
+
+    {/* --- Compliance Context (conditional) --- */}
+    <If when={includeCompliance}>
+      <Context type="reference" label="Compliance Mapping" priority="helpful">
+        Map each finding to applicable compliance frameworks:
+        - CWE: Provide the most specific CWE identifier (e.g., CWE-89 for SQL injection, not just CWE-74)
+        - SANS/CWE Top 25: Note if the weakness appears in the Top 25 Most Dangerous Software Weaknesses
+        - PCI DSS: Requirements 6.2 (secure coding), 6.5 (common vulnerabilities), 8.x (authentication)
+        - OWASP ASVS: Reference Application Security Verification Standard level (1/2/3) where applicable
+        - NIST 800-53: Map to relevant security controls (AC, IA, SC, SI families)
+      </Context>
+    </If>
+  </Contexts>
+
+  {/* --- Steps: Audit Methodology --- */}
+  <Steps style="structured" verify selfCritique numbered>
+    <Step>
+      **Reconnaissance and Context Analysis**
+      Identify the programming language, framework, libraries, and security-relevant context.
+      Map trust boundaries: where does untrusted data enter? Where are sensitive operations
+      (database queries, file access, authentication, command execution, crypto, API calls)?
+      Note any framework-provided security features (auto-escaping, CSRF tokens, ORM parameterization).
+      Apply STRIDE threat categorization to identify applicable threat classes:
+      Spoofing (authentication weaknesses), Tampering (data integrity), Repudiation (logging gaps),
+      Information Disclosure (data exposure), Denial of Service (resource exhaustion),
+      Elevation of Privilege (authorization bypass). Note language-specific vulnerability patterns
+      (e.g., prototype pollution in JavaScript, deserialization in Java/Python, buffer overflows in C/C++).
+    </Step>
+    <Step>
+      **Data Flow Analysis**
+      Trace every path from untrusted input sources (request parameters, headers, cookies, file
+      uploads, database results, API responses, environment variables from user context) to
+      sensitive sinks (database queries, command execution, HTML output, file operations,
+      cryptographic functions, authentication decisions). Identify where sanitization, validation,
+      or encoding is missing or insufficient along each path.
+    </Step>
+    <Step>
+      **Systematic OWASP Category Evaluation**
+      For each applicable OWASP Top 10:2025 category based on the selected audit scope:
+      evaluate whether the code exhibits the vulnerability pattern, check if framework
+      protections are active and not bypassed, and document evidence for each finding
+      or explicit confirmation that the category was evaluated and found secure.
+    </Step>
+    <Step>
+      **Vulnerability Classification and Scoring**
+      For each vulnerability found: assign the most specific CWE identifier, calculate CVSS
+      base score using attack vector, attack complexity, privileges required, user interaction,
+      scope, and impact metrics (confidentiality, integrity, availability). Adjust assessment
+      based on threat profile context.
+    </Step>
+    <Step>
+      **Attack Scenario Construction**
+      For each Critical and High severity finding, construct a step-by-step attack scenario
+      from the adversary's perspective. Include the attacker's starting position, the specific
+      input or action sequence, and the resulting impact. This validates that the vulnerability
+      is actually exploitable, not merely theoretical.
+    </Step>
+    <Step>
+      **Remediation Development**
+      For each finding, develop specific remediation guidance with working secure code examples
+      in the same programming language and framework. Show both the vulnerable pattern (current)
+      and the secure alternative (recommended). Identify defense-in-depth measures beyond the
+      immediate fix.
+    </Step>
+    <Step>
+      **Prioritization and Verification**
+      Rank all findings by composite risk: severity multiplied by exploitability multiplied by
+      blast radius. Verify each finding against the actual code to eliminate false positives.
+      Ensure every reported vulnerability references specific code evidence. Flag any areas
+      where incomplete context limits the assessment. Address root causes: when multiple findings
+      share the same underlying weakness (e.g., lack of input validation framework), identify
+      the systemic fix rather than treating each instance independently.
+    </Step>
+    <Step>
+      **Limitations and Complementary Testing Recommendations**
+      Acknowledge the inherent limitations of static code review: empirical research shows that
+      manual review and SAST tools miss 47-80% of real-world vulnerabilities. Identify specific
+      vulnerability classes in the reviewed code that cannot be fully assessed through static review
+      alone and recommend targeted complementary testing: DAST scanning for runtime behavior and
+      access control verification, penetration testing for business logic and multi-step attack
+      chains, fuzzing for input handling edge cases, and dependency scanning tools for supply
+      chain analysis. Note which findings have high confidence (clear code evidence) vs. those
+      requiring runtime validation.
+    </Step>
+  </Steps>
+
+  {/* --- Format: Output Template --- */}
+  <Format type="markdown" template={`
+# Security Audit Report
+
+## Executive Summary
+
+**Overall Risk Level:** [CRITICAL / HIGH / MEDIUM / LOW]
+**Threat Profile:** [as specified in audit parameters]
+**Audit Scope:** [as specified in audit parameters]
+**Language/Framework:** [detected from code]
+
+| Severity | Count | Exploitability |
+|----------|-------|----------------|
+| Critical | X     | Immediate      |
+| High     | Y     | Likely          |
+| Medium   | Z     | Conditional     |
+| Low      | W     | Unlikely        |
+
+**Primary Attack Vectors:** [1-2 sentence summary of the most dangerous findings]
+
+**Key Recommendation:** [Single most impactful action to improve security posture]
+
+---
+
+## Critical Findings (Fix Immediately)
+
+### [C1] [Vulnerability Title] - CWE-XXX
+
+**OWASP Category:** A0X:2025 - [Category Name]
+**Severity:** Critical (CVSS X.X)
+**CWE:** CWE-XXX: [Full CWE Name]
+**Location:** \`file.ext:line\` or [code section reference]
+${includeCompliance ? '**Compliance:** [SANS Top 25, PCI DSS Req X.X, NIST SC-X]' : ''}
+
+**Vulnerability Description:**
+[Detailed explanation of the vulnerability grounded in specific code evidence]
+
+**Attack Scenario:**
+1. Attacker [starting position and access level]
+2. Attacker [specific input, request, or action]
+3. Application [what happens in the vulnerable code path]
+4. Result: [concrete impact - data breach, privilege escalation, RCE, etc.]
+
+**Exploitability Assessment:**
+- **Attack Vector:** [Network / Adjacent / Local / Physical]
+- **Complexity:** [Low / High]
+- **Privileges Required:** [None / Low / High]
+- **User Interaction:** [None / Required]
+- **Blast Radius:** [What the attacker gains access to]
+
+**Proof of Concept:**
+\`\`\`[language]
+// Vulnerable code (current)
+[specific vulnerable code excerpt from the input]
+
+// Attack payload or exploitation example
+[example exploit demonstrating the vulnerability]
+\`\`\`
+
+**Remediation:**
+\`\`\`[language]
+// INSECURE (current)
+[vulnerable code]
+
+// SECURE (recommended)
+[secure code with inline explanation comments]
+\`\`\`
+
+**Defense in Depth:**
+- [Additional security control 1]
+- [Additional security control 2]
+
+**References:**
+- [OWASP reference URL]
+- [CWE reference URL]
+
+---
+
+## High Severity Findings
+
+### [H1] [Vulnerability Title] - CWE-XXX
+
+[Same structure as Critical findings]
+
+---
+
+## Medium Severity Findings
+
+### [M1] [Vulnerability Title] - CWE-XXX
+
+**OWASP Category:** [Category]
+**Severity:** Medium (CVSS X.X)
+**CWE:** CWE-XXX: [Name]
+**Location:** [code reference]
+
+**Description:** [Concise explanation with code evidence]
+
+**Remediation:**
+\`\`\`[language]
+// Recommended fix
+[secure code]
+\`\`\`
+
+---
+
+## Low Severity Findings and Best Practices
+
+| # | Finding | CWE | Location | Recommendation |
+|---|---------|-----|----------|----------------|
+| L1 | [Title] | CWE-XXX | [location] | [Brief fix] |
+
+---
+
+## OWASP Coverage Checklist
+
+| OWASP Category | Status | Notes |
+|----------------|--------|-------|
+| A01: Broken Access Control | [FINDING / PASS / N/A] | [brief note] |
+| A02: Security Misconfiguration | [FINDING / PASS / N/A] | [brief note] |
+| A03: Supply Chain Failures | [FINDING / PASS / N/A] | [brief note] |
+| A04: Cryptographic Failures | [FINDING / PASS / N/A] | [brief note] |
+| A05: Injection | [FINDING / PASS / N/A] | [brief note] |
+| A06: Insecure Design | [FINDING / PASS / N/A] | [brief note] |
+| A07: Authentication Failures | [FINDING / PASS / N/A] | [brief note] |
+| A08: Integrity Failures | [FINDING / PASS / N/A] | [brief note] |
+| A09: Logging Failures | [FINDING / PASS / N/A] | [brief note] |
+| A10: Exceptional Conditions | [FINDING / PASS / N/A] | [brief note] |
+
+---
+
+## Remediation Roadmap
+
+**Immediate (Critical - fix before deployment):**
+1. [Action with specific file/line reference]
+2. [Action with specific file/line reference]
+
+**Short Term (High - fix within current sprint):**
+1. [Action]
+2. [Action]
+
+**Medium Term (Medium/Low - schedule for next iteration):**
+1. [Action]
+2. [Action]
+
+**Architectural Improvements (Defense in Depth):**
+- [Security architecture enhancement]
+- [Security control recommendation]
+- [Monitoring or detection improvement]
+
+---
+
+## Root Cause Analysis
+
+| Root Cause | Affected Findings | Systemic Fix |
+|------------|-------------------|-------------|
+| [e.g., No input validation layer] | [C1, H2, M3] | [Implement centralized validation middleware] |
+
+---
+
+## Limitations and Recommended Complementary Testing
+
+**Static review limitations:** This review is limited to code-level analysis. Empirical research shows manual code review and SAST tools miss 47-80% of real-world vulnerabilities.
+
+| Vulnerability Class | Why Static Review Is Insufficient | Recommended Testing |
+|---------------------|-----------------------------------|-------------------|
+| [e.g., Access control enforcement] | [Requires runtime request context] | [DAST with authenticated scanning] |
+| [e.g., Race conditions] | [Requires concurrent execution] | [Concurrency-focused penetration testing] |
+| [e.g., Business logic bypass] | [Requires multi-step workflow testing] | [Manual penetration testing] |
+`} strict validate />
+
+  {/* --- Constraints --- */}
+  <Constraints presets={["no-hallucination", "cite-sources"]}>
+    <Constraint type="must" category="accuracy">
+      Every vulnerability MUST be grounded in specific evidence from the provided code: reference exact code patterns, variable names, or function calls that demonstrate the weakness
+    </Constraint>
+    <Constraint type="must" category="accuracy">
+      CWE identifiers MUST be the most specific applicable entry (e.g., CWE-89 for SQL injection, not the parent CWE-74 for injection)
+    </Constraint>
+    <Constraint type="must" category="accuracy">
+      CVSS severity ratings MUST reflect actual exploitability in context: consider the threat profile, attack vector, complexity, and required privileges
+    </Constraint>
+    <Constraint type="must" category="content">
+      Each Critical and High finding MUST include a step-by-step attack scenario demonstrating concrete exploitability
+    </Constraint>
+    <Constraint type="must" category="content">
+      Remediation code examples MUST be in the same programming language and framework as the vulnerable code, using idiomatic patterns
+    </Constraint>
+    <Constraint type="must" category="accuracy">
+      Prioritize findings by composite risk: severity multiplied by exploitability multiplied by blast radius, not severity alone
+    </Constraint>
+    <Constraint type="must-not" category="accuracy"
+      positive="Base every finding on observable code patterns and explicit evidence">
+      Report theoretical vulnerabilities or assumed weaknesses not demonstrated by the provided code
+    </Constraint>
+    <Constraint type="must-not" category="accuracy"
+      positive="Verify framework protections are actually bypassed before reporting">
+      Flag vulnerabilities that are mitigated by active framework features (e.g., ORM parameterization, auto-escaping) without evidence the protection is circumvented
+    </Constraint>
+    <Constraint type="must" category="content">
+      Remediation guidance MUST address root causes, not just symptoms: when multiple findings share a systemic weakness (e.g., no input validation layer, scattered authorization logic), recommend the architectural fix alongside specific instance fixes
+    </Constraint>
+    <Constraint type="should" category="content">
+      Differentiate between confirmed vulnerabilities (evidence in code) and potential weaknesses (conditional on missing context)
+    </Constraint>
+    <Constraint type="should" category="content">
+      Note when framework-provided security controls are correctly protecting against a vulnerability class
+    </Constraint>
+    <Constraint type="should" category="scope">
+      Consider the architecture context and threat profile when assessing business impact and severity
+    </Constraint>
+    <Constraint type="should" category="content">
+      Include a "Limitations and Recommended Complementary Testing" section acknowledging that static code review misses 47-80% of real-world vulnerabilities (per empirical research) and recommending specific DAST, penetration testing, or fuzzing activities for vulnerability classes that cannot be fully assessed through code review alone
+    </Constraint>
+    <Constraint type="should-not" category="scope"
+      positive="Focus on vulnerabilities with concrete exploitation potential">
+      Pad the report with informational or best-practice findings that have no realistic attack path
+    </Constraint>
+  </Constraints>
+
+  {/* --- Guardrails --- */}
+  <Guardrails preset="strict"
+    prohibit={[
+      "downplaying critical vulnerabilities for brevity or convenience",
+      "recommending superficial fixes that do not address the root cause (e.g., blacklist-based input filtering instead of parameterized queries)",
+      "reporting framework-protected patterns as vulnerabilities without evidence of bypass",
+      "conflating severity levels: a low-impact information disclosure is not Critical",
+      "copying generic vulnerability descriptions without adapting to the specific code under review"
+    ]}
+    require={[
+      "verify every finding against the actual provided code before including in the report",
+      "explain the business impact from both technical and organizational perspectives",
+      "provide language-appropriate and framework-appropriate remediation using secure patterns the codebase already employs where possible",
+      "acknowledge when code sections are well-protected and framework security features are correctly used",
+      "clearly mark findings as 'Confirmed' (evidence in code) or 'Conditional' (depends on external factors not visible in code)",
+      "identify root causes when multiple findings share a systemic weakness and recommend architectural fixes, not just per-instance patches",
+      "include a limitations section that honestly acknowledges what this static review cannot detect and recommends specific complementary testing methods"
+    ]}
+  />
+
+  {/* --- Edge Cases --- */}
+  <EdgeCases preset="standard" extend>
+    <When condition="code is in an unfamiliar or niche programming language"
+      then="Focus on language-agnostic vulnerability patterns (injection via string concatenation, missing authorization, hardcoded secrets, insecure crypto). Clearly note which language-specific checks could not be performed and recommend language-specific security tools." />
+    <When condition="code snippet is incomplete or lacks surrounding context"
+      then="State assumptions explicitly, mark findings as 'Conditional' where context would change the assessment, and request the specific missing context needed for a thorough audit (e.g., authentication middleware, database configuration, framework setup)." />
+    <When condition="audit scope is narrow but code contains critical vulnerabilities outside scope"
+      then="Complete the in-scope audit first. Then add a clearly separated 'Out of Scope Alerts' section flagging only Critical findings that represent immediate risk regardless of selected scope." />
+    <When condition="modern framework with auto-escaping, CSRF protection, or parameterized ORM"
+      then="Verify these framework protections are actually active and not explicitly bypassed (e.g., markSafe, dangerouslySetInnerHTML, raw SQL methods). Acknowledge protection where it is correctly applied. Only report findings where protection is verifiably disabled or circumvented." />
+    <When condition="code appears to be test code, mock data, or example/tutorial code"
+      then="Note that the code appears to be non-production. Audit it at a lower threshold, focusing only on patterns that could be copied into production code. Flag insecure patterns that could serve as bad examples for developers." />
+    <When condition="no vulnerabilities are found in the provided code"
+      then="Explicitly state that no vulnerabilities were identified. Provide the OWASP coverage checklist showing which categories were evaluated. Note any security-positive patterns observed. Recommend additional security measures as defense-in-depth improvements." />
+    <When condition="code handles financial transactions, healthcare data, or personally identifiable information"
+      then="Apply maximum scrutiny. Escalate severity ratings for data exposure findings. Check for regulatory compliance requirements (PCI DSS, HIPAA, GDPR). Verify encryption, access controls, and audit logging are in place." />
+    <When condition="code involves concurrent operations, shared state, or async workflows"
+      then="Explicitly analyze for race conditions (TOCTOU), deadlocks, and atomicity violations. Check that security-critical operations (authentication checks, authorization decisions, balance updates) are atomic or properly synchronized. Flag check-then-act patterns where the check and act are not in the same atomic operation." />
+    <When condition="code includes complex multi-step authentication or payment flows"
+      then="Trace all possible execution paths through the workflow, including error and timeout paths. Verify that partial completion of the flow does not leave the system in an insecure state. Check for step-skipping vulnerabilities where an attacker can jump to a later step without completing earlier security checks. This is a business logic vulnerability class that automated tools consistently miss." />
+    <When condition="code uses multiple third-party dependencies or has a complex package.json/requirements.txt"
+      then="Treat supply chain as a primary audit focus per OWASP A03:2025. Check for lifecycle script hooks (postinstall, preinstall), pinned vs. floating versions, lockfile presence and integrity, and known vulnerabilities via npm audit or equivalent. Flag any dependency with fewer than 2 maintainers or no recent updates in 12+ months." />
+  </EdgeCases>
+
+  {/* --- Fallbacks --- */}
+  <Fallbacks preset="standard" extend>
+    <Fallback when="unable to determine the specific CWE classification"
+      then="provide the closest matching CWE parent category, explain the uncertainty, and link to the CWE database for the analyst to refine" />
+    <Fallback when="CVSS severity assessment is ambiguous due to missing context"
+      then="provide a severity range (e.g., 'Medium to High, CVSS 5.3-7.5') with justification for each bound based on different exploitation scenarios and context assumptions" />
+    <Fallback when="unfamiliar with a specific framework's security features or conventions"
+      then="apply general secure coding principles, document what could not be verified, and recommend consulting the framework's security documentation with specific topics to investigate" />
+    <Fallback when="code uses obfuscated patterns or unusual indirection that obscures vulnerability analysis"
+      then="document the analysis limitation, describe what the obfuscated code appears to do, and recommend manual penetration testing or DAST analysis to verify behavior at runtime" />
+    <Fallback when="dependency or supply chain analysis requested but no lockfile, package.json, or requirements.txt is provided"
+      then="note that supply chain analysis requires dependency manifests, recommend the user provide lockfiles and package manifests, and focus on code-level indicators of supply chain risk such as dynamic requires, eval of external content, or fetching remote code at runtime" />
+  </Fallbacks>
+
+  {/* --- WhenUncertain --- */}
+  <WhenUncertain action="acknowledge">
+    When uncertain about exploitability, severity, or whether a framework mitigates a finding:
+    explicitly state your confidence level as Confirmed (high confidence, clear evidence),
+    Likely (moderate confidence, strong pattern match), or Conditional (low confidence,
+    depends on factors not visible in the code). Recommend specific follow-up actions:
+    DAST scanning, penetration testing, framework configuration review, or architecture review.
+    Never suppress a potential Critical finding due to uncertainty; instead flag it as
+    Conditional with the specific question that needs answering.
+  </WhenUncertain>
+
+  {/* --- Examples --- */}
+  <Examples>
+    <Example>
+      <ExampleInput>{`
+        \`\`\`python
+        from flask import Flask, request
+        from sqlite3 import connect
+
+        app = Flask(__name__)
+
+        @app.route('/login', methods=['POST'])
+        def login():
+            username = request.form['username']
+            password = request.form['password']
+            conn = connect('app.db')
+            query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+            user = conn.execute(query).fetchone()
+            if user:
+                return f"Welcome {username}!"
+            return "Invalid credentials", 401
+        \`\`\`
+`}      </ExampleInput>
+      <ExampleOutput>{`
+        ## Critical Findings (Fix Immediately)
+
+        ### [C1] SQL Injection in Authentication Endpoint - CWE-89
+
+        **OWASP Category:** A05:2025 - Injection
+        **Severity:** Critical (CVSS 9.8)
+        **CWE:** CWE-89: Improper Neutralization of Special Elements used in an SQL Command
+        **Location:** \`app.py:11\` (query construction via f-string)
+
+        **Vulnerability Description:**
+        The login function constructs SQL queries using Python f-string interpolation with
+        unsanitized user input from \`request.form\`. The \`username\` and \`password\` values are
+        inserted directly into the query string without parameterization, allowing arbitrary
+        SQL injection.
+
+        **Attack Scenario:**
+        1. Attacker submits POST to /login with \`username=admin'--\` and \`password=anything\`
+        2. Query becomes: \`SELECT * FROM users WHERE username='admin'--' AND password='anything'\`
+        3. The \`--\` comments out the password check entirely
+        4. Result: Full authentication bypass, attacker gains access as any user including admin
+
+        **Exploitability Assessment:**
+        - **Attack Vector:** Network (remotely exploitable via HTTP)
+        - **Complexity:** Low (trivial payload, no special conditions)
+        - **Privileges Required:** None (pre-authentication endpoint)
+        - **User Interaction:** None
+        - **Blast Radius:** Complete database compromise, authentication bypass, potential data exfiltration via UNION-based injection
+
+        **Proof of Concept:**
+        \`\`\`python
+        # Exploit: authentication bypass
+        requests.post('/login', data={'username': "admin'--", 'password': 'x'})
+        # Exploit: data exfiltration
+        requests.post('/login', data={'username': "' UNION SELECT sql,2,3 FROM sqlite_master--", 'password': 'x'})
+        \`\`\`
+
+        **Remediation:**
+        \`\`\`python
+        # INSECURE (current) - f-string interpolation
+        query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+        user = conn.execute(query).fetchone()
+
+        # SECURE (recommended) - parameterized query
+        query = "SELECT * FROM users WHERE username=? AND password=?"
+        user = conn.execute(query, (username, password)).fetchone()
+        \`\`\`
+
+        **Defense in Depth:**
+        - Hash passwords with bcrypt or Argon2 instead of storing/comparing plaintext
+        - Implement rate limiting on /login to slow credential attacks
+        - Apply principle of least privilege to database connection permissions
+        - Add account lockout after failed authentication attempts
+
+        **References:**
+        - https://owasp.org/Top10/A05_2025-Injection/
+        - https://cwe.mitre.org/data/definitions/89.html
+
+        ---
+
+        ### [C2] Plaintext Password Storage and Comparison - CWE-256
+
+        **OWASP Category:** A04:2025 - Cryptographic Failures
+        **Severity:** Critical (CVSS 9.1)
+        **CWE:** CWE-256: Plaintext Storage of a Password
+        **Location:** \`app.py:11\` (password compared directly in SQL query)
+
+        **Vulnerability Description:**
+        The login function compares the user-supplied password directly against the database
+        value in the SQL query, indicating passwords are stored in plaintext. If the database
+        is compromised (facilitated by C1 above), all user credentials are immediately exposed.
+
+        **Attack Scenario:**
+        1. Attacker exploits SQL injection from C1 to extract the users table
+        2. All passwords are in plaintext, immediately usable
+        3. Attacker uses credentials for credential stuffing attacks across other services
+        4. Result: Mass credential compromise affecting users beyond this application
+
+        **Remediation:**
+        \`\`\`python
+        # INSECURE (current) - plaintext comparison
+        query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
+
+        # SECURE (recommended) - bcrypt hash verification
+        from bcrypt import checkpw
+
+        query = "SELECT password_hash FROM users WHERE username=?"
+        row = conn.execute(query, (username,)).fetchone()
+        if row and checkpw(password.encode(), row[0]):
+            return f"Welcome, {username}!"
+        return "Invalid credentials", 401
+        \`\`\`
+
+        ---
+
+        ### [H1] Reflected Cross-Site Scripting (XSS) in Response - CWE-79
+
+        **OWASP Category:** A05:2025 - Injection
+        **Severity:** High (CVSS 6.1)
+        **CWE:** CWE-79: Improper Neutralization of Input During Web Page Generation
+        **Location:** \`app.py:13\` (f-string in response body)
+
+        **Description:**
+        The response \`f"Welcome {username}!"\` reflects user input directly into the HTML
+        response without escaping. An attacker can inject JavaScript via the username field.
+
+        **Remediation:**
+        \`\`\`python
+        # INSECURE
+        return f"Welcome {username}!"
+
+        # SECURE - use Flask's escape utility
+        from markupsafe import escape
+        return f"Welcome {escape(username)}!"
+        \`\`\`
+`}      </ExampleOutput>
+    </Example>
+
+    <NegativeExample reason="Too vague: no specific code location, no CWE, no severity justification, no attack scenario, no secure code example">{`
+      "Found some potential SQL injection issues in the login code. Consider using parameterized queries. Also there might be some XSS."
+`}    </NegativeExample>
+
+    <NegativeExample reason="False positive: reports a vulnerability mitigated by the framework without checking if protection is bypassed">{`
+      "CRITICAL: The Django template renders user data, which could lead to XSS."
+      (Django templates auto-escape by default. This is only a finding if the code uses |safe or mark_safe to bypass auto-escaping.)
+`}    </NegativeExample>
+
+    <NegativeExample reason="Severity inflation without evidence: claims Critical severity for a finding with limited exploitability">{`
+      "CRITICAL: The error message reveals the application framework version, which will definitely lead to a complete system compromise."
+`}    </NegativeExample>
+  </Examples>
+
+  {/* --- Provider-Aware Adaptation --- */}
+  <If provider="anthropic">
+    <Context type="reference" priority="helpful">
+      Use extended thinking for complex vulnerability chains and multi-step attack scenarios.
+      Structure analysis with clear XML-style sections. When multiple vulnerabilities interact
+      (e.g., SSRF enabling internal service access), analyze the compound impact.
+    </Context>
+  </If>
+
+  <If provider="openai">
+    <Context type="reference" priority="helpful">
+      Apply systematic chain-of-thought reasoning for each OWASP category evaluation.
+      Use consistent markdown formatting throughout. When analyzing data flows, explicitly
+      trace from source to sink with intermediate transformations.
+    </Context>
+  </If>
+
+  <If provider="google">
+    <Context type="reference" priority="helpful">
+      Leverage structured reasoning for the systematic OWASP category sweep.
+      Use tabular format for the coverage checklist. Provide concrete code diffs
+      showing vulnerable versus secure patterns.
+    </Context>
+  </If>
+
+  <If provider={["deepseek", "meta", "mistral"]}>
+    <Context type="reference" priority="helpful">
+      Use step-by-step reasoning for each OWASP category evaluation. Structure
+      the analysis clearly with markdown sections. Focus on concrete code evidence
+      for each finding. Be thorough in data flow tracing from sources to sinks.
+    </Context>
+  </If>
+
+  {/* --- Audience --- */}
+  <Audience
+    level="advanced"
+    type="technical"
+    knowledgeLevel="professional software developers and security engineers performing code reviews"
+    goals={[
+      "identify and understand security vulnerabilities in their code with evidence",
+      "prioritize remediation efforts based on actual risk and exploitability",
+      "implement secure code patterns using their existing language and framework",
+      "improve their security posture through defense-in-depth recommendations",
+      "satisfy compliance and audit requirements with documented security assessment"
+    ]}
+  />
+
+  {/* --- Tone --- */}
+  <Tone type="authoritative" formality="semi-formal" energy="measured"
+    avoidTones={["alarmist", "dismissive", "condescending"]} />
+
+  {/* --- Style --- */}
+  <Style type="technical" verbosity="verbose" formality="semi-formal" />
+
+  {/* --- Success Criteria --- */}
+  <SuccessCriteria>
+    <Criterion category="accuracy" weight="critical" metric="false positive count = 0">
+      Zero false positives: every reported vulnerability references specific code evidence and is not mitigated by active framework protections
+    </Criterion>
+    <Criterion category="completeness" weight="critical" metric="OWASP categories evaluated / applicable categories = 100%">
+      All applicable OWASP Top 10:2025 categories systematically evaluated with explicit pass, finding, or not-applicable determination
+    </Criterion>
+    <Criterion category="accuracy" weight="critical" metric="findings with CWE + CVSS / total findings = 100%">
+      Each finding includes accurate CWE classification (most specific entry) and justified CVSS severity score
+    </Criterion>
+    <Criterion category="completeness" weight="critical" metric="Critical+High findings with attack scenario / Critical+High findings = 100%">
+      Every Critical and High finding includes a concrete, step-by-step attack scenario
+    </Criterion>
+    <Criterion category="clarity" weight="critical" metric="findings with secure code example / total findings = 100%">
+      Remediation guidance includes working secure code examples in the same language and framework
+    </Criterion>
+    <Criterion category="relevance" weight="important">
+      Findings are prioritized by composite risk (severity multiplied by exploitability multiplied by blast radius), not severity alone
+    </Criterion>
+    <Criterion category="completeness" weight="important">
+      Defense-in-depth recommendations provided beyond immediate vulnerability fixes
+    </Criterion>
+    <Criterion category="format" weight="important">
+      Output follows the specified report template with executive summary, categorized findings, coverage checklist, and remediation roadmap
+    </Criterion>
+    <Criterion category="accuracy" weight="important">
+      Threat profile context is reflected in severity assessment and prioritization
+    </Criterion>
+    <Criterion category="completeness" weight="important">
+      Root cause analysis identifies systemic weaknesses when multiple findings share an underlying cause, with architectural remediation recommendations
+    </Criterion>
+    <Criterion category="completeness" weight="important">
+      Report includes a limitations section acknowledging what static review cannot detect and recommending specific complementary testing (DAST, penetration testing, fuzzing) for applicable vulnerability classes
+    </Criterion>
+    <Criterion category="clarity" weight="nice-to-have">
+      Positive security observations noted where the code demonstrates good security practices
+    </Criterion>
+  </SuccessCriteria>
+
+  {/* --- References --- */}
+  <References sources={[
+    { title: "OWASP Top 10:2025", url: "https://owasp.org/Top10/2025/", description: "The 2025 edition of the most critical web application security risks" },
+    { title: "OWASP API Security Top 10", url: "https://owasp.org/www-project-api-security/", description: "Top 10 security risks specific to APIs" },
+    { title: "CWE - Common Weakness Enumeration", url: "https://cwe.mitre.org/", description: "Comprehensive dictionary of software and hardware weaknesses" },
+    { title: "CWE Top 25 2025", url: "https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html", description: "The 2025 ranked list of the 25 most dangerous software weaknesses" },
+    { title: "CVSS v3.1 Specification", url: "https://www.first.org/cvss/v3.1/specification-document", description: "Common Vulnerability Scoring System for consistent severity rating" },
+    { title: "CVSS v4.0 Specification", url: "https://www.first.org/cvss/v4.0/specification-document", description: "Latest CVSS version with supplemental metrics" },
+    { title: "OWASP Code Review Guide", url: "https://owasp.org/www-project-code-review-guide/", description: "Methodology for conducting secure code reviews" },
+    { title: "OWASP Cheat Sheet Series", url: "https://cheatsheetseries.owasp.org/", description: "Concise, actionable security guidance organized by topic" },
+    { title: "OWASP Authorization Cheat Sheet", url: "https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html", description: "Authorization patterns including RBAC, ABAC, and deny-by-default" },
+    { title: "SANS/CWE Top 25", url: "https://cwe.mitre.org/top25/", description: "The 25 most dangerous software weaknesses" },
+    { title: "OWASP Application Security Verification Standard", url: "https://owasp.org/www-project-application-security-verification-standard/", description: "Framework for testing web application security controls" },
+    { title: "NIST Cryptography Code Audit Guide", url: "https://csrc.nist.gov/presentations/2024/a-hitchhikers-guide-to-cryptography-code-audit", description: "NIST guidance on auditing cryptographic implementations" },
+    { title: "Empirical Study: Static Analysis for Secure Code Review", url: "https://arxiv.org/abs/2407.12241", description: "ISSTA 2024 study on SAST effectiveness: 52% detection rate, 76% irrelevant warnings" },
+    { title: "CISA npm Supply Chain Alert (2025)", url: "https://www.cisa.gov/news-events/alerts/2025/09/23/widespread-supply-chain-compromise-impacting-npm-ecosystem", description: "September 2025 npm ecosystem compromise affecting 18 widely-used packages" }
+  ]} />
+
+  {/* --- Chain of Thought --- */}
+  <ChainOfThought style="structured" showReasoning />
+
+  {/* --- Post-Execution Actions --- */}
+  <PostExecution>
+    <OpenUrl url="https://owasp.org/Top10/" />
+    <OpenUrl url="https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html" />
+  </PostExecution>
+
+</Prompt>
