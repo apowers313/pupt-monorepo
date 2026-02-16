@@ -10,13 +10,13 @@ declare -A PACKAGE_PATHS
 PACKAGE_PATHS["pupt"]="../pupt"
 PACKAGE_PATHS["pupt-lib"]="../pupt-lib"
 PACKAGE_PATHS["pupt-react"]="../pupt-react"
-PACKAGE_PATHS["pupt-sde"]="../pupt-sde"
+PACKAGE_PATHS["pupt-sde-prompts"]="../pupt-sde-prompts"
 
 # All repos use master
 DEFAULT_BRANCH="master"
 
 # Order: pupt-lib first (foundation), then dependents
-PACKAGES=("pupt-lib" "pupt" "pupt-react" "pupt-sde")
+PACKAGES=("pupt-lib" "pupt" "pupt-react" "pupt-sde-prompts")
 MONOREPO_DIR="$(pwd)"
 
 # Verify we're in the monorepo root

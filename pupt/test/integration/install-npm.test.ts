@@ -1,8 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as path from 'path';
-import * as os from 'os';
 import * as nodeFs from 'node:fs/promises';
+
 import fs from 'fs-extra';
+import * as os from 'os';
+import * as path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { installCommand } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { logger } from '../../src/utils/logger.js';
@@ -48,7 +50,7 @@ vi.mock('../../src/services/package-manager.js', () => ({
 
 // Mock ConfigManager to use test configs
 vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
-  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  const original = await importOriginal();
   return {
     ...original,
     ConfigManager: {

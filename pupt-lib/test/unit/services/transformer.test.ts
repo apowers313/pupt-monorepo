@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Transformer } from '../../../src/services/transformer';
 
 describe('Transformer', () => {
@@ -17,7 +18,7 @@ describe('Transformer', () => {
 
     const result = await transformer.transformSourceAsync(source, 'test.tsx');
 
-    expect(result).toContain('pupt-lib/jsx-runtime');
+    expect(result).toContain('@pupt/lib/jsx-runtime');
   });
 
   it('should handle TypeScript interfaces', async () => {

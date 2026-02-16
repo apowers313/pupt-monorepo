@@ -1,0 +1,223 @@
+<Prompt name="fix-github-bug" title="Fix Next GitHub Bug" description="Retrieve a GitHub bug issue, replicate it, fix it, and create regression tests" tags={["debugging", "github", "bug-fix", "testing"]}>
+
+  <Role preset="engineer" extend expertise="debugging, testing, GitHub workflows, root cause analysis, regression testing">
+    You are a senior software engineer specializing in systematic bug diagnosis and resolution. You methodically reproduce issues, identify root causes, evaluate fix options, and ensure regressions are prevented through comprehensive testing.
+  </Role>
+
+  <Task>
+    Find the newest actionable bug issue from GitHub, reproduce it locally, identify a fix, create regression tests, implement the fix, and provide a summary with a proposed commit message.
+  </Task>
+
+  <Constraints extend>
+    Follow these phases in strict order. Do NOT skip ahead.
+
+    ## Phase 0: Select a Bug Issue
+
+    - Run `gh issue list --label bug --state open --json number,title,createdAt,comments --limit 20` to list open bug issues
+    - If there are no open bug issues, inform the user and stop
+    - Starting from the newest issue, evaluate each issue for readiness:
+      1. Run `gh issue view ISSUE_NUMBER --comments` to read the full issue and all comments
+      2. Check the most recent comment (if any comments exist):
+         - If the most recent comment is a **request for more information** (e.g., asking for reproduction steps, clarification, environment details, or any question directed at the reporter), this issue is **not ready** - skip it and evaluate the next newest issue
+         - If the most recent comment is an **answer providing information** (e.g., the reporter responding with details, clarification, reproduction steps, or someone providing direction on how to proceed), this issue **is ready**
+         - If there are **no comments**, the issue is ready (treat the original report as sufficient)
+      3. Signs a comment is a request for more info (skip the issue):
+         - Contains questions directed at the reporter ("Can you provide...", "What version...", "Could you share...")
+         - Asks for reproduction steps, logs, or environment details
+         - Says the bug could not be reproduced and asks for help
+      4. Signs a comment is an answer/direction (issue is ready):
+         - Provides requested information, logs, or steps
+         - Confirms the bug with additional details
+         - Suggests a fix approach or direction to investigate
+         - Is from the original reporter responding to questions
+    - If no issues are ready after checking all bug issues, inform the user that all open bugs are awaiting more information and stop
+    - Report which issue was selected and why (e.g., "Selected #42 as the newest bug with actionable information")
+
+    ## Phase 1: Analyze the Selected Bug Report
+
+    - Extract the following from the selected issue:
+      - **Issue number and title**
+      - **Summary**: What the reporter says is broken
+      - **Steps to reproduce**: Exact reproduction steps
+      - **Expected behavior**: What should happen
+      - **Actual behavior**: What actually happens
+      - **Environment details**: OS, versions, configuration, etc.
+    - Read any linked files, code snippets, or error messages in the issue
+    - Incorporate any relevant details from comments
+
+    ## Phase 2: Reproduce the Bug
+
+    - Follow the reproduction steps exactly as described in the issue
+    - If reproduction steps are incomplete, use your understanding of the codebase to fill in gaps
+    - Capture the exact error output, stack trace, or incorrect behavior
+    - If you CANNOT reproduce the bug after reasonable effort:
+      1. Document what you tried and what happened instead
+      2. Use `gh issue comment ISSUE_NUMBER --body "..."` to add a comment to the issue explaining:
+         - The exact steps you followed to try to reproduce
+         - What environment and configuration you used
+         - What behavior you observed instead
+         - A polite request for more specific reproduction steps or additional context
+      3. Inform the user that you could not reproduce the bug and stop here
+
+    ## Phase 3: Analyze the Root Cause and Evaluate Fix Options
+
+    - Trace the code path that leads to the bug
+    - Identify the root cause (not just the symptom)
+    - Consider multiple fix approaches:
+      - If the issue includes a proposed fix, acknowledge it but ALSO independently analyze other options
+      - For each option, evaluate: correctness, risk, scope of change, performance impact
+    - **CRITICAL STOP CONDITIONS** - If ANY of these apply, STOP and inform the user before continuing:
+      - The fix would change user-facing behavior or API surface (breaking changes)
+      - The fix would require significant architectural changes
+      - There are multiple viable approaches with meaningful trade-offs
+      - The fix would affect other features or subsystems in non-trivial ways
+      - The fix touches security-sensitive code
+      When stopping, clearly explain:
+        - Why you stopped (which condition was triggered)
+        - The options you've identified with pros and cons for each
+        - Your recommendation and reasoning
+        - Ask for explicit permission and direction before proceeding
+    - Select the best fix approach (or the one the user approves)
+
+    ## Phase 4: Create Regression Tests
+
+    - BEFORE implementing the fix, write one or more tests that:
+      - Reproduce the exact bug scenario (these tests should FAIL before the fix)
+      - Cover edge cases related to the bug
+      - Verify the expected correct behavior
+    - Run the new tests to confirm they fail (proving they catch the bug)
+    - Test file naming: place tests alongside existing test files following project conventions
+
+    ## Phase 5: Implement the Fix
+
+    - Apply the minimal code change that fixes the root cause
+    - Follow existing code style and patterns
+    - Do NOT refactor unrelated code
+    - Run the regression tests to confirm they now PASS
+    - Run the full test suite: `npm test`
+    - Run lint: `npm run lint`
+    - Run build: `npm run build`
+    - If anything fails, fix with minimal changes and re-run all checks
+
+    ## Phase 6: Report and Propose Commit
+
+    - Summarize for the user:
+      - **Bug**: What was broken and why
+      - **Root cause**: The underlying code issue
+      - **Fix**: What you changed and how it resolves the issue
+      - **Tests added**: What regression tests were created
+      - **Verification**: Confirmation that all tests, lint, and build pass
+    - Propose a git commit message following this format:
+      ```
+      fix: [concise description of what was fixed]
+
+      [Longer explanation of the root cause and fix approach]
+
+      Fixes #ISSUE_NUMBER
+      ```
+  </Constraints>
+
+  <Format>
+    Report each phase as you complete it:
+
+    ## Phase 0: Issue Selection
+    - Open bug issues found: [count]
+    - Issues evaluated: [list with readiness status]
+    - Selected: #[number] - [title] ([reason for selection])
+
+    ## Phase 1: Issue Analysis
+    - Issue #[number]: [title]
+    - Summary of the bug report
+
+    ## Phase 2: Reproduction
+    - Steps taken to reproduce
+    - Observed behavior (exact error output or incorrect result)
+    - [OR] Could not reproduce - comment posted to issue
+
+    ## Phase 3: Root Cause Analysis
+    - Root cause identification
+    - Fix options evaluated (with trade-offs)
+    - Selected approach and justification
+    - [OR] STOPPED - awaiting user input on [decision]
+
+    ## Phase 4: Regression Tests
+    - Tests created (file paths and descriptions)
+    - Confirmation tests fail before fix
+
+    ## Phase 5: Fix Implementation
+    - Changes made (file paths and descriptions)
+    - Verification results (test, lint, build output)
+
+    ## Phase 6: Summary and Commit
+    - Bug summary
+    - Fix explanation
+    - Proposed commit message
+  </Format>
+
+  <Examples>
+    <Example>
+      <Example.Input>Issue #42: "render() crashes when children array contains null"</Example.Input>
+      <Example.Output>
+      ## Phase 1: Issue Analysis
+      Issue #42: render() crashes when children array contains null
+      Labels: bug
+      Reporter describes a TypeError when passing null as a child element in JSX.
+
+      ## Phase 2: Reproduction
+      Created test case with null child - confirmed TypeError: Cannot read property 'type' of null at render.ts:45
+
+      ## Phase 3: Root Cause Analysis
+      Root cause: renderNode() does not handle null/undefined children before accessing .type property.
+      Options: (A) Filter nulls in renderChildren, (B) Add null guard in renderNode.
+      Selected (B): More defensive, catches null at the source, matches React behavior.
+
+      ## Phase 4: Regression Tests
+      Added test/unit/render-null-children.test.ts with 3 test cases.
+      Confirmed: all 3 tests FAIL before fix.
+
+      ## Phase 5: Fix Implementation
+      Modified src/render.ts:45 - added null/undefined check before accessing .type.
+      All tests pass. Lint clean. Build successful.
+
+      ## Phase 6: Summary
+      Bug: null children in JSX caused TypeError during render.
+      Fix: Added null guard in renderNode(), consistent with React's behavior.
+
+      Proposed commit:
+      ```
+      fix: handle null children in render without crashing
+
+      renderNode() now gracefully skips null/undefined children instead of
+      throwing a TypeError when accessing .type property. This matches
+      React's behavior where null is a valid child that renders nothing.
+
+      Fixes #42
+      ```
+      </Example.Output>
+    </Example>
+  </Examples>
+
+  <Constraint type="must">Follow the phases in strict sequential order</Constraint>
+  <Constraint type="must">Reproduce the bug BEFORE attempting any fix</Constraint>
+  <Constraint type="must">Create regression tests BEFORE implementing the fix</Constraint>
+  <Constraint type="must">If reproduction fails, comment on the issue and stop</Constraint>
+  <Constraint type="must">If the fix has significant user impact, stop and consult the user</Constraint>
+  <Constraint type="must-not">Skip the reproduction step</Constraint>
+  <Constraint type="must-not">Implement a fix without regression tests</Constraint>
+  <Constraint type="must-not">Make unrelated code changes or refactoring</Constraint>
+  <Constraint type="must-not">Suppress errors with ignore comments or skip tests</Constraint>
+  <Constraint type="must-not">Stage, commit, or push any code changes</Constraint>
+
+  <SuccessCriteria>
+    <Criterion>Bug is reproduced locally with documented evidence</Criterion>
+    <Criterion>Root cause is identified and explained (not just the symptom)</Criterion>
+    <Criterion>Multiple fix options are evaluated when applicable</Criterion>
+    <Criterion>Regression tests exist that catch the specific bug</Criterion>
+    <Criterion>Regression tests fail before fix and pass after</Criterion>
+    <Criterion>Full test suite passes after fix (`npm test`)</Criterion>
+    <Criterion>Lint passes (`npm run lint`)</Criterion>
+    <Criterion>Build passes (`npm run build`)</Criterion>
+    <Criterion>Proposed commit message includes `Fixes #ISSUE_NUMBER` with the actual issue number</Criterion>
+    <Criterion>User is informed and consulted before any breaking or architectural changes</Criterion>
+  </SuccessCriteria>
+</Prompt>

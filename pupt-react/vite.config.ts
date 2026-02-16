@@ -19,13 +19,13 @@ export default defineConfig({
       fileName: (format) => `index.${format === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
-      external: ["react", "react-dom", "react/jsx-runtime", "pupt-lib"],
+      external: ["react", "react-dom", "react/jsx-runtime", "@pupt/lib"],
       output: {
         globals: {
           react: "React",
           "react-dom": "ReactDOM",
           "react/jsx-runtime": "jsxRuntime",
-          "pupt-lib": "PuptLib",
+          "@pupt/lib": "PuptLib",
         },
       },
     },

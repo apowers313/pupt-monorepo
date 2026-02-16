@@ -1,4 +1,4 @@
-import { fileSearchPrompt, type FileSearchConfig } from './file-search-prompt.js';
+import { type FileSearchConfig,fileSearchPrompt } from './file-search-prompt.js';
 
 export async function reviewFilePrompt(config: FileSearchConfig): Promise<string> {
   // For now, reviewFile behaves exactly like file input

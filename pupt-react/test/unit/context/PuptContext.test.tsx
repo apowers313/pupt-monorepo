@@ -2,9 +2,10 @@
  * Tests for PuptContext
  */
 
-import { describe, it, expect } from "vitest";
-import { useContext } from "react";
 import { renderHook } from "@testing-library/react";
+import { useContext } from "react";
+import { describe, expect,it } from "vitest";
+
 import { PuptContext } from "../../../src/context/PuptContext";
 
 describe("PuptContext", () => {

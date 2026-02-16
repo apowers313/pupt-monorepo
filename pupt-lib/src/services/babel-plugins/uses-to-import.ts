@@ -57,13 +57,13 @@ function extractUsesProps(
   const { attributes } = path.node.openingElement;
 
   for (const attr of attributes) {
-    if (!t.isJSXAttribute(attr)) continue;
-    if (!t.isJSXIdentifier(attr.name)) continue;
+    if (!t.isJSXAttribute(attr)) {continue;}
+    if (!t.isJSXIdentifier(attr.name)) {continue;}
 
-    const name = attr.name.name;
+    const {name} = attr.name;
     const value = getAttributeValue(attr, t);
 
-    if (value === null) continue;
+    if (value === null) {continue;}
 
     switch (name) {
       case 'component':

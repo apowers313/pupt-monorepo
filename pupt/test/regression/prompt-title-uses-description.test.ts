@@ -15,13 +15,15 @@
  *      prompt: "say hello"
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import fs from 'fs-extra';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
+
+import type { DiscoveredPromptWithMethods } from '@pupt/lib';
+import { LocalPromptSource } from '@pupt/lib';
+import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import { fromDiscoveredPrompt } from '../../src/types/prompt.js';
-import type { DiscoveredPromptWithMethods } from 'pupt-lib';
-import { LocalPromptSource } from 'pupt-lib';
 
 describe('Prompt title uses description regression', () => {
   let tempDir: string;

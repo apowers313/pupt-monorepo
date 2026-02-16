@@ -1,15 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import chalk from 'chalk';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { 
-  PromptToolError, 
-  ErrorCategory,
-  ErrorSeverity,
   createError,
-  errors,
   displayError,
+  ErrorCategory,
+  errors,
+  ErrorSeverity,
+  getErrorCategory,
   isRecoverableError,
-  getErrorCategory
-} from '../../src/utils/errors.js';
+  PromptToolError} from '../../src/utils/errors.js';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/utils/logger.js');

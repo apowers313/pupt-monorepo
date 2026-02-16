@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Logger } from '../../src/utils/logger.js';
 import os from 'os';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { Logger } from '../../src/utils/logger.js';
 
 describe('Logger', () => {
   let logger: Logger;
@@ -33,7 +34,7 @@ describe('Logger', () => {
       
       expect(stdoutSpy).toHaveBeenCalled();
       const call = stdoutSpy.mock.calls[0][0];
-      expect(call).toBe('test' + expectedEnding);
+      expect(call).toBe(`test${  expectedEnding}`);
       
       if (isWindows) {
         expect(call.slice(-2)).toBe('\r\n');

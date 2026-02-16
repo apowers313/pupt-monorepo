@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { SuggestionGenerator } from '../../src/services/suggestion-generator.js';
 import type { Pattern } from '../../src/types/patterns.js';
 

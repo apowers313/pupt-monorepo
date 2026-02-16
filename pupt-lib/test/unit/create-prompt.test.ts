@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createPrompt, createPromptFromSource, CUSTOM_COMPONENTS_GLOBAL } from '../../src/create-prompt';
-import { Component } from '../../src/component';
-import { writeFileSync, mkdirSync, rmSync } from 'fs';
+import { mkdirSync, rmSync,writeFileSync } from 'fs';
 import { join } from 'path';
+import { afterAll,beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import type { PuptNode, RenderContext, PuptElement } from '../../src/types';
-import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
+
+import { Component } from '../../src/component';
+import { createPrompt, createPromptFromSource, CUSTOM_COMPONENTS_GLOBAL } from '../../src/create-prompt';
+import type { PuptElement,PuptNode, RenderContext } from '../../src/types';
+import { CHILDREN,PROPS, TYPE } from '../../src/types/symbols';
 
 /**
  * Get the type name from an element's type property.
@@ -13,15 +14,15 @@ import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
  * we need to extract the name from functions/classes.
  */
 function getTypeName(type: unknown): string {
-  if (typeof type === 'string') return type;
-  if (typeof type === 'function') return type.name;
-  if (typeof type === 'symbol') return type.toString();
+  if (typeof type === 'string') {return type;}
+  if (typeof type === 'function') {return type.name;}
+  if (typeof type === 'symbol') {return type.toString();}
   return String(type);
 }
 
 // Helper to get props with proper typing
 function getProps(element: PuptElement): Record<string, unknown> {
-  return element[PROPS] as Record<string, unknown>;
+  return element[PROPS];
 }
 
 // Helper to get children with proper typing
@@ -37,7 +38,7 @@ function getType(element: PuptElement): unknown {
 describe('createPromptFromSource', () => {
   it('should create element from TSX source', async () => {
     const source = `
-      import { Prompt, Role, Task } from 'pupt-lib';
+      import { Prompt, Role, Task } from '@pupt/lib';
 
       export default (
         <Prompt name="test">
@@ -55,7 +56,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle simple JSX without imports', async () => {
     const source = `
-      import { Prompt } from 'pupt-lib';
+      import { Prompt } from '@pupt/lib';
       export default <div>Hello World</div>;
     `;
 
@@ -67,7 +68,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle JSX with props', async () => {
     const source = `
-      import { Section } from 'pupt-lib';
+      import { Section } from '@pupt/lib';
       export default <Section title="Test" priority={1}>Content</Section>;
     `;
 
@@ -80,7 +81,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle nested JSX elements', async () => {
     const source = `
-      import { Prompt, Role, Task } from 'pupt-lib';
+      import { Prompt, Role, Task } from '@pupt/lib';
 
       export default (
         <Prompt name="nested">
@@ -98,7 +99,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle TypeScript syntax', async () => {
     const source = `
-      import { Prompt, Task } from 'pupt-lib';
+      import { Prompt, Task } from '@pupt/lib';
 
       interface Props { name: string }
       const config: Props = { name: 'typed-test' };
@@ -117,7 +118,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle fragments', async () => {
     const source = `
-      import { Role, Task } from 'pupt-lib';
+      import { Role, Task } from '@pupt/lib';
 
       export default (
         <>
@@ -135,7 +136,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle control flow components', async () => {
     const source = `
-      import { Prompt, If, Task } from 'pupt-lib';
+      import { Prompt, If, Task } from '@pupt/lib';
 
       export default (
         <Prompt name="conditional">
@@ -155,7 +156,7 @@ describe('createPromptFromSource', () => {
 
   it('should handle data components', async () => {
     const source = `
-      import { Prompt, Code } from 'pupt-lib';
+      import { Prompt, Code } from '@pupt/lib';
 
       export default (
         <Prompt name="with-code">
@@ -372,7 +373,7 @@ describe('createPrompt', () => {
   it('should load and transform .tsx file', async () => {
     const filePath = join(tmpDir, 'prompt.tsx');
     writeFileSync(filePath, `
-      import { Prompt, Task } from 'pupt-lib';
+      import { Prompt, Task } from '@pupt/lib';
 
       export default (
         <Prompt name="tsx-test">
@@ -389,7 +390,7 @@ describe('createPrompt', () => {
   it('should handle file with TypeScript types', async () => {
     const filePath = join(tmpDir, 'typed-prompt.tsx');
     writeFileSync(filePath, `
-      import { Prompt, Task } from 'pupt-lib';
+      import { Prompt, Task } from '@pupt/lib';
 
       interface PromptProps {
         name: string;
@@ -412,7 +413,7 @@ describe('createPrompt', () => {
   it('should handle file with inline function components', async () => {
     const filePath = join(tmpDir, 'func-prompt.tsx');
     writeFileSync(filePath, `
-      import { Prompt, Section } from 'pupt-lib';
+      import { Prompt, Section } from '@pupt/lib';
 
       // Function component defined inline and used immediately
       const MySection = ({ title, children }: { title: string; children: any }) => (

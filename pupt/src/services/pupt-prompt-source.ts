@@ -1,6 +1,7 @@
-import type { PromptSource, DiscoveredPromptFile } from 'pupt-lib';
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import type { DiscoveredPromptFile,PromptSource } from '@pupt/lib';
+import fs from 'fs-extra';
 
 /**
  * A PromptSource wrapping a single preprocessed file.
@@ -38,7 +39,7 @@ class SingleFilePromptSource implements PromptSource {
  */
 export async function scanLocalPromptDir(dirPath: string): Promise<PromptSource[]> {
   const resolvedPath = path.resolve(dirPath);
-  if (!await fs.pathExists(resolvedPath)) return [];
+  if (!await fs.pathExists(resolvedPath)) {return [];}
 
   const files: { fullPath: string; filename: string }[] = [];
   await scanRecursive(resolvedPath, files);

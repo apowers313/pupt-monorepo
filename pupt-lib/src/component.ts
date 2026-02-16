@@ -1,6 +1,7 @@
 // Component base class for pupt-lib
 
 import type { ZodObject, ZodRawShape } from 'zod';
+
 import type { PuptNode, RenderContext } from './types';
 import type { LlmProvider } from './types/context';
 
@@ -49,7 +50,7 @@ export const COMPONENT_MARKER = Symbol.for('pupt-lib:component:v1');
  */
 export abstract class Component<
   Props = Record<string, unknown>,
-  ResolveType = void,
+  ResolveType = undefined,
 > {
   static [COMPONENT_MARKER] = true;
 
@@ -106,11 +107,11 @@ export abstract class Component<
    * Returns false for undefined, null, empty arrays, and empty strings.
    */
   protected hasContent(children: PuptNode): boolean {
-    if (children === undefined || children === null) return false;
-    if (typeof children === 'boolean') return false;
-    if (typeof children === 'string') return children.length > 0;
-    if (typeof children === 'number') return true;
-    if (Array.isArray(children)) return children.length > 0;
+    if (children === undefined || children === null) {return false;}
+    if (typeof children === 'boolean') {return false;}
+    if (typeof children === 'string') {return children.length > 0;}
+    if (typeof children === 'number') {return true;}
+    if (Array.isArray(children)) {return children.length > 0;}
     return true;
   }
 

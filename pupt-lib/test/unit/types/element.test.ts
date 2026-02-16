@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import type { PuptElement, PuptNode, ComponentType } from '../../../src/types';
-import { TYPE, PROPS, CHILDREN, isPuptElement } from '../../../src';
+import { describe, expect,it } from 'vitest';
+
+import { CHILDREN, isPuptElement,PROPS, TYPE } from '../../../src';
+import type { ComponentType,PuptElement, PuptNode } from '../../../src/types';
 
 describe('PuptElement', () => {
   it('should have required properties with symbols', () => {

@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import {
-  normalizeLineEndings,
-  getUsername,
-} from '@/utils/platform';
 import os from 'os';
+import { describe, expect,it } from 'vitest';
+
+import {
+  getUsername,
+  normalizeLineEndings,
+} from '@/utils/platform';
 
 describe('Platform utilities - additional coverage', () => {
   describe('normalizeLineEndings', () => {

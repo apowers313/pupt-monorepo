@@ -1,9 +1,9 @@
 import { ConfigManager } from '../config/config-manager.js';
+import { buildModuleEntries } from '../services/module-entry-builder.js';
 import { PuptService } from '../services/pupt-service.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
-import { buildModuleEntries } from '../services/module-entry-builder.js';
 
 export async function editCommand(): Promise<void> {
   // Load configuration

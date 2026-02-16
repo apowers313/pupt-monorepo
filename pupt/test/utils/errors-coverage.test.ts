@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  PromptToolError,
-  ErrorCategory,
-  ErrorSeverity,
   createError,
-  errors,
   displayError,
+  ErrorCategory,
+  errors,
+  ErrorSeverity,
   isRecoverableError,
+  PromptToolError,
 } from '../../src/utils/errors.js';
 import { logger } from '../../src/utils/logger.js';
 

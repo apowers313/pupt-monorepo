@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import os from 'node:os';
+import path from 'node:path';
+
+import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { Config } from '../../src/types/config.js';
-import fs from 'fs-extra';
-import path from 'node:path';
-import os from 'node:os';
 
 
 describe('Config Schema Validation', () => {
@@ -13,12 +15,12 @@ describe('Config Schema Validation', () => {
   let savedEnv: { PUPT_CONFIG_DIR?: string; PUPT_DATA_DIR?: string };
 
   beforeEach(async () => {
-    const tempDir = path.join(os.tmpdir(), 'pt-config-schema-test-' + Date.now());
+    const tempDir = path.join(os.tmpdir(), `pt-config-schema-test-${  Date.now()}`);
     await fs.ensureDir(tempDir);
     // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
     testDir = fs.realpathSync(tempDir);
 
-    const tempDataDir = path.join(os.tmpdir(), 'pt-data-schema-test-' + Date.now());
+    const tempDataDir = path.join(os.tmpdir(), `pt-data-schema-test-${  Date.now()}`);
     await fs.ensureDir(tempDataDir);
     dataDir = fs.realpathSync(tempDataDir);
 
@@ -54,7 +56,7 @@ describe('Config Schema Validation', () => {
         await fs.remove(dataDir);
         break;
       } catch (error) {
-        if (i === maxRetries - 1) throw error;
+        if (i === maxRetries - 1) {throw error;}
         // Wait a bit before retrying
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -317,12 +319,12 @@ describe('Config Migration', () => {
   let savedEnv: { PUPT_CONFIG_DIR?: string; PUPT_DATA_DIR?: string };
 
   beforeEach(async () => {
-    const tempDir = path.join(os.tmpdir(), 'pt-config-migration-test-' + Date.now());
+    const tempDir = path.join(os.tmpdir(), `pt-config-migration-test-${  Date.now()}`);
     await fs.ensureDir(tempDir);
     // Use realpathSync to get canonical path (handles macOS /var -> /private/var)
     testDir = fs.realpathSync(tempDir);
 
-    const tempDataDir = path.join(os.tmpdir(), 'pt-data-migration-test-' + Date.now());
+    const tempDataDir = path.join(os.tmpdir(), `pt-data-migration-test-${  Date.now()}`);
     await fs.ensureDir(tempDataDir);
     dataDir = fs.realpathSync(tempDataDir);
 
@@ -358,7 +360,7 @@ describe('Config Migration', () => {
         await fs.remove(dataDir);
         break;
       } catch (error) {
-        if (i === maxRetries - 1) throw error;
+        if (i === maxRetries - 1) {throw error;}
         // Wait a bit before retrying
         await new Promise(resolve => setTimeout(resolve, 100));
       }
@@ -492,7 +494,7 @@ describe('Config Migration', () => {
     await ConfigManager.load();
 
     // Check backup was created
-    const backupPath = configPath + '.backup';
+    const backupPath = `${configPath  }.backup`;
     expect(await fs.pathExists(backupPath)).toBe(true);
 
     const backup = await fs.readJson(backupPath);

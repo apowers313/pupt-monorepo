@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import chalk from 'chalk';
+import { spawn } from 'child_process';
+import { promisify } from 'util';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { editCommand } from '../../src/commands/edit.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { PuptService } from '../../src/services/pupt-service.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
-import { spawn } from 'child_process';
-import { promisify } from 'util';
-import chalk from 'chalk';
 import { logger } from '../../src/utils/logger.js';
 
 // Use vi.hoisted to ensure mocks are available before imports
@@ -105,7 +106,7 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -194,7 +195,7 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -210,7 +211,7 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -231,7 +232,7 @@ describe('Edit Command', () => {
       
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       
@@ -309,7 +310,7 @@ describe('Edit Command', () => {
     it('should spawn editor with correct arguments', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -323,7 +324,7 @@ describe('Edit Command', () => {
       let closeCallback: any;
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') closeCallback = callback;
+          if (event === 'exit') {closeCallback = callback;}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -350,7 +351,7 @@ describe('Edit Command', () => {
     it('should handle non-zero exit codes', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(1); // Non-zero exit
+          if (event === 'exit') {callback(1);} // Non-zero exit
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -361,7 +362,7 @@ describe('Edit Command', () => {
     it('should handle editor spawn errors', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'error') callback(new Error('spawn failed'));
+          if (event === 'error') {callback(new Error('spawn failed'));}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -372,7 +373,7 @@ describe('Edit Command', () => {
     it('should show opening message', async () => {
       const mockSpawn = {
         on: vi.fn((event, callback) => {
-          if (event === 'exit') callback(0);
+          if (event === 'exit') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);

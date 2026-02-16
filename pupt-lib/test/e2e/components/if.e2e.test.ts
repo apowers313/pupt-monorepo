@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx, jsxs, Fragment } from '../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { If } from '../../../components/control/If';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { Fragment,jsx, jsxs } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 import type { LlmProvider } from '../../../src/types/context';
 
 describe('If provider e2e', () => {

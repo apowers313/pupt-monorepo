@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'child_process';
-import path from 'path';
-import os from 'os';
 import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
 
 describe('pt CLI', () => {
   const cliPath = path.join(__dirname, '../dist/cli.js');

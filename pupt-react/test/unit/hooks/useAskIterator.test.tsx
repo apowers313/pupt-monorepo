@@ -2,16 +2,16 @@
  * Tests for useAskIterator hook
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import type { ReactNode } from "react";
-import { useAskIterator } from "../../../src/hooks/useAskIterator";
-import { PuptProvider } from "../../../src/components/PuptProvider";
-import type { PuptElement } from "pupt-lib";
-
+import type { PuptElement } from "@pupt/lib";
 // createPromptFromSource is mocked globally in test/setup.ts
 // We need to mock createInputIterator separately for iterator behavior tests
-import { createInputIterator } from "pupt-lib";
+import { createInputIterator } from "@pupt/lib";
+import { act,renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { beforeEach,describe, expect, it, vi } from "vitest";
+
+import { PuptProvider } from "../../../src/components/PuptProvider";
+import { useAskIterator } from "../../../src/hooks/useAskIterator";
 vi.mocked(createInputIterator);
 const mockCreateInputIterator = vi.mocked(createInputIterator);
 
@@ -78,7 +78,7 @@ function createMockIterator(
       type: requirements[currentIndex].type,
     } : null),
     advance: vi.fn(() => { currentIndex++; }),
-    previous: vi.fn(() => { if (currentIndex > 0) currentIndex--; }),
+    previous: vi.fn(() => { if (currentIndex > 0) {currentIndex--;} }),
     goTo: vi.fn((index: number) => { currentIndex = Math.max(0, Math.min(index, requirements.length)); }),
     submit: vi.fn((value: unknown) => {
       const req = requirements[currentIndex];

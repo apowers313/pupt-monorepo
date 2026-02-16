@@ -1,9 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, AskOption, AskLabel } from '../../../../components/ask';
-import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../components';
+
+import { describe, expect,it } from 'vitest';
+
+import { Ask, AskLabel,AskOption } from '../../../../components/ask';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
+import { createInputIterator } from '../../../../src/services/input-iterator';
 
 describe('Ask.Editor', () => {
   it('should render placeholder when no input provided', async () => {

@@ -2,12 +2,13 @@
  * Tests for PuptProvider component
  */
 
-import { describe, it, expect, vi } from "vitest";
+import type { SearchablePrompt } from "@pupt/lib";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
+
 import { PuptProvider } from "../../../src/components/PuptProvider";
 import { usePupt } from "../../../src/hooks/usePupt";
-import type { SearchablePrompt } from "pupt-lib";
 
 // Helper to create wrapper with PuptProvider
 function createWrapper(props?: {

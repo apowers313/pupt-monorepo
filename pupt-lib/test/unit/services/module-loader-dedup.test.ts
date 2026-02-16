@@ -1,9 +1,10 @@
 import path from 'path';
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { Pupt } from '../../../src/api';
-import type { PromptSource } from '../../../src/types/prompt-source';
-import type { ResolvedModuleEntry } from '../../../src/types/module';
 import { ModuleLoader } from '../../../src/services/module-loader';
+import type { ResolvedModuleEntry } from '../../../src/types/module';
+import type { PromptSource } from '../../../src/types/prompt-source';
 
 describe('module deduplication', () => {
   it('should not load the same module twice', async () => {

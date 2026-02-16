@@ -11,7 +11,7 @@ WARNINGS=0
 
 # Check 1: Verify package directories exist with files
 echo "Check 1: Package directories exist..."
-for pkg in pupt-lib pupt pupt-react pupt-sde; do
+for pkg in pupt-lib pupt pupt-react pupt-sde-prompts; do
     if [ -f "$pkg/package.json" ]; then
         echo "  OK: $pkg/package.json exists"
     else
@@ -38,14 +38,14 @@ echo "Check 3: Total commit count..."
 TOTAL=$(git log --oneline | wc -l)
 echo "  Total commits: $TOTAL"
 if [ "$TOTAL" -lt 50 ]; then
-    echo "  WARN: Expected 250+ commits (pupt=137 + pupt-lib=97 + pupt-react=20 + pupt-sde=4 + scaffold)"
+    echo "  WARN: Expected 250+ commits (pupt=137 + pupt-lib=97 + pupt-react=20 + pupt-sde-prompts=4 + scaffold)"
     WARNINGS=$((WARNINGS + 1))
 fi
 
 # Check 4: CRITICAL - Verify history works WITHOUT --follow
 echo ""
 echo "Check 4: File history works WITHOUT --follow (CRITICAL)..."
-for pkg in pupt-lib pupt pupt-react pupt-sde; do
+for pkg in pupt-lib pupt pupt-react pupt-sde-prompts; do
     if [ ! -f "$pkg/package.json" ]; then
         continue
     fi

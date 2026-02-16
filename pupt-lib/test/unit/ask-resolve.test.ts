@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { render, Component } from '../../src';
-import { If } from '../../components/control/If';
-import { jsx, Fragment } from '../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
-import { AskText, AskNumber, AskSelect, AskConfirm, AskMultiSelect, AskRating, AskEditor, AskFile, AskPath, AskDate, AskSecret, AskChoice, AskReviewFile } from '../../components/ask';
+
+import { AskChoice, AskConfirm, AskDate, AskEditor, AskFile, AskMultiSelect, AskNumber, AskPath, AskRating, AskReviewFile,AskSecret, AskSelect, AskText } from '../../components/ask';
+import { If } from '../../components/control/If';
+import { Component,render } from '../../src';
 import { COMPONENT_MARKER, isComponentClass } from '../../src/component';
-import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
+import { Fragment,jsx } from '../../src/jsx-runtime';
+import { CHILDREN,PROPS, TYPE } from '../../src/types/symbols';
 
 describe('Ask components with resolve()', () => {
   describe('Ask.Text', () => {
@@ -373,7 +374,7 @@ describe('Dual-package resilience (issue #16 comment)', () => {
 
       resolve(props: { name: string; default?: boolean }, context: { inputs: Map<string, unknown> }): boolean {
         const value = context.inputs.get(props.name);
-        if (value !== undefined) return Boolean(value);
+        if (value !== undefined) {return Boolean(value);}
         return props.default ?? false;
       }
 

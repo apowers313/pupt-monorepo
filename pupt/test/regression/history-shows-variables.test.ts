@@ -14,10 +14,12 @@
  *      Ad Hoc Prompt Description
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import fs from 'fs-extra';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
+
+import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import { HistoryManager } from '../../src/history/history-manager.js';
 
 // Re-implement createAutoSummary logic for testing (mirrors history.ts)
@@ -79,7 +81,7 @@ function createAutoSummary(entry: { summary?: string; variables: Record<string, 
   }
 
   if (summary.length > maxSummaryLength) {
-    return summary.substring(0, maxSummaryLength - 3) + '...';
+    return `${summary.substring(0, maxSummaryLength - 3)  }...`;
   }
   return summary;
 }

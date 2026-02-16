@@ -1,7 +1,8 @@
 /**
  * Tests for branch coverage in transformer.ts
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { Transformer } from '../../../src/services/transformer';
 
 describe('Transformer branch coverage', () => {

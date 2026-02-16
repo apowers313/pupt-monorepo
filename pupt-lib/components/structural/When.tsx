@@ -1,12 +1,13 @@
-import { z } from 'zod';
-import { Component, wrapWithDelimiter } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext,wrapWithDelimiter } from "@pupt/lib";
+import { z } from "zod";
 
-export const whenSchema = z.object({
-  condition: z.string(),
-  then: z.string().optional(),
-  delimiter: z.enum(['xml', 'markdown', 'none']).optional(),
-}).passthrough();
+export const whenSchema = z
+    .object({
+        condition: z.string(),
+        then: z.string().optional(),
+        delimiter: z.enum(["xml", "markdown", "none"]).optional(),
+    })
+    .passthrough();
 
 type WhenProps = z.infer<typeof whenSchema> & { children?: PuptNode };
 
@@ -19,17 +20,15 @@ type WhenProps = z.infer<typeof whenSchema> & { children?: PuptNode };
  * <When condition="data is ambiguous" then="Ask for clarification" />
  */
 export class When extends Component<WhenProps> {
-  static schema = whenSchema;
+    static schema = whenSchema;
 
-  render(props: WhenProps, _resolvedValue: void, _context: RenderContext): PuptNode {
-    const { condition, then, delimiter = 'xml', children } = props;
+    render(props: WhenProps, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        const { condition, then, delimiter = "xml", children } = props;
 
-    const action = this.hasContent(children) ? children : then;
+        const action = this.hasContent(children) ? children : then;
 
-    const content = action
-      ? `When ${condition}: ${action}`
-      : `When ${condition}`;
+        const content = action ? `When ${condition}: ${String(action as string | number)}` : `When ${condition}`;
 
-    return wrapWithDelimiter(content, 'when', delimiter);
-  }
+        return wrapWithDelimiter(content, "when", delimiter);
+    }
 }

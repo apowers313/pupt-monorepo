@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
+import { describe, expect,it } from 'vitest';
+
+import { Constraint, Context, Format,Prompt, Role, Task } from '../../components/structural';
 import { jsx } from '../../src/jsx-runtime';
-import { Prompt, Role, Task, Context, Constraint, Format } from '../../components/structural';
+import { render } from '../../src/render';
 
 describe('Simple Prompt Rendering', () => {
   it('should render a complete prompt', async () => {

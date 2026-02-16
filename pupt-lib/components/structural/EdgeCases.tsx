@@ -1,13 +1,15 @@
-import { z } from 'zod';
-import { Component, wrapWithDelimiter } from 'pupt-lib';
-import { EDGE_CASE_PRESETS } from '../presets';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext,wrapWithDelimiter } from "@pupt/lib";
+import { z } from "zod";
 
-export const edgeCasesSchema = z.object({
-  extend: z.boolean().optional(),
-  preset: z.enum(['standard', 'minimal']).optional(),
-  delimiter: z.enum(['xml', 'markdown', 'none']).optional(),
-}).passthrough();
+import { EDGE_CASE_PRESETS } from "../presets";
+
+export const edgeCasesSchema = z
+    .object({
+        extend: z.boolean().optional(),
+        preset: z.enum(["standard", "minimal"]).optional(),
+        delimiter: z.enum(["xml", "markdown", "none"]).optional(),
+    })
+    .passthrough();
 
 type EdgeCasesProps = z.infer<typeof edgeCasesSchema> & { children?: PuptNode };
 
@@ -22,33 +24,33 @@ type EdgeCasesProps = z.infer<typeof edgeCasesSchema> & { children?: PuptNode };
  * <EdgeCases preset="standard" />
  */
 export class EdgeCases extends Component<EdgeCasesProps> {
-  static schema = edgeCasesSchema;
+    static schema = edgeCasesSchema;
 
-  render(props: EdgeCasesProps, _resolvedValue: void, _context: RenderContext): PuptNode {
-    const { preset, delimiter = 'xml', children } = props;
+    render(props: EdgeCasesProps, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        const { preset, delimiter = "xml", children } = props;
 
-    const parts: PuptNode[] = [];
+        const parts: PuptNode[] = [];
 
-    // Add preset edge cases
-    if (preset) {
-      const presetCases = EDGE_CASE_PRESETS[preset];
-      if (presetCases) {
-        for (const { condition, action } of presetCases) {
-          parts.push(`When ${condition}: ${action}`);
-          parts.push('\n');
+        // Add preset edge cases
+        if (preset) {
+            const presetCases = EDGE_CASE_PRESETS[preset];
+            if (presetCases) {
+                for (const { condition, action } of presetCases) {
+                    parts.push(`When ${condition}: ${action}`);
+                    parts.push("\n");
+                }
+            }
         }
-      }
-    }
 
-    // Add children (When components)
-    if (this.hasContent(children)) {
-      parts.push(children);
-    }
+        // Add children (When components)
+        if (this.hasContent(children)) {
+            parts.push(children);
+        }
 
-    if (parts.length === 0) {
-      return '';
-    }
+        if (parts.length === 0) {
+            return "";
+        }
 
-    return wrapWithDelimiter(parts, 'edge-cases', delimiter);
-  }
+        return wrapWithDelimiter(parts, "edge-cases", delimiter);
+    }
 }

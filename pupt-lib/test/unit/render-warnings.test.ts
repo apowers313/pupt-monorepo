@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { isWarningCode } from '../../src/types/render';
-import { jsx } from '../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Prompt } from '../../components/structural/Prompt';
 import { Role } from '../../components/structural/Role';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
+import { isWarningCode } from '../../src/types/render';
 
 // Prompt without a Task child produces a warn_missing_task warning
 function promptWithoutTask() {

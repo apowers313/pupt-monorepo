@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { historyCommand } from '../../src/commands/history.js';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
-import { logger } from '../../src/utils/logger.js';
-import * as gitInfo from '../../src/utils/git-info.js';
-import chalk from 'chalk';
 import path from 'node:path';
+
+import chalk from 'chalk';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { historyCommand } from '../../src/commands/history.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
+import { HistoryManager } from '../../src/history/history-manager.js';
+import * as gitInfo from '../../src/utils/git-info.js';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/history/history-manager.js');
@@ -392,7 +394,7 @@ describe('History Command', () => {
         const match = varLine.match(/prompt: "([^"]+)"/);
         if (match) {
           const value = match[1];
-          expect(value).toBe('a'.repeat(77) + '...');
+          expect(value).toBe(`${'a'.repeat(77)  }...`);
           expect(value.length).toBe(80);
         }
       }
@@ -964,7 +966,7 @@ describe('History Command', () => {
       await historyCommand({ entry: 1, annotations: true });
 
       // Should show separator between annotations
-      expect(loggerSpy).toHaveBeenCalledWith(chalk.gray('\n' + '-'.repeat(40) + '\n'));
+      expect(loggerSpy).toHaveBeenCalledWith(chalk.gray(`\n${  '-'.repeat(40)  }\n`));
     });
   });
 

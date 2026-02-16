@@ -10,8 +10,8 @@ import {
   ScrollArea,
 } from "@mantine/core";
 import { IconCopy, IconCheck, IconAlertCircle } from "@tabler/icons-react";
-import { PromptRenderer } from "pupt-react";
-import type { PromptSource } from "pupt-react";
+import { PromptRenderer } from "@pupt/react";
+import type { PromptSource } from "@pupt/react";
 import { useDemoContext } from "../context/DemoContext";
 import { AskInputs } from "./AskInputs";
 

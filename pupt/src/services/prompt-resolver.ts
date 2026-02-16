@@ -1,11 +1,12 @@
+import type { ModuleEntry } from '@pupt/lib';
 import chalk from 'chalk';
-import { PuptService } from './pupt-service.js';
-import { collectInputs } from './input-collector.js';
+
+import type { EnvironmentConfig } from '../types/config.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import type { ModuleEntry } from 'pupt-lib';
-import type { EnvironmentConfig } from '../types/config.js';
+import { collectInputs } from './input-collector.js';
+import { PuptService } from './pupt-service.js';
 
 export interface ResolvedPrompt {
   text: string;
@@ -76,10 +77,13 @@ export async function resolvePrompt(options: ResolvePromptOptions): Promise<Reso
   }
 
   // Collect inputs and render (wrap with environment if configured)
-  const dp = puptService.wrapWithEnvironment(selected._source!);
+  if (!selected._source) {
+    throw errors.promptNotFound(promptName ?? 'unknown');
+  }
+  const dp = puptService.wrapWithEnvironment(selected._source);
   const inputs = await collectInputs(dp.getInputIterator(), noInteractive);
   const renderResult = await dp.render({ inputs });
-  const text = renderResult.text;
+  const {text} = renderResult;
 
   const reviewFiles = renderResult.postExecution
     ?.filter((a: { type: string }) => a.type === 'reviewFile')

@@ -2,11 +2,12 @@
  * End-to-end tests for variable passing between components.
  * Based on examples from design/variables-design.md
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+import { z } from 'zod';
+
+import { Component } from '../../src/component';
 import { createPromptFromSource } from '../../src/create-prompt';
 import { render } from '../../src/render';
-import { Component } from '../../src/component';
-import { z } from 'zod';
 import type { PuptNode, RenderContext } from '../../src/types';
 
 // =============================================================================
@@ -25,7 +26,7 @@ class MockUserInfo extends Component<{ username: string; name?: string }, { disp
 
   resolve(props: { username: string }): { displayName: string; stars: number; email: string } {
     // Simulate fetching user data
-    const username = props.username;
+    const {username} = props;
     return {
       displayName: username.charAt(0).toUpperCase() + username.slice(1),
       stars: username.length * 10,
@@ -34,7 +35,7 @@ class MockUserInfo extends Component<{ username: string; name?: string }, { disp
   }
 
   render(props: { username: string }, value: { displayName: string; stars: number; email: string } | undefined, _context: RenderContext): PuptNode {
-    if (!value) return '';
+    if (!value) {return '';}
     return `User: ${value.displayName}, Stars: ${value.stars}`;
   }
 }
@@ -58,7 +59,7 @@ class MockSearchResults extends Component<{ query: string; name?: string }, Arra
   }
 
   render(props: { query: string }, value: Array<{ title: string; score: number }> | undefined): PuptNode {
-    if (!value) return '';
+    if (!value) {return '';}
     return `Found ${value.length} results for "${props.query}"`;
   }
 }
@@ -82,7 +83,7 @@ class AsyncDataFetcher extends Component<{ id: string; name?: string }, { data: 
   }
 
   render(_props: { id: string }, value: { data: string; timestamp: number } | undefined): PuptNode {
-    if (!value) return '';
+    if (!value) {return '';}
     return value.data;
   }
 }

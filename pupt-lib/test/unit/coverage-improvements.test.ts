@@ -2,14 +2,15 @@
  * Tests to improve code coverage for lower-coverage files.
  * Targets specific uncovered branches and edge cases.
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
+import { Step,Steps } from '../../components/reasoning';
 import { Format } from '../../components/structural/Format';
-import { Steps, Step } from '../../components/reasoning';
 import { createPromptFromSource } from '../../src/create-prompt';
-import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 import type { PuptElement } from '../../src/types';
+import { CHILDREN,PROPS, TYPE } from '../../src/types/symbols';
 
 describe('Coverage Improvements', () => {
   describe('Format component - delimiter branches', () => {

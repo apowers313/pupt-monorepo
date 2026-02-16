@@ -98,7 +98,8 @@ function formatValueForHyperFormula(value: unknown): RawCellContent {
   if (value === null || value === undefined) {
     return null;
   }
-  return String(value);
+  // value has been narrowed past string/number/boolean/null/undefined
+  return typeof value === 'object' ? JSON.stringify(value) : String(value as bigint);
 }
 
 /**

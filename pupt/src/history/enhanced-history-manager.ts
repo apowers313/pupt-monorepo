@@ -1,12 +1,14 @@
-import { HistoryManager } from './history-manager.js';
-import { EnhancedHistoryEntry } from '../types/history.js';
-import { getGitInfo, formatDuration } from '../utils/git-info.js';
-import fs from 'fs-extra';
-import path from 'node:path';
-import { calculateActiveExecutionTime, extractUserInputLines } from '../services/output-capture-service.js';
 import crypto from 'node:crypto';
-import { sanitizeObject } from '../utils/security.js';
+import path from 'node:path';
+
+import fs from 'fs-extra';
+
+import { calculateActiveExecutionTime, extractUserInputLines } from '../services/output-capture-service.js';
+import { EnhancedHistoryEntry } from '../types/history.js';
 import { DateFormats } from '../utils/date-formatter.js';
+import { formatDuration,getGitInfo } from '../utils/git-info.js';
+import { sanitizeObject } from '../utils/security.js';
+import { HistoryManager } from './history-manager.js';
 
 interface EnhancedHistorySaveOptions {
   templatePath: string;

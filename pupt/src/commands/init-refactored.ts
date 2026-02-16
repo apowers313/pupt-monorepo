@@ -1,10 +1,12 @@
-import { input, confirm } from '@inquirer/prompts';
-import fs from 'fs-extra';
 import path from 'node:path';
-import { BaseCommand, CommandContext, CommandOptions } from './base-command.js';
+
+import { confirm,input } from '@inquirer/prompts';
+import fs from 'fs-extra';
+
 import { Config, DEFAULT_CONFIG } from '../types/config.js';
-import { isGitRepository, addToGitignore } from '../utils/gitignore.js';
 import { errors } from '../utils/errors.js';
+import { addToGitignore,isGitRepository } from '../utils/gitignore.js';
+import { BaseCommand, CommandContext, CommandOptions } from './base-command.js';
 
 interface InitInput {
   overwrite: boolean;
@@ -14,7 +16,7 @@ interface InitInput {
   annotationDir?: string;
 }
 
-export class InitCommand extends BaseCommand<InitInput, void> {
+export class InitCommand extends BaseCommand<InitInput> {
   private configPath: string;
 
   constructor(context: CommandContext, options: CommandOptions = {}) {
@@ -102,13 +104,13 @@ export class InitCommand extends BaseCommand<InitInput, void> {
 
     // Create directories
     const dirsToCreate = [input.promptDir];
-    if (input.historyDir) dirsToCreate.push(input.historyDir);
+    if (input.historyDir) {dirsToCreate.push(input.historyDir);}
     if (input.annotationDir && input.annotationDir !== input.historyDir) {
       dirsToCreate.push(input.annotationDir);
     }
 
     for (const dir of dirsToCreate) {
-      if (!dir) continue;
+      if (!dir) {continue;}
       const resolvedDir = dir.startsWith('~') 
         ? path.join(process.env.HOME || '', dir.slice(2))
         : path.resolve(dir);
@@ -156,7 +158,7 @@ export async function initCommand(context?: CommandContext, options?: CommandOpt
     ...DEFAULT_CONFIG
   };
   
-  const ConsoleUI = (await import('../ui/console-ui.js')).ConsoleUI;
+  const {ConsoleUI} = await import('../ui/console-ui.js');
   const defaultContext = context || {
     config: defaultConfig,
     ui: new ConsoleUI(),

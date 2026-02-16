@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
+
 import { logger } from '../utils/logger.js';
 
 export enum LogLevel {
@@ -27,33 +28,33 @@ export class ConsoleUI {
   }
 
   success(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
-    const formatted = this.useColor ? chalk.green('✅ ' + message) : '✅ ' + message;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
+    const formatted = this.useColor ? chalk.green(`✅ ${  message}`) : `✅ ${  message}`;
     logger.log(formatted);
   }
 
   error(error: Error | string): void {
-    if (this.silent || this.logLevel < LogLevel.ERROR) return;
+    if (this.silent || this.logLevel < LogLevel.ERROR) {return;}
     const message = error instanceof Error ? error.message : error;
-    const formatted = this.useColor ? chalk.red('❌ ' + message) : '❌ ' + message;
+    const formatted = this.useColor ? chalk.red(`❌ ${  message}`) : `❌ ${  message}`;
     logger.error(formatted);
   }
 
   warn(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.WARN) return;
-    const formatted = this.useColor ? chalk.yellow('⚠️  ' + message) : '⚠️  ' + message;
+    if (this.silent || this.logLevel < LogLevel.WARN) {return;}
+    const formatted = this.useColor ? chalk.yellow(`⚠️  ${  message}`) : `⚠️  ${  message}`;
     logger.warn(formatted);
   }
 
   info(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
-    const formatted = this.useColor ? chalk.blue('ℹ️  ' + message) : 'ℹ️  ' + message;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
+    const formatted = this.useColor ? chalk.blue(`ℹ️  ${  message}`) : `ℹ️  ${  message}`;
     logger.log(formatted);
   }
 
   debug(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.DEBUG) return;
-    const formatted = this.useColor ? chalk.gray('🐛 ' + message) : '🐛 ' + message;
+    if (this.silent || this.logLevel < LogLevel.DEBUG) {return;}
+    const formatted = this.useColor ? chalk.gray(`🐛 ${  message}`) : `🐛 ${  message}`;
     logger.log(formatted);
   }
 
@@ -71,13 +72,13 @@ export class ConsoleUI {
   }
 
   table(data: unknown[]): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     // console.table doesn't have line ending issues, so we keep it
     console.table(data);
   }
 
   json(data: unknown, pretty = true): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     const output = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
     logger.log(output);
   }

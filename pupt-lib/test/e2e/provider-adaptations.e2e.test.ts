@@ -1,13 +1,14 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
+import { describe, expect,it } from 'vitest';
+
+import { LANGUAGE_CONVENTIONS,PROVIDER_ADAPTATIONS } from '../../components/presets/provider-adaptations';
 import { Constraint } from '../../components/structural/Constraint';
 import { Prompt } from '../../components/structural/Prompt';
-import { PROVIDER_ADAPTATIONS, LANGUAGE_CONVENTIONS } from '../../components/presets/provider-adaptations';
-import { LLM_PROVIDERS } from '../../src/types/context';
+import { Role } from '../../components/structural/Role';
+import { Task } from '../../components/structural/Task';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 import type { LlmProvider } from '../../src/types/context';
+import { LLM_PROVIDERS } from '../../src/types/context';
 
 describe('Provider adaptations e2e', () => {
   it('should have adaptation entries for all providers', () => {
@@ -54,12 +55,12 @@ describe('Provider adaptations e2e', () => {
   });
 
   it('should differentiate anthropic and google role prefix in adaptations table', () => {
-    expect(PROVIDER_ADAPTATIONS['anthropic'].rolePrefix).toBe('You are ');
-    expect(PROVIDER_ADAPTATIONS['google'].rolePrefix).toBe('Your role: ');
+    expect(PROVIDER_ADAPTATIONS.anthropic.rolePrefix).toBe('You are ');
+    expect(PROVIDER_ADAPTATIONS.google.rolePrefix).toBe('Your role: ');
   });
 
   it('should differentiate anthropic and openai format preferences', () => {
-    expect(PROVIDER_ADAPTATIONS['anthropic'].formatPreference).toBe('xml');
-    expect(PROVIDER_ADAPTATIONS['openai'].formatPreference).toBe('markdown');
+    expect(PROVIDER_ADAPTATIONS.anthropic.formatPreference).toBe('xml');
+    expect(PROVIDER_ADAPTATIONS.openai.formatPreference).toBe('markdown');
   });
 });

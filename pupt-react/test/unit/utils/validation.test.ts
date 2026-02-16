@@ -1,9 +1,10 @@
 /**
  * Tests for validation utility
  */
-import { describe, it, expect } from "vitest";
+import type { InputRequirement } from "@pupt/lib";
+import { describe, expect,it } from "vitest";
+
 import { validateInput } from "../../../src/utils/validation";
-import type { InputRequirement } from "pupt-lib";
 
 /**
  * Helper to create an InputRequirement with defaults

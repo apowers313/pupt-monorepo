@@ -2,44 +2,40 @@
  * Comprehensive coverage tests for all files below 95% coverage.
  * Organized by component/service category.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
 import { z } from 'zod';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
-import { createRenderContext } from '../setup';
-
-// Structural components
-import { Audience } from '../../components/structural/Audience';
-import { Context } from '../../components/structural/Context';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
-import { Tone } from '../../components/structural/Tone';
-import { Section } from '../../components/structural/Section';
-import { Constraint } from '../../components/structural/Constraint';
-import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
 
 // Ask components
 import { AskChoice } from '../../components/ask/Choice';
+import { AskConfirm } from '../../components/ask/Confirm';
 import { AskDate } from '../../components/ask/Date';
 import { AskEditor } from '../../components/ask/Editor';
-import { AskPath } from '../../components/ask/Path';
-import { AskSecret } from '../../components/ask/Secret';
-import { AskSelect } from '../../components/ask/Select';
 import { AskMultiSelect } from '../../components/ask/MultiSelect';
 import { AskNumber } from '../../components/ask/Number';
+import { AskPath } from '../../components/ask/Path';
 import { AskRating } from '../../components/ask/Rating';
-import { AskConfirm } from '../../components/ask/Confirm';
+import { AskSecret } from '../../components/ask/Secret';
+import { AskSelect } from '../../components/ask/Select';
 import { AskText } from '../../components/ask/Text';
-
+// Control components
+import { ForEach } from '../../components/control/ForEach';
+// Structural components
+import { Audience } from '../../components/structural/Audience';
+import { Constraint } from '../../components/structural/Constraint';
+import { Context } from '../../components/structural/Context';
+import { Role } from '../../components/structural/Role';
+import { Section } from '../../components/structural/Section';
+import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
+import { Task } from '../../components/structural/Task';
+import { Tone } from '../../components/structural/Tone';
 // Utility components
 import { Hostname } from '../../components/utility/Hostname';
 import { Username } from '../../components/utility/Username';
-
-// Control components
-import { ForEach } from '../../components/control/ForEach';
-
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 // Services
 import { Transformer } from '../../src/services/transformer';
+import { createRenderContext } from '../setup';
 
 // ============================================================================
 // STRUCTURAL COMPONENTS - Delimiter variations
@@ -801,7 +797,7 @@ describe('Uses to Import Plugin - Branch Coverage', () => {
   it('should transform Uses with component attribute', async () => {
     const source = `
 <Prompt name="test">
-  <Uses component="Section" from="pupt-lib" />
+  <Uses component="Section" from="@pupt/lib" />
   <Section name="intro">Content</Section>
 </Prompt>
     `;
@@ -813,7 +809,7 @@ describe('Uses to Import Plugin - Branch Coverage', () => {
   it('should transform Uses with default attribute', async () => {
     const source = `
 <Prompt name="test">
-  <Uses default="Fragment" from="pupt-lib" />
+  <Uses default="Fragment" from="@pupt/lib" />
   <Task>Hello</Task>
 </Prompt>
     `;
@@ -825,7 +821,7 @@ describe('Uses to Import Plugin - Branch Coverage', () => {
   it('should transform Uses with as alias', async () => {
     const source = `
 <Prompt name="test">
-  <Uses component="Section" as="MySection" from="pupt-lib" />
+  <Uses component="Section" as="MySection" from="@pupt/lib" />
   <MySection name="aliased">Aliased content</MySection>
 </Prompt>
     `;
@@ -837,7 +833,7 @@ describe('Uses to Import Plugin - Branch Coverage', () => {
   it('should transform Uses with multiple comma-separated components', async () => {
     const source = `
 <Prompt name="test">
-  <Uses component="Section, Task" from="pupt-lib" />
+  <Uses component="Section, Task" from="@pupt/lib" />
   <Section name="sec">
     <Task>Do something</Task>
   </Section>
@@ -879,7 +875,7 @@ describe('createPromptFromSource - Branch Coverage', () => {
   it('should handle source without imports (prepend custom components)', async () => {
     // Source with no import statements - custom components prepended at beginning
     const source = `
-import { Prompt } from 'pupt-lib';
+import { Prompt } from '@pupt/lib';
 
 export default (
   <Prompt name="test">
@@ -900,7 +896,7 @@ export default (
 
   it('should handle source with imports (insert after imports)', async () => {
     const source = `
-import { Prompt, Task } from 'pupt-lib';
+import { Prompt, Task } from '@pupt/lib';
 
 export default (
   <Prompt name="test">
@@ -924,7 +920,7 @@ export default (
     // Source with explicit export default undefined
     // This triggers the "must have a default export" error in create-prompt.ts
     const source = `
-import { Prompt } from 'pupt-lib';
+import { Prompt } from '@pupt/lib';
 export default undefined;
     `;
     await expect(createPromptFromSource(source, 'no-default.tsx'))
@@ -1055,9 +1051,10 @@ describe('AskMultiSelect - Additional Branch Coverage', () => {
 // ADDITIONAL EDGE CASE COVERAGE
 // ============================================================================
 
+import path from 'path';
+
 import { File } from '../../components/data/File';
 import { Prompt } from '../../components/structural/Prompt';
-import path from 'path';
 
 describe('File Component - Branch Coverage', () => {
   it('should read file with explicit language', async () => {
@@ -1068,7 +1065,7 @@ describe('File Component - Branch Coverage', () => {
     });
     const result = await render(element);
     expect(result.text).toContain('```json');
-    expect(result.text).toContain('pupt-lib');
+    expect(result.text).toContain('@pupt/lib');
   });
 
   it('should infer language from extension', async () => {
@@ -1321,7 +1318,7 @@ describe('MultiSelect Option Children', () => {
 // STEPS COMPONENT - Branch Coverage
 // ============================================================================
 
-import { Steps, Step } from '../../components/reasoning';
+import { Step,Steps } from '../../components/reasoning';
 
 describe('Steps Component - Branch Coverage', () => {
   it('should handle single (non-array) child', async () => {

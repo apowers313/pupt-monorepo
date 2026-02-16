@@ -52,9 +52,9 @@ export function getBuiltinComponents(): readonly string[] {
     const exports = getExports();
     _builtinCache = ['Component'];
     for (const [name, value] of Object.entries(exports)) {
-      if (name === 'Component') continue;
-      if (name === 'Ask') continue;
-      if (name.startsWith('Ask')) continue;
+      if (name === 'Component') {continue;}
+      if (name === 'Ask') {continue;}
+      if (name.startsWith('Ask')) {continue;}
       if (isComponentClass(value)) {
         _builtinCache.push(name);
       }
@@ -125,9 +125,9 @@ export function getStructuralComponents(): readonly string[] {
     const exports = getExports();
     const builtins = getBuiltinComponents();
     _structuralCache = builtins.filter(name => {
-      if (name === 'Component') return false;
+      if (name === 'Component') {return false;}
       const value = exports[name];
-      if (hasHoistName(value)) return false;
+      if (hasHoistName(value)) {return false;}
       return true;
     });
     _structuralCache.push('Fragment');

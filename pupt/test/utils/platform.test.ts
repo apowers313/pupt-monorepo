@@ -1,14 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  getHomePath,
-  getConfigPaths,
-  getPlatform,
-  isWindows,
-  isMacOS,
-  isLinux,
-} from '@/utils/platform';
 import os from 'os';
 import path from 'path';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import {
+  getConfigPaths,
+  getHomePath,
+  getPlatform,
+  isLinux,
+  isMacOS,
+  isWindows,
+} from '@/utils/platform';
 
 describe('Platform utilities', () => {
   const originalPlatform = process.platform;

@@ -1,6 +1,5 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
 /**
  * Schema for <Uses> component props.
@@ -11,16 +10,18 @@ import type { PuptNode, RenderContext } from 'pupt-lib';
  * - <Uses default="Card" from="my-lib" />
  * - <Uses component="A, B, C" from="my-lib" />
  */
-export const usesSchema = z.object({
-  /** Named export(s) to import (comma-separated for multiple) */
-  component: z.string().optional(),
-  /** Import the default export with this name */
-  default: z.string().optional(),
-  /** Alias for the imported component (only valid with single component) */
-  as: z.string().optional(),
-  /** Module specifier (npm package, URL, or local path) */
-  from: z.string(),
-}).passthrough();
+export const usesSchema = z
+    .object({
+        /** Named export(s) to import (comma-separated for multiple) */
+        component: z.string().optional(),
+        /** Import the default export with this name */
+        default: z.string().optional(),
+        /** Alias for the imported component (only valid with single component) */
+        as: z.string().optional(),
+        /** Module specifier (npm package, URL, or local path) */
+        from: z.string(),
+    })
+    .passthrough();
 
 type UsesProps = z.infer<typeof usesSchema> & { children?: PuptNode };
 
@@ -47,15 +48,15 @@ type UsesProps = z.infer<typeof usesSchema> & { children?: PuptNode };
  * ```
  */
 export class Uses extends Component<UsesProps> {
-  static schema = usesSchema;
+    static schema = usesSchema;
 
-  render(props: UsesProps, _resolvedValue: void, _context: RenderContext): PuptNode {
-    // This component should be transformed to an import by the Babel plugin.
-    // If we reach here, the plugin didn't run.
-    console.warn(
-      `Warning: <Uses from="${props.from}"> was rendered instead of transformed to an import. ` +
-      'Ensure the uses-to-import Babel plugin is configured correctly.',
-    );
-    return null;
-  }
+    render(props: UsesProps, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        // This component should be transformed to an import by the Babel plugin.
+        // If we reach here, the plugin didn't run.
+        console.warn(
+            `Warning: <Uses from="${props.from}"> was rendered instead of transformed to an import. ` +
+                "Ensure the uses-to-import Babel plugin is configured correctly.",
+        );
+        return null;
+    }
 }

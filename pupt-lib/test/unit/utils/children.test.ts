@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { findChildrenOfType, partitionChildren, isElementOfType } from '../../../src/utils/children';
-import { jsx, Fragment } from '../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Step } from '../../../components/reasoning/Step';
 import { Role } from '../../../components/structural/Role';
+import { Fragment,jsx } from '../../../src/jsx-runtime';
+import { findChildrenOfType, isElementOfType,partitionChildren } from '../../../src/utils/children';
 
 describe('findChildrenOfType', () => {
   it('should find direct children by class reference', () => {

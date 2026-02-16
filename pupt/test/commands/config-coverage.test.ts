@@ -1,12 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { configCommand } from '../../src/commands/config.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/utils/logger.js');
 vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
-  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  const original = await importOriginal();
   return {
     ...original,
     ConfigManager: {

@@ -1,9 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
-import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
-import { installCommand } from '../../src/commands/install.js';
+import * as path from 'node:path';
+
 import simpleGit from 'simple-git';
+import { afterEach, beforeAll,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { installCommand } from '../../src/commands/install.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 
 let testDir: string;
@@ -32,7 +34,7 @@ vi.mock('execa', () => ({
 }));
 
 vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
-  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  const original = await importOriginal();
   return {
     ...original,
     ConfigManager: {

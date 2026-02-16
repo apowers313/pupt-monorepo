@@ -2,7 +2,8 @@
  * Tests for evaluateFormula re-export
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect,it } from "vitest";
+
 import { evaluateFormula } from "../../../src/utils/formula";
 
 describe("evaluateFormula", () => {

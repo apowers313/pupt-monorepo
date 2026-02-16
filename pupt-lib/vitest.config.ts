@@ -7,10 +7,10 @@ const isCI = process.env.CI === 'true';
 const testTimeout = isCI ? 30000 : 5000;
 const noThresholds = process.env.VITEST_COVERAGE_NO_THRESHOLDS === 'true';
 
-// Self-referencing aliases so components/ can import from 'pupt-lib'
+// Self-referencing aliases so components/ can import from '@pupt/lib'
 const selfRefAlias = {
-  'pupt-lib/jsx-runtime': resolve(__dirname, 'src/jsx-runtime/index.ts'),
-  'pupt-lib': resolve(__dirname, 'src/index.ts'),
+  '@pupt/lib/jsx-runtime': resolve(__dirname, 'src/jsx-runtime/index.ts'),
+  '@pupt/lib': resolve(__dirname, 'src/index.ts'),
 };
 
 export default defineConfig({

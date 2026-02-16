@@ -7,8 +7,8 @@ const HelperConfigSchema = z.object({
   path: z.string().optional()
 }).refine(
   (data) => {
-    if (data.type === 'inline') return !!data.value;
-    if (data.type === 'file') return !!data.path;
+    if (data.type === 'inline') {return !!data.value;}
+    if (data.type === 'file') {return !!data.path;}
     return false;
   },
   {

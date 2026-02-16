@@ -2,13 +2,14 @@
  * Integration tests for Demo PromptOutput panel
  */
 
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { MantineProvider } from "@mantine/core";
-import { PuptProvider, PuptLibraryProvider } from "../../../src";
-import { DemoProvider } from "../../../demo/src/context/DemoContext";
+import { beforeAll,describe, expect, it, vi } from "vitest";
+
 import { PromptOutput } from "../../../demo/src/components/PromptOutput";
+import { DemoProvider } from "../../../demo/src/context/DemoContext";
+import { PuptLibraryProvider,PuptProvider } from "../../../src";
 
 // Mantine requires matchMedia and ResizeObserver in jsdom
 beforeAll(() => {

@@ -1,7 +1,8 @@
-import { describe, it, expect, vi } from 'vitest';
-import { InteractiveSearch } from '../../src/ui/interactive-search.js';
-import { Prompt } from '../../src/types/prompt.js';
 import * as inquirerPrompts from '@inquirer/prompts';
+import { describe, expect, it, vi } from 'vitest';
+
+import { Prompt } from '../../src/types/prompt.js';
+import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 
 // Mock inquirer prompts
 vi.mock('@inquirer/prompts', () => ({

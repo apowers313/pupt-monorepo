@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { AskOption } from '../../../../components/ask/Option';
-import { render } from '../../../../src/render';
 import { jsx } from '../../../../src/jsx-runtime/index';
+import { render } from '../../../../src/render';
 
 describe('AskOption', () => {
   it('should return null when rendered', async () => {

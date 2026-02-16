@@ -4,15 +4,16 @@
  * End-to-end tests that verify the complete prompt editing and rendering flow
  */
 
-import { describe, it, expect, vi, beforeAll, afterEach } from "vitest";
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
-import React from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider, PuptLibraryProvider } from "../../src";
-import { DemoProvider } from "../../demo/src/context/DemoContext";
+import { fireEvent,render, screen, waitFor } from "@testing-library/react";
+import React from "react";
+import { afterEach,beforeAll, describe, expect, it, vi } from "vitest";
+
 import { Layout } from "../../demo/src/components/Layout";
 import { PromptOutput } from "../../demo/src/components/PromptOutput";
+import { DemoProvider } from "../../demo/src/context/DemoContext";
 import { EXAMPLES } from "../../demo/src/data/examples";
+import { PuptLibraryProvider,PuptProvider } from "../../src";
 
 // Mock Monaco editor since it doesn't work in jsdom
 vi.mock("@monaco-editor/react", () => ({
@@ -138,7 +139,7 @@ describe("Full Flow Integration", () => {
     renderApp();
 
     // Verify editor renders with default example
-    const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
+    const editor = screen.getByTestId("mock-editor");
     expect(editor.value).toContain("Prompt");
     expect(editor.value).toContain("greeting");
 
@@ -149,7 +150,7 @@ describe("Full Flow Integration", () => {
     renderApp();
     await waitForPromptRender();
 
-    const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
+    const editor = screen.getByTestId("mock-editor");
 
     // Enter a new prompt
     const newPrompt = `<Prompt name="test">
@@ -320,7 +321,7 @@ describe("Error Handling", () => {
     renderApp();
     await waitForPromptRender();
 
-    const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
+    const editor = screen.getByTestId("mock-editor");
 
     // Enter invalid JSX
     fireEvent.change(editor, {
@@ -344,7 +345,7 @@ describe("Error Handling", () => {
     renderApp();
     await waitForPromptRender();
 
-    const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
+    const editor = screen.getByTestId("mock-editor");
 
     // Clear the editor
     fireEvent.change(editor, { target: { value: "" } });
@@ -376,7 +377,7 @@ describe("Application Stability", () => {
     renderApp();
     await waitForPromptRender();
 
-    const editor = screen.getByTestId("mock-editor") as HTMLTextAreaElement;
+    const editor = screen.getByTestId("mock-editor");
 
     // Simulate rapid typing
     for (let i = 0; i < 10; i++) {

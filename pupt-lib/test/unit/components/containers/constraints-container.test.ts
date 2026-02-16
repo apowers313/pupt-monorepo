@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { Constraints } from '../../../../components/structural/Constraints';
+import { describe, expect,it } from 'vitest';
+
 import { Constraint } from '../../../../components/structural/Constraint';
+import { Constraints } from '../../../../components/structural/Constraints';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Constraints container', () => {
   it('should render children constraints', async () => {

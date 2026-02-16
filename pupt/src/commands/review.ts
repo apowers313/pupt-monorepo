@@ -1,10 +1,11 @@
-import { ConfigManager } from '../config/config-manager.js';
-import { ReviewDataBuilder } from '../services/review-data-builder.js';
-import type { ReviewOptions, ReviewData } from '../types/review.js';
 import chalk from 'chalk';
 import fs from 'fs-extra';
-import { logger } from '../utils/logger.js';
+
+import { ConfigManager } from '../config/config-manager.js';
 import { buildModuleEntries } from '../services/module-entry-builder.js';
+import { ReviewDataBuilder } from '../services/review-data-builder.js';
+import type { ReviewData,ReviewOptions } from '../types/review.js';
+import { logger } from '../utils/logger.js';
 
 export async function reviewCommand(
   promptName?: string,
@@ -124,7 +125,7 @@ function formatMarkdownReport(data: ReviewData): string {
         lines.push(`- ${formatDate(annotation.timestamp)} - ${statusIcon} ${annotation.status}`);
         if (annotation.notes) {
           const truncatedNotes = annotation.notes.substring(0, 100);
-          const notes = annotation.notes.length > 100 ? truncatedNotes + '...' : truncatedNotes;
+          const notes = annotation.notes.length > 100 ? `${truncatedNotes  }...` : truncatedNotes;
           lines.push(`  *"${notes}"*`);
         }
       }
@@ -161,7 +162,7 @@ function formatMarkdownReport(data: ReviewData): string {
 function formatDate(isoDate: string): string {
   try {
     const date = new Date(isoDate);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    return `${date.toLocaleDateString()  } ${  date.toLocaleTimeString()}`;
   } catch {
     return isoDate;
   }

@@ -10,7 +10,7 @@ export interface Prompt {
   frontmatter: Record<string, unknown>; // Raw frontmatter data (empty for JSX prompts)
   variables?: VariableDefinition[];
   summary?: string; // Summary from frontmatter for history display
-  _source?: import('pupt-lib').DiscoveredPromptWithMethods; // Original pupt-lib prompt (for JSX prompts)
+  _source?: import('@pupt/lib').DiscoveredPromptWithMethods; // Original pupt-lib prompt (for JSX prompts)
 }
 
 export interface VariableDefinition {
@@ -30,7 +30,7 @@ export interface VariableDefinition {
  * This adapter allows the JSX-based prompts to work with existing search/UI code.
  */
 export function fromDiscoveredPrompt(
-  dp: import('pupt-lib').DiscoveredPromptWithMethods,
+  dp: import('@pupt/lib').DiscoveredPromptWithMethods,
   filePath?: string,
   baseDir?: string,
 ): Prompt {

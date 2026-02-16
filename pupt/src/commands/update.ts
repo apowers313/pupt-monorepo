@@ -1,12 +1,14 @@
 import * as path from 'node:path';
-import simpleGit from 'simple-git';
-import { ConfigManager } from '../config/config-manager.js';
-import { logger } from '../utils/logger.js';
-import { getDataDir } from '../config/global-paths.js';
-import { loadConfigFromDirectory } from './install.js';
-import { GlobalPackageManager } from '../services/package-manager.js';
+
 import fs from 'fs-extra';
+import simpleGit from 'simple-git';
+
+import { ConfigManager } from '../config/config-manager.js';
+import { getDataDir } from '../config/global-paths.js';
+import { GlobalPackageManager } from '../services/package-manager.js';
 import type { GitLibraryEntry, NpmLibraryEntry } from '../types/config.js';
+import { logger } from '../utils/logger.js';
+import { loadConfigFromDirectory } from './install.js';
 
 async function updateGitLibrary(library: GitLibraryEntry): Promise<void> {
   const dataDir = getDataDir();

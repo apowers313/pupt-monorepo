@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
-import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
 import { spawn } from 'child_process';
+import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { afterAll,afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 /**

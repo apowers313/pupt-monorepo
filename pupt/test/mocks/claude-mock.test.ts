@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { spawn } from 'child_process';
-import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+import { afterAll,beforeAll, describe, expect, it } from 'vitest';
+
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 const __filename = fileURLToPath(import.meta.url);

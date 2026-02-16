@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { createPromptFromSource } from '../../src/create-prompt';
 import { render } from '../../src/render';
 

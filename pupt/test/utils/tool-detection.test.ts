@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { detectInstalledTools, getToolByName, getToolByCommand, SUPPORTED_TOOLS, isInteractiveTUI } from '../../src/utils/tool-detection.js';
 import { sync as commandExistsSync } from 'command-exists';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
+import { detectInstalledTools, getToolByCommand, getToolByName, isInteractiveTUI,SUPPORTED_TOOLS } from '../../src/utils/tool-detection.js';
 
 // Mock command-exists module
 vi.mock('command-exists');

@@ -1,13 +1,15 @@
-import { input, select, confirm } from '@inquirer/prompts';
-import { ConfigManager } from '../config/config-manager.js';
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import { confirm,input, select } from '@inquirer/prompts';
 import chalk from 'chalk';
+import fs from 'fs-extra';
+
+import { ConfigManager } from '../config/config-manager.js';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import { findLocalPromptsDir } from '../utils/prompt-dir-resolver.js';
 import { findProjectRoot } from '../utils/project-root.js';
+import { findLocalPromptsDir } from '../utils/prompt-dir-resolver.js';
 
 export interface AddCommandOptions {
   global?: boolean;

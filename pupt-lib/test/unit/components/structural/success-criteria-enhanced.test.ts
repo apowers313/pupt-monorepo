@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { SuccessCriteria } from '../../../../components/structural/SuccessCriteria';
+import { describe, expect,it } from 'vitest';
+
 import { Criterion } from '../../../../components/structural/Criterion';
+import { SuccessCriteria } from '../../../../components/structural/SuccessCriteria';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('SuccessCriteria enhanced props', () => {
   it('should render accuracy preset', async () => {

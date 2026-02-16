@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { PatternDetector } from '../../src/services/pattern-detector.js';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { AnnotationAnalyzer } from '../../src/annotations/annotation-analyzer.js';
+import { PatternDetector } from '../../src/services/pattern-detector.js';
 import type { ParsedAnnotation } from '../../src/types/annotations.js';
 
 /**
@@ -118,7 +119,7 @@ describe('PatternDetector - additional coverage', () => {
   describe('truncateEvidence', () => {
     it('should truncate long evidence text to 100 characters', () => {
       // Create annotations with very long notes that will be included as evidence
-      const longNotes = 'A'.repeat(200) + ' tests still failing after claimed success';
+      const longNotes = `${'A'.repeat(200)  } tests still failing after claimed success`;
       const annotations = Array(3).fill(null).map(() =>
         createAnnotation({
           notes: longNotes,

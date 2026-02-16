@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ConsoleUI, LogLevel } from '../../src/ui/console-ui';
 import chalk from 'chalk';
 import ora from 'ora';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ConsoleUI, LogLevel } from '../../src/ui/console-ui';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('ora');

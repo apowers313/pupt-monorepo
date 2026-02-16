@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { MantineProvider } from "@mantine/core";
-import { PuptProvider, PuptLibraryProvider, usePuptLibraryContext } from "pupt-react";
-import type { SearchablePrompt } from "pupt-react";
+import { PuptProvider, PuptLibraryProvider, usePuptLibraryContext } from "@pupt/react";
+import type { SearchablePrompt } from "@pupt/react";
 import { theme } from "./theme";
 import { Layout } from "./components";
 import { DemoProvider } from "./context/DemoContext";

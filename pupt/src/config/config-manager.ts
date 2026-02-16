@@ -1,15 +1,17 @@
-import { cosmiconfig } from 'cosmiconfig';
-import { Config, DEFAULT_CONFIG } from '../types/config.js';
 import path from 'node:path';
-import { getHomePath } from '../utils/platform.js';
+
+import { cosmiconfig } from 'cosmiconfig';
 import fs from 'fs-extra';
-import { errors, createError, ErrorCategory } from '../utils/errors.js';
-import { migrateConfig } from './migration.js';
-import { ConfigSchema, ConfigFileSchema } from '../schemas/config-schema.js';
 import { z } from 'zod';
-import { logger } from '../utils/logger.js';
+
+import { ConfigFileSchema,ConfigSchema } from '../schemas/config-schema.js';
+import { Config, DEFAULT_CONFIG } from '../types/config.js';
 import { migrateAnnotationsToJson } from '../utils/annotation-migration.js';
+import { createError, ErrorCategory,errors } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
+import { getHomePath } from '../utils/platform.js';
 import { getConfigDir, getConfigPath, getDataDir } from './global-paths.js';
+import { migrateConfig } from './migration.js';
 
 interface ConfigResult {
   config: Config;
@@ -75,7 +77,7 @@ export class ConfigManager {
       try {
         await migrateAnnotationsToJson(expandedConfig.annotationDir);
       } catch (error) {
-        logger.warn(`Failed to migrate annotation files: ${error}`);
+        logger.warn(`Failed to migrate annotation files: ${error instanceof Error ? error.message : String(error as string | number)}`);
       }
     }
 
@@ -90,7 +92,7 @@ export class ConfigManager {
     // First validate that it's a valid config file format (any version)
     const fileResult = ConfigFileSchema.safeParse(config);
     if (!fileResult.success) {
-      const issues = fileResult.error.issues;
+      const {issues} = fileResult.error;
       const firstIssue = issues[0];
 
       // Handle union errors by looking for the most specific error
@@ -181,7 +183,7 @@ export class ConfigManager {
 
       // Still invalid after migration attempt
       const firstIssue = retryResult.error.issues[0];
-      const message = firstIssue.message;
+      const {message} = firstIssue;
 
       throw errors.invalidConfig('validation', 'valid configuration', message);
     }

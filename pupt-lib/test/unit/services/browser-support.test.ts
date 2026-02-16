@@ -1,25 +1,26 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import {
+  type Dependency,
   generateImportMap,
-  resolveCdn,
-  serializeImportMap,
   generateImportMapScript,
   generatePuptLibImportMap,
   generatePuptLibImportMapScript,
   type ImportMap,
-  type Dependency,
+  resolveCdn,
+  serializeImportMap,
 } from '../../../src/services/browser-support';
 
 describe('generateImportMap', () => {
   it('should generate import map for dependencies', () => {
     const deps: Dependency[] = [
-      { name: 'pupt-lib', version: '1.0.0' },
+      { name: '@pupt/lib', version: '1.0.0' },
       { name: '@acme/prompts', version: '2.0.0' },
     ];
 
     const importMap = generateImportMap(deps, { cdn: 'esm.sh' });
 
-    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@1.0.0');
+    expect(importMap.imports['@pupt/lib']).toBe('https://esm.sh/@pupt/lib@1.0.0');
     expect(importMap.imports['@acme/prompts']).toBe('https://esm.sh/@acme/prompts@2.0.0');
   });
 
@@ -30,7 +31,7 @@ describe('generateImportMap', () => {
 
     const importMap = generateImportMap(deps, { cdn: 'unpkg' });
 
-    expect(importMap.imports['lodash']).toBe('https://unpkg.com/lodash@4.17.21');
+    expect(importMap.imports.lodash).toBe('https://unpkg.com/lodash@4.17.21');
   });
 
   it('should generate import map with custom template', () => {
@@ -69,7 +70,7 @@ describe('generateImportMap', () => {
 
   it('should include scopes when provided', () => {
     const deps: Dependency[] = [
-      { name: 'pupt-lib', version: '1.0.0' },
+      { name: '@pupt/lib', version: '1.0.0' },
     ];
 
     const importMap = generateImportMap(deps, {
@@ -81,7 +82,7 @@ describe('generateImportMap', () => {
       },
     });
 
-    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@1.0.0');
+    expect(importMap.imports['@pupt/lib']).toBe('https://esm.sh/@pupt/lib@1.0.0');
     expect(importMap.scopes?.['/app/']?.['internal-pkg']).toBe('/local/internal-pkg.js');
   });
 });
@@ -197,15 +198,15 @@ describe('serializeImportMap', () => {
 describe('generateImportMapScript', () => {
   it('should generate HTML script tag with import map', () => {
     const deps: Dependency[] = [
-      { name: 'pupt-lib', version: '1.0.0' },
+      { name: '@pupt/lib', version: '1.0.0' },
     ];
 
     const html = generateImportMapScript(deps, { cdn: 'esm.sh' });
 
     expect(html).toContain('<script type="importmap">');
     expect(html).toContain('</script>');
-    expect(html).toContain('"pupt-lib"');
-    expect(html).toContain('https://esm.sh/pupt-lib@1.0.0');
+    expect(html).toContain('"@pupt/lib"');
+    expect(html).toContain('https://esm.sh/@pupt/lib@1.0.0');
   });
 
   it('should include multiple dependencies', () => {
@@ -235,20 +236,20 @@ describe('generatePuptLibImportMap', () => {
   it('should generate import map with pupt-lib and jsx-runtime', () => {
     const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
 
-    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@1.1.0');
-    expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://esm.sh/pupt-lib@1.1.0/jsx-runtime');
+    expect(importMap.imports['@pupt/lib']).toBe('https://esm.sh/@pupt/lib@1.1.0');
+    expect(importMap.imports['@pupt/lib/jsx-runtime']).toBe('https://esm.sh/@pupt/lib@1.1.0/jsx-runtime');
   });
 
   it('should not include zod (bundled into dist)', () => {
     const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
 
-    expect(importMap.imports['zod']).toBeUndefined();
+    expect(importMap.imports.zod).toBeUndefined();
   });
 
   it('should not include minisearch (bundled into dist)', () => {
     const importMap = generatePuptLibImportMap({ puptLibVersion: '1.1.0' });
 
-    expect(importMap.imports['minisearch']).toBeUndefined();
+    expect(importMap.imports.minisearch).toBeUndefined();
   });
 
   it('should support different CDN providers', () => {
@@ -257,8 +258,8 @@ describe('generatePuptLibImportMap', () => {
       cdn: 'unpkg',
     });
 
-    expect(importMap.imports['pupt-lib']).toBe('https://unpkg.com/pupt-lib@1.1.0');
-    expect(importMap.imports['pupt-lib/jsx-runtime']).toBe('https://unpkg.com/pupt-lib@1.1.0/jsx-runtime');
+    expect(importMap.imports['@pupt/lib']).toBe('https://unpkg.com/@pupt/lib@1.1.0');
+    expect(importMap.imports['@pupt/lib/jsx-runtime']).toBe('https://unpkg.com/@pupt/lib@1.1.0/jsx-runtime');
   });
 
   it('should support custom CDN template', () => {
@@ -267,7 +268,7 @@ describe('generatePuptLibImportMap', () => {
       cdnTemplate: 'https://mycdn.example.com/{name}@{version}',
     });
 
-    expect(importMap.imports['pupt-lib']).toBe('https://mycdn.example.com/pupt-lib@1.1.0');
+    expect(importMap.imports['@pupt/lib']).toBe('https://mycdn.example.com/@pupt/lib@1.1.0');
   });
 
   it('should include additional dependencies when provided', () => {
@@ -286,7 +287,7 @@ describe('generatePuptLibImportMap', () => {
   it('should use "latest" as default version', () => {
     const importMap = generatePuptLibImportMap({});
 
-    expect(importMap.imports['pupt-lib']).toBe('https://esm.sh/pupt-lib@latest');
+    expect(importMap.imports['@pupt/lib']).toBe('https://esm.sh/@pupt/lib@latest');
   });
 });
 
@@ -296,8 +297,8 @@ describe('generatePuptLibImportMapScript', () => {
 
     expect(html).toContain('<script type="importmap">');
     expect(html).toContain('</script>');
-    expect(html).toContain('"pupt-lib"');
-    expect(html).toContain('"pupt-lib/jsx-runtime"');
+    expect(html).toContain('"@pupt/lib"');
+    expect(html).toContain('"@pupt/lib/jsx-runtime"');
     expect(html).not.toContain('"zod"');
     expect(html).not.toContain('"minisearch"');
   });

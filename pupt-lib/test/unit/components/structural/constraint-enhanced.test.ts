@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Constraint } from '../../../../components/structural/Constraint';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Constraint positive framing', () => {
   it('should use positive framing for anthropic provider', async () => {

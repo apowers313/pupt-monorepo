@@ -3,6 +3,7 @@
  */
 
 import { useContext } from "react";
+
 import { PuptContext } from "../context/PuptContext";
 import type { PuptContextValue } from "../types/context";
 
@@ -29,12 +30,12 @@ import type { PuptContextValue } from "../types/context";
  * @throws {Error} When used outside of PuptProvider
  */
 export function usePupt(): PuptContextValue {
-  const context = useContext(PuptContext);
+    const context = useContext(PuptContext);
 
-  // Check if we're outside a provider using the internal _initialized marker
-  if (!context._initialized) {
-    throw new Error("usePupt must be used within a PuptProvider");
-  }
+    // Check if we're outside a provider using the internal _initialized marker
+    if (!context._initialized) {
+        throw new Error("usePupt must be used within a PuptProvider");
+    }
 
-  return context;
+    return context;
 }

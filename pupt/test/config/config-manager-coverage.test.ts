@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let testDir: string;
 
@@ -16,7 +16,7 @@ import { ConfigManager } from '@/config/config-manager';
 
 describe('ConfigManager coverage', () => {
   beforeEach(async () => {
-    const tempDir = path.join(os.tmpdir(), 'pt-test-config-cov-' + Date.now());
+    const tempDir = path.join(os.tmpdir(), `pt-test-config-cov-${  Date.now()}`);
     await fs.ensureDir(tempDir);
     testDir = fs.realpathSync(tempDir);
   });

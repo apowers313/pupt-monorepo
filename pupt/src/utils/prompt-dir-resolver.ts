@@ -1,5 +1,6 @@
-import path from 'node:path';
 import fs from 'node:fs';
+import path from 'node:path';
+
 import { findProjectRoot } from './project-root.js';
 
 const LOCAL_PROMPTS_DIR = '.prompts';
@@ -9,7 +10,7 @@ const LOCAL_PROMPTS_DIR = '.prompts';
  */
 export async function findLocalPromptsDir(startDir?: string): Promise<string | null> {
   const root = findProjectRoot(startDir ?? process.cwd());
-  if (!root) return null;
+  if (!root) {return null;}
 
   const localDir = path.join(root, LOCAL_PROMPTS_DIR);
   try {

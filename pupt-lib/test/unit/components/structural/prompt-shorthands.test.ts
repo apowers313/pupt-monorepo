@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Prompt } from '../../../../components/structural/Prompt';
-import { Task } from '../../../../components/structural/Task';
 import { Role } from '../../../../components/structural/Role';
+import { Task } from '../../../../components/structural/Task';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Prompt shorthand disable props', () => {
   it('should skip default role when noRole=true', async () => {

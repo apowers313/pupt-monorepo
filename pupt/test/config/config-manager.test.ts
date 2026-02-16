@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { ConfigManager } from '@/config/config-manager';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { ConfigManager } from '@/config/config-manager';
 
 describe('ConfigManager', () => {
   let testDir: string;
@@ -11,11 +12,11 @@ describe('ConfigManager', () => {
 
   beforeEach(async () => {
     // Create temp directories and resolve to canonical paths
-    const tempDir = path.join(os.tmpdir(), 'pt-test-config-' + Date.now());
+    const tempDir = path.join(os.tmpdir(), `pt-test-config-${  Date.now()}`);
     await fs.ensureDir(tempDir);
     testDir = fs.realpathSync(tempDir);
 
-    const tempDataDir = path.join(os.tmpdir(), 'pt-test-data-' + Date.now());
+    const tempDataDir = path.join(os.tmpdir(), `pt-test-data-${  Date.now()}`);
     await fs.ensureDir(tempDataDir);
     dataDir = fs.realpathSync(tempDataDir);
 

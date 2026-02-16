@@ -3,8 +3,9 @@
  */
 
 import { createContext, useMemo } from "react";
+
 import { usePuptLibrary } from "../hooks/usePuptLibrary";
-import type { UsePuptLibraryReturn, UsePuptLibraryOptions } from "../types/hooks";
+import type { UsePuptLibraryOptions, UsePuptLibraryReturn } from "../types/hooks";
 
 /**
  * Context value for PuptLibraryProvider
@@ -16,7 +17,7 @@ PuptLibraryContext.displayName = "PuptLibraryContext";
  * Props for PuptLibraryProvider
  */
 interface PuptLibraryProviderProps extends UsePuptLibraryOptions {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }
 
 /**
@@ -29,24 +30,20 @@ interface PuptLibraryProviderProps extends UsePuptLibraryOptions {
  * </PuptLibraryProvider>
  * ```
  */
-export function PuptLibraryProvider({
-  children,
-  modules,
-  searchConfig,
-}: PuptLibraryProviderProps): React.ReactElement {
-  const opts: UsePuptLibraryOptions = {};
-  if (modules) opts.modules = modules;
-  if (searchConfig) opts.searchConfig = searchConfig;
-  const library = usePuptLibrary(opts);
+export function PuptLibraryProvider({ children, modules, searchConfig }: PuptLibraryProviderProps): React.ReactElement {
+    const opts: UsePuptLibraryOptions = {};
+    if (modules) {
+        opts.modules = modules;
+    }
+    if (searchConfig) {
+        opts.searchConfig = searchConfig;
+    }
+    const library = usePuptLibrary(opts);
 
-  const value = useMemo(
-    () => library,
-    [library.isLoading, library.error, library.prompts, library.tags, library.modules], // eslint-disable-line react-hooks/exhaustive-deps
-  );
+    const value = useMemo(
+        () => library,
+        [library.isLoading, library.error, library.prompts, library.tags, library.modules], // eslint-disable-line react-hooks/exhaustive-deps
+    );
 
-  return (
-    <PuptLibraryContext.Provider value={value}>
-      {children}
-    </PuptLibraryContext.Provider>
-  );
+    return <PuptLibraryContext.Provider value={value}>{children}</PuptLibraryContext.Provider>;
 }

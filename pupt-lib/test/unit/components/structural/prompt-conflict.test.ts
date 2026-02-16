@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
+import { ChainOfThought } from '../../../../components/reasoning/ChainOfThought';
+import { Format } from '../../../../components/structural/Format';
 import { Prompt } from '../../../../components/structural/Prompt';
 import { Task } from '../../../../components/structural/Task';
-import { Format } from '../../../../components/structural/Format';
-import { ChainOfThought } from '../../../../components/reasoning/ChainOfThought';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Prompt Format/ChainOfThought conflict detection', () => {
   it('should warn when Format strict and ChainOfThought showReasoning are both active', async () => {

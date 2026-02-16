@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Reference } from '../../../../components/structural/Reference';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Reference', () => {
   it('should render title', async () => {

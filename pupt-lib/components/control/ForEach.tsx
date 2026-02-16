@@ -1,42 +1,43 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
-export const forEachSchema = z.object({
-  items: z.array(z.unknown()),
-  as: z.string(),
-}).passthrough();
+export const forEachSchema = z
+    .object({
+        items: z.array(z.unknown()),
+        as: z.string(),
+    })
+    .passthrough();
 
 export type ForEachProps<T = unknown> = {
-  items: T[];
-  as: string;
-  children?: ((item: T, index: number) => PuptNode) | PuptNode | PuptNode[];
+    items: T[];
+    as: string;
+    children?: ((item: T, index: number) => PuptNode) | PuptNode | PuptNode[];
 };
 
 export class ForEach<T = unknown> extends Component<ForEachProps<T>> {
-  static schema = forEachSchema;
+    static schema = forEachSchema;
 
-  render({ items, children }: ForEachProps<T>, _resolvedValue: void, _context: RenderContext): PuptNode {
-    if (!items || items.length === 0) {
-      return null;
+    render({ items, children }: ForEachProps<T>, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        if (!items || items.length === 0) {
+            return null;
+        }
+
+        // When passed through JSX, children may be wrapped in an array
+        // Extract the actual child function or value
+        let childContent = children;
+        if (Array.isArray(children) && children.length === 1) {
+            childContent = children[0];
+        }
+
+        if (typeof childContent === "function") {
+            // Children is a render function
+            const results: PuptNode[] = items.map((item, index) =>
+                (childContent as (item: T, index: number) => PuptNode)(item, index),
+            );
+            return results;
+        }
+
+        // If children is not a function, repeat it for each item
+        return items.map(() => childContent);
     }
-
-    // When passed through JSX, children may be wrapped in an array
-    // Extract the actual child function or value
-    let childContent = children;
-    if (Array.isArray(children) && children.length === 1) {
-      childContent = children[0];
-    }
-
-    if (typeof childContent === 'function') {
-      // Children is a render function
-      const results: PuptNode[] = items.map((item, index) =>
-        (childContent as (item: T, index: number) => PuptNode)(item, index),
-      );
-      return results;
-    }
-
-    // If children is not a function, repeat it for each item
-    return items.map(() => childContent);
-  }
 }

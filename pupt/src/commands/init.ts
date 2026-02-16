@@ -1,11 +1,13 @@
-import { input, confirm, select } from '@inquirer/prompts';
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import { confirm, input, select } from '@inquirer/prompts';
 import chalk from 'chalk';
-import { DEFAULT_CONFIG } from '../types/config.js';
-import { detectInstalledTools, getToolByName } from '../utils/tool-detection.js';
-import { logger } from '../utils/logger.js';
+import fs from 'fs-extra';
+
 import { getConfigPath, getDataDir } from '../config/global-paths.js';
+import { DEFAULT_CONFIG } from '../types/config.js';
+import { logger } from '../utils/logger.js';
+import { detectInstalledTools, getToolByName } from '../utils/tool-detection.js';
 
 export async function initCommand(): Promise<void> {
   const configPath = getConfigPath();
@@ -17,7 +19,7 @@ export async function initCommand(): Promise<void> {
       message: 'Global config already exists. Reconfigure?',
       default: false
     });
-    if (!reconfigure) return;
+    if (!reconfigure) {return;}
   }
 
   // Prompt for prompt directory

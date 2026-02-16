@@ -1,8 +1,10 @@
 import path from 'node:path';
-import type { ModuleEntry } from 'pupt-lib';
+
+import type { ModuleEntry } from '@pupt/lib';
+
+import { getDataDir } from '../config/global-paths.js';
 import type { Config, LibraryEntry } from '../types/config.js';
 import { findLocalPromptsDir } from '../utils/prompt-dir-resolver.js';
-import { getDataDir } from '../config/global-paths.js';
 import { scanLocalPromptDir } from './pupt-prompt-source.js';
 
 export interface BuildModuleEntriesOptions {
@@ -38,22 +40,22 @@ export async function buildModuleEntries(options: BuildModuleEntriesOptions): Pr
 
   // 1. CLI --prompt-dir overrides (highest priority)
   if (cliPromptDirs) {
-    for (const dir of cliPromptDirs) await addLocalDir(dir);
+    for (const dir of cliPromptDirs) {await addLocalDir(dir);}
   }
 
   // 2. Auto-discovered {projectRoot}/.prompts/
   const localDir = await findLocalPromptsDir(startDir);
-  if (localDir) await addLocalDir(localDir);
+  if (localDir) {await addLocalDir(localDir);}
 
   // 3. Config promptDirs (local directories)
-  for (const dir of config.promptDirs) await addLocalDir(dir);
+  for (const dir of config.promptDirs) {await addLocalDir(dir);}
 
   // 4. Libraries → scan each library's promptDirs for .prompt files
   if (config.libraries) {
     const dataDir = getDataDir();
     for (const lib of config.libraries) {
       const libDirs = getLibraryPromptDirs(lib, dataDir);
-      for (const dir of libDirs) await addLocalDir(dir);
+      for (const dir of libDirs) {await addLocalDir(dir);}
     }
   }
 

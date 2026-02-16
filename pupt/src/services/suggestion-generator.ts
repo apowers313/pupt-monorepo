@@ -1,4 +1,4 @@
-import type { Pattern, Suggestion, Severity } from '../types/patterns.js';
+import type { Pattern, Severity,Suggestion } from '../types/patterns.js';
 
 export class SuggestionGenerator {
   generateSuggestions(patterns: Pattern[]): Suggestion[] {
@@ -161,6 +161,6 @@ Use: "Ensure all unit tests pass (npm test shows 0 failures) and the feature wor
     if (text.length <= maxLength) {
       return text;
     }
-    return text.substring(0, maxLength - 3) + '...';
+    return `${text.substring(0, maxLength - 3)  }...`;
   }
 }

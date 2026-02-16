@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Context } from '../../../../components/structural/Context';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Context content handling props', () => {
   it('should include preserveFormatting hint when true', async () => {
@@ -64,7 +65,7 @@ describe('Context content handling props', () => {
     const result = await render(element);
     expect(result.ok).toBe(true);
     // Should not have the truncation indicator text beyond the content itself
-    const text = result.text;
+    const {text} = result;
     expect(text).toContain('Regular content');
     // Count occurrences - only the content itself, no extra truncation indicator
     expect(text).not.toContain('[may be truncated]');

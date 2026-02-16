@@ -2,12 +2,13 @@
  * Tests for usePromptSearch hook
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import type { SearchablePrompt } from "@pupt/lib";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
+import { afterEach,beforeEach, describe, expect, it, vi } from "vitest";
+
 import { PuptProvider } from "../../../src/components/PuptProvider";
 import { usePromptSearch } from "../../../src/hooks/usePromptSearch";
-import type { SearchablePrompt } from "pupt-lib";
 
 const searchablePrompts: SearchablePrompt[] = [
   {

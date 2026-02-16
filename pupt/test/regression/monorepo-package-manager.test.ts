@@ -13,8 +13,9 @@
  * is no longer part of the codebase.
  */
 
-import { describe, it, expect } from 'vitest';
-import { isNpmPackage, validateNpmPackage, validateGitUrl } from '../../src/commands/install.js';
+import { describe, expect,it } from 'vitest';
+
+import { isNpmPackage, validateGitUrl,validateNpmPackage } from '../../src/commands/install.js';
 
 describe('Monorepo Package Manager Detection - Regression Test', () => {
   describe('install source detection (replacement for removed detectPackageManager)', () => {

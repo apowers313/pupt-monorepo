@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import {
-  extractUserInputLines,
   calculateActiveExecutionTime,
+  extractUserInputLines,
   OutputCaptureService
 } from '../../src/services/output-capture-service.js';
-import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
 
 describe('OutputCaptureService - Pure Function Coverage', () => {
   let tempDir: string;

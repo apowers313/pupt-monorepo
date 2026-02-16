@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../src/render';
-import { jsx, jsxs } from '../../../src/jsx-runtime';
-import { Prompt } from '../../../components/structural/Prompt';
-import { Constraints } from '../../../components/structural/Constraints';
+import { describe, expect,it } from 'vitest';
+
 import { Constraint } from '../../../components/structural/Constraint';
+import { Constraints } from '../../../components/structural/Constraints';
+import { Prompt } from '../../../components/structural/Prompt';
 import { Task } from '../../../components/structural/Task';
+import { jsx, jsxs } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('Constraints container e2e', () => {
   it('should extend default constraints in Prompt pipeline', async () => {

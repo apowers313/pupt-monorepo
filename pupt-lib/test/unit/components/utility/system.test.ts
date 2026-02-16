@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
+import { describe, expect,it } from 'vitest';
+
+import { Cwd,Hostname, Username } from '../../../../components/utility';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Hostname, Username, Cwd } from '../../../../components/utility';
+import { render } from '../../../../src/render';
 
 describe('Hostname', () => {
   it('should render system hostname', async () => {

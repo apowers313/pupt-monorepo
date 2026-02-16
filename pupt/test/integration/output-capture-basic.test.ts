@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
-import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
-import path from 'path';
-import os from 'os';
 import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 
 describe('Output Capture Basic Integration', () => {
   let tempDir: string;

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'node:path';
+
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
 
 describe('global-paths', () => {
   let savedConfigDir: string | undefined;

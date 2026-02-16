@@ -1,16 +1,15 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
 export const hostnameSchema = z.object({}).passthrough();
 
 type HostnameProps = z.infer<typeof hostnameSchema>;
 
 export class Hostname extends Component<HostnameProps> {
-  static schema = hostnameSchema;
+    static schema = hostnameSchema;
 
-  render(_props: HostnameProps, _resolvedValue: void, context: RenderContext): PuptNode {
-    // Use the hostname from runtime config (already handles browser/Node detection)
-    return context.env.runtime.hostname ?? 'unknown';
-  }
+    render(_props: HostnameProps, _resolvedValue: undefined, context: RenderContext): PuptNode {
+        // Use the hostname from runtime config (already handles browser/Node detection)
+        return context.env.runtime.hostname ?? "unknown";
+    }
 }

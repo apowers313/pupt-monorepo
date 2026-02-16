@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fileSearchPrompt } from '../../src/prompts/input-types/file-search-prompt.js';
 import { search } from '@inquirer/prompts';
-import { FileSearchEngine } from 'pupt-lib';
+import { FileSearchEngine } from '@pupt/lib';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fileSearchPrompt } from '../../src/prompts/input-types/file-search-prompt.js';
 
 vi.mock('@inquirer/prompts', () => ({
   search: vi.fn(),
 }));
 
-vi.mock('pupt-lib', () => ({
+vi.mock('@pupt/lib', () => ({
   FileSearchEngine: {
     create: vi.fn().mockResolvedValue({
       search: vi.fn(),

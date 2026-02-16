@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx, jsxs } from '../../../src/jsx-runtime';
-import { References } from '../../../components/structural/References';
+import { describe, expect,it } from 'vitest';
+
 import { Reference } from '../../../components/structural/Reference';
+import { References } from '../../../components/structural/References';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { jsx, jsxs } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('References e2e', () => {
   it('should render Reference children through .prompt pipeline', async () => {

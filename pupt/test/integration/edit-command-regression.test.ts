@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { spawn } from 'child_process';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { editCommand } from '../../src/commands/edit.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
 import { PuptService } from '../../src/services/pupt-service.js';

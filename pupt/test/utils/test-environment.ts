@@ -1,8 +1,8 @@
-import fs from 'fs-extra';
-import path from 'path';
-import { tmpdir } from 'os';
 import { spawn } from 'child_process';
 import crypto from 'crypto';
+import fs from 'fs-extra';
+import { tmpdir } from 'os';
+import path from 'path';
 
 export class TestEnvironment {
   private tempDir: string = '';

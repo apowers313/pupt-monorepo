@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 const mockDataDir = '/mock/data';
 vi.mock('@/config/global-paths', () => ({

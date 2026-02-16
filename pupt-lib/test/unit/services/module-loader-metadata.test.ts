@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { ModuleLoader } from '../../../src/services/module-loader';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { Pupt } from '../../../src/api';
-import type { PromptSource } from '../../../src/types/prompt-source';
+import { ModuleLoader } from '../../../src/services/module-loader';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
+import type { PromptSource } from '../../../src/types/prompt-source';
 
 const basicEntry: ResolvedModuleEntry = {
   name: 'basic',
@@ -93,7 +94,7 @@ describe('prompt metadata', () => {
 
   it('should extract description and tags from prompt metadata', async () => {
     const library = await loader.loadResolvedEntry(basicEntry);
-    const greeting = library.prompts['greeting'];
+    const {greeting} = library.prompts;
     expect(greeting.description).toBe('A simple greeting');
     expect(greeting.tags).toContain('test');
   });

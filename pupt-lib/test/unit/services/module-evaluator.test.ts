@@ -2,7 +2,8 @@
  * Tests for the ES module evaluator.
  * Tests both the Node.js evaluation path and helper functions.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { evaluateModule } from '../../../src/services/module-evaluator';
 
 describe('evaluateModule', () => {
@@ -68,7 +69,7 @@ describe('evaluateModule', () => {
   describe('imports from pupt-lib', () => {
     it('should resolve pupt-lib imports', async () => {
       const code = `
-        import { Component } from 'pupt-lib';
+        import { Component } from '@pupt/lib';
         export default typeof Component;
       `;
 
@@ -79,7 +80,7 @@ describe('evaluateModule', () => {
 
     it('should resolve pupt-lib/jsx-runtime imports', async () => {
       const code = `
-        import { jsx, Fragment } from 'pupt-lib/jsx-runtime';
+        import { jsx, Fragment } from '@pupt/lib/jsx-runtime';
         export default { hasJsx: typeof jsx === 'function', hasFragment: typeof Fragment !== 'undefined' };
       `;
 
@@ -90,12 +91,12 @@ describe('evaluateModule', () => {
     });
 
     it('should resolve pupt-lib without relying on process.cwd() fallback (issue #21)', async () => {
-      // Regression: require.resolve('pupt-lib') throws ERR_PACKAGE_PATH_NOT_EXPORTED
+      // Regression: require.resolve('@pupt/lib') throws ERR_PACKAGE_PATH_NOT_EXPORTED
       // because package.json has no "require" or "default" condition. The old fallback
       // used process.cwd() + '/dist/index.js' which only works inside the repo.
       // By changing cwd to a temp dir, we simulate the consumer-as-dependency scenario.
       const code = `
-        import { Component } from 'pupt-lib';
+        import { Component } from '@pupt/lib';
         export default typeof Component;
       `;
 
@@ -113,7 +114,7 @@ describe('evaluateModule', () => {
 
     it('should resolve pupt-lib/jsx-runtime without relying on process.cwd() fallback (issue #21)', async () => {
       const code = `
-        import { jsx } from 'pupt-lib/jsx-runtime';
+        import { jsx } from '@pupt/lib/jsx-runtime';
         export default typeof jsx;
       `;
 

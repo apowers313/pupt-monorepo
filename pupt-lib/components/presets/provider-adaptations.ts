@@ -1,4 +1,4 @@
-import type { LlmProvider } from 'pupt-lib';
+import type { LlmProvider } from '@pupt/lib';
 
 /**
  * Provider-specific adaptation settings that influence how components

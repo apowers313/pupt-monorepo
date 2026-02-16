@@ -1,11 +1,13 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import os from 'node:os';
+import path from 'node:path';
+
+import type { ResolvedModuleEntry } from '@pupt/lib';
+import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { scanLocalPromptDir } from '../../src/services/pupt-prompt-source.js';
 import { PuptService } from '../../src/services/pupt-service.js';
 import { fromDiscoveredPrompt } from '../../src/types/prompt.js';
-import { scanLocalPromptDir } from '../../src/services/pupt-prompt-source.js';
-import type { ResolvedModuleEntry } from 'pupt-lib';
-import fs from 'fs-extra';
-import path from 'node:path';
-import os from 'node:os';
 
 describe('PuptService', () => {
   let tempDir: string;

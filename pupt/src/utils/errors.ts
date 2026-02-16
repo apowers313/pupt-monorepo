@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+
 import { logger } from './logger.js';
 
 export enum ErrorCategory {

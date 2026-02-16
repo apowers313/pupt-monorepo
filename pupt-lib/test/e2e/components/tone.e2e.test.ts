@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx } from '../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Tone } from '../../../components/structural/Tone';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { jsx } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('Tone e2e', () => {
   it('should render tone type through .prompt pipeline', async () => {

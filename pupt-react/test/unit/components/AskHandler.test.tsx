@@ -2,14 +2,15 @@
  * Tests for AskHandler headless component
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, waitFor, act } from "@testing-library/react";
+import type { PuptElement } from "@pupt/lib";
+import { act,render, waitFor } from "@testing-library/react";
 import React from "react";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { describe, expect, it, vi } from "vitest";
+
 import { AskHandler } from "../../../src/components/AskHandler";
-import { transformSource } from "../../../src/utils/transform";
-import type { PuptElement } from "pupt-lib";
+import { PuptProvider } from "../../../src/components/PuptProvider";
 import type { AskHandlerRenderProps } from "../../../src/types/components";
+import { transformSource } from "../../../src/utils/transform";
 
 async function createElementWithAsks(): Promise<PuptElement> {
   return transformSource(`export default (

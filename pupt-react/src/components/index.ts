@@ -2,8 +2,8 @@
  * Component exports for pupt-react
  */
 
-export { PuptProvider } from "./PuptProvider";
-export { PuptLibraryProvider } from "./PuptLibraryProvider";
+export { AskHandler } from "./AskHandler";
 export { PromptEditor } from "./PromptEditor";
 export { PromptRenderer } from "./PromptRenderer";
-export { AskHandler } from "./AskHandler";
+export { PuptLibraryProvider } from "./PuptLibraryProvider";
+export { PuptProvider } from "./PuptProvider";

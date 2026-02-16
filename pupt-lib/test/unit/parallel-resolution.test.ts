@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render, Component } from '../../src';
-import { jsx, Fragment } from '../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
+
+import { Component,render } from '../../src';
+import { Fragment,jsx } from '../../src/jsx-runtime';
 
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));

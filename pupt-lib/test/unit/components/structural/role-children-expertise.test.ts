@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Role } from '../../../../components/structural/Role';
 import { Specialization } from '../../../../components/structural/Specialization';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Role: children should not have auto-appended expertise/domain fragments', () => {
   it('should not append "with expertise in..." when children are provided', async () => {

@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Steps } from '../../../../components/reasoning/Steps';
+import { describe, expect,it } from 'vitest';
+
 import { Step } from '../../../../components/reasoning/Step';
+import { Steps } from '../../../../components/reasoning/Steps';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Steps presets', () => {
   it('should render problem-solving preset', async () => {

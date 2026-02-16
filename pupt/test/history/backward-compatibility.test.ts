@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
-import { HistoryEntry, EnhancedHistoryEntry } from '../../src/types/history.js';
 import fs from 'fs-extra';
 import path from 'path';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
+import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
+import { EnhancedHistoryEntry,HistoryEntry } from '../../src/types/history.js';
 
 vi.mock('fs-extra');
 
@@ -37,8 +38,8 @@ describe('Enhanced History Backward Compatibility', () => {
     expect(entries).toHaveLength(1);
     expect(entries[0].timestamp).toBe(oldEntry.timestamp);
     expect(entries[0].templatePath).toBe(oldEntry.templatePath);
-    expect((entries[0] as EnhancedHistoryEntry).environment).toBeUndefined();
-    expect((entries[0] as EnhancedHistoryEntry).execution).toBeUndefined();
+    expect((entries[0]).environment).toBeUndefined();
+    expect((entries[0]).execution).toBeUndefined();
   });
 
   it('should read new enhanced history entries', async () => {
@@ -72,7 +73,7 @@ describe('Enhanced History Backward Compatibility', () => {
     const entries = await historyManager.listHistory();
 
     expect(entries).toHaveLength(1);
-    const entry = entries[0] as EnhancedHistoryEntry;
+    const entry = entries[0];
     expect(entry.environment).toBeDefined();
     expect(entry.environment?.git_branch).toBe('main');
     expect(entry.execution).toBeDefined();
@@ -109,7 +110,7 @@ describe('Enhanced History Backward Compatibility', () => {
     const entries = await historyManager.listHistory();
 
     expect(entries).toHaveLength(2);
-    expect((entries[0] as EnhancedHistoryEntry).environment).toBeUndefined();
-    expect((entries[1] as EnhancedHistoryEntry).environment).toBeDefined();
+    expect((entries[0]).environment).toBeUndefined();
+    expect((entries[1]).environment).toBeDefined();
   });
 });

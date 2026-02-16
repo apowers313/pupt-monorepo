@@ -1,5 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as path from 'node:path';
+
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { logger } from '../../src/utils/logger.js';
 
 let testDir: string;
@@ -35,12 +37,13 @@ vi.mock('cosmiconfig', () => ({
   })),
 }));
 
-import { updateCommand } from '../../src/commands/update.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
 import fs from 'fs-extra';
 
+import { updateCommand } from '../../src/commands/update.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
+
 vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
-  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  const original = await importOriginal();
   return {
     ...original,
     ConfigManager: {

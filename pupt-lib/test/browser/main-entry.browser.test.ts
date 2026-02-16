@@ -6,35 +6,34 @@
  * static Node.js imports (os, fs, path) are accidentally included in the bundle.
  *
  * NOTE: This test imports from src/index.ts which Vite transforms for the browser.
- * This simulates what happens when users import from 'pupt-lib' in their browser apps.
+ * This simulates what happens when users import from '@pupt/lib' in their browser apps.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
 
 // Import from the main entry point - this is what users would do
 // If there are static Node.js imports, this will fail in the browser
 import {
-  render,
-  Component,
-  Prompt,
-  Role,
-  Task,
-  Context,
-  Section,
   Code,
-  Steps,
-  Step,
-  If,
-  ForEach,
-  Examples,
+  Component,
+  Context,
+  createPromptFromSource,
+  createRuntimeConfig,
   Example,
   ExampleInput,
   ExampleOutput,
-  createPromptFromSource,
-  createRuntimeConfig,
+  Examples,
+  ForEach,
+  If,
+  Prompt,
+  render,
+  Role,
+  Section,
+  Step,
+  Steps,
+  Task,
 } from '../../src/index';
-
-import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { TYPE, CHILDREN } from '../../src/types/symbols';
+import { Fragment,jsx, jsxs } from '../../src/jsx-runtime';
+import { CHILDREN,TYPE } from '../../src/types/symbols';
 
 describe('Browser: Main Entry Point Import', () => {
   it('should import render function successfully', () => {

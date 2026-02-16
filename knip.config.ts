@@ -34,7 +34,7 @@ const config: KnipConfig = {
         },
 
         // @pupt/lib - core JSX prompt library
-        "pupt-lib": {
+        "@pupt/lib": {
             entry: ["src/index.ts", "src/jsx-runtime/index.ts", "test/**/*.test.ts"],
             project: ["src/**/*.ts", "src/**/*.tsx", "components/**/*.tsx", "test/**/*.ts"],
             ignore: ["dist/**", "coverage/**", "node_modules/**"],
@@ -62,8 +62,8 @@ const config: KnipConfig = {
             ],
         },
 
-        // @pupt/sde - SDE prompt collection
-        "pupt-sde": {
+        // @pupt/sde-prompts - SDE prompt collection
+        "pupt-sde-prompts": {
             entry: ["test/**/*.test.mjs"],
             project: ["test/**/*.mjs"],
             ignore: ["node_modules/**"],

@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { If } from '../../../../components/control/If';
 import '../../../../components';
+
+import { describe, expect,it } from 'vitest';
+
+import { If } from '../../../../components/control/If';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('If', () => {
   it('should render children when condition is true', async () => {

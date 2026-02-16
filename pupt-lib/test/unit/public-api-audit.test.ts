@@ -1,30 +1,29 @@
-import { describe, it, expect } from 'vitest';
-import { Component, COMPONENT_MARKER } from '../../src/component';
+import { describe, expect,it } from 'vitest';
 
-// Import all structural components
-import { Prompt } from '../../components/structural/Prompt';
-import { Section } from '../../components/structural/Section';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
-import { Context } from '../../components/structural/Context';
-import { Constraint } from '../../components/structural/Constraint';
-import { Format } from '../../components/structural/Format';
-import { Audience } from '../../components/structural/Audience';
-import { Tone } from '../../components/structural/Tone';
-import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
-import { Criterion } from '../../components/structural/Criterion';
-
-// Import other components
-import { Steps } from '../../components/reasoning/Steps';
-import { Step } from '../../components/reasoning/Step';
-import { If } from '../../components/control/If';
 import { ForEach } from '../../components/control/ForEach';
-import { Examples } from '../../components/examples/Examples';
-import { Example } from '../../components/examples/Example';
+import { If } from '../../components/control/If';
 import { Code } from '../../components/data/Code';
 import { Data } from '../../components/data/Data';
 import { Json } from '../../components/data/Json';
 import { Xml } from '../../components/data/Xml';
+import { Example } from '../../components/examples/Example';
+import { Examples } from '../../components/examples/Examples';
+import { Step } from '../../components/reasoning/Step';
+// Import other components
+import { Steps } from '../../components/reasoning/Steps';
+import { Audience } from '../../components/structural/Audience';
+import { Constraint } from '../../components/structural/Constraint';
+import { Context } from '../../components/structural/Context';
+import { Criterion } from '../../components/structural/Criterion';
+import { Format } from '../../components/structural/Format';
+// Import all structural components
+import { Prompt } from '../../components/structural/Prompt';
+import { Role } from '../../components/structural/Role';
+import { Section } from '../../components/structural/Section';
+import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
+import { Task } from '../../components/structural/Task';
+import { Tone } from '../../components/structural/Tone';
+import { Component, COMPONENT_MARKER } from '../../src/component';
 
 describe('Public API audit', () => {
   const structuralComponents = [

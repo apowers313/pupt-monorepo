@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { spawn } from 'child_process';
-import { editorLauncher, DefaultEditorLauncher } from '../../src/utils/editor.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { DefaultEditorLauncher,editorLauncher } from '../../src/utils/editor.js';
 import { mockEnvironmentVariables } from '../utils/test-helpers.js';
 
 // Use vi.hoisted to ensure mocks are available before imports

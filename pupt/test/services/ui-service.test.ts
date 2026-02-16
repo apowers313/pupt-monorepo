@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ConsoleUI, LogLevel } from '../../src/services/ui-service';
 import chalk from 'chalk';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { ConsoleUI, LogLevel } from '../../src/services/ui-service';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/utils/logger.js');

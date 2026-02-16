@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import fs from 'fs-extra';
 import path from 'path';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { HistoryManager } from '../../src/history/history-manager.js';
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 
 vi.mock('fs-extra');
 vi.mock('../../src/utils/logger.js', () => ({
@@ -163,7 +164,7 @@ describe('Global History - Centralized Storage', () => {
       vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
         const filename = path.basename(filePath as string);
         const idx = mockFiles.indexOf(filename);
-        if (idx >= 0) return entriesFromMultipleProjects[idx];
+        if (idx >= 0) {return entriesFromMultipleProjects[idx];}
         throw new Error('File not found');
       });
     });
@@ -213,7 +214,7 @@ describe('Global History - Centralized Storage', () => {
 
       vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
         const filename = path.basename(filePath as string);
-        if (filename === '20240113-100000-eee55555.json') return legacyEntry;
+        if (filename === '20240113-100000-eee55555.json') {return legacyEntry;}
         const mockFiles = [
           '20240114-100000-aaa11111.json',
           '20240115-100000-bbb22222.json',
@@ -221,7 +222,7 @@ describe('Global History - Centralized Storage', () => {
           '20240117-100000-ddd44444.json'
         ];
         const idx = mockFiles.indexOf(filename);
-        if (idx >= 0) return entriesFromMultipleProjects[idx];
+        if (idx >= 0) {return entriesFromMultipleProjects[idx];}
         throw new Error('File not found');
       });
 
@@ -256,8 +257,8 @@ describe('Global History - Centralized Storage', () => {
 
       vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
         const filename = path.basename(filePath as string);
-        if (filename === '20240113-100000-eee55555.json') return legacyEntry;
-        if (filename === '20240114-100000-aaa11111.json') return entriesFromMultipleProjects[0];
+        if (filename === '20240113-100000-eee55555.json') {return legacyEntry;}
+        if (filename === '20240114-100000-aaa11111.json') {return entriesFromMultipleProjects[0];}
         throw new Error('File not found');
       });
 
@@ -294,7 +295,7 @@ describe('Global History - Centralized Storage', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       // Output file should be stored as relative path from historyDir
       expect(entry.execution).toBeDefined();
@@ -321,7 +322,7 @@ describe('Global History - Centralized Storage', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution.output_size).toBe(2048);
       expect(entry.execution.duration_ms).toBe(12345);
@@ -473,7 +474,7 @@ describe('Global History - Centralized Storage', () => {
       vi.mocked(fs.readJson).mockImplementation(async (filePath: any) => {
         const filename = path.basename(filePath as string);
         const idx = mockFiles.indexOf(filename);
-        if (idx >= 0) return entries[idx];
+        if (idx >= 0) {return entries[idx];}
         throw new Error('File not found');
       });
 

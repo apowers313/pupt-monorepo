@@ -200,7 +200,7 @@ export const EXAMPLES: PromptExample[] = [
   },
   {
     format: "jsx",
-    source: `import { Prompt, Task, Context, Section, Code, Data, ForEach, Component, Constraint, Format } from 'pupt-lib';
+    source: `import { Prompt, Task, Context, Section, Code, Data, ForEach, Component, Constraint, Format } from '@pupt/lib';
 import { z } from 'zod';
 
 // A custom component that processes its children and formats them
@@ -316,7 +316,7 @@ export default (
   },
   {
     format: "jsx",
-    source: `import { Prompt, Task, Context, Constraint, Component, Ask, Style } from 'pupt-lib';
+    source: `import { Prompt, Task, Context, Constraint, Component, Ask, Style } from '@pupt/lib';
 import { z } from 'zod';
 
 // Async component that fetches live data from the GitHub API
@@ -364,7 +364,7 @@ export default (
   },
   {
     format: "jsx",
-    source: `import { Prompt, Task, Context, Role, Constraint, Format, Specialization, References, Reference } from 'pupt-lib';
+    source: `import { Prompt, Task, Context, Role, Constraint, Format, Specialization, References, Reference } from '@pupt/lib';
 
 export default (
   <Prompt

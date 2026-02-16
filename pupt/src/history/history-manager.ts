@@ -1,12 +1,14 @@
-import fs from 'fs-extra';
-import path from 'node:path';
 import crypto from 'node:crypto';
+import path from 'node:path';
+
+import fs from 'fs-extra';
 import { v4 as uuidv4 } from 'uuid';
-import { HistoryEntry, EnhancedHistoryEntry } from '../types/history.js';
+
 import { AnnotationMetadata } from '../types/annotations.js';
-import { sanitizeObject } from '../utils/security.js';
+import { EnhancedHistoryEntry,HistoryEntry } from '../types/history.js';
 import { DateFormats } from '../utils/date-formatter.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeObject } from '../utils/security.js';
 
 interface HistorySaveOptions {
   templatePath: string;
@@ -219,7 +221,7 @@ export class HistoryManager {
       return { ...entry, filename };
     } catch (error) {
       if (process.env.NODE_ENV !== 'test') {
-        logger.error(`Failed to get history entry ${index}: ${error}`);
+        logger.error(`Failed to get history entry ${index}: ${error instanceof Error ? error.message : String(error as string | number)}`);
       }
       return null;
     }
@@ -252,7 +254,7 @@ export class HistoryManager {
       return annotations;
     } catch (error) {
       if (process.env.NODE_ENV !== 'test') {
-        logger.error(`Failed to get annotations: ${error}`);
+        logger.error(`Failed to get annotations: ${error instanceof Error ? error.message : String(error as string | number)}`);
       }
       return [];
     }
@@ -294,7 +296,7 @@ export class HistoryManager {
       await fs.writeJson(filepath, annotationData, { spaces: 2 });
       logger.debug(`Auto-annotation saved to ${filepath}`);
     } catch (error) {
-      logger.error(`Failed to save annotation: ${error}`);
+      logger.error(`Failed to save annotation: ${error instanceof Error ? error.message : String(error as string | number)}`);
       throw error;
     }
   }

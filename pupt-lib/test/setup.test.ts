@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { VERSION, TYPE, PROPS } from '../src/index';
+import { describe, expect,it } from 'vitest';
+
+import { PROPS,TYPE, VERSION } from '../src/index';
 import { Fragment, jsx, jsxs } from '../src/jsx-runtime/index';
 import { jsxDEV } from '../src/jsx-runtime/jsx-dev-runtime';
 

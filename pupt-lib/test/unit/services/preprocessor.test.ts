@@ -2,16 +2,17 @@
  * Tests for the preprocessor module.
  * Tests extension-based preprocessing for .prompt files.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import {
-  preprocessSource,
-  isPromptFile,
-} from '../../../src/services/preprocessor';
-import {
-  getBuiltinComponents,
   getAskComponents,
   getAskShorthand,
+  getBuiltinComponents,
 } from '../../../src/services/component-discovery';
+import {
+  isPromptFile,
+  preprocessSource,
+} from '../../../src/services/preprocessor';
 
 describe('isPromptFile', () => {
   it('should return true for .prompt files', () => {
@@ -36,7 +37,7 @@ describe('preprocessSource', () => {
       const result = preprocessSource(source, { filename: 'test.prompt' });
 
       expect(result).toContain('import {');
-      expect(result).toContain("} from 'pupt-lib'");
+      expect(result).toContain("} from '@pupt/lib'");
       expect(result).toContain('Prompt');
     });
 
@@ -106,7 +107,7 @@ describe('preprocessSource', () => {
       const result = preprocessSource(source, { filename: 'test.prompt' });
 
       expect(result).toContain('import {');
-      expect(result).toContain("} from 'pupt-lib'");
+      expect(result).toContain("} from '@pupt/lib'");
       expect(result).toContain('export default (');
     });
 
@@ -122,7 +123,7 @@ describe('preprocessSource', () => {
 
       const result = preprocessSource(source, { filename: 'test.prompt' });
 
-      expect(result).toContain("} from 'pupt-lib'");
+      expect(result).toContain("} from '@pupt/lib'");
       expect(result).toContain('export default (');
     });
 
@@ -139,7 +140,7 @@ describe('preprocessSource', () => {
 
       const result = preprocessSource(source, { filename: 'test.prompt' });
 
-      expect(result).toContain("} from 'pupt-lib'");
+      expect(result).toContain("} from '@pupt/lib'");
       expect(result).toContain('export default (');
     });
   });
@@ -147,7 +148,7 @@ describe('preprocessSource', () => {
   describe('non-.prompt files are returned unchanged', () => {
     it('should not preprocess .tsx files', () => {
       const source = `
-import { Prompt } from 'pupt-lib';
+import { Prompt } from '@pupt/lib';
 export default <Prompt />;
       `.trim();
 
@@ -293,9 +294,9 @@ describe('component discovery', () => {
 
   it('getAskShorthand should map shorthand names to full names', () => {
     const shorthand = getAskShorthand();
-    expect(shorthand['Text']).toBe('AskText');
-    expect(shorthand['Number']).toBe('AskNumber');
-    expect(shorthand['Select']).toBe('AskSelect');
-    expect(shorthand['Confirm']).toBe('AskConfirm');
+    expect(shorthand.Text).toBe('AskText');
+    expect(shorthand.Number).toBe('AskNumber');
+    expect(shorthand.Select).toBe('AskSelect');
+    expect(shorthand.Confirm).toBe('AskConfirm');
   });
 });

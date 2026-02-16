@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { PuptService } from '../../src/services/pupt-service.js';
-import type { Config } from '../../src/types/config.js';
-import type { HistoryEntry, EnhancedHistoryEntry } from '../../src/types/history.js';
 import fs from 'fs-extra';
 import path from 'path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { HistoryManager } from '../../src/history/history-manager.js';
+import { PuptService } from '../../src/services/pupt-service.js';
+import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
+import type { Config } from '../../src/types/config.js';
+import type { EnhancedHistoryEntry,HistoryEntry } from '../../src/types/history.js';
 
 vi.mock('../../src/history/history-manager.js');
 vi.mock('../../src/services/pupt-service.js');
@@ -51,7 +52,7 @@ describe('ReviewDataBuilder - Coverage Improvements', () => {
     };
 
     vi.mocked(HistoryManager).mockReturnValue(mockHistoryManager);
-    vi.mocked(PuptService).mockImplementation(() => mockPuptService as any);
+    vi.mocked(PuptService).mockImplementation(() => mockPuptService);
 
     // Default: no annotation files
     vi.mocked(fs.readdir).mockResolvedValue([] as any);

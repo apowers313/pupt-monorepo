@@ -9,6 +9,12 @@ pupt-react is a headless React component library for rendering pupt-lib prompts.
 ## Commands
 
 ```bash
+# From monorepo root (preferred):
+pnpm exec nx run @pupt/react:build     # Build this package
+pnpm exec nx run @pupt/react:test      # Run tests
+pnpm exec nx run @pupt/react:lint      # Lint
+
+# From this directory:
 npm run build        # Build the library (outputs to dist/)
 npm run build:demo   # Build the demo website (outputs to dist-demo/)
 npm run dev:demo     # Start demo dev server via servherd
@@ -40,20 +46,20 @@ npm run test:watch   # Watch mode
 - **React 18+** - Peer dependency
 - **Mantine** - UI components for demo app
 
-## pupt-lib Integration
+## @pupt/lib Integration
 
-This library depends on pupt-lib for prompt transformation and rendering.
+This library depends on @pupt/lib for prompt transformation and rendering.
 
-**IMPORTANT: Do not attempt to work around bugs in pupt-lib.** Instead:
+**IMPORTANT: Do not attempt to work around bugs in @pupt/lib.** Instead:
 
-1. File a GitHub issue at https://github.com/apowers313/pupt-lib/issues
+1. File a GitHub issue at https://github.com/apowers313/pupt-monorepo/issues
 2. Include in the issue:
    - **Defect description**: What is broken or not working as expected
    - **Root cause**: Analysis of why the bug occurs (if known)
    - **Reproduction steps**: Minimal code/steps to reproduce the issue
    - **Suggested fix**: Proposed solution or approach to fix the bug
 3. Reference the issue in code comments if needed
-4. Wait for the fix to be released in pupt-lib before continuing
+4. Since @pupt/lib is now in the same monorepo, fixes can be made directly
 
 This ensures bugs are fixed at the source rather than papered over with workarounds that may break later.
 
@@ -65,8 +71,8 @@ When using pupt-lib in the browser (demo app), an import map is required for dyn
 <script type="importmap">
   {
     "imports": {
-      "pupt-lib": "https://unpkg.com/pupt-lib@VERSION/dist/index.js",
-      "pupt-lib/jsx-runtime": "https://unpkg.com/pupt-lib@VERSION/dist/jsx-runtime/index.js",
+      "@pupt/lib": "https://unpkg.com/@pupt/lib@VERSION/dist/index.js",
+      "@pupt/lib/jsx-runtime": "https://unpkg.com/@pupt/lib@VERSION/dist/jsx-runtime/index.js",
       "zod": "https://unpkg.com/zod@3.24.2/lib/index.mjs",
       "minisearch": "https://unpkg.com/minisearch@7.1.1/dist/es/index.js"
     }

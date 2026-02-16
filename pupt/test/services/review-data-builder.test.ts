@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
+import fs from 'fs-extra';
+import path from 'path';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { PuptService } from '../../src/services/pupt-service.js';
+import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
+import type { ParsedAnnotation } from '../../src/types/annotations.js';
 import type { Config } from '../../src/types/config.js';
 import type { HistoryEntry } from '../../src/types/history.js';
-import type { ParsedAnnotation } from '../../src/types/annotations.js';
-import path from 'path';
-import fs from 'fs-extra';
 
 vi.mock('../../src/history/history-manager.js');
 vi.mock('../../src/services/pupt-service.js');
@@ -52,7 +53,7 @@ describe('ReviewDataBuilder', () => {
     };
 
     vi.mocked(HistoryManager).mockReturnValue(mockHistoryManager);
-    vi.mocked(PuptService).mockImplementation(() => mockPuptService as any);
+    vi.mocked(PuptService).mockImplementation(() => mockPuptService);
 
     reviewDataBuilder = new ReviewDataBuilder(mockConfig);
   });
@@ -124,7 +125,7 @@ This is a test prompt.`;
               tags: [],
               notes: 'Task completed successfully'
             });
-          } else {
+          } 
             return Promise.resolve({
               historyFile: 'history_2025-08-16T11-00-00Z_test-prompt.json',
               timestamp: '2025-08-16T11:30:00Z',
@@ -132,7 +133,7 @@ This is a test prompt.`;
               tags: [],
               notes: 'Tests still failing after implementation'
             });
-          }
+          
         }
         return Promise.resolve({});
       });
@@ -329,7 +330,7 @@ This is a test prompt.`;
               tags: [],
               notes: 'Tests still failing after AI claimed success'
             });
-          } else {
+          } 
             return Promise.resolve({
               historyFile: 'history_2025-08-16T11:00:00Z_prompt2.json',
               timestamp: '2025-08-16T11:30:00Z',
@@ -337,7 +338,7 @@ This is a test prompt.`;
               tags: [],
               notes: 'Verification showed tests still failing'
             });
-          }
+          
         }
         return Promise.resolve({});
       });
@@ -377,7 +378,7 @@ This is a test prompt.`;
           templateContent: '',
           variables: {},
           finalPrompt: '',
-          filename: 'history_' + new Date().toISOString().replace(/:/g, '-') + '_recent.json'
+          filename: `history_${  new Date().toISOString().replace(/:/g, '-')  }_recent.json`
         }
       ];
 

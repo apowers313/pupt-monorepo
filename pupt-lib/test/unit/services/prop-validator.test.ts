@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
-import { validateProps, getSchema, getComponentName } from '../../../src/services/prop-validator';
+
 import { Component } from '../../../src/component';
+import { getComponentName,getSchema, validateProps } from '../../../src/services/prop-validator';
 
 describe('prop-validator', () => {
   describe('validateProps', () => {

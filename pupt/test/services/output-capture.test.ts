@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 
 // Mock node-pty for unit tests
 vi.mock('@homebridge/node-pty-prebuilt-multiarch');
@@ -119,7 +120,7 @@ describe('OutputCaptureService - Claude typing', () => {
     vi.mocked(pty.spawn).mockImplementation((cmd, args, options) => {
       console.log('Spawning command:', cmd);
       console.log('With args:', args);
-      return mockPty as any;
+      return mockPty;
     });
     
     // Mock TTY environment

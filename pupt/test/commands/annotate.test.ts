@@ -1,11 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
+import path from 'node:path';
+
+import * as prompts from '@inquirer/prompts';
+import fs from 'fs-extra';
+import { v4 as uuidv4 } from 'uuid';
+import { afterEach, beforeEach, describe, expect, it, Mock,vi } from 'vitest';
+
 import { annotateCommand } from '../../src/commands/annotate';
 import { ConfigManager } from '../../src/config/config-manager';
 import { HistoryManager } from '../../src/history/history-manager';
-import * as prompts from '@inquirer/prompts';
-import fs from 'fs-extra';
-import path from 'node:path';
-import { v4 as uuidv4 } from 'uuid';
 import { logger } from '../../src/utils/logger.js';
 vi.mock('../../src/config/config-manager');
 vi.mock('../../src/history/history-manager');
@@ -206,7 +208,7 @@ describe('annotateCommand', () => {
 
       await annotateCommand();
 
-      const calls = (fs.writeJson as Mock).mock.calls;
+      const {calls} = (fs.writeJson as Mock).mock;
       expect(calls).toHaveLength(1);
       expect(calls[0][0]).toContain('20240120-103000-abc123-annotation-test-uuid-2.json');
     });

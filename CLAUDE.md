@@ -13,7 +13,7 @@ PUPT (Powerful Universal Prompt Tool) is a TypeScript ecosystem for creating, ma
 | `@pupt/lib`   | `pupt-lib/`   | Core JSX prompt library - create AI prompts using JSX syntax    |
 | `@pupt/cli`   | `pupt/`       | CLI tool (`pt` binary) for managing and running prompts         |
 | `@pupt/react` | `pupt-react/` | Headless React component library for rendering pupt-lib prompts |
-| `@pupt/sde`   | `pupt-sde/`   | Software development prompt collection                          |
+| `@pupt/sde-prompts`   | `pupt-sde-prompts/`   | Software development prompt collection                          |
 
 ### Dependency Graph
 
@@ -22,10 +22,10 @@ PUPT (Powerful Universal Prompt Tool) is a TypeScript ecosystem for creating, ma
   ↑
   ├── @pupt/cli   (production dependency)
   ├── @pupt/react (peer dependency + react)
-  └── @pupt/sde   (peer dependency)
+  └── @pupt/sde-prompts   (peer dependency)
 ```
 
-Build order: `@pupt/lib` → `@pupt/cli`, `@pupt/react`, `@pupt/sde` (parallel)
+Build order: `@pupt/lib` → `@pupt/cli`, `@pupt/react`, `@pupt/sde-prompts` (parallel)
 
 ## Monorepo Structure
 
@@ -34,7 +34,7 @@ pupt-monorepo/
 ├── pupt/                    # @pupt/cli package
 ├── pupt-lib/                # @pupt/lib package
 ├── pupt-react/              # @pupt/react package
-├── pupt-sde/                # @pupt/sde package
+├── pupt-sde-prompts/        # @pupt/sde-prompts package
 ├── tools/                   # Build scripts
 │   ├── merge-coverage.sh    # Coverage report merging
 │   └── prepush.sh           # Pre-push validation
@@ -108,7 +108,7 @@ npm run lint          # Lint package
 
 - Browser-based tests (Playwright)
 
-**pupt-sde:**
+**pupt-sde-prompts:**
 
 - Integration tests (.mjs files, forks pool)
 
@@ -132,7 +132,7 @@ pupt: 90% lines, 85% functions, 90% statements/branches (higher thresholds)
 - `pupt-lib-node` - Library node tests
 - `pupt-lib-browser` - Library browser tests (Playwright)
 - `pupt-react` - React component tests (Playwright)
-- `pupt-sde` - SDE integration tests
+- `pupt-sde-prompts` - SDE integration tests
 
 ## Shared Configuration
 
@@ -176,7 +176,7 @@ pupt: 90% lines, 85% functions, 90% statements/branches (higher thresholds)
 
 **pupt-react:** External deps: react, react-dom, @pupt/lib. Uses Mantine in demo. Browser tests with Playwright.
 
-**pupt-sde:** No TypeScript, no build step. Tests are `.mjs` files. Only publishes `prompts/` directory.
+**pupt-sde-prompts:** No TypeScript, no build step. Tests are `.mjs` files. Only publishes `prompts/` directory.
 
 ### Package CLAUDE.md Files
 

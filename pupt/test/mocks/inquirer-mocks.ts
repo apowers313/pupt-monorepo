@@ -6,7 +6,7 @@ interface MockOptions {
   confirmResponses?: boolean[];
 }
 
-let originalModules: any = {};
+const originalModules: any = {};
 
 export function setupInquirerMocks(options: MockOptions = {}) {
   // Mock @inquirer/prompts

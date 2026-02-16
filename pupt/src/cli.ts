@@ -1,28 +1,30 @@
 #!/usr/bin/env node
-import { program } from 'commander';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import chalk from 'chalk';
+import { program } from 'commander';
+
+import { addCommand } from './commands/add.js';
+import { annotateCommand } from './commands/annotate.js';
+import { cacheCommand } from './commands/cache.js';
+import { configCommand } from './commands/config.js';
+import { editCommand } from './commands/edit.js';
+import { helpCommand } from './commands/help.js';
+import { historyCommand } from './commands/history.js';
+import { initCommand } from './commands/init.js';
+import { installCommand } from './commands/install.js';
+import { reviewCommand } from './commands/review.js';
+import { runCommand } from './commands/run.js';
+import { uninstallCommand } from './commands/uninstall.js';
+import { updateCommand } from './commands/update.js';
 import { ConfigManager } from './config/config-manager.js';
 import { HistoryManager } from './history/history-manager.js';
-import { resolvePrompt } from './services/prompt-resolver.js';
-import { initCommand } from './commands/init.js';
-import { historyCommand } from './commands/history.js';
-import { addCommand } from './commands/add.js';
-import { editCommand } from './commands/edit.js';
-import { runCommand } from './commands/run.js';
-import { annotateCommand } from './commands/annotate.js';
-import { installCommand } from './commands/install.js';
-import { updateCommand } from './commands/update.js';
-import { uninstallCommand } from './commands/uninstall.js';
-import { helpCommand } from './commands/help.js';
-import { reviewCommand } from './commands/review.js';
-import { configCommand } from './commands/config.js';
-import { cacheCommand } from './commands/cache.js';
-import { logger } from './utils/logger.js';
-import { errors, displayError } from './utils/errors.js';
 import { buildModuleEntries } from './services/module-entry-builder.js';
+import { resolvePrompt } from './services/prompt-resolver.js';
+import { displayError,errors } from './utils/errors.js';
+import { logger } from './utils/logger.js';
 
 // Commander.js helper for repeatable options (e.g. -d path1 -d path2)
 function collect(val: string, acc: string[]): string[] {
@@ -116,7 +118,7 @@ program
     try {
       // Load configuration
       const configResult = await ConfigManager.loadWithPath();
-      const config = configResult.config;
+      const {config} = configResult;
 
       // Capture timestamp at start of prompt processing
       const startTimestamp = new Date();
@@ -136,11 +138,11 @@ program
       const result = resolved.text;
 
       // Display result
-      logger.log(chalk.green('\n' + '='.repeat(60)));
+      logger.log(chalk.green(`\n${  '='.repeat(60)}`));
       logger.log(chalk.bold('Generated Prompt:'));
-      logger.log(chalk.green('='.repeat(60) + '\n'));
+      logger.log(chalk.green(`${'='.repeat(60)  }\n`));
       logger.log(result);
-      logger.log(chalk.green('\n' + '='.repeat(60)));
+      logger.log(chalk.green(`\n${  '='.repeat(60)}`));
 
       // Check if autoRun is enabled
       const willAutoRun = config.autoRun && config.defaultCmd && config.defaultCmd.trim() !== '';

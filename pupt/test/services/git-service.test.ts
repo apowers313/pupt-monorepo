@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GitService } from '../../src/services/git-service';
 import simpleGit from 'simple-git';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { GitService } from '../../src/services/git-service';
 
 vi.mock('simple-git');
 
@@ -21,7 +22,7 @@ describe('GitService', () => {
       revparse: vi.fn()
     };
     
-    vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+    vi.mocked(simpleGit).mockReturnValue(mockGit);
     service = new GitService();
   });
 

@@ -1,13 +1,15 @@
 /**
  * Tests for branch coverage in Ask.Rating component
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
+import '../../../../components';
+
+import { describe, expect,it } from 'vitest';
+
 import { Ask } from '../../../../components/ask';
 import { AskLabel } from '../../../../components/ask/Label';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 import { createInputIterator } from '../../../../src/services/input-iterator';
-import '../../../../components';
 
 describe('Ask.Rating branch coverage', () => {
   describe('label text rendering', () => {

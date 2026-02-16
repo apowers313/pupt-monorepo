@@ -1,4 +1,4 @@
-import type { PromptSource, DiscoveredPromptFile } from '../../types/prompt-source';
+import type { DiscoveredPromptFile,PromptSource } from '../../types/prompt-source';
 
 /** Configuration options for GitHubPromptSource */
 export interface GitHubPromptSourceOptions {
@@ -82,7 +82,7 @@ export class GitHubPromptSource implements PromptSource {
     const results: DiscoveredPromptFile[] = [];
     for (const entry of promptEntries) {
       const content = await this.fetchFileContent(entry.path);
-      const filename = entry.path.split('/').pop()!;
+      const filename = entry.path.split('/').pop() ?? entry.path;
       results.push({ filename, content });
     }
 
@@ -158,7 +158,7 @@ export class GitHubPromptSource implements PromptSource {
     };
 
     if (this.token) {
-      headers['Authorization'] = `token ${this.token}`;
+      headers.Authorization = `token ${this.token}`;
     }
 
     return headers;

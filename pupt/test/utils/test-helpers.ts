@@ -1,7 +1,8 @@
-import { mkdtemp, rm, writeFile, mkdir } from 'fs-extra';
+import { mkdir,mkdtemp, rm, writeFile } from 'fs-extra';
 import { tmpdir } from 'os';
 import { join } from 'path';
-import { beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
+
 import { createMockConsole } from './mock-factories.js';
 
 export interface TestContext {

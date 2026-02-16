@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { afterAll, afterEach,beforeAll, describe, expect, it } from 'vitest';
+
 import { Pupt } from '../../../src/api';
 import { ModuleLoader } from '../../../src/services/module-loader';
 import { NpmRegistryPromptSource } from '../../../src/services/prompt-sources/npm-registry-prompt-source';
@@ -66,14 +67,14 @@ describe('CDN URL routing', () => {
 
   it('should detect tarball URLs by .tgz extension', () => {
     const loader = new ModuleLoader();
-    const isTarball = (loader as never)['isTarballOrCdnUrl'].bind(loader);
+    const isTarball = (loader as never).isTarballOrCdnUrl.bind(loader);
     expect(isTarball('https://registry.npmjs.org/pkg/-/pkg-1.0.0.tgz')).toBe(true);
     expect(isTarball('https://example.com/random-file.tgz')).toBe(true);
   });
 
   it('should detect CDN URLs by hostname', () => {
     const loader = new ModuleLoader();
-    const isTarball = (loader as never)['isTarballOrCdnUrl'].bind(loader);
+    const isTarball = (loader as never).isTarballOrCdnUrl.bind(loader);
     expect(isTarball('https://cdn.jsdelivr.net/npm/pkg@1.0.0')).toBe(true);
     expect(isTarball('https://unpkg.com/pkg@1.0.0')).toBe(true);
     expect(isTarball('https://registry.npmjs.org/pkg')).toBe(true);
@@ -81,7 +82,7 @@ describe('CDN URL routing', () => {
 
   it('should NOT route random URLs to NpmRegistryPromptSource', () => {
     const loader = new ModuleLoader();
-    const isTarball = (loader as never)['isTarballOrCdnUrl'].bind(loader);
+    const isTarball = (loader as never).isTarballOrCdnUrl.bind(loader);
     expect(isTarball('https://example.com/lib.js')).toBe(false);
     expect(isTarball('https://mysite.com/module')).toBe(false);
   });

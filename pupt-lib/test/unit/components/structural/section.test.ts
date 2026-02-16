@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { Section } from '../../../../components/structural/Section';
+import { describe, expect,it } from 'vitest';
+
 import { Prompt } from '../../../../components/structural/Prompt';
+import { Section } from '../../../../components/structural/Section';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Section', () => {
   it('should render with XML delimiters', async () => {

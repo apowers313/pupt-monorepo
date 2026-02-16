@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import { describe, expect,it } from 'vitest';
 
 const COMPONENTS_DIR = path.resolve(__dirname, '../../components');
 const SRC_COMPONENTS_DIR = path.resolve(__dirname, '../../src/components');
@@ -13,8 +13,8 @@ const SRC_COMPONENTS_DIR = path.resolve(__dirname, '../../src/components');
  * guarantees that third-party components using the same API will also work.
  */
 const ALLOWED_IMPORT_SOURCES = [
-  { pattern: /^'pupt-lib'$/, description: 'pupt-lib (public API)' },
-  { pattern: /^'pupt-lib\//, description: 'pupt-lib/* sub-paths (e.g. jsx-runtime)' },
+  { pattern: /^'@pupt\/lib'$/, description: '@pupt/lib (public API)' },
+  { pattern: /^'@pupt\/lib\//, description: '@pupt/lib/* sub-paths (e.g. jsx-runtime)' },
   { pattern: /^'zod'/, description: 'zod (external dependency)' },
   { pattern: /^'\.\//, description: 'sibling file in the same directory' },
   { pattern: /^'\.\.\//, description: 'sibling directory within components/ (e.g. ../presets)' },
@@ -24,7 +24,7 @@ const ALLOWED_IMPORT_SOURCES = [
  * Recursively collect all files in a directory.
  */
 function getAllFiles(dir: string): string[] {
-  if (!fs.existsSync(dir)) return [];
+  if (!fs.existsSync(dir)) {return [];}
   const results: string[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);

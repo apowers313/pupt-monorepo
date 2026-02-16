@@ -1,12 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, afterAll, vi } from 'vitest';
+import { execSync, spawn } from 'node:child_process';
+import path from 'node:path';
+
+import { confirm,input, select } from '@inquirer/prompts';
+import fs from 'fs-extra';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { addCommand } from '../../src/commands/add.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
-import fs from 'fs-extra';
-import path from 'node:path';
-import { execSync, spawn } from 'node:child_process';
-import { input, select, confirm } from '@inquirer/prompts';
-import { logger } from '../../src/utils/logger.js';
 import { editorLauncher } from '../../src/utils/editor.js';
+import { logger } from '../../src/utils/logger.js';
 vi.mock('../../src/config/config-manager.js');
 vi.mock('fs-extra');
 vi.mock('node:child_process', () => ({
@@ -256,8 +258,8 @@ describe('Add Command', () => {
         promptDirs: ['./.prompts']
       } as any);
       vi.mocked(execSync).mockImplementation((cmd: any, options?: any) => {
-        if (cmd === 'git config user.name') return Buffer.from('Jane Smith\n');
-        if (cmd === 'git config user.email') return Buffer.from('jane@example.com\n');
+        if (cmd === 'git config user.name') {return Buffer.from('Jane Smith\n');}
+        if (cmd === 'git config user.email') {return Buffer.from('jane@example.com\n');}
         return Buffer.from('');
       });
       vi.mocked(fs.pathExists).mockResolvedValue(false);

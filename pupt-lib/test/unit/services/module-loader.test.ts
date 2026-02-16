@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ModuleLoader } from '../../../src/services/module-loader';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
 import { Component } from '../../../src/component';
 import { jsx } from '../../../src/jsx-runtime';
-import type { PromptSource } from '../../../src/types/prompt-source';
+import { ModuleLoader } from '../../../src/services/module-loader';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
+import type { PromptSource } from '../../../src/types/prompt-source';
 
 // Create test components extending Component
 class TestComponent extends Component<{ children?: unknown }> {
@@ -166,7 +167,7 @@ describe('ModuleLoader', () => {
       };
       const library = await loader.loadEntry(mockSource);
       expect(Object.keys(library.prompts)).toContain('test');
-      expect(library.prompts['test'].name).toBe('test');
+      expect(library.prompts.test.name).toBe('test');
     });
 
     it('should accept a ResolvedModuleEntry via loadEntry', async () => {
@@ -194,7 +195,7 @@ describe('ModuleLoader', () => {
         config: { path: 'test/fixtures/prompt-packages/basic' },
       });
       expect(Object.keys(library.prompts).length).toBeGreaterThan(0);
-      expect(library.prompts['greeting']).toBeDefined();
+      expect(library.prompts.greeting).toBeDefined();
       expect(library.prompts['code-review']).toBeDefined();
     });
 
@@ -217,12 +218,12 @@ describe('ModuleLoader', () => {
       };
       const library = await loader.loadPromptSource(mockSource);
       expect(Object.keys(library.prompts)).toHaveLength(2);
-      expect(library.prompts['one'].name).toBe('one');
-      expect(library.prompts['one'].id).toMatch(/^[0-9a-f-]+$/);
-      expect(library.prompts['two'].name).toBe('two');
-      expect(library.prompts['two'].id).toMatch(/^[0-9a-f-]+$/);
+      expect(library.prompts.one.name).toBe('one');
+      expect(library.prompts.one.id).toMatch(/^[0-9a-f-]+$/);
+      expect(library.prompts.two.name).toBe('two');
+      expect(library.prompts.two.id).toMatch(/^[0-9a-f-]+$/);
       // IDs should be unique
-      expect(library.prompts['one'].id).not.toBe(library.prompts['two'].id);
+      expect(library.prompts.one.id).not.toBe(library.prompts.two.id);
       expect(library.components).toEqual({});
     });
 
@@ -245,8 +246,8 @@ describe('ModuleLoader', () => {
         },
       };
       const library = await loader.loadPromptSource(mockSource);
-      expect(library.prompts['unnamed']).toBeDefined();
-      expect(library.prompts['unnamed'].name).toBe('unnamed');
+      expect(library.prompts.unnamed).toBeDefined();
+      expect(library.prompts.unnamed.name).toBe('unnamed');
     });
   });
 
@@ -261,8 +262,8 @@ describe('ModuleLoader', () => {
       expect(Object.keys(library.components).length).toBeGreaterThan(0);
       expect(library.components).toHaveProperty('Greeting');
       expect(Object.keys(library.prompts).length).toBeGreaterThan(0);
-      expect(library.prompts['helper']).toBeDefined();
-      expect(library.prompts['helper'].name).toBe('helper');
+      expect(library.prompts.helper).toBeDefined();
+      expect(library.prompts.helper.name).toBe('helper');
     });
   });
 });

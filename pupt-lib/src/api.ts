@@ -1,20 +1,20 @@
-import type {
-  PuptInitConfig,
-  SearchResult,
-  SearchOptions,
-  RenderOptions,
-  RenderResult,
-  PuptElement,
-  ModuleEntry,
-} from './types';
-import { isPuptElement } from './types/element';
-import { isPromptSource } from './types/prompt-source';
-import { isResolvedModuleEntry } from './types/module';
-import { PROPS } from './types/symbols';
-import { createSearchEngine, type SearchEngine } from './services/search-engine';
 import { render } from './render';
 import { createInputIterator, type InputIterator } from './services/input-iterator';
 import { ModuleLoader } from './services/module-loader';
+import { createSearchEngine, type SearchEngine } from './services/search-engine';
+import type {
+  ModuleEntry,
+  PuptElement,
+  PuptInitConfig,
+  RenderOptions,
+  RenderResult,
+  SearchOptions,
+  SearchResult,
+} from './types';
+import { isPuptElement } from './types/element';
+import { isResolvedModuleEntry } from './types/module';
+import { isPromptSource } from './types/prompt-source';
+import { PROPS } from './types/symbols';
 
 /**
  * A discovered prompt with render and input iterator capabilities
@@ -45,7 +45,7 @@ export class Pupt {
   }
 
   async init(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {return;}
 
     // Discover prompts from configured modules
     this.prompts = await this.discoverPrompts();
@@ -65,7 +65,7 @@ export class Pupt {
 
   getPrompts(filter?: { tags?: string[] }): DiscoveredPromptWithMethods[] {
     if (filter?.tags) {
-      return this.prompts.filter(p => filter.tags!.every(t => p.tags.includes(t)));
+      return this.prompts.filter(p => filter.tags.every(t => p.tags.includes(t)));
     }
     return [...this.prompts];
   }
@@ -180,7 +180,7 @@ export class Pupt {
     if (!isPuptElement(value)) {
       return false;
     }
-    const props = (value as PuptElement)[PROPS];
+    const props = (value)[PROPS];
     return (
       props !== null &&
       typeof props === 'object' &&
@@ -208,7 +208,7 @@ export class Pupt {
         const inputsMap =
           inputsObj instanceof Map
             ? inputsObj
-            : new Map(Object.entries(inputsObj as Record<string, unknown>));
+            : new Map(Object.entries(inputsObj));
 
         return render(element, {
           ...options,

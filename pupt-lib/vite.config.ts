@@ -5,8 +5,8 @@ import dts from 'vite-plugin-dts';
 export default defineConfig({
   resolve: {
     alias: {
-      'pupt-lib/jsx-runtime': resolve(__dirname, 'src/jsx-runtime/index.ts'),
-      'pupt-lib': resolve(__dirname, 'src/index.ts'),
+      '@pupt/lib/jsx-runtime': resolve(__dirname, 'src/jsx-runtime/index.ts'),
+      '@pupt/lib': resolve(__dirname, 'src/index.ts'),
     },
   },
   build: {

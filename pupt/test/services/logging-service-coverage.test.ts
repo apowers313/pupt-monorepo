@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
 import {
-  LoggingService,
   enhanceWithLogging,
+  LoggingService,
 } from '../../src/services/logging-service.js';
 
 describe('LoggingService coverage', () => {

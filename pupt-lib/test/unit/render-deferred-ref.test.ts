@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { render, Component } from 'pupt-lib';
-import { jsx } from 'pupt-lib/jsx-runtime';
+import { Component,render } from '@pupt/lib';
+import { jsx } from '@pupt/lib/jsx-runtime';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
 
 describe('Rendering deferred references', () => {

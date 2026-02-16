@@ -1,6 +1,7 @@
+import boxen from 'boxen';
 import chalk from 'chalk';
 import ora, { Ora } from 'ora';
-import boxen from 'boxen';
+
 import { logger } from '../utils/logger.js';
 
 export enum LogLevel {
@@ -38,38 +39,38 @@ export class ConsoleUI {
   }
 
   success(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
-    const formatted = this.useColor ? chalk.green('✅ ' + message) : '✅ ' + message;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
+    const formatted = this.useColor ? chalk.green(`✅ ${  message}`) : `✅ ${  message}`;
     logger.log(formatted);
   }
 
   error(error: Error | string): void {
-    if (this.silent || this.logLevel < LogLevel.ERROR) return;
+    if (this.silent || this.logLevel < LogLevel.ERROR) {return;}
     const message = error instanceof Error ? error.message : error;
-    const formatted = this.useColor ? chalk.red('❌ ' + message) : '❌ ' + message;
+    const formatted = this.useColor ? chalk.red(`❌ ${  message}`) : `❌ ${  message}`;
     logger.error(formatted);
   }
 
   warn(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.WARN) return;
-    const formatted = this.useColor ? chalk.yellow('⚠️  ' + message) : '⚠️  ' + message;
+    if (this.silent || this.logLevel < LogLevel.WARN) {return;}
+    const formatted = this.useColor ? chalk.yellow(`⚠️  ${  message}`) : `⚠️  ${  message}`;
     logger.warn(formatted);
   }
 
   info(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
-    const formatted = this.useColor ? chalk.blue('ℹ️  ' + message) : 'ℹ️  ' + message;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
+    const formatted = this.useColor ? chalk.blue(`ℹ️  ${  message}`) : `ℹ️  ${  message}`;
     logger.log(formatted);
   }
 
   debug(message: string): void {
-    if (this.silent || this.logLevel < LogLevel.DEBUG) return;
-    const formatted = this.useColor ? chalk.gray('🐛 ' + message) : '🐛 ' + message;
+    if (this.silent || this.logLevel < LogLevel.DEBUG) {return;}
+    const formatted = this.useColor ? chalk.gray(`🐛 ${  message}`) : `🐛 ${  message}`;
     logger.log(formatted);
   }
 
   prompt(title: string, description?: string): void {
-    if (this.silent) return;
+    if (this.silent) {return;}
     logger.log(this.useColor ? chalk.bold.blue(`\n📝 ${title}`) : `\n📝 ${title}`);
     if (description) {
       logger.log(this.useColor ? chalk.dim(description) : description);
@@ -77,7 +78,7 @@ export class ConsoleUI {
   }
 
   progress(message: string, current: number, total: number): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     const percentage = Math.round((current / total) * 100);
     const progress = `[${current}/${total}] ${percentage}%`;
     const formatted = this.useColor 
@@ -104,18 +105,18 @@ export class ConsoleUI {
   }
 
   table(data: unknown[]): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     console.table(data);
   }
 
   json(data: unknown, pretty = true): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     const output = pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data);
     logger.log(output);
   }
 
   list(items: string[], options: ListOptions = {}): void {
-    if (this.silent || this.logLevel < LogLevel.INFO) return;
+    if (this.silent || this.logLevel < LogLevel.INFO) {return;}
     const { numbered = false, indent = 2 } = options;
     const indentation = ' '.repeat(indent);
     
@@ -129,14 +130,14 @@ export class ConsoleUI {
   }
 
   header(text: string): void {
-    if (this.silent) return;
+    if (this.silent) {return;}
     const divider = '─'.repeat(text.length + 4);
     logger.log(this.useColor ? chalk.bold(`\n${text}`) : `\n${text}`);
     logger.log(this.useColor ? chalk.dim(divider) : divider);
   }
 
   box(content: string, title?: string): void {
-    if (this.silent) return;
+    if (this.silent) {return;}
     const boxOptions: Parameters<typeof boxen>[1] = {
       padding: 1,
       margin: 1,
@@ -149,7 +150,7 @@ export class ConsoleUI {
   }
 
   divider(): void {
-    if (this.silent) return;
+    if (this.silent) {return;}
     const line = '─'.repeat(50);
     logger.log(this.useColor ? chalk.dim(line) : line);
   }

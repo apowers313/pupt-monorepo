@@ -1,14 +1,16 @@
-import { select, input, editor } from '@inquirer/prompts';
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import { editor,input, select } from '@inquirer/prompts';
+import fs from 'fs-extra';
 import { v4 as uuidv4 } from 'uuid';
+
 import { ConfigManager } from '../config/config-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
-import { HistoryEntry } from '../types/history.js';
-import { errors } from '../utils/errors.js';
-import { DateFormats } from '../utils/date-formatter.js';
-import { logger } from '../utils/logger.js';
 import { AnnotationMetadata } from '../types/annotations.js';
+import { HistoryEntry } from '../types/history.js';
+import { DateFormats } from '../utils/date-formatter.js';
+import { errors } from '../utils/errors.js';
+import { logger } from '../utils/logger.js';
 
 export async function annotateCommand(historyNumber?: number): Promise<void> {
   const config = await ConfigManager.load();
@@ -58,14 +60,14 @@ export async function annotateCommand(historyNumber?: number): Promise<void> {
     entry = historyList[selectedIndex];
   }
 
-  const status = await select({
+  const status = await select<'success' | 'failure' | 'partial'>({
     message: 'How did this prompt work?',
     choices: [
       { value: 'success', name: '✓ Success' },
       { value: 'failure', name: '✗ Failure' },
       { value: 'partial', name: '~ Partial success' }
     ]
-  }) as 'success' | 'failure' | 'partial';
+  });
 
   const tagsInput = await input({
     message: 'Tags (comma-separated, optional):'
@@ -110,7 +112,7 @@ function formatHistoryChoice(entry: HistoryEntry, index: number): string {
   const title = entry.title || 'Untitled';
   const firstLine = entry.finalPrompt.split('\n')[0];
   const truncated = firstLine.length > 50 
-    ? firstLine.substring(0, 47) + '...'
+    ? `${firstLine.substring(0, 47)  }...`
     : firstLine;
   
   return `${index}. ${dateStr} ${title} - ${truncated}`;

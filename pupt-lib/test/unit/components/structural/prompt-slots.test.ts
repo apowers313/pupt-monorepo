@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Component } from '../../../../src/component';
+
 import { Prompt } from '../../../../components/structural/Prompt';
-import { Task } from '../../../../components/structural/Task';
 import { Role } from '../../../../components/structural/Role';
+import { Task } from '../../../../components/structural/Task';
+import { Component } from '../../../../src/component';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 import type { PuptNode, RenderContext } from '../../../../src/types';
 import { createEnvironment } from '../../../../src/types/context';
 

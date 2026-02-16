@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { execSync } from 'node:child_process';
-import * as path from 'node:path';
-import * as fs from 'fs-extra';
 import * as os from 'node:os';
+import * as path from 'node:path';
+
+import * as fs from 'fs-extra';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('AutoRun Feature', () => {
   let testDir: string;

@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Component } from '../../src/component';
 
 describe('Component with resolve()', () => {
@@ -9,7 +10,7 @@ describe('Component with resolve()', () => {
       }
     }
     const instance = new StringComponent();
-    expect(instance.resolve!({ value: 'hello' }, {} as never)).toBe('HELLO');
+    expect(instance.resolve({ value: 'hello' }, {} as never)).toBe('HELLO');
   });
 
   it('should allow components with resolve() that returns complex types', () => {
@@ -19,7 +20,7 @@ describe('Component with resolve()', () => {
       }
     }
     const instance = new DataComponent();
-    const resolved = instance.resolve!({ id: 42 }, {} as never);
+    const resolved = instance.resolve({ id: 42 }, {} as never);
     expect(resolved).toEqual({ name: 'User 42' });
   });
 
@@ -30,7 +31,7 @@ describe('Component with resolve()', () => {
       }
     }
     const instance = new AsyncComponent();
-    expect(await instance.resolve!({}, {} as never)).toBe(42);
+    expect(await instance.resolve({}, {} as never)).toBe(42);
   });
 
   it('should support components with only render() (backward compatibility)', () => {
@@ -40,7 +41,7 @@ describe('Component with resolve()', () => {
       }
     }
     const instance = new RenderOnlyComponent();
-    expect(instance.render!({ name: 'World' }, {} as never)).toBe('Hello, World!');
+    expect(instance.render({ name: 'World' }, {} as never)).toBe('Hello, World!');
   });
 
   it('should support ResolveType defaulting to void', () => {
@@ -52,7 +53,7 @@ describe('Component with resolve()', () => {
     }
     const instance = new SimpleComponent();
     expect(instance.resolve).toBeUndefined();
-    expect(instance.render!({ text: 'test' }, {} as never)).toBe('test');
+    expect(instance.render({ text: 'test' }, {} as never)).toBe('test');
   });
 
   it('should allow components with both resolve() and render()', () => {
@@ -65,7 +66,7 @@ describe('Component with resolve()', () => {
       }
     }
     const instance = new DualComponent();
-    expect(instance.resolve!({ id: 1 }, {} as never)).toBe('resolved-1');
-    expect(instance.render!({ id: 1 }, {} as never)).toBe('Rendered: 1');
+    expect(instance.resolve({ id: 1 }, {} as never)).toBe('resolved-1');
+    expect(instance.render({ id: 1 }, {} as never)).toBe('Rendered: 1');
   });
 });

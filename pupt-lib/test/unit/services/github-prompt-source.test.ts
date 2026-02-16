@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { GitHubPromptSource } from '../../../src/services/prompt-sources/github-prompt-source';
 
 // Mock data for GitHub API responses
@@ -156,7 +157,7 @@ describe('GitHubPromptSource', () => {
       const url = input.toString();
       // Verify the token is sent in the Authorization header
       const headers = init?.headers as Record<string, string> | undefined;
-      if (!headers?.['Authorization']?.includes('token ghp_test123')) {
+      if (!headers?.Authorization?.includes('token ghp_test123')) {
         return new Response('Unauthorized', { status: 401 });
       }
 

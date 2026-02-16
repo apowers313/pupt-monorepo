@@ -71,7 +71,7 @@ function buildImportLine(raw: string): string {
     return "";
   }
 
-  return `import { ${used.join(", ")} } from "pupt-react";\n`;
+  return `import { ${used.join(", ")} } from "@pupt/react";\n`;
 }
 
 /** Wrap raw prompt content as a valid .tsx file with imports. */

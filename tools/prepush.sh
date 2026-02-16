@@ -60,8 +60,8 @@ echo "  Testing pupt..."
 echo "  Testing pupt-react..."
 (cd pupt-react && npm run test:ci) || FAILED=1
 
-echo "  Testing pupt-sde..."
-(cd pupt-sde && npm run test:ci) || FAILED=1
+echo "  Testing pupt-sde-prompts..."
+(cd pupt-sde-prompts && npm run test:ci) || FAILED=1
 
 if [ $FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ Fast tests passed${NC}"

@@ -1,9 +1,8 @@
 import { 
+  AnnotationAnalysisSummary, 
   AnnotationMetadata, 
-  ParsedAnnotation, 
   IssueIdentified,
-  AnnotationAnalysisSummary 
-} from '../types/annotations.js';
+  ParsedAnnotation} from '../types/annotations.js';
 
 interface RawAnnotation extends AnnotationMetadata {
   notes?: string;

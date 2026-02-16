@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
+import { Step,Steps } from '../../../../components/reasoning';
+import { Fragment,jsx } from '../../../../src/jsx-runtime';
 import { render } from '../../../../src/render';
-import { jsx, Fragment } from '../../../../src/jsx-runtime';
-import { Steps, Step } from '../../../../components/reasoning';
 
 describe('Steps', () => {
   it('should render numbered steps', async () => {

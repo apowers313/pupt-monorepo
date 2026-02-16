@@ -5,8 +5,8 @@
  * that work with external data sources.
  */
 
-import { Component } from "pupt-react";
-import type { PuptNode } from "pupt-react";
+import { Component } from "@pupt/react";
+import type { PuptNode } from "@pupt/react";
 import { z } from "zod";
 
 export interface GitHubUserData {

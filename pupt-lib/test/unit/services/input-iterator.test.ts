@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { createInputIterator } from '../../../src/services/input-iterator';
-import { jsx, Fragment } from '../../../src/jsx-runtime';
-import { Ask } from '../../../components/ask';
-import { mkdirSync, writeFileSync, rmSync } from 'fs';
-import { join } from 'path';
 import '../../../components'; // Register components
+
+import { mkdirSync, rmSync,writeFileSync } from 'fs';
+import { join } from 'path';
+import { describe, expect,it } from 'vitest';
+
+import { Ask } from '../../../components/ask';
+import { Fragment,jsx } from '../../../src/jsx-runtime';
+import { createInputIterator } from '../../../src/services/input-iterator';
 
 // Create temp directory for filesystem tests
 const tmpDir = join(__dirname, '../../../tmp/iterator-test');

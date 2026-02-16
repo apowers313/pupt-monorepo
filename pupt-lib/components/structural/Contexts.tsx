@@ -1,11 +1,12 @@
-import { z } from 'zod';
-import { Component, wrapWithDelimiter } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext,wrapWithDelimiter } from "@pupt/lib";
+import { z } from "zod";
 
-const contextsSchema = z.object({
-  extend: z.boolean().optional(),
-  delimiter: z.enum(['xml', 'markdown', 'none']).optional(),
-}).passthrough();
+const contextsSchema = z
+    .object({
+        extend: z.boolean().optional(),
+        delimiter: z.enum(["xml", "markdown", "none"]).optional(),
+    })
+    .passthrough();
 
 type ContextsProps = z.infer<typeof contextsSchema> & { children?: PuptNode };
 
@@ -16,15 +17,15 @@ type ContextsProps = z.infer<typeof contextsSchema> & { children?: PuptNode };
  * - extend={true}: merges with default contexts
  */
 export class Contexts extends Component<ContextsProps> {
-  static schema = contextsSchema;
+    static schema = contextsSchema;
 
-  render(props: ContextsProps, _resolvedValue: void, _context: RenderContext): PuptNode {
-    const { delimiter = 'xml', children } = props;
+    render(props: ContextsProps, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        const { delimiter = "xml", children } = props;
 
-    if (!this.hasContent(children)) {
-      return '';
+        if (!this.hasContent(children)) {
+            return "";
+        }
+
+        return wrapWithDelimiter(children, "contexts", delimiter);
     }
-
-    return wrapWithDelimiter(children, 'contexts', delimiter);
-  }
 }

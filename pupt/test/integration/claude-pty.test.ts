@@ -1,9 +1,10 @@
 import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
 import stripAnsi from 'strip-ansi';
+import { afterAll,beforeAll, describe, expect, it } from 'vitest';
+
 import { setupClaudeMock } from '../helpers/claude-mock-helper.js';
 
 describe('Claude PTY Input Test', () => {

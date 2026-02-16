@@ -1,21 +1,22 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../src/create-prompt';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
-import { createEnvironment } from '../../src/types/context';
-import { Prompt } from '../../components/structural/Prompt';
-import { Task } from '../../components/structural/Task';
-import { Context } from '../../components/structural/Context';
-import { Constraint } from '../../components/structural/Constraint';
-import { Constraints } from '../../components/structural/Constraints';
-import { Format } from '../../components/structural/Format';
-import { Steps } from '../../components/reasoning/Steps';
-import { Guardrails } from '../../components/structural/Guardrails';
-import { WhenUncertain } from '../../components/structural/WhenUncertain';
-import { Examples } from '../../components/examples/Examples';
+import { describe, expect,it } from 'vitest';
+
 import { Example } from '../../components/examples/Example';
 import { ExampleInput } from '../../components/examples/ExampleInput';
 import { ExampleOutput } from '../../components/examples/ExampleOutput';
+import { Examples } from '../../components/examples/Examples';
+import { Steps } from '../../components/reasoning/Steps';
+import { Constraint } from '../../components/structural/Constraint';
+import { Constraints } from '../../components/structural/Constraints';
+import { Context } from '../../components/structural/Context';
+import { Format } from '../../components/structural/Format';
+import { Guardrails } from '../../components/structural/Guardrails';
+import { Prompt } from '../../components/structural/Prompt';
+import { Task } from '../../components/structural/Task';
+import { WhenUncertain } from '../../components/structural/WhenUncertain';
+import { createPromptFromSource } from '../../src/create-prompt';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
+import { createEnvironment } from '../../src/types/context';
 
 
 describe('Full-featured prompt e2e', () => {

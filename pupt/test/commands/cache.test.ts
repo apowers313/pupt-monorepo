@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import fs from 'fs-extra';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
+
+import fs from 'fs-extra';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock global-paths before importing the module
-const mockCacheDir = path.join(os.tmpdir(), 'pupt-cache-cmd-test-' + Date.now());
+const mockCacheDir = path.join(os.tmpdir(), `pupt-cache-cmd-test-${  Date.now()}`);
 
 vi.mock('../../src/config/global-paths.js', () => ({
   getCacheDir: () => mockCacheDir,

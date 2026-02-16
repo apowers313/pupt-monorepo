@@ -14,46 +14,40 @@ export * from "./types/index";
 export { PuptContext, PuptLibraryContext } from "./context";
 
 // Export components
-export {
-  PuptProvider,
-  PuptLibraryProvider,
-  PromptEditor,
-  PromptRenderer,
-  AskHandler,
-} from "./components";
+export { AskHandler, PromptEditor, PromptRenderer, PuptLibraryProvider, PuptProvider } from "./components";
 
 // Export hooks
 export {
-  usePupt,
-  usePromptRender,
-  useAskIterator,
-  usePromptSearch,
-  usePostActions,
-  useFormula,
-  usePuptLibrary,
-  usePuptLibraryContext,
+    useAskIterator,
+    useFormula,
+    usePostActions,
+    usePromptRender,
+    usePromptSearch,
+    usePupt,
+    usePuptLibrary,
+    usePuptLibraryContext,
 } from "./hooks";
 
 // Export utility functions
 export {
-  transformSource,
-  extractInputRequirements,
-  isAskComponent,
-  traverseElement,
-  isElement,
-  validateInput,
-  createRuntimeConfig,
-  evaluateFormula,
+    createRuntimeConfig,
+    evaluateFormula,
+    extractInputRequirements,
+    isAskComponent,
+    isElement,
+    transformSource,
+    traverseElement,
+    validateInput,
 } from "./utils";
 
 // Re-export pupt-lib element symbols
-export { TYPE, PROPS, CHILDREN, DEFERRED_REF } from "pupt-lib";
+export { CHILDREN, DEFERRED_REF, PROPS, TYPE } from "@pupt/lib";
 
 // Re-export pupt-lib type guards
-export { isPuptElement, isDeferredRef, isComponentClass } from "pupt-lib";
+export { isComponentClass, isDeferredRef, isPuptElement } from "@pupt/lib";
 
 // Re-export pupt-lib Component base class for custom components
-export { Component, COMPONENT_MARKER } from "pupt-lib";
+export { Component, COMPONENT_MARKER } from "@pupt/lib";
 
 // Version constant
 export const VERSION = "1.0.0";

@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Pupt } from '../../src/api';
-import type { PromptSource } from '../../src/types/prompt-source';
 import type { ModuleEntry } from '../../src/types/module';
+import type { PromptSource } from '../../src/types/prompt-source';
 
 describe('CLI integration patterns', () => {
   it('should support a modules array mixing entry types and package references', async () => {

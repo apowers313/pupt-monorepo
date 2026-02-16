@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { PatternDetector } from '../../src/services/pattern-detector.js';
 import type { ParsedAnnotation } from '../../src/types/annotations.js';
 
@@ -207,9 +208,9 @@ describe('PatternDetector', () => {
             notes: 'Stopped at first error - incomplete',
             status: 'partial',
           });
-        } else {
+        } 
           return createAnnotation({ status: 'success' });
-        }
+        
       });
 
       const patterns = detector.detectPatterns(annotations);

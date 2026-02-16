@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import { Combobox, TextInput, Group, Text, Badge, useCombobox, ScrollArea } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { usePupt, usePromptSearch, usePuptLibraryContext } from "pupt-react";
-import type { SearchablePrompt } from "pupt-react";
+import { usePupt, usePromptSearch, usePuptLibraryContext } from "@pupt/react";
+import type { SearchablePrompt } from "@pupt/react";
 import { useDemoContext } from "../context/DemoContext";
 import { wrapJsx } from "../util/jsxWrapper";
 

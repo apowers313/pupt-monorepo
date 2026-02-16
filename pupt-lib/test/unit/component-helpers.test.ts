@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
-import { Component } from '../../src/component';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
-import type { RenderContext, PuptNode } from '../../src/types';
+
+import { Component } from '../../src/component';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
+import type { PuptNode,RenderContext } from '../../src/types';
 
 describe('Component helper methods', () => {
   describe('getProvider', () => {

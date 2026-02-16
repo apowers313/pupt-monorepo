@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { jsx } from 'pupt-lib/jsx-runtime';
-import { TYPE, PROPS, isDeferredRef, isPuptElement, DEFERRED_REF } from 'pupt-lib';
+import { DEFERRED_REF,isDeferredRef, isPuptElement, PROPS, TYPE } from '@pupt/lib';
+import { jsx } from '@pupt/lib/jsx-runtime';
+import { describe, expect,it } from 'vitest';
 
 describe('Proxy-wrapped elements', () => {
   it('should allow symbol access on proxied elements', () => {

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { ConfigSchema, ConfigFileSchema } from '../../src/schemas/config-schema.js';
+import { describe, expect,it } from 'vitest';
+
+import { ConfigFileSchema,ConfigSchema } from '../../src/schemas/config-schema.js';
 
 describe('Config Schema v5', () => {
   it('should accept config with libraries array via ConfigFileSchema (pre-v8 format)', () => {

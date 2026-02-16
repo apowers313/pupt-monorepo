@@ -2,11 +2,12 @@
  * Tests for PromptEditor headless component
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, waitFor, act, fireEvent } from "@testing-library/react";
+import { act, fireEvent,render, waitFor } from "@testing-library/react";
 import React from "react";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { afterEach,beforeEach, describe, expect, it, vi } from "vitest";
+
 import { PromptEditor } from "../../../src/components/PromptEditor";
+import { PuptProvider } from "../../../src/components/PuptProvider";
 import type { PromptEditorRenderProps } from "../../../src/types/components";
 
 describe("PromptEditor", () => {
@@ -155,7 +156,7 @@ describe("PromptEditor", () => {
       <PuptProvider>
         <PromptEditor defaultValue="" debounce={200}>
           {(props) => {
-            if (props.element) transformCount++;
+            if (props.element) {transformCount++;}
             capturedProps = props;
             return <textarea {...props.inputProps} />;
           }}

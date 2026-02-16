@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { PromptToolError } from '../../src/utils/errors.js';
 
 // Mock dependencies before importing the module under test
@@ -15,9 +16,9 @@ vi.mock('../../src/utils/logger.js', () => ({
   },
 }));
 
+import { collectInputs } from '../../src/services/input-collector.js';
 import { resolvePrompt } from '../../src/services/prompt-resolver.js';
 import { PuptService } from '../../src/services/pupt-service.js';
-import { collectInputs } from '../../src/services/input-collector.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { logger } from '../../src/utils/logger.js';
 

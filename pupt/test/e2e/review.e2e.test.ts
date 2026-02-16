@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { E2eTestEnvironment } from './e2e-env.js';
 import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { E2eTestEnvironment } from './e2e-env.js';
 
 describe('pt review E2E', () => {
   let env: E2eTestEnvironment;
@@ -48,7 +49,7 @@ describe('pt review E2E', () => {
 </Prompt>`);
 
       // Create history entries with environment info for proper filtering
-      const workDir = env.workDir;
+      const {workDir} = env;
 
       await env.writeHistoryEntry('.pt-history', '20250115-100000-abcd1234.json', {
         timestamp: '2025-01-15T10:00:00.000Z',

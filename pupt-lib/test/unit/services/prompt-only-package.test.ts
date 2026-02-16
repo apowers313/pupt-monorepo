@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { ModuleLoader } from '../../../src/services/module-loader';
 import { LocalPromptSource } from '../../../src/services/prompt-sources/local-prompt-source';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
@@ -29,13 +30,13 @@ describe('prompt-only package (no main/exports)', () => {
     const library = await loader.loadResolvedEntry(promptOnlyEntry);
     expect(Object.keys(library.components)).toHaveLength(0);
     expect(Object.keys(library.prompts).length).toBeGreaterThan(0);
-    expect(library.prompts['simple']).toBeDefined();
-    expect(library.prompts['simple'].name).toBe('simple');
+    expect(library.prompts.simple).toBeDefined();
+    expect(library.prompts.simple.name).toBe('simple');
   });
 
   it('should extract correct metadata from prompt-only package prompts', async () => {
     const library = await loader.loadResolvedEntry(promptOnlyEntry);
-    const simple = library.prompts['simple'];
+    const {simple} = library.prompts;
     expect(simple.description).toBe('A simple prompt from a prompt-only package');
     expect(simple.tags).toContain('simple');
     expect(simple.id).toBeDefined();

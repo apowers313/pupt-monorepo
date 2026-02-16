@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
 import { ModuleLoader } from '../../../src/services/module-loader';
-import { isResolvedModuleEntry } from '../../../src/types/module';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
+import { isResolvedModuleEntry } from '../../../src/types/module';
 import type { PromptSource } from '../../../src/types/prompt-source';
 
 describe('ResolvedModuleEntry', () => {
@@ -314,10 +315,10 @@ describe('ResolvedModuleEntry', () => {
       const library = await loader.loadEntry(entry);
 
       expect(library.name).toBe('multi-dir');
-      expect(library.prompts['basic']).toBeDefined();
-      expect(library.prompts['basic'].name).toBe('basic');
-      expect(library.prompts['expert']).toBeDefined();
-      expect(library.prompts['expert'].name).toBe('expert');
+      expect(library.prompts.basic).toBeDefined();
+      expect(library.prompts.basic.name).toBe('basic');
+      expect(library.prompts.expert).toBeDefined();
+      expect(library.prompts.expert.name).toBe('expert');
     });
 
     it('should use default discovery when promptDirs is not provided', async () => {
@@ -348,7 +349,7 @@ describe('ResolvedModuleEntry', () => {
       const library = await loader.loadEntry(entry);
 
       // Should still find prompts from the existing 'prompts' directory
-      expect(library.prompts['basic']).toBeDefined();
+      expect(library.prompts.basic).toBeDefined();
     });
   });
 });

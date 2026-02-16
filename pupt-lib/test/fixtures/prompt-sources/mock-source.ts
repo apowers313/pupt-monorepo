@@ -1,6 +1,7 @@
-import type { PromptSource, DiscoveredPromptFile } from '../../../src/types/prompt-source';
 import { readdir, readFile } from 'fs/promises';
-import { resolve, join } from 'path';
+import { join,resolve } from 'path';
+
+import type { DiscoveredPromptFile,PromptSource } from '../../../src/types/prompt-source';
 
 export default class MockSource implements PromptSource {
   private config: { path: string };

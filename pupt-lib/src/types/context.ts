@@ -1,6 +1,7 @@
 // Context types for pupt-lib rendering
 
 import { z } from 'zod';
+
 import type { PostExecutionAction, RenderError } from './render';
 
 // Browser-safe detection
@@ -26,7 +27,7 @@ let nodeRuntimeCachePromise: Promise<void> | null = null;
  * This is called lazily on first access to avoid bundling issues in browsers.
  */
 async function initNodeRuntimeCache(): Promise<void> {
-  if (nodeRuntimeCache) return;
+  if (nodeRuntimeCache) {return;}
 
   try {
     // Dynamic import to avoid bundling in browser builds
@@ -75,7 +76,7 @@ function getNodeRuntimeValues(): NodeRuntimeValues {
  * This is primarily useful for testing to ensure runtime values are available.
  */
 export async function ensureRuntimeCacheReady(): Promise<void> {
-  if (isBrowser) return;
+  if (isBrowser) {return;}
 
   if (!nodeRuntimeCachePromise) {
     nodeRuntimeCachePromise = initNodeRuntimeCache();
@@ -122,28 +123,28 @@ export function inferProviderFromModel(model: string): LlmProvider | null {
   const m = model.toLowerCase();
 
   // Anthropic: claude-*, or short names opus/sonnet/haiku
-  if (m.startsWith('claude') || m === 'opus' || m === 'sonnet' || m === 'haiku') return 'anthropic';
+  if (m.startsWith('claude') || m === 'opus' || m === 'sonnet' || m === 'haiku') {return 'anthropic';}
 
   // OpenAI: gpt-*, chatgpt-*, o1/o3/o4 series
-  if (m.startsWith('gpt-') || m.startsWith('chatgpt-') || /^o[134]([-_]|$)/.test(m)) return 'openai';
+  if (m.startsWith('gpt-') || m.startsWith('chatgpt-') || /^o[134]([-_]|$)/.test(m)) {return 'openai';}
 
   // Google: gemini-*
-  if (m.startsWith('gemini')) return 'google';
+  if (m.startsWith('gemini')) {return 'google';}
 
   // Meta: llama-*
-  if (m.startsWith('llama')) return 'meta';
+  if (m.startsWith('llama')) {return 'meta';}
 
   // Mistral: mistral-*, mixtral-*, codestral-*, pixtral-*
-  if (m.startsWith('mistral') || m.startsWith('mixtral') || m.startsWith('codestral') || m.startsWith('pixtral')) return 'mistral';
+  if (m.startsWith('mistral') || m.startsWith('mixtral') || m.startsWith('codestral') || m.startsWith('pixtral')) {return 'mistral';}
 
   // DeepSeek: deepseek-*
-  if (m.startsWith('deepseek')) return 'deepseek';
+  if (m.startsWith('deepseek')) {return 'deepseek';}
 
   // xAI: grok-*
-  if (m.startsWith('grok')) return 'xai';
+  if (m.startsWith('grok')) {return 'xai';}
 
   // Cohere: command-*
-  if (m.startsWith('command')) return 'cohere';
+  if (m.startsWith('command')) {return 'cohere';}
 
   return null;
 }

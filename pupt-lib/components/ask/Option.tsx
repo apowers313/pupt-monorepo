@@ -1,10 +1,11 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
-export const askOptionSchema = z.object({
-  value: z.string(),
-}).passthrough();
+export const askOptionSchema = z
+    .object({
+        value: z.string(),
+    })
+    .passthrough();
 
 export type OptionProps = z.infer<typeof askOptionSchema> & { children?: PuptNode };
 
@@ -15,9 +16,9 @@ export type OptionProps = z.infer<typeof askOptionSchema> & { children?: PuptNod
  */
 // Named AskOption for consistent Ask component naming
 export class AskOption extends Component<OptionProps> {
-  static schema = askOptionSchema;
-  render(_props: OptionProps, _resolvedValue: void, _context: RenderContext): PuptNode {
-    // Options don't render directly - they're collected by parent Select
-    return null;
-  }
+    static schema = askOptionSchema;
+    render(_props: OptionProps, _resolvedValue: undefined, _context: RenderContext): PuptNode {
+        // Options don't render directly - they're collected by parent Select
+        return null;
+    }
 }

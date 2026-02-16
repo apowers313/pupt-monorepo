@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { render, Component } from '../../src';
-import { jsx } from '../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
+
+import { Component,render } from '../../src';
+import { jsx } from '../../src/jsx-runtime';
 
 describe('Optional schema for components', () => {
   describe('components with resolve() only', () => {

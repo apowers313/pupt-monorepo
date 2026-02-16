@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { EdgeCases } from '../../../../components/structural/EdgeCases';
+import { describe, expect,it } from 'vitest';
+
 import { EDGE_CASE_PRESETS } from '../../../../components/presets/guardrail-presets';
+import { EdgeCases } from '../../../../components/structural/EdgeCases';
 import { When } from '../../../../components/structural/When';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('EdgeCases', () => {
   it('should render When children', async () => {

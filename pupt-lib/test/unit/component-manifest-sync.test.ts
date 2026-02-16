@@ -1,14 +1,15 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import * as allExports from '../../components';
-import { isComponentClass } from '../../src/component';
 import {
-  BUILTIN_COMPONENTS,
   ASK_COMPONENTS,
+  BUILTIN_COMPONENTS,
   STRUCTURAL_COMPONENTS,
 } from '../../components/manifest';
+import { isComponentClass } from '../../src/component';
 import {
-  getBuiltinComponents,
   getAskComponents,
+  getBuiltinComponents,
   getStructuralComponents,
 } from '../../src/services/component-discovery';
 
@@ -33,7 +34,7 @@ describe('component manifest sync', () => {
       name => !(BUILTIN_COMPONENTS as readonly string[]).includes(name),
     );
     const extra = (BUILTIN_COMPONENTS as readonly string[]).filter(
-      name => name === 'Component' || expectedInManifest.includes(name) ? false : true,
+      name => !(name === 'Component' || expectedInManifest.includes(name)),
     );
 
     expect(missing, 'Components exported but missing from BUILTIN_COMPONENTS in manifest').toEqual([]);

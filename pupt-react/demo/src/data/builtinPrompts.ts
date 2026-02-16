@@ -1,5 +1,5 @@
-import type { SearchablePrompt } from "pupt-react";
-import { transformSource, PROPS } from "pupt-react";
+import type { SearchablePrompt } from "@pupt/react";
+import { transformSource, PROPS } from "@pupt/react";
 import { EXAMPLES, type ExampleFormat } from "./examples";
 import { wrapJsx } from "../util/jsxWrapper";
 

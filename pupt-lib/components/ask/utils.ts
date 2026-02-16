@@ -1,5 +1,5 @@
+import type { InputRequirement,RenderContext } from '@pupt/lib';
 import { z } from 'zod';
-import type { RenderContext, InputRequirement } from 'pupt-lib';
 
 export const askBaseSchema = z.object({
   name: z.string(),

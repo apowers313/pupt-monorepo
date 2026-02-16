@@ -2,7 +2,8 @@
  * Tests for createRuntimeConfig re-export
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect,it } from "vitest";
+
 import { createRuntimeConfig } from "../../../src/utils";
 
 describe("createRuntimeConfig", () => {

@@ -1,18 +1,19 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { DEFAULT_ENVIRONMENT } from '../../../../src/types/context';
-import { Prompt } from '../../../../components/structural/Prompt';
-import { Constraints } from '../../../../components/structural/Constraints';
+import { describe, expect,it } from 'vitest';
+
 import { Constraint } from '../../../../components/structural/Constraint';
-import { Guardrails } from '../../../../components/structural/Guardrails';
+import { Constraints } from '../../../../components/structural/Constraints';
 import { EdgeCases } from '../../../../components/structural/EdgeCases';
-import { When } from '../../../../components/structural/When';
-import { Fallbacks } from '../../../../components/structural/Fallbacks';
 import { Fallback } from '../../../../components/structural/Fallback';
-import { References } from '../../../../components/structural/References';
+import { Fallbacks } from '../../../../components/structural/Fallbacks';
+import { Guardrails } from '../../../../components/structural/Guardrails';
+import { Prompt } from '../../../../components/structural/Prompt';
 import { Reference } from '../../../../components/structural/Reference';
+import { References } from '../../../../components/structural/References';
 import { Task } from '../../../../components/structural/Task';
+import { When } from '../../../../components/structural/When';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
+import { DEFAULT_ENVIRONMENT } from '../../../../src/types/context';
 
 describe('Prompt additive composition', () => {
   it('should extend default constraints when Constraints extend is provided', async () => {

@@ -1,18 +1,19 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { runCommand, parseRunArgs, RunOptions } from '../../src/commands/run.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
-import { PuptService } from '../../src/services/pupt-service.js';
-import { collectInputs } from '../../src/services/input-collector.js';
-import { InteractiveSearch } from '../../src/ui/interactive-search.js';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { spawn } from 'child_process';
-import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
-import { logger } from '../../src/utils/logger.js';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
-import { editorLauncher } from '../../src/utils/editor.js';
+import chalk from 'chalk';
+import { spawn } from 'child_process';
 import { pathExists } from 'fs-extra';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { parseRunArgs, runCommand, RunOptions } from '../../src/commands/run.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
+import { HistoryManager } from '../../src/history/history-manager.js';
+import { collectInputs } from '../../src/services/input-collector.js';
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { resolvePrompt } from '../../src/services/prompt-resolver.js';
+import { PuptService } from '../../src/services/pupt-service.js';
+import { InteractiveSearch } from '../../src/ui/interactive-search.js';
+import { editorLauncher } from '../../src/utils/editor.js';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/services/pupt-service.js');
@@ -50,7 +51,7 @@ function createMockSpawn(exitCode: number = 0) {
     stdin: { write: vi.fn(), end: vi.fn(), on: vi.fn() },
     stderr: null,
     on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-      if (event === 'close') callback(exitCode);
+      if (event === 'close') {callback(exitCode);}
     })
   };
 }
@@ -61,7 +62,7 @@ function createMockSpawnWithStderr(exitCode: number, stderrData?: string) {
 
   const mockStderr = {
     on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-      if (!stderrCallbacks[event]) stderrCallbacks[event] = [];
+      if (!stderrCallbacks[event]) {stderrCallbacks[event] = [];}
       stderrCallbacks[event].push(callback);
     })
   };
@@ -70,22 +71,22 @@ function createMockSpawnWithStderr(exitCode: number, stderrData?: string) {
     stdin: { write: vi.fn(), end: vi.fn(), on: vi.fn() },
     stderr: mockStderr,
     on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-      if (!processCallbacks[event]) processCallbacks[event] = [];
+      if (!processCallbacks[event]) {processCallbacks[event] = [];}
       processCallbacks[event].push(callback);
     }),
     // Helpers for triggering events in tests
     _triggerStderr: (data: string) => {
-      for (const cb of stderrCallbacks['data'] || []) {
+      for (const cb of stderrCallbacks.data || []) {
         cb(Buffer.from(data));
       }
     },
     _triggerClose: (code: number) => {
-      for (const cb of processCallbacks['close'] || []) {
+      for (const cb of processCallbacks.close || []) {
         cb(code);
       }
     },
     _triggerError: (error: Error) => {
-      for (const cb of processCallbacks['error'] || []) {
+      for (const cb of processCallbacks.error || []) {
         cb(error);
       }
     }
@@ -94,7 +95,7 @@ function createMockSpawnWithStderr(exitCode: number, stderrData?: string) {
   // If stderrData is provided, trigger it immediately after the 'data' listener is set
   if (stderrData !== undefined) {
     mockStderr.on.mockImplementation((event: string, callback: (...args: any[]) => void) => {
-      if (!stderrCallbacks[event]) stderrCallbacks[event] = [];
+      if (!stderrCallbacks[event]) {stderrCallbacks[event] = [];}
       stderrCallbacks[event].push(callback);
       if (event === 'data') {
         // Immediately fire the data event
@@ -521,7 +522,7 @@ describe('Run Command - Coverage Tests', () => {
         },
         stderr: null,
         on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
 
@@ -533,9 +534,9 @@ describe('Run Command - Coverage Tests', () => {
       const epipeError = new Error('EPIPE') as NodeJS.ErrnoException;
       epipeError.code = 'EPIPE';
 
-      expect(stdinOnCallbacks['error']).toBeDefined();
+      expect(stdinOnCallbacks.error).toBeDefined();
       // Should not throw
-      stdinOnCallbacks['error'](epipeError);
+      stdinOnCallbacks.error(epipeError);
 
       // logger.error should NOT have been called for EPIPE
       expect(loggerErrorSpy).not.toHaveBeenCalledWith(expect.stringContaining('stdin error'));
@@ -555,7 +556,7 @@ describe('Run Command - Coverage Tests', () => {
         },
         stderr: null,
         on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
 
@@ -567,7 +568,7 @@ describe('Run Command - Coverage Tests', () => {
       const otherError = new Error('ECONNRESET') as NodeJS.ErrnoException;
       otherError.code = 'ECONNRESET';
 
-      stdinOnCallbacks['error'](otherError);
+      stdinOnCallbacks.error(otherError);
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('stdin error'));
     });
@@ -609,7 +610,7 @@ describe('Run Command - Coverage Tests', () => {
         },
         stderr: null,
         on: vi.fn((event: string, callback: (...args: any[]) => void) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
 

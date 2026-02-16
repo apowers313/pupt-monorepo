@@ -1,4 +1,5 @@
 import MiniSearch from 'minisearch';
+
 import { Prompt } from '../types/prompt.js';
 
 interface SearchablePrompt extends Omit<Prompt, 'tags'> {

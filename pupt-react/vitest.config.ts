@@ -40,7 +40,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
-      "pupt-react": resolve(__dirname, "src/index.ts"),
+      "@pupt/react": resolve(__dirname, "src/index.ts"),
     },
   },
 });

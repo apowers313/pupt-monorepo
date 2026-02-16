@@ -46,7 +46,7 @@ export async function createTestTarball(
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {break;}
     chunks.push(value);
   }
 
@@ -82,7 +82,7 @@ function createTarHeader(filename: string, size: number): Uint8Array {
   header.set(encoder.encode('0000000\0'), 116);
 
   // File size in octal (bytes 124-135)
-  const sizeOctal = size.toString(8).padStart(11, '0') + '\0';
+  const sizeOctal = `${size.toString(8).padStart(11, '0')  }\0`;
   header.set(encoder.encode(sizeOctal), 124);
 
   // Modification time (bytes 136-147): use 0
@@ -101,7 +101,7 @@ function createTarHeader(filename: string, size: number): Uint8Array {
   }
 
   // Write checksum as 6-digit octal, null, space
-  const checksumStr = checksum.toString(8).padStart(6, '0') + '\0 ';
+  const checksumStr = `${checksum.toString(8).padStart(6, '0')  }\0 `;
   header.set(encoder.encode(checksumStr), 148);
 
   return header;

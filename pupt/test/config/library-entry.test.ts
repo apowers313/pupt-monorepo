@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
+
 import { ConfigSchema } from '../../src/schemas/config-schema.js';
 
 // Extract the libraries schema from ConfigSchema for direct testing

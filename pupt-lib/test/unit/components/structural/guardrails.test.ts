@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Guardrails } from '../../../../components/structural/Guardrails';
+import { describe, expect,it } from 'vitest';
+
 import { STANDARD_GUARDRAILS } from '../../../../components/presets/guardrail-presets';
+import { Guardrails } from '../../../../components/structural/Guardrails';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Guardrails', () => {
   it('should render standard preset by default', async () => {

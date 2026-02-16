@@ -1,12 +1,14 @@
-import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
-import { ConfigManager } from '../config/config-manager.js';
-import simpleGit, { SimpleGit } from 'simple-git';
-import { logger } from '../utils/logger.js';
+import * as path from 'node:path';
+
 import { cosmiconfig } from 'cosmiconfig';
+import simpleGit, { SimpleGit } from 'simple-git';
+
+import { ConfigManager } from '../config/config-manager.js';
 import { getDataDir } from '../config/global-paths.js';
 import { GlobalPackageManager } from '../services/package-manager.js';
 import type { GitLibraryEntry, NpmLibraryEntry } from '../types/config.js';
+import { logger } from '../utils/logger.js';
 
 export async function loadConfigFromDirectory(dir: string): Promise<string[] | undefined> {
   // Look for config files only in the specific directory (no traversal)
@@ -187,7 +189,7 @@ export async function installFromGit(url: string, options: InstallFromGitOptions
   await ConfigManager.save(config);
 
   logger.log(`Successfully installed library "${libraryName}" from ${url}`);
-  promptDirs.forEach(dir => logger.log(`  Prompt directory: ${dir}`));
+  promptDirs.forEach(dir => { logger.log(`  Prompt directory: ${dir}`); });
 }
 
 // NPM Package Detection
@@ -269,7 +271,7 @@ export async function installFromNpm(packageName: string): Promise<void> {
     await ConfigManager.save(config);
 
     logger.log(`Successfully installed prompts from ${packageName}`);
-    info.promptDirs.forEach(dir => logger.log(`  Prompt directory: ${dir}`));
+    info.promptDirs.forEach(dir => { logger.log(`  Prompt directory: ${dir}`); });
   } else {
     logger.log(`Package ${packageName} installed (no prompt directories found - pure component package)`);
   }

@@ -1,9 +1,10 @@
 import * as pty from '@homebridge/node-pty-prebuilt-multiarch';
-import stripAnsi from 'strip-ansi';
 import fs from 'fs-extra';
 import path from 'path';
-import { logger } from '../utils/logger.js';
+import stripAnsi from 'strip-ansi';
+
 import { getDataDir } from '../config/global-paths.js';
+import { logger } from '../utils/logger.js';
 
 // Helper to get high-precision timestamp
 function getHighPrecisionTimestamp(): bigint {
@@ -35,7 +36,7 @@ export function extractUserInputLines(jsonFile: string): Promise<string[]> {
 // Calculate actual execution time excluding user input wait time
 export function calculateActiveExecutionTime(jsonFile: string, inputWaitThreshold = 100_000_000n): Promise<bigint> {
   return fs.readJson(jsonFile).then((chunks: OutputChunk[]) => {
-    if (chunks.length === 0) return 0n;
+    if (chunks.length === 0) {return 0n;}
     
     let totalActiveTime = 0n;
     let lastOutputTime = BigInt(chunks[0].timestamp);
@@ -87,8 +88,13 @@ interface OutputCaptureOptions {
   maxOutputSize?: number; // in bytes
 }
 
+interface ResolvedOutputCaptureOptions {
+  outputDirectory: string;
+  maxOutputSize: number;
+}
+
 export class OutputCaptureService {
-  private readonly options: OutputCaptureOptions;
+  private readonly options: ResolvedOutputCaptureOptions;
   private defaultMaxSize = 10 * 1024 * 1024; // 10MB default
 
   constructor(options: OutputCaptureOptions = {}) {
@@ -157,14 +163,14 @@ export class OutputCaptureService {
 
     // Create a wrapper to track bytes and enforce size limit
     const limitedWrite = (data: string, direction: 'input' | 'output'): void => {
-      if (truncated) return;
+      if (truncated) {return;}
 
       const cleanData = stripAnsi(data);
       const dataSize = Buffer.byteLength(cleanData);
 
-      if (bytesWritten + dataSize > this.options.maxOutputSize!) {
+      if (bytesWritten + dataSize > this.options.maxOutputSize) {
         // Write only what fits
-        const remaining = this.options.maxOutputSize! - bytesWritten;
+        const remaining = this.options.maxOutputSize - bytesWritten;
         const truncatedData = cleanData.substring(0, remaining);
         chunks.push({
           timestamp: getHighPrecisionTimestamp().toString(),
@@ -176,7 +182,7 @@ export class OutputCaptureService {
           direction: 'output',
           data: '\n\n[OUTPUT TRUNCATED - SIZE LIMIT REACHED]'
         });
-        bytesWritten = this.options.maxOutputSize!;
+        bytesWritten = this.options.maxOutputSize;
         truncated = true;
       } else {
         chunks.push({
@@ -360,7 +366,7 @@ export class OutputCaptureService {
           // If Claude had a raw mode error AND failed, provide helpful guidance
           // Only show error if Claude actually failed (non-zero exit code)
           if (claudeRawModeError && exitCode !== 0) {
-            logger.error('\n' + '─'.repeat(60));
+            logger.error(`\n${  '─'.repeat(60)}`);
             logger.error('\x1b[31mError: Claude cannot run in interactive mode when launched from pt.\x1b[0m');
             logger.error('\x1b[33m\nThis typically happens when Claude needs to ask for directory trust permissions.\x1b[0m');
             logger.error('\x1b[34m\nTo fix this:\x1b[0m');
@@ -368,7 +374,7 @@ export class OutputCaptureService {
             logger.error('\x1b[37m2. When prompted, trust the directory\x1b[0m');
             logger.error('\x1b[37m3. Then run your pt command again\n\x1b[0m');
             logger.error('\x1b[90mAlternatively, you can use: \x1b[36mpt run claude -- --permission-mode acceptEdits\x1b[0m');
-            logger.error('─'.repeat(60) + '\n');
+            logger.error(`${'─'.repeat(60)  }\n`);
           }
           
           // Write final JSON file
@@ -402,7 +408,7 @@ export class OutputCaptureService {
   }
 
   async cleanupOldOutputs(retentionDays: number = 30): Promise<void> {
-    if (!this.options.outputDirectory) return;
+    if (!this.options.outputDirectory) {return;}
 
     try {
       await fs.ensureDir(this.options.outputDirectory);
@@ -412,7 +418,7 @@ export class OutputCaptureService {
 
       for (const file of files) {
         // Clean up both .txt and .json output files
-        if (!file.endsWith('-output.txt') && !file.endsWith('-output.json')) continue;
+        if (!file.endsWith('-output.txt') && !file.endsWith('-output.json')) {continue;}
         
         const filePath = path.join(this.options.outputDirectory, file);
         const stats = await fs.stat(filePath);

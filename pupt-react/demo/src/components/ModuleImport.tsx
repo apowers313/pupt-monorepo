@@ -11,7 +11,7 @@ import {
   Paper,
 } from "@mantine/core";
 import { IconTrash, IconPlus } from "@tabler/icons-react";
-import { usePuptLibraryContext } from "pupt-react";
+import { usePuptLibraryContext } from "@pupt/react";
 
 interface ModuleImportProps {
   opened: boolean;

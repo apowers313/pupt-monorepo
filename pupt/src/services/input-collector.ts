@@ -1,6 +1,7 @@
-import { input, select, confirm, editor, checkbox, password } from '@inquirer/prompts';
+import { checkbox, confirm, editor, input, password,select } from '@inquirer/prompts';
+import type { InputIterator, InputRequirement } from '@pupt/lib';
+
 import { fileSearchPrompt } from '../prompts/input-types/file-search-prompt.js';
-import type { InputIterator, InputRequirement } from 'pupt-lib';
 
 /**
  * Collect inputs from a pupt-lib InputIterator by prompting the user
@@ -16,7 +17,7 @@ export async function collectInputs(
 
   while (!iterator.isDone()) {
     const req = iterator.current();
-    if (!req) break;
+    if (!req) {break;}
 
     let value: unknown;
     if (noInteractive) {
@@ -74,9 +75,9 @@ async function promptForInput(req: InputRequirement): Promise<unknown> {
     case 'number': {
       const raw = await input({
         message,
-        default: req.default !== undefined ? String(req.default) : undefined,
+        default: req.default !== undefined ? String(req.default as string | number) : undefined,
         validate: (val: string) => {
-          if (val === '' && !req.required) return true;
+          if (val === '' && !req.required) {return true;}
           return !isNaN(Number(val)) || 'Please enter a valid number';
         },
       });

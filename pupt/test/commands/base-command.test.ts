@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import pino from 'pino';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
 import { BaseCommand, CommandContext, CommandOptions } from '../../src/commands/base-command.js';
 import { ConsoleUI, LogLevel } from '../../src/ui/console-ui.js';
-import { PromptToolError, ErrorCategory, ErrorSeverity } from '../../src/utils/errors.js';
-import pino from 'pino';
+import { ErrorCategory, ErrorSeverity,PromptToolError } from '../../src/utils/errors.js';
 
 class TestCommand extends BaseCommand<{ input: string }, string> {
   protected get name(): string {
@@ -30,7 +31,7 @@ class TestCommand extends BaseCommand<{ input: string }, string> {
   }
 }
 
-class FailingCommand extends BaseCommand<void, void> {
+class FailingCommand extends BaseCommand<void> {
   constructor(
     context: CommandContext,
     options: CommandOptions,

@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { LocalPromptSource } from '@pupt/lib';
 import { execSync } from 'child_process';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
-import { LocalPromptSource } from 'pupt-lib';
+import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let testDir: string;
 

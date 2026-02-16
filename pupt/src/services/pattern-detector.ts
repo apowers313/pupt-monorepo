@@ -117,10 +117,12 @@ export class PatternDetector {
       if ((annotation.status === 'failure' || annotation.status === 'partial') && 
           annotation.environment?.git_branch) {
         const branch = annotation.environment.git_branch;
-        if (!branchFailures.has(branch)) {
-          branchFailures.set(branch, []);
+        let failures = branchFailures.get(branch);
+        if (!failures) {
+          failures = [];
+          branchFailures.set(branch, failures);
         }
-        branchFailures.get(branch)!.push(annotation);
+        failures.push(annotation);
       }
     });
 
@@ -137,8 +139,9 @@ export class PatternDetector {
     });
 
     // Collect evidence with branch prefix
+    const problematicFailures = branchFailures.get(problematicBranch) ?? [];
     if (problematicBranch) {
-      branchFailures.get(problematicBranch)!.forEach(f => {
+      problematicFailures.forEach(f => {
         branchEvidence.push(`feature/test: ${this.truncateEvidence(f.notes)}`);
       });
     }
@@ -166,10 +169,10 @@ export class PatternDetector {
       frequency: totalMatches,
       severity: this.calculateSeverity(totalMatches, annotations.length),
       evidence: branchEvidence.length > 0 ? branchEvidence : envMatches.map(m => this.truncateEvidence(m.notes)),
-      affectedPrompts: this.getUniquePrompts(branchEvidence.length > 0 ? 
-        branchFailures.get(problematicBranch)! : envMatches),
+      affectedPrompts: this.getUniquePrompts(branchEvidence.length > 0 ?
+        problematicFailures : envMatches),
       correlation_strength: this.calculateCorrelationStrength(
-        branchEvidence.length > 0 ? branchFailures.get(problematicBranch)! : envMatches, 
+        branchEvidence.length > 0 ? problematicFailures : envMatches,
         annotations
       ),
       affected_executions: totalMatches,
@@ -211,12 +214,12 @@ export class PatternDetector {
   }
 
   private calculateSeverity(frequency: number, total: number): Severity {
-    if (total === 0) return 'low';
+    if (total === 0) {return 'low';}
     
     const percentage = frequency / total;
-    if (percentage > 0.5) return 'critical';
-    if (percentage >= 0.3) return 'high';
-    if (percentage >= 0.15) return 'medium';
+    if (percentage > 0.5) {return 'critical';}
+    if (percentage >= 0.3) {return 'high';}
+    if (percentage >= 0.15) {return 'medium';}
     return 'low';
   }
 
@@ -224,7 +227,7 @@ export class PatternDetector {
     matches: ParsedAnnotation[], 
     allAnnotations: ParsedAnnotation[]
   ): number {
-    if (allAnnotations.length === 0) return 0;
+    if (allAnnotations.length === 0) {return 0;}
     
     // Calculate correlation based on:
     // 1. How many of the failures have this pattern
@@ -234,7 +237,7 @@ export class PatternDetector {
       a.status === 'partial' || a.status === 'failure'
     ).length;
     
-    if (totalFailures === 0) return 0;
+    if (totalFailures === 0) {return 0;}
     
     // Proportion of failures that have this pattern
     const failureCorrelation = matches.length / totalFailures;
@@ -266,6 +269,6 @@ export class PatternDetector {
     if (text.length <= maxLength) {
       return text;
     }
-    return text.substring(0, maxLength - 3) + '...';
+    return `${text.substring(0, maxLength - 3)  }...`;
   }
 }

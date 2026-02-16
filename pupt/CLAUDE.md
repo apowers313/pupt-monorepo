@@ -9,32 +9,20 @@ PUPT (Powerful Universal Prompt Tool) is a CLI tool for managing and using AI pr
 ## Building, Testing, and Development Commands
 
 ```bash
-# Install dependencies
-npm install
+# From monorepo root (preferred):
+pnpm exec nx run @pupt/cli:build     # Build this package
+pnpm exec nx run @pupt/cli:test      # Run tests
+pnpm exec nx run @pupt/cli:lint      # Lint
 
-# Build the TypeScript project
-npm run build
-
-# Development mode (watch for changes)
-npm run dev
-
-# Run tests with vitest
-npm test
-
-# Run tests in verbose mode
-npm run test:verbose
-
-# Run tests for CI (no coverage, pass with no tests)
-npm run test:ci
-
-# Run tests with UI interface
-npm run test:ui
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
+# From this directory:
+npm run build         # Build the TypeScript project
+npm run dev           # Development mode (watch for changes)
+npm test              # Run tests with vitest
+npm run test:verbose  # Run tests in verbose mode
+npm run test:ci       # Run tests (CI mode, no coverage)
+npm run test:ui       # Run tests with UI interface
+npm run test:coverage # Run tests with coverage
+npm run test:watch    # Run tests in watch mode
 
 # Run a single test file
 npm test test/commands/add.test.ts
@@ -44,9 +32,6 @@ npm test -- -t "pattern"
 
 # Lint the codebase
 npm run lint
-
-# Format code with prettier
-npm run format
 
 # Run full check (lint + build + test:coverage)
 npm run check
@@ -274,21 +259,9 @@ This is a CLI tool for managing AI prompts with template support, built with Typ
 - Always validate user input using the established schemas
 - Consider cross-platform compatibility for all file system operations
 
-## Filing Issues for pupt-lib
+## Working with @pupt/lib
 
-If you find bugs or issues in `pupt-lib` (the underlying prompt library), file a GitHub issue at `apowers313/pupt-lib`. Each issue should include:
-
-1. **Description**: Clear summary of the problem
-2. **Reproduction Steps**: Step-by-step instructions to reproduce the issue, including sample code/prompts
-3. **Root Cause**: Analysis of why the bug is occurring (if known)
-4. **Proposed Fix**: Suggested solution or approach to fix the issue
-
-Example:
-```bash
-gh issue create --repo apowers313/pupt-lib --title "Brief description" --body "..."
-```
-
-File separate issues for separate bugs - don't combine unrelated problems into one issue.
+`@pupt/lib` (the underlying prompt library) is now in the same monorepo at `pupt-lib/`. Bugs and issues can be fixed directly rather than filed as separate GitHub issues.
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

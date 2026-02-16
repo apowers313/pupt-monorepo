@@ -1,58 +1,60 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import { askBaseSchema, attachRequirement } from './utils';
-import type { PuptNode, RenderContext, InputRequirement } from 'pupt-lib';
+import { Component, type InputRequirement, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
-export const askConfirmSchema = askBaseSchema.extend({
-  default: z.boolean().optional(),
-}).passthrough();
+import { askBaseSchema, attachRequirement } from "./utils";
+
+export const askConfirmSchema = askBaseSchema
+    .extend({
+        default: z.boolean().optional(),
+    })
+    .passthrough();
 
 export type ConfirmProps = z.infer<typeof askConfirmSchema> & { children?: PuptNode };
 
 // Named AskConfirm for consistent Ask component naming
 export class AskConfirm extends Component<ConfirmProps, boolean> {
-  static schema = askConfirmSchema;
-  static implicitDefault = false;
+    static schema = askConfirmSchema;
+    static implicitDefault = false;
 
-  resolve(props: ConfirmProps, context: RenderContext): boolean {
-    const { name, default: defaultValue = false } = props;
-    const value = context.inputs.get(name);
+    resolve(props: ConfirmProps, context: RenderContext): boolean {
+        const { name, default: defaultValue = false } = props;
+        const value = context.inputs.get(name);
 
-    if (value !== undefined) {
-      return Boolean(value);
+        if (value !== undefined) {
+            return Boolean(value);
+        }
+
+        return defaultValue;
     }
 
-    return defaultValue;
-  }
+    render(props: ConfirmProps, resolvedValue: boolean | undefined, context: RenderContext): PuptNode {
+        const {
+            name,
+            label,
+            description = label,
+            required = false,
+            default: defaultValue = false,
+            silent = false,
+        } = props;
 
-  render(props: ConfirmProps, resolvedValue: boolean | undefined, context: RenderContext): PuptNode {
-    const {
-      name,
-      label,
-      description = label,
-      required = false,
-      default: defaultValue = false,
-      silent = false,
-    } = props;
+        const requirement: InputRequirement = {
+            name,
+            label,
+            description,
+            type: "boolean",
+            required,
+            default: defaultValue,
+        };
 
-    const requirement: InputRequirement = {
-      name,
-      label,
-      description,
-      type: 'boolean',
-      required,
-      default: defaultValue,
-    };
+        attachRequirement(context, requirement);
 
-    attachRequirement(context, requirement);
+        if (silent) {
+            return "";
+        }
 
-    if (silent) {
-      return '';
+        // Get actual value - from resolvedValue if available, otherwise compute it
+        const actualValue = resolvedValue ?? this.resolve(props, context);
+
+        return actualValue ? "Yes" : "No";
     }
-
-    // Get actual value - from resolvedValue if available, otherwise compute it
-    const actualValue = resolvedValue ?? this.resolve(props, context);
-
-    return actualValue ? 'Yes' : 'No';
-  }
 }

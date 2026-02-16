@@ -10,7 +10,7 @@ import {
   Textarea,
   Text,
 } from "@mantine/core";
-import type { InputRequirement } from "pupt-react";
+import type { InputRequirement } from "@pupt/react";
 
 interface AskInputsProps {
   requirements: InputRequirement[];

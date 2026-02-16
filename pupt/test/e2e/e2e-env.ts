@@ -1,7 +1,7 @@
 import { execSync, ExecSyncOptions } from 'child_process';
 import * as fs from 'fs-extra';
-import * as path from 'path';
 import * as os from 'os';
+import * as path from 'path';
 
 export interface E2eExecResult {
   stdout: string;

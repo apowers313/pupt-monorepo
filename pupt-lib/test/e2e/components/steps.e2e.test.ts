@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx, Fragment } from '../../../src/jsx-runtime';
-import { Steps } from '../../../components/reasoning/Steps';
+import { describe, expect,it } from 'vitest';
+
 import { Step } from '../../../components/reasoning/Step';
+import { Steps } from '../../../components/reasoning/Steps';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { Fragment,jsx } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('Steps e2e', () => {
   it('should render steps through .prompt pipeline', async () => {

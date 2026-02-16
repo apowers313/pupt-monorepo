@@ -1,10 +1,11 @@
 /**
  * Tests for branch coverage in Step and Steps components
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
+import { describe, expect,it } from 'vitest';
+
+import { Step,Steps } from '../../../../components/reasoning';
 import { jsx } from '../../../../src/jsx-runtime';
-import { Steps, Step } from '../../../../components/reasoning';
+import { render } from '../../../../src/render';
 
 describe('Step branch coverage', () => {
   describe('step number handling', () => {

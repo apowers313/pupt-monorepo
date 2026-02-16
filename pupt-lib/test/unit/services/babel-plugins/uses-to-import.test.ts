@@ -2,7 +2,8 @@
  * Tests for the uses-to-import Babel plugin.
  * This plugin transforms <Uses> JSX elements into import declarations.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Transformer } from '../../../../src/services/transformer';
 
 describe('uses-to-import Babel plugin', () => {

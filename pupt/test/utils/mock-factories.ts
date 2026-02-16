@@ -1,8 +1,9 @@
-import { vi } from 'vitest';
-import type { Config } from '../../src/types/config.js';
-import type { Prompt } from '../../src/types/prompt.js';
-import type { HistoryEntry } from '../../src/types/history.js';
 import { spawn } from 'child_process';
+import { vi } from 'vitest';
+
+import type { Config } from '../../src/types/config.js';
+import type { HistoryEntry } from '../../src/types/history.js';
+import type { Prompt } from '../../src/types/prompt.js';
 
 export function createMockConfig(overrides: Partial<Config> = {}): Config {
   return {

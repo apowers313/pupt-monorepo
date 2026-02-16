@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { ConfigSchema, OutputCaptureConfigSchema } from '../../src/schemas/config-schema.js';
 
 describe('Output Capture Configuration', () => {

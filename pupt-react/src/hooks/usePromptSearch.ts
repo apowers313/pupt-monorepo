@@ -2,13 +2,11 @@
  * usePromptSearch hook - Search through indexed prompts with debouncing
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
-import type { SearchResult } from "pupt-lib";
+import type { SearchResult } from "@pupt/lib";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import type { UsePromptSearchOptions, UsePromptSearchReturn } from "../types/hooks";
 import { usePupt } from "./usePupt";
-import type {
-  UsePromptSearchOptions,
-  UsePromptSearchReturn,
-} from "../types/hooks";
 
 const DEFAULT_DEBOUNCE = 200;
 
@@ -36,97 +34,95 @@ const DEFAULT_DEBOUNCE = 200;
  * }
  * ```
  */
-export function usePromptSearch(
-  options: UsePromptSearchOptions = {}
-): UsePromptSearchReturn {
-  const { debounce = DEFAULT_DEBOUNCE, limit } = options;
-  const { searchEngine } = usePupt();
+export function usePromptSearch(options: UsePromptSearchOptions = {}): UsePromptSearchReturn {
+    const { debounce = DEFAULT_DEBOUNCE, limit } = options;
+    const { searchEngine } = usePupt();
 
-  const [query, setQueryState] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+    const [query, setQueryState] = useState("");
+    const [results, setResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Perform the actual search
-  const performSearch = useCallback(
-    (searchQuery: string) => {
-      if (!searchEngine || searchQuery.trim() === "") {
+    // Perform the actual search
+    const performSearch = useCallback(
+        (searchQuery: string) => {
+            if (!searchEngine || searchQuery.trim() === "") {
+                setResults([]);
+                setIsSearching(false);
+                return;
+            }
+
+            setIsSearching(true);
+            try {
+                const searchOptions = limit !== undefined ? { limit } : {};
+                const searchResults = searchEngine.search(searchQuery, searchOptions);
+                setResults(searchResults);
+            } finally {
+                setIsSearching(false);
+            }
+        },
+        [searchEngine, limit],
+    );
+
+    // Set query with debouncing
+    const setQuery = useCallback(
+        (newQuery: string) => {
+            setQueryState(newQuery);
+
+            if (timerRef.current !== null) {
+                clearTimeout(timerRef.current);
+                timerRef.current = null;
+            }
+
+            if (newQuery.trim() === "") {
+                setResults([]);
+                setIsSearching(false);
+                return;
+            }
+
+            if (debounce <= 0) {
+                performSearch(newQuery);
+            } else {
+                setIsSearching(true);
+                timerRef.current = setTimeout(() => {
+                    timerRef.current = null;
+                    performSearch(newQuery);
+                }, debounce);
+            }
+        },
+        [debounce, performSearch],
+    );
+
+    // Clear search
+    const clear = useCallback(() => {
+        if (timerRef.current !== null) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+        setQueryState("");
         setResults([]);
         setIsSearching(false);
-        return;
-      }
+    }, []);
 
-      setIsSearching(true);
-      try {
-        const searchOptions = limit !== undefined ? { limit } : {};
-        const searchResults = searchEngine.search(searchQuery, searchOptions);
-        setResults(searchResults);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [searchEngine, limit]
-  );
+    // Get all tags
+    const allTags = searchEngine ? searchEngine.getAllTags() : [];
 
-  // Set query with debouncing
-  const setQuery = useCallback(
-    (newQuery: string) => {
-      setQueryState(newQuery);
+    // Cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current !== null) {
+                clearTimeout(timerRef.current);
+            }
+        };
+    }, []);
 
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-
-      if (newQuery.trim() === "") {
-        setResults([]);
-        setIsSearching(false);
-        return;
-      }
-
-      if (debounce <= 0) {
-        performSearch(newQuery);
-      } else {
-        setIsSearching(true);
-        timerRef.current = setTimeout(() => {
-          timerRef.current = null;
-          performSearch(newQuery);
-        }, debounce);
-      }
-    },
-    [debounce, performSearch]
-  );
-
-  // Clear search
-  const clear = useCallback(() => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    setQueryState("");
-    setResults([]);
-    setIsSearching(false);
-  }, []);
-
-  // Get all tags
-  const allTags = searchEngine ? searchEngine.getAllTags() : [];
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current !== null) {
-        clearTimeout(timerRef.current);
-      }
+    return {
+        query,
+        setQuery,
+        results,
+        isSearching,
+        allTags,
+        clear,
     };
-  }, []);
-
-  return {
-    query,
-    setQuery,
-    results,
-    isSearching,
-    allTags,
-    clear,
-  };
 }

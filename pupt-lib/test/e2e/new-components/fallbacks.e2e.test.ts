@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx, jsxs } from '../../../src/jsx-runtime';
-import { Fallbacks } from '../../../components/structural/Fallbacks';
+import { describe, expect,it } from 'vitest';
+
 import { Fallback } from '../../../components/structural/Fallback';
+import { Fallbacks } from '../../../components/structural/Fallbacks';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { jsx, jsxs } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('Fallbacks e2e', () => {
   it('should render Fallback when/then through .prompt pipeline', async () => {

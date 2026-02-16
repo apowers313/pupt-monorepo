@@ -1,22 +1,16 @@
 {
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "jsx": "react-jsx",
-    "jsxImportSource": "pupt-lib",
-    "paths": {
-      "pupt-lib": ["./src/index.ts"],
-      "pupt-lib/*": ["./src/*"]
-    },
-    "strict": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
+    "composite": true,
     "outDir": "./dist",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "jsx": "react-jsx",
+    "jsxImportSource": "@pupt/lib",
+    "paths": {
+      "@pupt/lib": ["./src/index.ts"],
+      "@pupt/lib/*": ["./src/*"]
+    },
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src/**/*", "components/**/*"],
   "exclude": ["node_modules", "dist", "test"]

@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { spawn, exec } from 'node:child_process';
-import { promisify } from 'node:util';
+import { exec,spawn } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+
 import fs from 'fs-extra';
-import os from 'node:os';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
 
 const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

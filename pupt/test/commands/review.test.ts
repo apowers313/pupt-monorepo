@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { reviewCommand } from '../../src/commands/review.js';
-import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import { ConfigManager } from '../../src/config/config-manager.js';
+import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import type { ReviewData } from '../../src/types/review.js';
 import { logger } from '../../src/utils/logger.js';
 

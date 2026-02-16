@@ -59,7 +59,7 @@ async function evaluateInBrowser(code: string, filename: string): Promise<unknow
 
 /**
  * Check if a specifier is a bare specifier (not a relative or absolute path).
- * Bare specifiers are things like 'pupt-lib', 'zod', 'lodash/map'.
+ * Bare specifiers are things like '@pupt/lib', 'zod', 'lodash/map'.
  */
 function isBareSpecifier(specifier: string): boolean {
   // Relative paths
@@ -127,7 +127,7 @@ let babelPackagesCache: {
  * Load Babel's bundled parser and generator from @babel/standalone.
  */
 async function loadBabelPackages(): Promise<NonNullable<typeof babelPackagesCache>> {
-  if (babelPackagesCache) return babelPackagesCache;
+  if (babelPackagesCache) {return babelPackagesCache;}
 
   const babelModule = await import('@babel/standalone');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -148,12 +148,12 @@ async function loadBabelPackages(): Promise<NonNullable<typeof babelPackagesCach
  * Recursively walk an AST node and call the visitor on each node that has a `type`.
  */
 function walkAst(node: AstNode, visitor: (n: AstNode) => void): void {
-  if (!node || typeof node !== 'object') return;
+  if (!node || typeof node !== 'object') {return;}
   if (node.type) {
     visitor(node);
   }
   for (const key of Object.keys(node)) {
-    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') continue;
+    if (key === 'type' || key === 'start' || key === 'end' || key === 'loc') {continue;}
     const child = node[key];
     if (Array.isArray(child)) {
       for (const item of child) {
@@ -178,7 +178,7 @@ async function rewriteAllImports(code: string): Promise<string> {
   // Parse the already-transformed JS code into an AST.
   // Use errorRecovery to tolerate duplicate import bindings that can arise
   // when .prompt auto-imports and <Uses> imports overlap (e.g., both import
-  // Prompt from 'pupt-lib'). We only need the AST for import rewriting.
+  // Prompt from '@pupt/lib'). We only need the AST for import rewriting.
   const ast = parse(code, { sourceType: 'module', errorRecovery: true });
 
   // Collect AST nodes that contain bare specifiers
@@ -268,7 +268,7 @@ async function evaluateInNode(code: string, filename: string): Promise<unknown> 
 
   // Create a unique temp file (can be anywhere since imports are absolute)
   const hash = crypto.createHash('md5').update(rewrittenCode).digest('hex').slice(0, 8);
-  const tempDir = path.join(os.tmpdir(), 'pupt-lib');
+  const tempDir = path.join(os.tmpdir(), '@pupt/lib');
 
   // Ensure temp directory exists
   await fs.mkdir(tempDir, { recursive: true });
@@ -312,7 +312,7 @@ async function evaluateInNode(code: string, filename: string): Promise<unknown> 
  * Evaluate JavaScript code as an ES module.
  * Uses Blob URLs in browser and temp files in Node.js.
  *
- * In Node.js, all bare specifiers (like 'pupt-lib', 'zod') are rewritten
+ * In Node.js, all bare specifiers (like '@pupt/lib', 'zod') are rewritten
  * to absolute file:// URLs before evaluation, eliminating module resolution issues.
  *
  * @param code - JavaScript code to evaluate (should be valid ES module)
@@ -322,7 +322,7 @@ async function evaluateInNode(code: string, filename: string): Promise<unknown> 
  * @example
  * ```typescript
  * const code = `
- *   import { Prompt } from 'pupt-lib';
+ *   import { Prompt } from '@pupt/lib';
  *   export default <Prompt name="test" />;
  * `;
  * const module = await evaluateModule(code, { filename: 'test.tsx' });

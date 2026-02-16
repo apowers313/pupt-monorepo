@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'node:child_process';
-import * as path from 'node:path';
-import * as fs from 'fs-extra';
 import * as os from 'node:os';
+import * as path from 'node:path';
+
+import * as fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
 
 describe('AutoRun Regression Tests', () => {
   let testDir: string;

@@ -1,11 +1,12 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, Fragment } from '../../../../src/jsx-runtime';
-import { Prompt } from '../../../../components/structural/Prompt';
-import { Task } from '../../../../components/structural/Task';
-import { Role } from '../../../../components/structural/Role';
+import { describe, expect,it } from 'vitest';
+
 import { Constraint } from '../../../../components/structural/Constraint';
 import { Format } from '../../../../components/structural/Format';
+import { Prompt } from '../../../../components/structural/Prompt';
+import { Role } from '../../../../components/structural/Role';
+import { Task } from '../../../../components/structural/Task';
+import { Fragment,jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Prompt defaults system', () => {
   it('should render default role when no Role child is provided', async () => {

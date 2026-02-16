@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { SearchEngine } from '../../src/search/search-engine.js';
 import { Prompt } from '../../src/types/prompt.js';
 

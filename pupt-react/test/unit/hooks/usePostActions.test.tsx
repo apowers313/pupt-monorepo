@@ -2,10 +2,11 @@
  * Tests for usePostActions hook
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import type { PostExecutionAction } from "@pupt/lib";
+import { act,renderHook } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
 import { usePostActions } from "../../../src/hooks/usePostActions";
-import type { PostExecutionAction } from "pupt-lib";
 
 const mockActions: PostExecutionAction[] = [
   { type: "openUrl", url: "https://example.com" },

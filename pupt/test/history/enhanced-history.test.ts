@@ -1,16 +1,24 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { EnhancedHistoryManager } from '../../src/history/enhanced-history-manager.js';
 import { calculateActiveExecutionTime, extractUserInputLines } from '../../src/services/output-capture-service.js';
 
-const execAsync = promisify(exec);
+const { mockExecAsync } = vi.hoisted(() => ({
+  mockExecAsync: vi.fn(),
+}));
 
 vi.mock('fs-extra');
 vi.mock('child_process');
+vi.mock('util', async (importOriginal) => {
+  const original = await importOriginal<typeof import('util')>();
+  return {
+    ...original,
+    promisify: vi.fn(() => mockExecAsync),
+  };
+});
 vi.mock('../../src/services/output-capture-service.js', () => ({
   calculateActiveExecutionTime: vi.fn(),
   extractUserInputLines: vi.fn(),
@@ -43,18 +51,18 @@ describe('Enhanced History', () => {
       gitDir: '/home/user/project/.git'
     };
 
-    vi.mocked(execAsync).mockImplementation(async (cmd: string) => {
+    mockExecAsync.mockImplementation(async (cmd: string) => {
       if (cmd === 'git rev-parse --abbrev-ref HEAD') {
-        return { stdout: mockGitInfo.branch + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.branch  }\n`, stderr: '' };
       }
       if (cmd === 'git rev-parse HEAD') {
-        return { stdout: mockGitInfo.commit + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.commit  }\n`, stderr: '' };
       }
       if (cmd === 'git status --porcelain') {
         return { stdout: '', stderr: '' };
       }
       if (cmd === 'git rev-parse --absolute-git-dir') {
-        return { stdout: mockGitInfo.gitDir + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.gitDir  }\n`, stderr: '' };
       }
       throw new Error('Unknown command');
     });
@@ -69,7 +77,7 @@ describe('Enhanced History', () => {
     });
 
     const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-    const historyEntry = writeCall[1] as any;
+    const historyEntry = writeCall[1];
 
     expect(historyEntry.environment).toBeDefined();
     expect(historyEntry.environment.working_directory).toBe(process.cwd());
@@ -85,7 +93,7 @@ describe('Enhanced History', () => {
     const startTime = new Date('2025-08-16T10:00:00Z');
     const endTime = new Date('2025-08-16T10:00:30Z'); // 30 seconds later
     
-    vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+    mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
     
     await historyManager.savePrompt({
       templatePath: 'test-prompt',
@@ -97,7 +105,7 @@ describe('Enhanced History', () => {
     });
 
     const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-    const historyEntry = writeCall[1] as any;
+    const historyEntry = writeCall[1];
 
     expect(historyEntry.execution).toBeDefined();
     expect(historyEntry.execution.start_time).toBe(startTime.toISOString());
@@ -113,18 +121,18 @@ describe('Enhanced History', () => {
       gitDir: '/home/user/project/.git'
     };
 
-    vi.mocked(execAsync).mockImplementation(async (cmd: string) => {
+    mockExecAsync.mockImplementation(async (cmd: string) => {
       if (cmd === 'git rev-parse --abbrev-ref HEAD') {
-        return { stdout: mockGitInfo.branch + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.branch  }\n`, stderr: '' };
       }
       if (cmd === 'git rev-parse HEAD') {
-        return { stdout: mockGitInfo.commit + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.commit  }\n`, stderr: '' };
       }
       if (cmd === 'git status --porcelain') {
         return { stdout: 'M src/file.ts\n', stderr: '' };
       }
       if (cmd === 'git rev-parse --absolute-git-dir') {
-        return { stdout: mockGitInfo.gitDir + '\n', stderr: '' };
+        return { stdout: `${mockGitInfo.gitDir  }\n`, stderr: '' };
       }
       throw new Error('Unknown command');
     });
@@ -137,7 +145,7 @@ describe('Enhanced History', () => {
     });
 
     const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-    const historyEntry = writeCall[1] as any;
+    const historyEntry = writeCall[1];
 
     expect(historyEntry.environment.git_branch).toBe(mockGitInfo.branch);
     expect(historyEntry.environment.git_commit).toBe(mockGitInfo.commit);
@@ -147,7 +155,7 @@ describe('Enhanced History', () => {
 
   it('should handle missing git info gracefully', async () => {
     // Simulate not being in a git repository
-    vi.mocked(execAsync).mockRejectedValue(new Error('Not a git repository'));
+    mockExecAsync.mockRejectedValue(new Error('Not a git repository'));
 
     await historyManager.savePrompt({
       templatePath: 'test-prompt',
@@ -157,7 +165,7 @@ describe('Enhanced History', () => {
     });
 
     const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-    const historyEntry = writeCall[1] as any;
+    const historyEntry = writeCall[1];
 
     expect(historyEntry.environment).toBeDefined();
     expect(historyEntry.environment.git_branch).toBeUndefined();
@@ -172,7 +180,7 @@ describe('Enhanced History', () => {
 
   describe('empty prompt handling', () => {
     it('should return empty string without saving when finalPrompt is empty', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const result = await historyManager.savePrompt({
         templatePath: 'test-prompt',
@@ -186,7 +194,7 @@ describe('Enhanced History', () => {
     });
 
     it('should return empty string without saving when finalPrompt is whitespace only', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const result = await historyManager.savePrompt({
         templatePath: 'test-prompt',
@@ -202,7 +210,7 @@ describe('Enhanced History', () => {
 
   describe('savePrompt with executionTime but no JSON output file', () => {
     it('should use executionTime as duration when no JSON outputFile is provided', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const startTime = new Date('2025-08-16T10:00:00Z');
       const endTime = new Date('2025-08-16T10:00:30Z');
@@ -218,14 +226,14 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution).toBeDefined();
       expect(historyEntry.execution.duration).toBe('5000ms');
     });
 
     it('should use executionTime as duration when outputFile is not a JSON file', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const startTime = new Date('2025-08-16T10:00:00Z');
       const endTime = new Date('2025-08-16T10:00:30Z');
@@ -242,7 +250,7 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution.duration).toBe('7500ms');
       expect(historyEntry.execution.output_file).toBe('/tmp/output.txt');
@@ -251,7 +259,7 @@ describe('Enhanced History', () => {
 
   describe('savePrompt with JSON output file', () => {
     it('should calculate active execution time and user input count from JSON file', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
       vi.mocked(calculateActiveExecutionTime).mockResolvedValue(2_500_000_000n); // 2500ms in nanoseconds
       vi.mocked(extractUserInputLines).mockResolvedValue(['yes', 'input1', 'input2']);
 
@@ -269,7 +277,7 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(calculateActiveExecutionTime).toHaveBeenCalledWith('/tmp/output.json');
       expect(extractUserInputLines).toHaveBeenCalledWith('/tmp/output.json');
@@ -280,7 +288,7 @@ describe('Enhanced History', () => {
     });
 
     it('should fall back to executionTime when active time calculation fails', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
       vi.mocked(calculateActiveExecutionTime).mockRejectedValue(new Error('File not found'));
 
       const startTime = new Date('2025-08-16T10:00:00Z');
@@ -298,7 +306,7 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution.active_time).toBe('4000ms');
       // duration stays as computed from startTime/endTime
@@ -306,7 +314,7 @@ describe('Enhanced History', () => {
     });
 
     it('should have no active_time when calculation fails and no executionTime provided', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
       vi.mocked(calculateActiveExecutionTime).mockRejectedValue(new Error('File not found'));
 
       const startTime = new Date('2025-08-16T10:00:00Z');
@@ -323,7 +331,7 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution.active_time).toBeUndefined();
       expect(historyEntry.execution.user_input_count).toBeUndefined();
@@ -332,7 +340,7 @@ describe('Enhanced History', () => {
 
   describe('savePrompt with outputFile and outputSize', () => {
     it('should include output_file and output_size in execution data', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const startTime = new Date('2025-08-16T10:00:00Z');
       const endTime = new Date('2025-08-16T10:00:10Z');
@@ -349,14 +357,14 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution.output_file).toBe('/tmp/my-output.txt');
       expect(historyEntry.execution.output_size).toBe(4096);
     });
 
     it('should not include output_file when not provided', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
 
       const startTime = new Date('2025-08-16T10:00:00Z');
       const endTime = new Date('2025-08-16T10:00:10Z');
@@ -371,7 +379,7 @@ describe('Enhanced History', () => {
       });
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const historyEntry = writeCall[1] as any;
+      const historyEntry = writeCall[1];
 
       expect(historyEntry.execution.output_file).toBeUndefined();
       expect(historyEntry.execution.output_size).toBeUndefined();
@@ -380,7 +388,7 @@ describe('Enhanced History', () => {
 
   describe('savePrompt error handling', () => {
     it('should throw a wrapped error when fs.writeJson fails', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
       vi.mocked(fs.writeJson).mockRejectedValue(new Error('EACCES: permission denied'));
 
       await expect(historyManager.savePrompt({
@@ -392,7 +400,7 @@ describe('Enhanced History', () => {
     });
 
     it('should wrap non-Error throws in the error message', async () => {
-      vi.mocked(execAsync).mockResolvedValue({ stdout: '', stderr: '' });
+      mockExecAsync.mockResolvedValue({ stdout: '', stderr: '' });
       vi.mocked(fs.writeJson).mockRejectedValue('disk full');
 
       await expect(historyManager.savePrompt({

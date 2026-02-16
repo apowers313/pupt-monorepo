@@ -2,20 +2,27 @@
  * Bundle compatibility regression tests.
  * These tests verify that the built bundle is browser-compatible.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync,readdirSync,readFileSync } from 'fs';
 import { resolve } from 'path';
+import { beforeAll,describe, expect, it } from 'vitest';
 
 describe('Bundle Browser Compatibility', () => {
   let bundleContent: string;
-  const bundlePath = resolve(__dirname, '../../dist/index.js');
+  const distDir = resolve(__dirname, '../../dist');
+  const bundlePath = resolve(distDir, 'index.js');
 
   beforeAll(() => {
     // Ensure bundle exists
     if (!existsSync(bundlePath)) {
       throw new Error('Bundle not found. Run `npm run build` first.');
     }
-    bundleContent = readFileSync(bundlePath, 'utf-8');
+    // Read all index*.js files in dist/ (the build uses code splitting / chunks).
+    // Exclude non-index chunks (e.g., babel-*.js) which are third-party code
+    // loaded lazily and contain string templates that look like require() calls.
+    const jsFiles = readdirSync(distDir)
+      .filter((f) => f.startsWith('index') && f.endsWith('.js'))
+      .map((f) => resolve(distDir, f));
+    bundleContent = jsFiles.map((f) => readFileSync(f, 'utf-8')).join('\n');
   });
 
   describe('No static Node.js imports', () => {

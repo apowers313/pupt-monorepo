@@ -1,13 +1,15 @@
+import path from 'node:path';
+
 import chalk from 'chalk';
+import fs from 'fs-extra';
+
 import { ConfigManager } from '../config/config-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
+import { IssueIdentified } from '../types/annotations.js';
 import { HistoryEntry } from '../types/history.js';
 import { errors } from '../utils/errors.js';
-import { logger } from '../utils/logger.js';
-import { IssueIdentified } from '../types/annotations.js';
-import path from 'node:path';
-import fs from 'fs-extra';
 import { getGitInfo } from '../utils/git-info.js';
+import { logger } from '../utils/logger.js';
 
 interface HistoryOptions {
   limit?: number;
@@ -52,9 +54,9 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
     logger.log(chalk.bold(`\nHistory Entry #${options.result}:`));
     logger.log(chalk.gray('─'.repeat(80)));
     
-    logger.log(chalk.cyan('Timestamp:') + ` ${formatDate(entry.timestamp)}`);
-    logger.log(chalk.cyan('Title:') + ` ${entry.title || 'Untitled'}`);
-    logger.log(chalk.cyan('Template:') + ` ${entry.templatePath}`);
+    logger.log(`${chalk.cyan('Timestamp:')  } ${formatDate(entry.timestamp)}`);
+    logger.log(`${chalk.cyan('Title:')  } ${entry.title || 'Untitled'}`);
+    logger.log(`${chalk.cyan('Template:')  } ${entry.templatePath}`);
     
     if (Object.keys(entry.variables).length > 0) {
       logger.log(chalk.cyan('\nVariables:'));
@@ -106,9 +108,9 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
     logger.log(chalk.bold(`\nHistory Entry #${options.entry}:`));
     logger.log(chalk.gray('─'.repeat(80)));
     
-    logger.log(chalk.cyan('Timestamp:') + ` ${formatDate(entry.timestamp)}`);
-    logger.log(chalk.cyan('Title:') + ` ${entry.title || 'Untitled'}`);
-    logger.log(chalk.cyan('Template:') + ` ${entry.templatePath}`);
+    logger.log(`${chalk.cyan('Timestamp:')  } ${formatDate(entry.timestamp)}`);
+    logger.log(`${chalk.cyan('Title:')  } ${entry.title || 'Untitled'}`);
+    logger.log(`${chalk.cyan('Template:')  } ${entry.templatePath}`);
     
     if (Object.keys(entry.variables).length > 0) {
       logger.log(chalk.cyan('\nVariables:'));
@@ -134,7 +136,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
         
         annotations.forEach((annotation, index) => {
           if (index > 0) {
-            logger.log(chalk.gray('\n' + '-'.repeat(40) + '\n'));
+            logger.log(chalk.gray(`\n${  '-'.repeat(40)  }\n`));
           }
           
           // Try to parse as JSON first
@@ -258,7 +260,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
     const summary = createAutoSummary(entry);
 
     logger.log(chalk.cyan(`${num}.`) + chalk.gray(` [${date}] `) + chalk.white(title));
-    logger.log('   ' + chalk.gray(summary));
+    logger.log(`   ${  chalk.gray(summary)}`);
     logger.log('');
   });
 }
@@ -278,7 +280,7 @@ function formatDate(timestamp: string): string {
 function processSummaryTemplate(summary: string, variables: Record<string, unknown>): string {
   try {
     return summary.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => {
-      return variables[key] !== undefined ? String(variables[key]) : `{{${key}}}`;
+      return variables[key] !== undefined ? String(variables[key] as string | number) : `{{${key}}}`;
     });
   } catch {
     // If template processing fails, return the raw summary
@@ -328,7 +330,7 @@ function formatVariables(variables: Record<string, unknown>): string[] {
     } else if (typeof value === 'object') {
       formatted.push(`${key}: {...}`);
     } else {
-      formatted.push(`${key}: ${String(value)}`);
+      formatted.push(`${key}: ${String(value as bigint)}`);
     }
   }
   
@@ -358,7 +360,7 @@ function createAutoSummary(entry: HistoryEntry): string {
 
   // Ensure consistent truncation for alignment
   if (summary.length > maxSummaryLength) {
-    return summary.substring(0, maxSummaryLength - 3) + '...';
+    return `${summary.substring(0, maxSummaryLength - 3)  }...`;
   }
   return summary;
 }

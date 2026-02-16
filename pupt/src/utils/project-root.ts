@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
 
 /**
  * Project markers used to detect project root directories.
@@ -211,8 +211,9 @@ export function findProjectRoot(startDir: string): string | null {
   const normalizedStart = path.resolve(startDir);
 
   // Check cache first
-  if (projectRootCache.has(normalizedStart)) {
-    return projectRootCache.get(normalizedStart)!;
+  const cached = projectRootCache.get(normalizedStart);
+  if (cached !== undefined) {
+    return cached;
   }
 
   const homeDir = os.homedir();

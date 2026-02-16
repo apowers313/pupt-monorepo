@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ConfigSchema } from '../../src/schemas/config-schema.js';
 
 const mockDataDir = '/mock/data';
@@ -146,7 +147,7 @@ describe('Config Migration', () => {
 
       await migrateConfig.createBackup(configPath);
 
-      const backupPath = configPath + '.backup';
+      const backupPath = `${configPath  }.backup`;
       expect(await fs.pathExists(backupPath)).toBe(true);
       
       const backup = await fs.readJson(backupPath);
@@ -166,7 +167,7 @@ describe('Config Migration', () => {
       await migrateConfig.createBackup(configPath);
 
       // Check that both backups exist
-      const backupPath = configPath + '.backup';
+      const backupPath = `${configPath  }.backup`;
       expect(await fs.pathExists(backupPath)).toBe(true);
       
       const files = await fs.readdir(tempDir);

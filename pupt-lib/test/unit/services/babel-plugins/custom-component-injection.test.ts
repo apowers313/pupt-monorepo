@@ -3,7 +3,8 @@
  * This plugin injects a destructuring declaration for custom components
  * from globalThis into the program body.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Transformer } from '../../../../src/services/transformer';
 
 describe('custom-component-injection Babel plugin', () => {
@@ -17,7 +18,7 @@ describe('custom-component-injection Babel plugin', () => {
 
   it('should inject destructuring after imports', async () => {
     const source = `
-      import { Prompt } from 'pupt-lib';
+      import { Prompt } from '@pupt/lib';
       export default <Prompt name="test"><MyComp /></Prompt>;
     `;
 
@@ -29,7 +30,7 @@ describe('custom-component-injection Babel plugin', () => {
 
   it('should inject multiple component names', async () => {
     const source = `
-      import { Prompt } from 'pupt-lib';
+      import { Prompt } from '@pupt/lib';
       export default <Prompt name="test"><A /><B /><C /></Prompt>;
     `;
 
@@ -40,7 +41,7 @@ describe('custom-component-injection Babel plugin', () => {
 
   it('should not inject when componentNames is empty', async () => {
     const source = `
-      import { Prompt } from 'pupt-lib';
+      import { Prompt } from '@pupt/lib';
       export default <Prompt name="test">Hello</Prompt>;
     `;
 
@@ -62,7 +63,7 @@ describe('custom-component-injection Babel plugin', () => {
 
   it('should use the provided globalKey', async () => {
     const source = `
-      import { Prompt } from 'pupt-lib';
+      import { Prompt } from '@pupt/lib';
       export default <Prompt name="test"><X /></Prompt>;
     `;
 

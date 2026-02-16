@@ -1,12 +1,14 @@
 /**
  * Tests for branch coverage in Ask.MultiSelect component
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx } from '../../../../src/jsx-runtime';
-import { Ask, AskOption } from '../../../../components/ask';
-import { createInputIterator } from '../../../../src/services/input-iterator';
 import '../../../../components';
+
+import { describe, expect,it } from 'vitest';
+
+import { Ask, AskOption } from '../../../../components/ask';
+import { jsx } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
+import { createInputIterator } from '../../../../src/services/input-iterator';
 
 describe('Ask.MultiSelect branch coverage', () => {
   describe('option text fallback', () => {

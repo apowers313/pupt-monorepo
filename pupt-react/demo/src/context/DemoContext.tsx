@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { createRuntimeConfig } from "pupt-react";
-import type { EnvironmentContext, RuntimeConfig, PuptElement } from "pupt-react";
+import { createRuntimeConfig } from "@pupt/react";
+import type { EnvironmentContext, RuntimeConfig, PuptElement } from "@pupt/react";
 import { DEFAULT_EXAMPLE, type ExampleFormat } from "../data/examples";
 import type { BuiltinPromptMeta } from "../data/builtinPrompts";
 

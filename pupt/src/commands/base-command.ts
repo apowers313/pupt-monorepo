@@ -1,7 +1,8 @@
+import pino from 'pino';
+
 import { Config } from '../types/config.js';
 import { ConsoleUI, LogLevel } from '../ui/console-ui.js';
 import { PromptToolError } from '../utils/errors.js';
-import pino from 'pino';
 
 export interface CommandContext {
   config: Config;
@@ -47,7 +48,7 @@ export abstract class BaseCommand<TInput, TOutput = void> {
         this.context.ui.error(error);
         if (error.suggestions && error.suggestions.length > 0) {
           this.context.ui.info('Suggestions:');
-          error.suggestions.forEach(s => this.context.ui.info(`  - ${s.text}`));
+          error.suggestions.forEach(s => { this.context.ui.info(`  - ${s.text}`); });
         }
       } else {
         this.context.ui.error(error as Error);

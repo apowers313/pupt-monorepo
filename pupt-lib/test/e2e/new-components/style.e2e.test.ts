@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx } from '../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { Style } from '../../../components/structural/Style';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { jsx } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('Style e2e', () => {
   it('should render style type through .prompt pipeline', async () => {

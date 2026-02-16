@@ -1,9 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getGitInfo, formatDuration } from '../../src/utils/git-info.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
+
+import { formatDuration,getGitInfo } from '../../src/utils/git-info.js';
+
+const { mockExecAsync } = vi.hoisted(() => ({
+  mockExecAsync: vi.fn(),
+}));
 
 vi.mock('child_process');
+vi.mock('util', async (importOriginal) => {
+  const original = await importOriginal<typeof import('util')>();
+  return {
+    ...original,
+    promisify: vi.fn(() => mockExecAsync),
+  };
+});
 
 describe('Git Info Utilities', () => {
   beforeEach(() => {
@@ -12,8 +22,6 @@ describe('Git Info Utilities', () => {
 
   describe('getGitInfo', () => {
     it('should return git branch, commit, clean status, and git directory', async () => {
-      const mockExecAsync = vi.mocked(promisify(exec));
-
       mockExecAsync.mockImplementation(async (cmd: string) => {
         if (cmd === 'git rev-parse --abbrev-ref HEAD') {
           return { stdout: 'main\n', stderr: '' };
@@ -39,8 +47,6 @@ describe('Git Info Utilities', () => {
     });
 
     it('should detect dirty git status', async () => {
-      const mockExecAsync = vi.mocked(promisify(exec));
-
       mockExecAsync.mockImplementation(async (cmd: string) => {
         if (cmd === 'git rev-parse --abbrev-ref HEAD') {
           return { stdout: 'feature/test\n', stderr: '' };
@@ -65,7 +71,6 @@ describe('Git Info Utilities', () => {
     });
 
     it('should handle non-git directories gracefully', async () => {
-      const mockExecAsync = vi.mocked(promisify(exec));
       mockExecAsync.mockRejectedValue(new Error('Not a git repository'));
 
       const info = await getGitInfo();

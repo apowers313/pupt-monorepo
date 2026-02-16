@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { runCommand, parseRunArgs, RunOptions } from '../../src/commands/run.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
-import { PuptService } from '../../src/services/pupt-service.js';
-import { collectInputs } from '../../src/services/input-collector.js';
-import { InteractiveSearch } from '../../src/ui/interactive-search.js';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { spawn } from 'child_process';
-import chalk from 'chalk';
 import { confirm } from '@inquirer/prompts';
+import chalk from 'chalk';
+import { spawn } from 'child_process';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { parseRunArgs, runCommand, RunOptions } from '../../src/commands/run.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
+import { HistoryManager } from '../../src/history/history-manager.js';
+import { collectInputs } from '../../src/services/input-collector.js';
+import { PuptService } from '../../src/services/pupt-service.js';
+import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
@@ -183,7 +184,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -217,7 +218,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -251,7 +252,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -283,7 +284,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -320,7 +321,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: mockStdin,
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -335,7 +336,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -359,7 +360,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(42);
+          if (event === 'close') {callback(42);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -373,7 +374,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'error') callback(new Error('spawn ENOENT'));
+          if (event === 'error') {callback(new Error('spawn ENOENT'));}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -431,7 +432,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -472,7 +473,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -505,7 +506,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -538,7 +539,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -611,7 +612,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -649,7 +650,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -677,7 +678,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -717,7 +718,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -759,7 +760,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0);
+          if (event === 'close') {callback(0);}
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -838,7 +839,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(1); // Exit code 1 indicates failure
+          if (event === 'close') {callback(1);} // Exit code 1 indicates failure
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);
@@ -949,7 +950,7 @@ describe('Run Command', () => {
       const mockSpawn = {
         stdin: { write: vi.fn(), end: vi.fn() },
         on: vi.fn((event, callback) => {
-          if (event === 'close') callback(0); // Exit code 0 indicates success
+          if (event === 'close') {callback(0);} // Exit code 0 indicates success
         })
       };
       vi.mocked(spawn).mockReturnValue(mockSpawn as any);

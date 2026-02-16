@@ -1,5 +1,6 @@
-import envPaths from 'env-paths';
 import path from 'node:path';
+
+import envPaths from 'env-paths';
 
 const platformPaths = envPaths('pupt', { suffix: '' });
 

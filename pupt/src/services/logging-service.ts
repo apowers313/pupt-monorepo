@@ -1,5 +1,5 @@
-import pino from 'pino';
-import type { Logger } from 'pino';
+import pino, { type Logger } from 'pino';
+
 import type { Config } from '../types/config.js';
 import { isSensitiveKey } from '../utils/security.js';
 
@@ -85,7 +85,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.trace(objOrMsg);
     } else {
-      this.logger.trace(objOrMsg, msg!);
+      this.logger.trace(objOrMsg, msg);
     }
   }
 
@@ -95,7 +95,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.debug(objOrMsg);
     } else {
-      this.logger.debug(objOrMsg, msg!);
+      this.logger.debug(objOrMsg, msg);
     }
   }
 
@@ -105,7 +105,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.info(objOrMsg);
     } else {
-      this.logger.info(objOrMsg, msg!);
+      this.logger.info(objOrMsg, msg);
     }
   }
 
@@ -115,7 +115,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.warn(objOrMsg);
     } else {
-      this.logger.warn(objOrMsg, msg!);
+      this.logger.warn(objOrMsg, msg);
     }
   }
 
@@ -125,7 +125,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.error(objOrMsg);
     } else {
-      this.logger.error(objOrMsg, msg!);
+      this.logger.error(objOrMsg, msg);
     }
   }
 
@@ -135,7 +135,7 @@ export class LoggingService {
     if (typeof objOrMsg === 'string') {
       this.logger.fatal(objOrMsg);
     } else {
-      this.logger.fatal(objOrMsg, msg!);
+      this.logger.fatal(objOrMsg, msg);
     }
   }
 
@@ -194,14 +194,14 @@ export class LoggingService {
 }
 
 export function formatLogContext(command: string, options: Record<string, unknown>): LogContext {
-  const sanitizedOptions = Object.entries(options).reduce((acc, [key, value]) => {
+  const sanitizedOptions = Object.entries(options).reduce<Record<string, unknown>>((acc, [key, value]) => {
     if (isSensitiveKey(key)) {
       acc[key] = '***';
     } else {
       acc[key] = value;
     }
     return acc;
-  }, {} as Record<string, unknown>);
+  }, {});
 
   return {
     command,

@@ -6,9 +6,10 @@
  * - Testing extractNameFromUrl with various URL formats
  * - Testing error handling paths
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { ModuleLoader } from '../../../src/services/module-loader';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
 
@@ -259,7 +260,7 @@ describe('ModuleLoader Real Code Paths', () => {
 
     beforeAll(() => {
       loader = new ModuleLoader();
-      extractName = (loader as never)['extractNameFromUrl'].bind(loader);
+      extractName = (loader as never).extractNameFromUrl.bind(loader);
     });
 
     it('should extract name from esm.sh URLs', () => {
@@ -298,7 +299,7 @@ describe('ModuleLoader Real Code Paths', () => {
 
     beforeAll(() => {
       loader = new ModuleLoader();
-      extractName = (loader as never)['extractNameFromPath'].bind(loader);
+      extractName = (loader as never).extractNameFromPath.bind(loader);
     });
 
     it('should extract last segment from relative paths', () => {

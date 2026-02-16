@@ -13,9 +13,9 @@
  */
 
 import {
-  getBuiltinComponents,
   getAskComponents,
   getAskShorthand,
+  getBuiltinComponents,
 } from './component-discovery';
 
 export interface PreprocessOptions {
@@ -44,13 +44,13 @@ function generateImports(): string {
   // Main components import
   lines.push('import {');
   lines.push(`  ${builtinComponents.join(',\n  ')},`);
-  lines.push('} from \'pupt-lib\';');
+  lines.push('} from \'@pupt/lib\';');
   lines.push('');
 
   // Ask components import (including namespace)
   lines.push('import {');
   lines.push(`  ${askComponents.join(',\n  ')},`);
-  lines.push('} from \'pupt-lib\';');
+  lines.push('} from \'@pupt/lib\';');
   lines.push('');
 
   // Create shorthand aliases

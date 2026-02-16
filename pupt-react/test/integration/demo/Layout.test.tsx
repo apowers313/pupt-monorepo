@@ -2,13 +2,14 @@
  * Integration tests for Demo Layout
  */
 
-import { describe, it, expect, vi, beforeAll } from "vitest";
+import { MantineProvider } from "@mantine/core";
 import { render, screen, waitFor } from "@testing-library/react";
 import React from "react";
-import { MantineProvider } from "@mantine/core";
-import { PuptProvider, PuptLibraryProvider } from "../../../src";
-import { DemoProvider } from "../../../demo/src/context/DemoContext";
+import { beforeAll,describe, expect, it, vi } from "vitest";
+
 import { Layout } from "../../../demo/src/components/Layout";
+import { DemoProvider } from "../../../demo/src/context/DemoContext";
+import { PuptLibraryProvider,PuptProvider } from "../../../src";
 
 // Mock Monaco editor since it doesn't work in jsdom
 vi.mock("@monaco-editor/react", () => ({

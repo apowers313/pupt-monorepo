@@ -1,4 +1,4 @@
-import type { PromptSource, DiscoveredPromptFile } from '../../types/prompt-source';
+import type { DiscoveredPromptFile,PromptSource } from '../../types/prompt-source';
 import { extractPromptFiles } from './tar-utils';
 
 /**

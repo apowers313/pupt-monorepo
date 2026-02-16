@@ -2,8 +2,9 @@
 
 // Import the main entry point which triggers component loading
 import '../components/index';
-import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../src/types/context';
+
 import type { RenderContext } from '../src/types/context';
+import { createRuntimeConfig,DEFAULT_ENVIRONMENT } from '../src/types/context';
 
 /**
  * Create a render context for testing.

@@ -2,7 +2,7 @@
 # Copies uncommitted changes (modified + untracked) from original repos
 set -e
 
-PACKAGES=("pupt" "pupt-lib" "pupt-react" "pupt-sde")
+PACKAGES=("pupt" "pupt-lib" "pupt-react" "pupt-sde-prompts")
 MONOREPO_DIR="$(pwd)"
 
 # Verify we're in the monorepo root

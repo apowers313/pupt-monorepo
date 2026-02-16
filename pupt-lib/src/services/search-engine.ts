@@ -1,5 +1,6 @@
 import MiniSearch from 'minisearch';
-import type { SearchablePrompt, SearchResult, SearchEngineConfig, SearchOptions } from '../types';
+
+import type { SearchablePrompt, SearchEngineConfig, SearchOptions,SearchResult } from '../types';
 
 export interface SearchEngine {
   index(prompts: SearchablePrompt[]): void;
@@ -58,7 +59,7 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
     search(query, options) {
       const searchResults = miniSearch.search(query, {
         filter: options?.tags
-          ? (result) => options.tags!.every(t => (result.tags as string).includes(t))
+          ? (result) => options.tags.every(t => (result.tags as string).includes(t))
           : undefined,
       });
 
@@ -83,7 +84,7 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
 
     getAllTags() {
       const tags = new Set<string>();
-      allPrompts.forEach(p => p.tags.forEach(t => tags.add(t)));
+      allPrompts.forEach(p => { p.tags.forEach(t => tags.add(t)); });
       return [...tags];
     },
 

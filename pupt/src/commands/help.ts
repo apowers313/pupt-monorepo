@@ -1,4 +1,5 @@
 import { program } from 'commander';
+
 import { logger } from '../utils/logger.js';
 
 export async function helpCommand(commandName?: string): Promise<void> {

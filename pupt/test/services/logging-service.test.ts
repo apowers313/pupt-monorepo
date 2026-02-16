@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import pino from 'pino';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { BaseCommand } from '../../src/commands/base-command.js';
 import { 
+  createChildLogger,
   createLogger, 
-  LoggingService, 
-  LogLevel as PinoLogLevel,
   enhanceWithLogging,
   formatLogContext,
-  createChildLogger
-} from '../../src/services/logging-service.js';
-import { BaseCommand } from '../../src/commands/base-command.js';
-import { ConsoleUI, LogLevel } from '../../src/ui/console-ui.js';
+  LoggingService, 
+  LogLevel as PinoLogLevel} from '../../src/services/logging-service.js';
 import type { Config } from '../../src/types/config.js';
+import { ConsoleUI, LogLevel } from '../../src/ui/console-ui.js';
 
 describe('Logging Service', () => {
   let originalEnv: NodeJS.ProcessEnv;

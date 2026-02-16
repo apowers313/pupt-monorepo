@@ -1,9 +1,11 @@
 import * as path from 'node:path';
+
 import fs from 'fs-extra';
+
 import { ConfigManager } from '../config/config-manager.js';
-import { logger } from '../utils/logger.js';
 import { getDataDir } from '../config/global-paths.js';
 import { GlobalPackageManager } from '../services/package-manager.js';
+import { logger } from '../utils/logger.js';
 
 export async function uninstallCommand(name: string): Promise<void> {
   if (!name) {

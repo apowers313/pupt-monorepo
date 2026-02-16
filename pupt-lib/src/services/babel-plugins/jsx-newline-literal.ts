@@ -91,7 +91,7 @@ function dedentJsxText(text: string): string | null {
   // Find minimum indentation across non-empty lines
   let minIndent = Infinity;
   for (const line of lines) {
-    if (line.trim() === '') continue; // skip blank lines for indent calculation
+    if (line.trim() === '') {continue;} // skip blank lines for indent calculation
     const match = line.match(/^(\s*)/);
     const indent = match ? match[1].length : 0;
     if (indent < minIndent) {
@@ -105,7 +105,7 @@ function dedentJsxText(text: string): string | null {
 
   // Remove common indentation from each line
   const dedented = lines.map(line => {
-    if (line.trim() === '') return ''; // normalize blank lines
+    if (line.trim() === '') {return '';} // normalize blank lines
     return line.slice(minIndent);
   });
 

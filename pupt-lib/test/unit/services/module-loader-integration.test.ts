@@ -6,11 +6,12 @@
  * - vi.doMock for npm module mocking
  * - Real file fixtures for local module loading
  */
-import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
-import { ModuleLoader } from '../../../src/services/module-loader';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { Component } from '../../../src/component';
+import { ModuleLoader } from '../../../src/services/module-loader';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
 
 // Test component for mocked modules
@@ -240,7 +241,7 @@ describe('ModuleLoader Integration Tests', () => {
   describe('extractNameFromUrl', () => {
     it('should extract package name from CDN URLs', async () => {
       const loader = new ModuleLoader();
-      const extractName = (loader as never)['extractNameFromUrl'].bind(loader);
+      const extractName = (loader as never).extractNameFromUrl.bind(loader);
 
       expect(extractName('https://esm.sh/lodash@4.17.21')).toBe('lodash@4.17.21');
       expect(extractName('https://unpkg.com/react@18.2.0/index.js')).toBe('index');
@@ -249,7 +250,7 @@ describe('ModuleLoader Integration Tests', () => {
 
     it('should return "unknown" for invalid URLs', async () => {
       const loader = new ModuleLoader();
-      const extractName = (loader as never)['extractNameFromUrl'].bind(loader);
+      const extractName = (loader as never).extractNameFromUrl.bind(loader);
 
       expect(extractName('not-a-valid-url')).toBe('unknown');
     });
@@ -258,7 +259,7 @@ describe('ModuleLoader Integration Tests', () => {
   describe('extractNameFromPath', () => {
     it('should extract filename from path', async () => {
       const loader = new ModuleLoader();
-      const extractName = (loader as never)['extractNameFromPath'].bind(loader);
+      const extractName = (loader as never).extractNameFromPath.bind(loader);
 
       expect(extractName('./src/lib/my-module')).toBe('my-module');
       expect(extractName('/absolute/path/to/component.ts')).toBe('component.ts');

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { Component } from '../../../../src/component';
 
 export class Greeting extends Component<{ name?: string; children?: unknown }> {

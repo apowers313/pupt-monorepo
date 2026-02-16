@@ -1,7 +1,7 @@
-import type { PuptNode, PuptElement, ComponentType } from '../types';
-import { isPuptElement } from '../types/element';
 import { Fragment } from '../jsx-runtime';
-import { TYPE, CHILDREN } from '../types/symbols';
+import type { ComponentType,PuptElement, PuptNode } from '../types';
+import { isPuptElement } from '../types/element';
+import { CHILDREN,TYPE } from '../types/symbols';
 
 /**
  * Check if a PuptElement matches a given type (class reference or string name).

@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
 import { z } from 'zod';
-import { render } from '../../src/render';
-import { jsx, Fragment } from '../../src/jsx-runtime';
+
 import { Component } from '../../src/component';
+import { Fragment,jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 
 const emptySchema = z.object({}).passthrough();
 

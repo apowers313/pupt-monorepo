@@ -1,7 +1,7 @@
 // Core element types for pupt-lib JSX
 
 import type { Component } from '../component';
-import { TYPE, PROPS, CHILDREN, DEFERRED_REF } from './symbols';
+import { CHILDREN, DEFERRED_REF,PROPS, TYPE } from './symbols';
 
 /**
  * PuptNode represents any valid child of a JSX element.

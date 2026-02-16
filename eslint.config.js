@@ -36,7 +36,9 @@ export default tseslint.config(
             "docs/**",
             "**/docs/**",
             // pupt-sde tests are .mjs (no TypeScript)
-            "pupt-sde/test/**",
+            "pupt-sde-prompts/test/**",
+            // Demo apps have relaxed standards
+            "pupt-react/demo/**",
         ],
     },
 
@@ -53,7 +55,12 @@ export default tseslint.config(
         extends: [...tseslint.configs.strictTypeChecked],
         languageOptions: {
             parserOptions: {
-                projectService: true,
+                project: [
+                    "./pupt-lib/tsconfig.eslint.json",
+                    "./pupt/tsconfig.eslint.json",
+                    "./pupt-react/tsconfig.eslint.json",
+                    "./tsconfig.base.json",
+                ],
                 tsconfigRootDir: import.meta.dirname,
             },
             globals: {
@@ -98,18 +105,13 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-return": "off",
             "@typescript-eslint/restrict-template-expressions": [
                 "error",
-                {
-                    allowNumber: true,
-                    allowBoolean: true,
-                    allowAny: false,
-                    allowNullish: false,
-                },
+                { allowNumber: true, allowBoolean: true },
             ],
 
             // ==========================================
             // ERROR PREVENTION - Logic Safety
             // ==========================================
-            eqeqeq: ["error", "always"],
+            eqeqeq: ["error", "always", { null: "ignore" }],
             curly: "error",
             "no-var": "error",
             "prefer-const": "error",
@@ -135,7 +137,10 @@ export default tseslint.config(
             "prefer-destructuring": ["error", { object: true, array: false }],
             "prefer-rest-params": "error",
             "prefer-spread": "error",
-            camelcase: ["error", { properties: "always" }],
+            // snake_case is used intentionally in serialized data interfaces (history, annotations, review)
+            camelcase: "off",
+            // no-undef is handled by TypeScript compiler for TS files
+            "no-undef": "off",
 
             // ==========================================
             // IMPORT SORTING
@@ -163,13 +168,22 @@ export default tseslint.config(
             "@typescript-eslint/no-explicit-any": "off",
             "@typescript-eslint/explicit-function-return-type": "off",
             "@typescript-eslint/no-non-null-assertion": "off",
+            "@typescript-eslint/no-unused-vars": "off",
             "@typescript-eslint/unbound-method": "off",
             "@typescript-eslint/restrict-template-expressions": "off",
+            "@typescript-eslint/require-await": "off",
+            "@typescript-eslint/no-misused-promises": "off",
+            "@typescript-eslint/no-floating-promises": "off",
             "@typescript-eslint/no-deprecated": "off",
             "@typescript-eslint/no-confusing-void-expression": "off",
             "@typescript-eslint/restrict-plus-operands": "off",
             "@typescript-eslint/no-redundant-type-constituents": "off",
+            "@typescript-eslint/no-unsafe-function-type": "off",
             "no-console": "off",
+            "no-unused-vars": "off",
+            "no-duplicate-imports": "off",
+            "@typescript-eslint/no-invalid-void-type": "off",
+            "@typescript-eslint/no-base-to-string": "off",
         },
     },
 
@@ -180,6 +194,9 @@ export default tseslint.config(
         files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
         rules: {
             "@typescript-eslint/explicit-function-return-type": "off",
+            // JS files don't have TypeScript checking, but globals are typically fine
+            "no-undef": "off",
+            "no-unused-vars": "off",
         },
     },
 );

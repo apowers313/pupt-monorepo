@@ -5,20 +5,21 @@
  * Note: We import specific components rather than the full index to avoid
  * pulling in Node.js-only components like File that use 'fs'.
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { Prompt } from '../../components/structural/Prompt';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
+import { describe, expect,it } from 'vitest';
+
+import { Code } from '../../components/data/Code';
 import { Example } from '../../components/examples/Example';
 import { ExampleInput } from '../../components/examples/ExampleInput';
 import { ExampleOutput } from '../../components/examples/ExampleOutput';
 import { Examples } from '../../components/examples/Examples';
-import { Code } from '../../components/data/Code';
-import { Steps } from '../../components/reasoning/Steps';
 import { Step } from '../../components/reasoning/Step';
-import { TYPE, PROPS, CHILDREN } from '../../src/types/symbols';
+import { Steps } from '../../components/reasoning/Steps';
+import { Prompt } from '../../components/structural/Prompt';
+import { Role } from '../../components/structural/Role';
+import { Task } from '../../components/structural/Task';
+import { Fragment,jsx, jsxs } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
+import { CHILDREN,PROPS, TYPE } from '../../src/types/symbols';
 
 describe('Browser: render', () => {
   it('should render a simple prompt', async () => {
@@ -144,7 +145,7 @@ describe('Browser: .prompt file transformation', () => {
       plugins: [
         ['transform-react-jsx', {
           runtime: 'automatic',
-          importSource: 'pupt-lib',
+          importSource: '@pupt/lib',
         }],
       ],
     });
@@ -155,8 +156,8 @@ describe('Browser: .prompt file transformation', () => {
 
     // Process the transformed code
     const processedCode = result.code
-      .replace(/import\s*\{[^}]*\}\s*from\s*["']pupt-lib\/jsx-runtime["'];?/g, '')
-      .replace(/import\s*\{[^}]*\}\s*from\s*["']pupt-lib["'];?/g, '')
+      .replace(/import\s*\{[^}]*\}\s*from\s*["']@pupt\/lib\/jsx-runtime["'];?/g, '')
+      .replace(/import\s*\{[^}]*\}\s*from\s*["']@pupt\/lib["'];?/g, '')
       .replace(/export\s+default\s+/g, 'exports.default = ');
 
     // Create evaluation context with jsx runtime and components
@@ -188,9 +189,9 @@ describe('Browser: .prompt file transformation', () => {
    * Get the type name from an element's type property.
    */
   function getTypeName(type: unknown): string {
-    if (typeof type === 'string') return type;
-    if (typeof type === 'function') return type.name;
-    if (typeof type === 'symbol') return type.toString();
+    if (typeof type === 'string') {return type;}
+    if (typeof type === 'function') {return type.name;}
+    if (typeof type === 'symbol') {return type.toString();}
     return String(type);
   }
 

@@ -1,16 +1,17 @@
 /**
  * Tests for transform utility
  */
-import { describe, it, expect } from "vitest";
+import type { PuptElement, PuptNode } from "@pupt/lib";
+import { CHILDREN,PROPS, TYPE } from "@pupt/lib";
+import { describe, expect,it } from "vitest";
+
 import {
-  transformSource,
-  isElement,
-  isAskComponent,
-  traverseElement,
   extractInputRequirements,
+  isAskComponent,
+  isElement,
+  transformSource,
+  traverseElement,
 } from "../../../src/utils/transform";
-import type { PuptElement, PuptNode } from "pupt-lib";
-import { TYPE, PROPS, CHILDREN } from "pupt-lib";
 
 /**
  * Helper to create a proper PuptElement with symbol keys

@@ -1,7 +1,8 @@
 import { search } from '@inquirer/prompts';
-import { Prompt } from '../types/prompt.js';
-import { SearchEngine } from '../search/search-engine.js';
 import chalk from 'chalk';
+
+import { SearchEngine } from '../search/search-engine.js';
+import { Prompt } from '../types/prompt.js';
 
 export class InteractiveSearch {
   private searchEngine: SearchEngine;

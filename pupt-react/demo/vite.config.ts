@@ -21,7 +21,7 @@ function getInstalledVersion(pkg: string): string {
  */
 function importMapVersionPlugin(): Plugin {
   const versions: Record<string, string> = {
-    __PUPT_LIB_VERSION__: getInstalledVersion("pupt-lib"),
+    __PUPT_LIB_VERSION__: getInstalledVersion("@pupt/lib"),
     __ZOD_VERSION__: getInstalledVersion("zod"),
   };
 
@@ -42,7 +42,7 @@ export default defineConfig({
   plugins: [importMapVersionPlugin(), react()],
   resolve: {
     alias: [
-      { find: "pupt-react", replacement: resolve(__dirname, "../src/index.ts") },
+      { find: "@pupt/react", replacement: resolve(__dirname, "../src/index.ts") },
       { find: "fs/promises", replacement: nodeShim },
       { find: "fs", replacement: nodeShim },
       { find: "os", replacement: nodeShim },

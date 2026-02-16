@@ -5,7 +5,7 @@
  * Works in both Node.js and browser environments.
  */
 
-import { usesToImportPlugin, nameHoistingPlugin, jsxNewlineLiteralPlugin, customComponentInjectionPlugin } from './babel-plugins';
+import { customComponentInjectionPlugin,jsxNewlineLiteralPlugin, nameHoistingPlugin, usesToImportPlugin } from './babel-plugins';
 
 // Type for Babel transform interface
 interface BabelStandalone {
@@ -26,7 +26,7 @@ let pluginsRegistered = false;
  * Register custom plugins with Babel.
  */
 function registerPlugins(Babel: BabelStandalone): void {
-  if (pluginsRegistered) return;
+  if (pluginsRegistered) {return;}
 
   // Register the uses-to-import plugin
   Babel.registerPlugin('uses-to-import', usesToImportPlugin);
@@ -70,7 +70,7 @@ function getTransformOptions(filename: string, options?: TransformOptions): Reco
     // Transform JSX to jsx() calls
     ['transform-react-jsx', {
       runtime: 'automatic',
-      importSource: 'pupt-lib',
+      importSource: '@pupt/lib',
     }],
   ];
 

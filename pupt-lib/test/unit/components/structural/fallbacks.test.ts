@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { Fallbacks } from '../../../../components/structural/Fallbacks';
+import { describe, expect,it } from 'vitest';
+
 import { FALLBACK_PRESETS } from '../../../../components/presets/guardrail-presets';
 import { Fallback } from '../../../../components/structural/Fallback';
+import { Fallbacks } from '../../../../components/structural/Fallbacks';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Fallbacks', () => {
   it('should render Fallback children', async () => {

@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
+import { describe, expect,it } from 'vitest';
+
 import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 import type { RenderContext } from '../../src/types';
 
 describe('function component context access', () => {

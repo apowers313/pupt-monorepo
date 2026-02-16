@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import * as path from 'path';
-import * as os from 'os';
 import type { Dirent, Stats } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import {
-  FileSearchEngine,
-  createFileSearchEngine,
-  type FileInfo,
   _injectModulesForTesting,
   _resetModulesForTesting,
+  createFileSearchEngine,
+  type FileInfo,
+  FileSearchEngine,
 } from '../../../src/services/file-search-engine';
 
 describe('FileSearchEngine', () => {

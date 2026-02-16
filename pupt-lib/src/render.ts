@@ -1,11 +1,11 @@
-import type { PuptElement, PuptNode, RenderResult, RenderOptions, RenderContext, PostExecutionAction, RenderError } from './types';
-import { isWarningCode } from './types/render';
+import { Component,isComponentClass } from './component';
 import { Fragment } from './jsx-runtime';
-import { isComponentClass, Component } from './component';
-import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from './types/context';
-import { validateProps, getSchema, getComponentName } from './services/prop-validator';
-import { TYPE, PROPS, CHILDREN } from './types/symbols';
-import { isPuptElement, isDeferredRef } from './types/element';
+import { getComponentName,getSchema, validateProps } from './services/prop-validator';
+import type { PostExecutionAction, PuptElement, PuptNode, RenderContext, RenderError,RenderOptions, RenderResult } from './types';
+import { createRuntimeConfig,DEFAULT_ENVIRONMENT } from './types/context';
+import { isDeferredRef,isPuptElement } from './types/element';
+import { isWarningCode } from './types/render';
+import { CHILDREN,PROPS, TYPE } from './types/symbols';
 
 /** Type for function components - context is passed as optional second argument */
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }, context?: RenderContext) => PuptNode | Promise<PuptNode>;
@@ -30,7 +30,7 @@ interface RenderState {
  */
 function followPath(obj: unknown, path: (string | number)[]): unknown {
   return path.reduce((current, key) => {
-    if (current == null) return undefined;
+    if (current == null) {return undefined;}
     return (current as Record<string | number, unknown>)[key];
   }, obj);
 }
@@ -194,7 +194,7 @@ export async function render(
 
   for (const err of errors) {
     if (isWarningCode(err.code)) {
-      if (ignoreSet.has(err.code)) continue;
+      if (ignoreSet.has(err.code)) {continue;}
       if (throwOnWarnings) {
         hardErrors.push(err);
       } else {
@@ -256,7 +256,7 @@ async function renderNode(
     if (value === null || value === undefined) {
       return '';
     }
-    return String(value);
+    return typeof value === 'string' ? value : String(value as string | number);
   }
 
   // PuptElement
@@ -269,7 +269,7 @@ async function renderNode(
       if (resolved === null || resolved === undefined) {
         return '';
       }
-      return String(resolved);
+      return typeof resolved === 'string' ? resolved : String(resolved as string | number);
     }
 
     // Check if resolution is already in progress (parallel rendering)
@@ -282,7 +282,7 @@ async function renderNode(
         if (resolved === null || resolved === undefined) {
           return '';
         }
-        return String(resolved);
+        return typeof resolved === 'string' ? resolved : String(resolved as string | number);
       }
     }
 
@@ -365,7 +365,7 @@ async function renderElement(
   }
 
   // Resolve props by rendering element dependencies and looking up their values
-  const resolvedProps = await resolveProps(props as Record<string, unknown>, state);
+  const resolvedProps = await resolveProps(props, state);
 
   // Component class
   if (isComponentClass(type)) {
@@ -373,24 +373,22 @@ async function renderElement(
 
     // Check if component has resolve() method
     const hasResolve = typeof instance.resolve === 'function';
-    const hasRender = typeof instance.render === 'function';
-
     // Create resolve function if component has resolve()
-    const resolveFn = hasResolve
-      ? () => instance.resolve!({ ...resolvedProps, children }, state.context)
+    const resolveFn = instance.resolve
+      ? () => instance.resolve?.({ ...resolvedProps, children }, state.context)
       : undefined;
 
     // Create render function
     const renderFn = (resolvedValue: unknown) => {
-      if (hasRender) {
+      if (instance.render) {
         // Pass resolved value as second argument to render()
-        return instance.render!({ ...resolvedProps, children }, resolvedValue as never, state.context);
+        return instance.render({ ...resolvedProps, children }, resolvedValue as never, state.context);
       }
       // No render method - return resolved value to be stringified
       if (resolvedValue === null || resolvedValue === undefined) {
         return '';
       }
-      return String(resolvedValue);
+      return typeof resolvedValue === 'string' ? resolvedValue : String(resolvedValue as string | number);
     };
 
     return renderComponentWithValidation(
@@ -451,7 +449,7 @@ async function renderElement(
  * static `implicitDefault` values (e.g., AskConfirm defaults to `false`).
  */
 function seedAskDefaults(node: PuptNode, context: RenderContext): void {
-  if (!node || typeof node !== 'object') return;
+  if (!node || typeof node !== 'object') {return;}
 
   if (Array.isArray(node)) {
     for (const child of node) {
@@ -460,11 +458,11 @@ function seedAskDefaults(node: PuptNode, context: RenderContext): void {
     return;
   }
 
-  if (!isPuptElement(node)) return;
+  if (!isPuptElement(node)) {return;}
 
   const element = node as PuptElement;
   const type = element[TYPE];
-  const props = element[PROPS] as Record<string, unknown>;
+  const props = element[PROPS];
   const children = element[CHILDREN];
 
   // Seed defaults from Ask components (identified by name + label props)

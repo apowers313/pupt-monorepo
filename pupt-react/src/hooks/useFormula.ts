@@ -2,8 +2,9 @@
  * useFormula hook - Reactive formula evaluation
  */
 
+import { evaluateFormula } from "@pupt/lib";
 import { useMemo } from "react";
-import { evaluateFormula } from "pupt-lib";
+
 import type { UseFormulaOptions, UseFormulaReturn } from "../types/hooks";
 
 /**
@@ -28,16 +29,16 @@ import type { UseFormulaOptions, UseFormulaReturn } from "../types/hooks";
  * ```
  */
 export function useFormula(options: UseFormulaOptions): UseFormulaReturn {
-  const { formula, inputs } = options;
+    const { formula, inputs } = options;
 
-  return useMemo(() => {
-    try {
-      return { result: evaluateFormula(formula, inputs), error: null };
-    } catch (err) {
-      return {
-        result: false,
-        error: err instanceof Error ? err : new Error(String(err)),
-      };
-    }
-  }, [formula, inputs]);
+    return useMemo(() => {
+        try {
+            return { result: evaluateFormula(formula, inputs), error: null };
+        } catch (err) {
+            return {
+                result: false,
+                error: err instanceof Error ? err : new Error(String(err)),
+            };
+        }
+    }, [formula, inputs]);
 }

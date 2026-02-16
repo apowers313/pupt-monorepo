@@ -16,7 +16,7 @@ export async function decompressGzip(compressed: ArrayBuffer): Promise<ArrayBuff
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {break;}
     chunks.push(value);
     totalLength += value.length;
   }
@@ -114,7 +114,7 @@ export async function extractPromptFiles(tarballBuffer: ArrayBuffer): Promise<Di
     const normalizedName = entry.name.replace(/^package\//, '');
 
     if (normalizedName.startsWith('prompts/') && normalizedName.endsWith('.prompt')) {
-      const filename = normalizedName.split('/').pop()!;
+      const filename = normalizedName.split('/').pop() ?? normalizedName;
       const content = new TextDecoder('utf-8').decode(entry.content);
       promptFiles.push({ filename, content });
     }

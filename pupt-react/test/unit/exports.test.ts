@@ -2,47 +2,40 @@
  * Export smoke tests - verify all new exports are importable from pupt-react
  */
 
-import { describe, it, expect } from "vitest";
 import {
+  CHILDREN,
+  // Component base class
+  Component,
+  COMPONENT_MARKER,
+  createRuntimeConfig,
+  DEFERRED_REF,
+  evaluateFormula,
+  extractInputRequirements,
+  isAskComponent,
+  isComponentClass,
+  isDeferredRef,
+  isElement,
+  // Type guards
+  isPuptElement,
+  PROPS,
+  // Context
+  PuptLibraryContext,
+  // Components
+  PuptLibraryProvider,
+  // Utility functions
+  transformSource,
+  traverseElement,
+  // Symbols
+  TYPE,
   // Hooks
   useFormula,
   usePuptLibrary,
   usePuptLibraryContext,
-
-  // Components
-  PuptLibraryProvider,
-
-  // Context
-  PuptLibraryContext,
-
-  // Utility functions
-  transformSource,
-  extractInputRequirements,
-  isAskComponent,
-  traverseElement,
-  isElement,
   validateInput,
-  createRuntimeConfig,
-  evaluateFormula,
-
-  // Symbols
-  TYPE,
-  PROPS,
-  CHILDREN,
-  DEFERRED_REF,
-
-  // Type guards
-  isPuptElement,
-  isDeferredRef,
-  isComponentClass,
-
-  // Component base class
-  Component,
-  COMPONENT_MARKER,
-
   // Version
   VERSION,
-} from "pupt-react";
+} from "@pupt/react";
+import { describe, expect,it } from "vitest";
 
 describe("exports", () => {
   describe("hooks", () => {

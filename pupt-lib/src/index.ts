@@ -3,136 +3,135 @@
 export const VERSION = '0.0.0-development';
 
 // Export symbols for element properties
-export { TYPE, PROPS, CHILDREN, DEFERRED_REF } from './types/symbols';
+export { CHILDREN, DEFERRED_REF,PROPS, TYPE } from './types/symbols';
 
 // Export element utilities
-export { isPuptElement, isDeferredRef } from './types/element';
+export { isDeferredRef,isPuptElement } from './types/element';
 
 // Export types
 export type {
-  PuptNode,
-  PuptElement,
+  CodeConfig,
   ComponentType,
   DeferredRef,
+  DiscoveredPrompt,
+  DiscoveredPromptFile,
+  EnvironmentContext,
+  InputRequirement,
+  LibraryLoadResult,
   LlmConfig,
   LlmProvider,
+  ModuleEntry,
+  OpenUrlAction,
   OutputConfig,
-  CodeConfig,
-  UserConfig,
-  RuntimeConfig,
+  PostExecutionAction,
   PromptConfig,
-  EnvironmentContext,
+  PromptSource,
+  PuptConfig,
+  PuptElement,
+  PuptInitConfig,
+  PuptLibrary,
+  PuptNode,
   RenderContext,
+  RenderError,
+  RenderFailure,
   RenderOptions,
   RenderResult,
   RenderSuccess,
-  RenderFailure,
-  RenderError,
-  PostExecutionAction,
   ReviewFileAction,
-  OpenUrlAction,
   RunCommandAction,
-  InputRequirement,
-  ValidationResult,
-  ValidationError,
+  RuntimeConfig,
   SearchablePrompt,
+  SearchEngineConfig,
   SearchOptions,
   SearchResult,
   SearchResultMatch,
-  SearchEngineConfig,
-  ModuleEntry,
-  PuptConfig,
-  PuptLibrary,
-  DiscoveredPrompt,
-  LibraryLoadResult,
-  PuptInitConfig,
-  DiscoveredPromptFile,
-  PromptSource,
+  UserConfig,
+  ValidationError,
+  ValidationResult,
 } from './types';
-
 export { isPromptSource } from './types';
 
 // Export context utilities
 export {
-  LLM_PROVIDERS,
-  inferProviderFromModel,
-  DEFAULT_ENVIRONMENT,
   createEnvironment,
   createRuntimeConfig,
+  DEFAULT_ENVIRONMENT,
   ensureRuntimeCacheReady,
+  inferProviderFromModel,
   isWarningCode,
+  LLM_PROVIDERS,
 } from './types';
 
 // Export Component base class
-export { Component, isComponentClass, COMPONENT_MARKER } from './component';
+export { Component, COMPONENT_MARKER,isComponentClass } from './component';
 
 // Export render function
 export { render } from './render';
 
 // Export utilities
+export { findChildrenOfType, isElementOfType,partitionChildren } from './utils/children';
 export { wrapWithDelimiter } from './utils/delimiter';
-export { findChildrenOfType, partitionChildren, isElementOfType } from './utils/children';
 // Component preset data (re-exported from components/presets/ for public API)
-export {
-  PROVIDER_ADAPTATIONS,
-  LANGUAGE_CONVENTIONS,
-  ROLE_PRESETS,
-  TASK_PRESETS,
-  CONSTRAINT_PRESETS,
-  STEPS_PRESETS,
-  DEFAULT_CONSTRAINTS,
-  STANDARD_GUARDRAILS,
-  EDGE_CASE_PRESETS,
-  FALLBACK_PRESETS,
-} from '../components/presets';
 export type { ProviderAdaptations } from '../components/presets';
 export type { RolePresetConfig } from '../components/presets';
 export type { TaskPresetConfig } from '../components/presets';
 export type { ConstraintPresetConfig } from '../components/presets';
 export type { StepsPresetConfig } from '../components/presets';
+export {
+  CONSTRAINT_PRESETS,
+  DEFAULT_CONSTRAINTS,
+  EDGE_CASE_PRESETS,
+  FALLBACK_PRESETS,
+  LANGUAGE_CONVENTIONS,
+  PROVIDER_ADAPTATIONS,
+  ROLE_PRESETS,
+  STANDARD_GUARDRAILS,
+  STEPS_PRESETS,
+  TASK_PRESETS,
+} from '../components/presets';
 
 // Export services
-export { createInputIterator } from './services/input-iterator';
-export type { InputIterator, InputIteratorOptions, OnMissingDefaultStrategy } from './services/input-iterator';
 export { evaluateFormula } from './services/formula-parser';
-export { Transformer } from './services/transformer';
-export { evaluateModule } from './services/module-evaluator';
+export type { InputIterator, InputIteratorOptions, OnMissingDefaultStrategy } from './services/input-iterator';
+export { createInputIterator } from './services/input-iterator';
 export type { EvaluateOptions } from './services/module-evaluator';
-export { preprocessSource, isPromptFile } from './services/preprocessor';
+export { evaluateModule } from './services/module-evaluator';
 export type { PreprocessOptions } from './services/preprocessor';
+export { isPromptFile,preprocessSource } from './services/preprocessor';
+export { Transformer } from './services/transformer';
 
 // Export component discovery (dynamically computed from actual component exports)
 export {
-  getBuiltinComponents,
   getAskComponents,
   getAskShorthand,
+  getBuiltinComponents,
   getStructuralComponents,
 } from './services/component-discovery';
 import { setComponentExportsThunk } from './services/component-discovery';
 
 // Export module loading services
+export type { CompiledPrompt, LoadedLibrary, ParsedPackageSource } from './services/module-loader';
 export { ModuleLoader } from './services/module-loader';
-export type { LoadedLibrary, CompiledPrompt, ParsedPackageSource } from './services/module-loader';
 
 // Export prompt sources
-export { LocalPromptSource, NpmLocalPromptSource, GitHubPromptSource, parseGitHubSource, NpmRegistryPromptSource } from './services/prompt-sources';
 export type { GitHubPromptSourceOptions } from './services/prompt-sources';
+export { GitHubPromptSource, LocalPromptSource, NpmLocalPromptSource, NpmRegistryPromptSource,parseGitHubSource } from './services/prompt-sources';
 
 // Export browser support utilities
-export {
-  resolveCdn,
-  generateImportMap,
-  serializeImportMap,
-  generateImportMapScript,
-  generatePuptLibImportMap,
-  generatePuptLibImportMapScript,
-} from './services/browser-support';
 export type {
-  CdnProvider,
   CdnOptions,
+  CdnProvider,
   Dependency,
   ImportMap,
   PuptLibImportMapOptions,
+} from './services/browser-support';
+export {
+  generateImportMap,
+  generateImportMapScript,
+  generatePuptLibImportMap,
+  generatePuptLibImportMapScript,
+  resolveCdn,
+  serializeImportMap,
 } from './services/browser-support';
 
 // Export built-in components
@@ -143,24 +142,24 @@ export * from '../components';
 export { askBaseSchema, attachRequirement } from '../components/ask/utils';
 
 // Export prompt creation
-export { createPromptFromSource, createPrompt } from './create-prompt';
 export type { CreatePromptOptions } from './create-prompt';
+export { createPrompt,createPromptFromSource } from './create-prompt';
 
 // Export API
-export { Pupt } from './api';
 export type { DiscoveredPromptWithMethods } from './api';
+export { Pupt } from './api';
 
 // Export search engine
-export { createSearchEngine } from './services/search-engine';
 export type { SearchEngine } from './services/search-engine';
+export { createSearchEngine } from './services/search-engine';
 
 // Export file search engine
-export { FileSearchEngine, createFileSearchEngine, loadNodeModules } from './services/file-search-engine';
 export type {
   FileInfo,
-  FileSearchResult,
   FileSearchEngineConfig,
+  FileSearchResult,
 } from './services/file-search-engine';
+export { createFileSearchEngine, FileSearchEngine, loadNodeModules } from './services/file-search-engine';
 
 // Register component exports for dynamic discovery.
 // Uses a thunk (lazy reference) so the namespace object is fully populated

@@ -11,7 +11,7 @@ import {
   ActionIcon,
 } from "@mantine/core";
 import { IconRefresh } from "@tabler/icons-react";
-import type { EnvironmentContext } from "pupt-react";
+import type { EnvironmentContext } from "@pupt/react";
 import { useDemoContext } from "../context/DemoContext";
 
 const MODEL_OPTIONS = [

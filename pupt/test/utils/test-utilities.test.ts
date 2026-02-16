@@ -1,25 +1,24 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { access, readdir,readFile } from 'fs-extra';
 import { join } from 'path';
-import { readFile, access, readdir } from 'fs-extra';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { fixtures } from './fixtures.js';
 import { 
   createMockConfig, 
-  createMockPrompt, 
-  createMockHistoryEntry,
   createMockConsole,
-  createMockSpawn,
-  createMockInquirer,
   createMockFileSystem,
-  createMockGit
-} from './mock-factories.js';
+  createMockGit,
+  createMockHistoryEntry,
+  createMockInquirer,
+  createMockPrompt, 
+  createMockSpawn} from './mock-factories.js';
 import {
-  setupTestEnvironment,
+  captureProcessExit,
   createTestPromptStructure,
-  mockEnvironmentVariables,
   mockDateNow,
-  waitForCondition,
-  captureProcessExit
-} from './test-helpers.js';
-import { fixtures } from './fixtures.js';
+  mockEnvironmentVariables,
+  setupTestEnvironment,
+  waitForCondition} from './test-helpers.js';
 
 describe('Mock Factories', () => {
   describe('createMockConfig', () => {

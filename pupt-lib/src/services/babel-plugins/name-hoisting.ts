@@ -10,7 +10,8 @@
  * The plugin runs BEFORE the JSX transform, so it works with raw JSX elements.
  */
 
-import type { PluginObj, types as BabelTypes, NodePath } from '@babel/core';
+import type { NodePath,PluginObj, types as BabelTypes } from '@babel/core';
+
 import { getStructuralComponents } from '../component-discovery';
 
 // JavaScript reserved words that cannot be used as variable names
@@ -73,9 +74,9 @@ function findNameAttribute(
   t: typeof BabelTypes,
 ): { attr: BabelTypes.JSXAttribute; value: string } | null {
   for (const attr of attributes) {
-    if (!t.isJSXAttribute(attr)) continue;
-    if (!t.isJSXIdentifier(attr.name)) continue;
-    if (attr.name.name !== 'name') continue;
+    if (!t.isJSXAttribute(attr)) {continue;}
+    if (!t.isJSXIdentifier(attr.name)) {continue;}
+    if (attr.name.name !== 'name') {continue;}
 
     const value = getNameValue(attr.value, t);
     if (value) {
@@ -123,7 +124,7 @@ function shouldHoistName(
   }
 
   if (t.isJSXIdentifier(elementName)) {
-    const name = elementName.name;
+    const {name} = elementName;
 
     // Built-in structural components should NOT be hoisted
     // These use `name` for identification, not variable creation

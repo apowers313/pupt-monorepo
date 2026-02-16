@@ -1,8 +1,10 @@
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import fs from 'fs-extra';
 import yaml from 'js-yaml';
-import { logger } from './logger.js';
+
 import { AnnotationMetadata } from '../types/annotations.js';
+import { logger } from './logger.js';
 
 interface AnnotationMigrationResult {
   migrated: number;
@@ -96,7 +98,7 @@ export async function migrateAnnotationsToJson(annotationDir: string): Promise<A
         logger.debug(`Migrated ${mdFile} to ${jsonFile}`);
       } catch (error) {
         result.failed++;
-        const errorMsg = `Failed to migrate ${mdFile}: ${error}`;
+        const errorMsg = `Failed to migrate ${mdFile}: ${error instanceof Error ? error.message : 'unknown error'}`;
         result.errors.push(errorMsg);
         logger.error(errorMsg);
       }

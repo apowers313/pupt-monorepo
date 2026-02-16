@@ -1,6 +1,6 @@
 import type { Config } from '../../src/types/config.js';
-import type { Prompt } from '../../src/types/prompt.js';
 import type { HistoryEntry } from '../../src/types/history.js';
+import type { Prompt } from '../../src/types/prompt.js';
 
 // Sample configurations
 export const fixtures = {

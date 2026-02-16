@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 
 // Helper to read JSON output as plain text
 async function readOutputAsText(outputFile: string): Promise<string> {

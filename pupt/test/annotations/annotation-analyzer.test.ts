@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach,describe, expect, it } from 'vitest';
+
 import { AnnotationAnalyzer } from '../../src/annotations/annotation-analyzer.js';
-import { ParsedAnnotation, StructuredOutcome, IssueIdentified } from '../../src/types/annotations.js';
+import { IssueIdentified,ParsedAnnotation, StructuredOutcome } from '../../src/types/annotations.js';
 
 describe('AnnotationAnalyzer', () => {
   let analyzer: AnnotationAnalyzer;
@@ -174,9 +175,9 @@ describe('AnnotationAnalyzer', () => {
 
       const categorized = analyzer.categorizeIssues(annotations);
 
-      expect(categorized['verification_gap']).toHaveLength(2);
-      expect(categorized['incomplete_task']).toHaveLength(1);
-      expect(categorized['verification_gap'][0].description).toBe('Issue 1');
+      expect(categorized.verification_gap).toHaveLength(2);
+      expect(categorized.incomplete_task).toHaveLength(1);
+      expect(categorized.verification_gap[0].description).toBe('Issue 1');
     });
 
     it('should handle annotations without structured issues', () => {
@@ -228,8 +229,8 @@ describe('AnnotationAnalyzer', () => {
 
       const frequency = analyzer.calculatePatternFrequency(annotations);
 
-      expect(frequency['verification_gap']).toBe(2);
-      expect(frequency['incomplete_task']).toBe(1);
+      expect(frequency.verification_gap).toBe(2);
+      expect(frequency.incomplete_task).toBe(1);
     });
 
     it('should count patterns from both text and structured issues', () => {
@@ -262,7 +263,7 @@ describe('AnnotationAnalyzer', () => {
 
       const frequency = analyzer.calculatePatternFrequency(annotations);
 
-      expect(frequency['verification_gap']).toBe(2);
+      expect(frequency.verification_gap).toBe(2);
     });
   });
 
@@ -375,8 +376,8 @@ describe('AnnotationAnalyzer', () => {
       expect(summary.statusDistribution.success).toBe(1);
       expect(summary.statusDistribution.partial).toBe(1);
       expect(summary.statusDistribution.failure).toBe(1);
-      expect(summary.patternFrequency['verification_gap']).toBe(1);
-      expect(summary.patternFrequency['ambiguous_instruction']).toBe(1);
+      expect(summary.patternFrequency.verification_gap).toBe(1);
+      expect(summary.patternFrequency.ambiguous_instruction).toBe(1);
       expect(summary.commonTags).toContain('feature');
       expect(summary.commonTags).toContain('bug');
     });

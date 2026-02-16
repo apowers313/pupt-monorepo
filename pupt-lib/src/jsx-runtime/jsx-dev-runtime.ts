@@ -1,7 +1,7 @@
 // JSX Development Runtime for pupt-lib
 // Re-exports from main runtime with development extras
 
-import type { PuptElement, PuptNode, ComponentType } from '../types';
+import type { ComponentType,PuptElement, PuptNode } from '../types';
 import { jsx } from './index';
 
 export { Fragment, jsx, jsxs } from './index';

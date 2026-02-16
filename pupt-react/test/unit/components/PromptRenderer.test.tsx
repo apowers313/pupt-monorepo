@@ -2,11 +2,12 @@
  * Tests for PromptRenderer headless component
  */
 
-import { describe, it, expect, vi } from "vitest";
-import { render, waitFor, act } from "@testing-library/react";
+import { act,render, waitFor } from "@testing-library/react";
 import React from "react";
-import { PuptProvider } from "../../../src/components/PuptProvider";
+import { describe, expect, it, vi } from "vitest";
+
 import { PromptRenderer } from "../../../src/components/PromptRenderer";
+import { PuptProvider } from "../../../src/components/PuptProvider";
 import type { PromptRendererRenderProps } from "../../../src/types/components";
 
 describe("PromptRenderer", () => {
@@ -42,7 +43,7 @@ describe("PromptRenderer", () => {
           autoRender
         >
           {(props) => {
-            if (props.isLoading) sawLoading = true;
+            if (props.isLoading) {sawLoading = true;}
             return <div>{props.isLoading ? "Loading..." : "Done"}</div>;
           }}
         </PromptRenderer>

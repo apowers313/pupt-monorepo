@@ -1,13 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
-import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import { PatternDetector } from '../../src/services/pattern-detector.js';
-import type { Config } from '../../src/types/index.js';
+import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
 import type { EnhancedHistoryEntry } from '../../src/types/history.js';
+import type { Config } from '../../src/types/index.js';
 
 let testDir: string;
 
@@ -56,9 +57,9 @@ describe('Full Review Flow Integration', () => {
 
       await fs.ensureDir('.prompts');
       await fs.writeJson(path.join(testDir, 'config.json'), config);
-      await fs.ensureDir(config.historyDir!);
-      await fs.ensureDir(config.annotationDir!);
-      await fs.ensureDir(config.outputCapture!.directory!);
+      await fs.ensureDir(config.historyDir);
+      await fs.ensureDir(config.annotationDir);
+      await fs.ensureDir(config.outputCapture!.directory);
 
       // Create a test prompt
       const promptContent = `---
@@ -70,7 +71,7 @@ Execute this test: {{input}}`;
       await fs.writeFile('.prompts/test-prompt.md', promptContent);
 
       // Step 1: Simulate execution with output capture
-      const historyManager = new HistoryManager(config.historyDir!, config.annotationDir);
+      const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
       const outputCaptureService = new OutputCaptureService({
         outputDirectory: config.outputCapture!.directory,
         maxOutputSize: (config.outputCapture!.maxSizeMB || 10) * 1024 * 1024
@@ -83,7 +84,7 @@ ERROR: Test failed!
 Completed with errors.`;
 
       const timestamp = new Date();
-      const outputFile = path.join(config.outputCapture!.directory!, `output-${Date.now()}.txt`);
+      const outputFile = path.join(config.outputCapture!.directory, `output-${Date.now()}.txt`);
       await fs.writeFile(outputFile, outputContent);
 
       // Save enhanced history entry
@@ -150,7 +151,7 @@ Completed with errors.`;
         notes: 'Auto-detected: ERROR pattern found in output'
       };
 
-      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+      const annotationFile = path.join(config.annotationDir, `${path.basename(historyFile, '.json')}.annotation.json`);
       await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
 
       // Step 3: Review data generation
@@ -238,9 +239,9 @@ Completed with errors.`;
 
       await fs.ensureDir('.prompts');
       await fs.writeJson(path.join(testDir, 'config.json'), config);
-      await fs.ensureDir(config.historyDir!);
-      await fs.ensureDir(config.annotationDir!);
-      await fs.ensureDir(config.outputCapture!.directory!);
+      await fs.ensureDir(config.historyDir);
+      await fs.ensureDir(config.annotationDir);
+      await fs.ensureDir(config.outputCapture!.directory);
 
       // Create analysis prompt
       const analysisPromptContent = `---
@@ -273,10 +274,10 @@ Output file: {{outputFile}}`;
 
       await fs.ensureDir('.prompts');
       await fs.writeJson(path.join(testDir, 'config.json'), config);
-      await fs.ensureDir(config.historyDir!);
-      await fs.ensureDir(config.annotationDir!);
+      await fs.ensureDir(config.historyDir);
+      await fs.ensureDir(config.annotationDir);
 
-      const historyManager = new HistoryManager(config.historyDir!, config.annotationDir);
+      const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
 
       // Create multiple history entries with similar issues
       for (let i = 0; i < 5; i++) {
@@ -316,7 +317,7 @@ Output file: {{outputFile}}`;
           notes: 'Tests still failing after AI claimed success'
         };
 
-        const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+        const annotationFile = path.join(config.annotationDir, `${path.basename(historyFile, '.json')}.annotation.json`);
         await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
       }
 
@@ -352,8 +353,8 @@ Output file: {{outputFile}}`;
 
       await fs.ensureDir('.prompts');
       await fs.writeJson(path.join(testDir, 'config.json'), config);
-      await fs.ensureDir(config.historyDir!);
-      await fs.ensureDir(config.annotationDir!);
+      await fs.ensureDir(config.historyDir);
+      await fs.ensureDir(config.annotationDir);
 
       // Create test prompt
       const promptContent = `---
@@ -365,7 +366,7 @@ Test the CLI review command`;
       await fs.writeFile('.prompts/cli-test.md', promptContent);
 
       // Create history entry
-      const historyManager = new HistoryManager(config.historyDir!, config.annotationDir);
+      const historyManager = new HistoryManager(config.historyDir, config.annotationDir);
       const timestamp = new Date();
       const historyFile = await historyManager.savePrompt({
         timestamp,
@@ -384,7 +385,7 @@ Test the CLI review command`;
         notes: 'Test completed successfully'
       };
 
-      const annotationFile = path.join(config.annotationDir!, `${path.basename(historyFile, '.json')}.annotation.json`);
+      const annotationFile = path.join(config.annotationDir, `${path.basename(historyFile, '.json')}.annotation.json`);
       await fs.writeJson(annotationFile, annotationData, { spaces: 2 });
 
       // Import and run the review command

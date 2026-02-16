@@ -12,21 +12,21 @@ export * from './meta';
 // Ask components - explicit exports to avoid naming conflicts
 export {
   Ask,
-  AskOption,
-  AskLabel,
-  AskText,
-  AskNumber,
-  AskSelect,
-  AskConfirm,
-  AskEditor,
-  AskMultiSelect,
-  AskFile,
-  AskPath,
-  AskDate,
-  AskSecret,
   AskChoice,
+  AskConfirm,
+  AskDate,
+  AskEditor,
+  AskFile,
+  AskLabel,
+  AskMultiSelect,
+  AskNumber,
+  AskOption,
+  AskPath,
   AskRating,
   AskReviewFile,
+  AskSecret,
+  AskSelect,
+  AskText,
 } from './ask';
 
 // Control flow components

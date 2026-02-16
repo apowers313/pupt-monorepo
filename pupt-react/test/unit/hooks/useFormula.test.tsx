@@ -2,11 +2,12 @@
  * Tests for useFormula hook
  */
 
-import { describe, it, expect } from "vitest";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { useFormula } from "../../../src/hooks/useFormula";
+import { describe, expect,it } from "vitest";
+
 import { PuptProvider } from "../../../src/components/PuptProvider";
+import { useFormula } from "../../../src/hooks/useFormula";
 
 function createWrapper() {
   return function Wrapper({ children }: { children: ReactNode }) {

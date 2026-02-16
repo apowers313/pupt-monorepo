@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { initCommand } from '../../src/commands/init.js';
-import fs from 'fs-extra';
-import path from 'path';
-import os from 'os';
 import * as inquirerPrompts from '@inquirer/prompts';
+import fs from 'fs-extra';
+import os from 'os';
+import path from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { initCommand } from '../../src/commands/init.js';
 import { logger } from '../../src/utils/logger.js';
 
 // Mock inquirer prompts

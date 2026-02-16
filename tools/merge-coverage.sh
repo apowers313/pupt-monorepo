@@ -7,7 +7,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 cd "$ROOT_DIR"
 
-PACKAGES=("pupt" "pupt-lib" "pupt-react" "pupt-sde")
+PACKAGES=("pupt" "pupt-lib" "pupt-react" "pupt-sde-prompts")
 COVERAGE_DIR=".coverage-packages"
 OUTPUT_DIR="coverage"
 

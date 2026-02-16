@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { HistoryManager } from '../../src/history/history-manager.js';
 import fs from 'fs-extra';
 import * as path from 'path';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { HistoryManager } from '../../src/history/history-manager.js';
 import { logger } from '../../src/utils/logger.js';
 
 vi.mock('fs-extra');
@@ -68,7 +69,7 @@ describe('HistoryManager', () => {
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
       const filePath = writeCall[0] as string;
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       // Check filename format (now using local time, not UTC)
       expect(filename).toMatch(/^\d{8}-\d{6}-[a-f0-9]{8}\.json$/);
@@ -101,7 +102,7 @@ describe('HistoryManager', () => {
       const writeCall = writeJsonMock.mock.calls[0];
       expect(writeCall).toBeDefined();
       
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       // Check that sensitive values are masked
       expect(entry.variables.password).toBe('***');
@@ -633,7 +634,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution).toBeDefined();
       expect(entry.execution.output_file).toBe('outputs/output.json');
@@ -652,7 +653,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution).toBeDefined();
       expect(entry.execution.duration_ms).toBe(5000);
@@ -671,7 +672,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution).toBeDefined();
       expect(entry.execution.exit_code).toBe(0);
@@ -693,7 +694,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution).toEqual({
         output_file: 'outputs/output.json',
@@ -715,7 +716,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.execution).toBeUndefined();
     });
@@ -735,7 +736,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.rerun).toBe('20240110-090000-abcd1234.json');
     });
@@ -752,7 +753,7 @@ describe('HistoryManager', () => {
       await manager.savePrompt(options);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const entry = writeCall[1] as any;
+      const entry = writeCall[1];
 
       expect(entry.rerun).toBeUndefined();
     });
@@ -1041,7 +1042,7 @@ describe('HistoryManager', () => {
       await annotationManager.saveAnnotation(historyEntry, metadata);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const data = writeCall[1] as any;
+      const data = writeCall[1];
 
       expect(data.notes).toBe('Auto-generated annotation');
     });
@@ -1067,7 +1068,7 @@ describe('HistoryManager', () => {
       await annotationManager.saveAnnotation(historyEntry, metadata);
 
       const writeCall = vi.mocked(fs.writeJson).mock.calls[0];
-      const data = writeCall[1] as any;
+      const data = writeCall[1];
 
       expect(data.notes).toBe('');
     });

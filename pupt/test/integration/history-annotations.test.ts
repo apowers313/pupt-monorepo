@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+import { vi } from 'vitest';
+
 import { HistoryManager } from '../../src/history/history-manager.js';
 import { Config } from '../../src/types/config.js';
-import { vi } from 'vitest';
 import * as logger from '../../src/utils/logger.js';
 
 let testDir: string;

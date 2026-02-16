@@ -2,12 +2,13 @@
  * Tests for usePromptRender hook
  */
 
-import { describe, it, expect } from "vitest";
-import { renderHook, waitFor, act } from "@testing-library/react";
+import { TYPE } from "@pupt/lib";
+import { act,renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { usePromptRender } from "../../../src/hooks/usePromptRender";
+import { describe, expect,it } from "vitest";
+
 import { PuptProvider } from "../../../src/components/PuptProvider";
-import { TYPE } from "pupt-lib";
+import { usePromptRender } from "../../../src/hooks/usePromptRender";
 
 // Helper to create wrapper with PuptProvider
 function createWrapper() {

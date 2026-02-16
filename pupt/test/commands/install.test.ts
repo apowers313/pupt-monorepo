@@ -1,7 +1,9 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+
 import fs2 from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { logger } from '../../src/utils/logger.js';
 
 let testDir: string;
@@ -45,13 +47,14 @@ vi.mock('../../src/services/package-manager.js', () => ({
 }));
 
 // Now import after mocking
-import { validateGitUrl, extractRepoName, installFromGit, isNpmPackage, validateNpmPackage, installFromNpm } from '../../src/commands/install.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
 import simpleGit from 'simple-git';
+
+import { extractRepoName, installFromGit, installFromNpm,isNpmPackage, validateGitUrl, validateNpmPackage } from '../../src/commands/install.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
 
 vi.mock('fs/promises');
 vi.mock('../../src/config/config-manager.js', async (importOriginal) => {
-  const original = await importOriginal() as typeof import('../../src/config/config-manager.js');
+  const original = await importOriginal();
   return {
     ...original,
     ConfigManager: {

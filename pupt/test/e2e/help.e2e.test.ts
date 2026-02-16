@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import { E2eTestEnvironment } from './e2e-env.js';
 
 describe('pt help E2E', () => {

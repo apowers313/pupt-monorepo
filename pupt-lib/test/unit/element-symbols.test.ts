@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { jsx, Fragment } from '../../src/jsx-runtime';
-import { TYPE, PROPS, CHILDREN, isPuptElement } from '../../src';
+import { describe, expect,it } from 'vitest';
+
+import { CHILDREN, isPuptElement,PROPS, TYPE } from '../../src';
+import { Fragment,jsx } from '../../src/jsx-runtime';
 
 describe('Element symbols', () => {
   it('should use symbols for internal properties', () => {

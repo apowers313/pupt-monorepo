@@ -1,20 +1,22 @@
+import { spawn } from 'node:child_process';
+import crypto from 'node:crypto';
+import * as path from 'node:path';
+
+import { confirm } from '@inquirer/prompts';
+import chalk from 'chalk';
+import { pathExists } from 'fs-extra';
+
 import { ConfigManager } from '../config/config-manager.js';
 import { HistoryManager } from '../history/history-manager.js';
+import { buildModuleEntries } from '../services/module-entry-builder.js';
+import { OutputCaptureService } from '../services/output-capture-service.js';
 import { resolvePrompt } from '../services/prompt-resolver.js';
-import { spawn } from 'node:child_process';
-import chalk from 'chalk';
-import { confirm } from '@inquirer/prompts';
+import type { Config } from '../types/config.js';
+import { DateFormats } from '../utils/date-formatter.js';
+import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import * as path from 'node:path';
-import { pathExists } from 'fs-extra';
-import { editorLauncher } from '../utils/editor.js';
-import { OutputCaptureService } from '../services/output-capture-service.js';
-import { DateFormats } from '../utils/date-formatter.js';
-import type { Config } from '../types/config.js';
-import crypto from 'node:crypto';
-import { isInteractiveTUI, getToolByCommand } from '../utils/tool-detection.js';
-import { buildModuleEntries } from '../services/module-entry-builder.js';
+import { getToolByCommand,isInteractiveTUI } from '../utils/tool-detection.js';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -80,7 +82,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
   
   // Load configuration
   const configResult = await ConfigManager.loadWithPath();
-  const config = configResult.config;
+  const {config} = configResult;
   
   // Parse arguments
   const { tool, toolArgs, extraArgs } = parseRunArgs(args);
@@ -276,7 +278,7 @@ async function executeToolWithCapture(
   isTUI: boolean = false
 ): Promise<{ exitCode: number | null; outputFile?: string; outputSize?: number }> {
   const outputCapture = new OutputCaptureService({
-    outputDirectory: config.outputCapture?.directory || config.historyDir!,
+    outputDirectory: config.outputCapture?.directory ?? config.historyDir ?? '',
     maxOutputSize: (config.outputCapture?.maxSizeMB || 10) * 1024 * 1024
   });
 
@@ -284,7 +286,7 @@ async function executeToolWithCapture(
   const { dateStr, timeStr, randomSuffix } = filenameComponents;
   const outputFilename = `${dateStr}-${timeStr}-${randomSuffix}-output.json`;
   const outputPath = path.join(
-    config.outputCapture?.directory || config.historyDir!,
+    config.outputCapture?.directory ?? config.historyDir ?? '',
     outputFilename
   );
 
@@ -403,7 +405,7 @@ async function executeTool(tool: string, args: string[], prompt: string, isTUI: 
 }
 
 async function handlePostRunReviews(reviewFiles: Array<{ name: string; value: unknown }>, config: Config, isAutoRun?: boolean): Promise<void> {
-  logger.log(chalk.dim('\n' + '─'.repeat(60)));
+  logger.log(chalk.dim(`\n${  '─'.repeat(60)}`));
   
   for (const { name, value } of reviewFiles) {
     const filePath = String(value);

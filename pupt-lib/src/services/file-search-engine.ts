@@ -17,8 +17,8 @@ let osModule: OsModule | null = null;
  * Safe to call multiple times (subsequent calls are no-ops).
  */
 export async function loadNodeModules(): Promise<void> {
-  if (isBrowser) return;
-  if (pathModule && fsModule && osModule) return;
+  if (isBrowser) {return;}
+  if (pathModule && fsModule && osModule) {return;}
 
   const [p, f, o] = await Promise.all([
     import('path'),
@@ -53,9 +53,9 @@ function getNodeModules(): { path: PathModule; fs: FsModule; os: OsModule } {
  * @internal
  */
 export function _injectModulesForTesting(mocks: { path?: PathModule; fs?: FsModule; os?: OsModule }): void {
-  if (mocks.path) pathModule = mocks.path;
-  if (mocks.fs) fsModule = mocks.fs;
-  if (mocks.os) osModule = mocks.os;
+  if (mocks.path) {pathModule = mocks.path;}
+  if (mocks.fs) {fsModule = mocks.fs;}
+  if (mocks.os) {osModule = mocks.os;}
 }
 
 /**
@@ -214,7 +214,7 @@ export class FileSearchEngine {
    * @returns Normalized path
    */
   normalizePathInput(input: string): string {
-    if (!input) return '';
+    if (!input) {return '';}
 
     const { path, os } = getNodeModules();
 
@@ -358,7 +358,7 @@ export class FileSearchEngine {
   }
 
   private matchesFilter(name: string, ext: string): boolean {
-    if (!this.filter) return true;
+    if (!this.filter) {return true;}
 
     // Simple glob-like matching
     if (this.filter.startsWith('*.')) {
@@ -377,7 +377,7 @@ export class FileSearchEngine {
       const term = caseSensitive ? searchTerm : searchTerm.toLowerCase();
 
       // Prefix matching (highest priority)
-      if (name.startsWith(term)) return true;
+      if (name.startsWith(term)) {return true;}
 
       // Fuzzy matching
       return this.fuzzyMatch(name, term);
@@ -390,12 +390,12 @@ export class FileSearchEngine {
       const bStarts = b.name.toLowerCase().startsWith(termLower);
 
       // Prioritize exact prefix matches
-      if (aStarts && !bStarts) return -1;
-      if (!aStarts && bStarts) return 1;
+      if (aStarts && !bStarts) {return -1;}
+      if (!aStarts && bStarts) {return 1;}
 
       // Then directories first
-      if (a.isDirectory && !b.isDirectory) return -1;
-      if (!a.isDirectory && b.isDirectory) return 1;
+      if (a.isDirectory && !b.isDirectory) {return -1;}
+      if (!a.isDirectory && b.isDirectory) {return 1;}
 
       // Then alphabetically
       return a.name.localeCompare(b.name);
@@ -408,8 +408,8 @@ export class FileSearchEngine {
   private sortResults(files: FileInfo[]): FileInfo[] {
     return files.sort((a, b) => {
       // Directories first
-      if (a.isDirectory && !b.isDirectory) return -1;
-      if (!a.isDirectory && b.isDirectory) return 1;
+      if (a.isDirectory && !b.isDirectory) {return -1;}
+      if (!a.isDirectory && b.isDirectory) {return 1;}
 
       // Then alphabetically
       return a.name.localeCompare(b.name);

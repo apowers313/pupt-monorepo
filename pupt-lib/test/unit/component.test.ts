@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
-import { Component, isComponentClass, COMPONENT_MARKER } from '../../src/component';
+import { describe, expect,it } from 'vitest';
+
+import { Component, COMPONENT_MARKER,isComponentClass } from '../../src/component';
 import type { RenderContext } from '../../src/types';
 
 class TestComponent extends Component<{ name: string }> {

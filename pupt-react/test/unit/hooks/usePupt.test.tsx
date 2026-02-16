@@ -2,12 +2,13 @@
  * Tests for usePupt hook
  */
 
-import { describe, it, expect } from "vitest";
+import type { SearchablePrompt } from "@pupt/lib";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { usePupt } from "../../../src/hooks/usePupt";
+import { describe, expect,it } from "vitest";
+
 import { PuptProvider } from "../../../src/components/PuptProvider";
-import type { SearchablePrompt } from "pupt-lib";
+import { usePupt } from "../../../src/hooks/usePupt";
 
 describe("usePupt", () => {
   it("should throw when used outside provider", () => {

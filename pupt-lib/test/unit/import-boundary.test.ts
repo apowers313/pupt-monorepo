@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
-import { resolve, relative } from 'path';
 import { globSync } from 'glob';
+import { relative,resolve } from 'path';
+import { describe, expect,it } from 'vitest';
 
 describe('Import boundary: src/ must not import from components/', () => {
   const srcDir = resolve(__dirname, '../../src');

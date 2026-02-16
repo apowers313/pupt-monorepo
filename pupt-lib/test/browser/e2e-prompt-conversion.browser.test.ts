@@ -2,25 +2,26 @@
  * Browser end-to-end tests for .tsx and .prompt file conversion.
  * These tests run in a real Chromium browser via Playwright.
  */
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx, jsxs, Fragment } from '../../src/jsx-runtime';
-import { Prompt } from '../../components/structural/Prompt';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
-import { Section } from '../../components/structural/Section';
-import { Context } from '../../components/structural/Context';
-import { Constraint } from '../../components/structural/Constraint';
-import { If } from '../../components/control/If';
+import { describe, expect,it } from 'vitest';
+
 import { ForEach } from '../../components/control/ForEach';
+import { If } from '../../components/control/If';
 import { Code } from '../../components/data/Code';
-import { Steps } from '../../components/reasoning/Steps';
-import { Step } from '../../components/reasoning/Step';
 import { Example } from '../../components/examples/Example';
-import { Examples } from '../../components/examples/Examples';
-import { PROPS } from '../../src/types/symbols';
 import { ExampleInput } from '../../components/examples/ExampleInput';
 import { ExampleOutput } from '../../components/examples/ExampleOutput';
+import { Examples } from '../../components/examples/Examples';
+import { Step } from '../../components/reasoning/Step';
+import { Steps } from '../../components/reasoning/Steps';
+import { Constraint } from '../../components/structural/Constraint';
+import { Context } from '../../components/structural/Context';
+import { Prompt } from '../../components/structural/Prompt';
+import { Role } from '../../components/structural/Role';
+import { Section } from '../../components/structural/Section';
+import { Task } from '../../components/structural/Task';
+import { Fragment,jsx, jsxs } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
+import { PROPS } from '../../src/types/symbols';
 
 /**
  * Helper to transform and evaluate TSX source in the browser using babel-standalone.
@@ -40,7 +41,7 @@ async function createPromptFromSourceBrowser(
     plugins: [
       ['transform-react-jsx', {
         runtime: 'automatic',
-        importSource: 'pupt-lib',
+        importSource: '@pupt/lib',
       }],
     ],
   });
@@ -51,8 +52,8 @@ async function createPromptFromSourceBrowser(
 
   // Process the transformed code - remove imports and replace export default
   const processedCode = result.code
-    .replace(/import\s*\{[^}]*\}\s*from\s*["']pupt-lib\/jsx-runtime["'];?/g, '')
-    .replace(/import\s*\{[^}]*\}\s*from\s*["']pupt-lib["'];?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*["']@pupt\/lib\/jsx-runtime["'];?/g, '')
+    .replace(/import\s*\{[^}]*\}\s*from\s*["']@pupt\/lib["'];?/g, '')
     .replace(/export\s+default\s+/g, 'exports.default = ');
 
   // Create evaluation context with jsx runtime and components

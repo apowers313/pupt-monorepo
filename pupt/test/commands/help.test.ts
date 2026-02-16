@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { helpCommand } from '../../src/commands/help.js';
 import { program } from 'commander';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { helpCommand } from '../../src/commands/help.js';
 
 // Mock the logger module
 vi.mock('../../src/utils/logger.js', () => ({

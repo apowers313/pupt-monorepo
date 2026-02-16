@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { InputIterator, InputRequirement, ValidationResult } from 'pupt-lib';
+import type { InputIterator, InputRequirement, ValidationResult } from '@pupt/lib';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
 
 // Mock @inquirer/prompts
 vi.mock('@inquirer/prompts', () => ({
@@ -21,9 +21,10 @@ vi.mock('../../src/prompts/input-types/review-file-prompt.js', () => ({
   reviewFilePrompt: vi.fn(),
 }));
 
-import { collectInputs } from '../../src/services/input-collector.js';
-import { input, editor } from '@inquirer/prompts';
+import { editor,input } from '@inquirer/prompts';
+
 import { fileSearchPrompt } from '../../src/prompts/input-types/file-search-prompt.js';
+import { collectInputs } from '../../src/services/input-collector.js';
 
 const mockedInput = vi.mocked(input);
 const mockedEditor = vi.mocked(editor);

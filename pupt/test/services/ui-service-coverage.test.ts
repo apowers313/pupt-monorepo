@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { ConsoleUI, LogLevel } from '../../src/services/ui-service';
 import { logger } from '../../src/utils/logger.js';
 

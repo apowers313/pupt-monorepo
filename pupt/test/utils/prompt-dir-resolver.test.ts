@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
-import { findLocalPromptsDir } from '../../src/utils/prompt-dir-resolver.js';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { clearProjectRootCache } from '../../src/utils/project-root.js';
+import { findLocalPromptsDir } from '../../src/utils/prompt-dir-resolver.js';
 
 describe('prompt-dir-resolver', () => {
   let tempDir: string;

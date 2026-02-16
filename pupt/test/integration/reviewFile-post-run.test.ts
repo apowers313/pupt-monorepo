@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import path, { join } from 'path';
-import { mkdtemp, rm, writeFile, mkdir } from 'fs/promises';
-import { tmpdir } from 'os';
-import { existsSync } from 'fs';
-import { spawn } from 'child_process';
 import { confirm, search } from '@inquirer/prompts';
+import { spawn } from 'child_process';
+import { existsSync } from 'fs';
+import { mkdir,mkdtemp, rm, writeFile } from 'fs/promises';
+import { tmpdir } from 'os';
+import path, { join } from 'path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { editorLauncher } from '../../src/utils/editor.js';
 
 let testDir: string;

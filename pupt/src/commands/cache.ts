@@ -1,6 +1,7 @@
 import chalk from 'chalk';
-import { ModuleCache } from '../services/module-cache.js';
+
 import { getCacheDir } from '../config/global-paths.js';
+import { ModuleCache } from '../services/module-cache.js';
 import { logger } from '../utils/logger.js';
 
 export interface CacheCommandOptions {

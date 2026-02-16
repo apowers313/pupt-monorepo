@@ -109,14 +109,14 @@ export function resolveCdn(
  * @example
  * ```typescript
  * const deps = [
- *   { name: 'pupt-lib', version: '1.0.0' },
+ *   { name: '@pupt/lib', version: '1.0.0' },
  *   { name: '@acme/prompts', version: '2.0.0' },
  * ];
  *
  * const importMap = generateImportMap(deps, { cdn: 'esm.sh' });
  * // => {
  * //      imports: {
- * //        'pupt-lib': 'https://esm.sh/pupt-lib@1.0.0',
+ * //        '@pupt/lib': 'https://esm.sh/pupt-lib@1.0.0',
  * //        '@acme/prompts': 'https://esm.sh/@acme/prompts@2.0.0'
  * //      }
  * //    }
@@ -234,8 +234,8 @@ export interface PuptLibImportMapOptions {
  * <script type="importmap">
  *   {
  *     "imports": {
- *       "pupt-lib": "https://esm.sh/pupt-lib@1.1.0",
- *       "pupt-lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime"
+ *       "@pupt/lib": "https://esm.sh/pupt-lib@1.1.0",
+ *       "@pupt/lib/jsx-runtime": "https://esm.sh/pupt-lib@1.1.0/jsx-runtime"
  *     }
  *   }
  * </script>
@@ -257,12 +257,12 @@ export function generatePuptLibImportMap(
   const imports: Record<string, string> = {};
 
   // pupt-lib main entry
-  const puptLibUrl = resolveCdn('pupt-lib', puptLibVersion, cdnOptions);
-  imports['pupt-lib'] = puptLibUrl;
+  const puptLibUrl = resolveCdn('@pupt/lib', puptLibVersion, cdnOptions);
+  imports['@pupt/lib'] = puptLibUrl;
 
   // pupt-lib/jsx-runtime subpath
   // Most CDNs support subpath exports, so we construct the URL directly
-  imports['pupt-lib/jsx-runtime'] = `${puptLibUrl}/jsx-runtime`;
+  imports['@pupt/lib/jsx-runtime'] = `${puptLibUrl}/jsx-runtime`;
 
   // Add any additional dependencies
   for (const dep of additionalDependencies) {

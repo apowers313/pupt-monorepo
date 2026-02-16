@@ -1,8 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import * as path from 'node:path';
 import * as nodeFs from 'node:fs/promises';
 import * as os from 'node:os';
+import * as path from 'node:path';
+
 import fs from 'fs-extra';
+import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { GlobalPackageManager } from '../../src/services/package-manager.js';
 
 // Mock execa

@@ -20,8 +20,14 @@ pupt-lib is a TypeScript library for creating AI prompts using JSX syntax. It pr
 ## Commands
 
 ```bash
+# From monorepo root (preferred):
+pnpm exec nx run @pupt/lib:build     # Build this package
+pnpm exec nx run @pupt/lib:test      # Run tests
+pnpm exec nx run @pupt/lib:lint      # Lint
+
+# From this directory:
 npm run build        # Build with Vite (outputs to dist/)
-npm run lint         # ESLint + TypeScript type checking + Knip (unused code)
+npm run lint         # ESLint + TypeScript type checking
 npm run lint:fix     # Auto-fix linting issues
 npm run test         # Run all tests (node + browser)
 npm run test:node    # Run only Node.js tests
@@ -35,7 +41,7 @@ npm run prompt       # Interactive CLI (examples/cli.ts) to run prompts from ./t
 ## Architecture
 
 ### JSX Runtime (`src/jsx-runtime/`)
-Custom JSX runtime that transforms JSX into `PuptElement` trees. Configure in tsconfig.json with `jsxImportSource: "pupt-lib"`. The runtime exports `jsx`, `jsxs`, and `Fragment`.
+Custom JSX runtime that transforms JSX into `PuptElement` trees. Configure in tsconfig.json with `jsxImportSource: "@pupt/lib"`. The runtime exports `jsx`, `jsxs`, and `Fragment`.
 
 ### Core Types (`src/types/`)
 - `PuptElement<P>` - JSX element with type, props, and children
@@ -53,7 +59,7 @@ Traverses `PuptElement` tree and converts to string. Handles Fragments, class co
 Maps string names to component classes. `defaultRegistry` is auto-populated with all built-in components. Used when JSX type is a string (e.g., from transformed code).
 
 ### Built-in Components (`components/`)
-Built-in components live in the top-level `components/` directory (not `src/`). Component files MUST only import from `pupt-lib` (the public API) or sibling directories within `components/` (e.g., `../presets`), never internal `src/` paths. This ensures built-in components use the exact same API as external/third-party components.
+Built-in components live in the top-level `components/` directory (not `src/`). Component files MUST only import from `@pupt/lib` (the public API) or sibling directories within `components/` (e.g., `../presets`), never internal `src/` paths. This ensures built-in components use the exact same API as external/third-party components.
 
 **Import boundary**: Code in `src/` must NEVER import from `components/` except in `src/index.ts` (the barrel file that re-exports components as public API). The `src/services/component-discovery.ts` module dynamically discovers component names from the actual exports rather than hardcoding them.
 
@@ -87,11 +93,11 @@ High-level `Pupt` class for loading prompt libraries, discovering prompts, and s
 ## Package Exports
 
 ```typescript
-import { render, Component, Prompt, Role, ... } from 'pupt-lib';
-import { jsx, jsxs, Fragment } from 'pupt-lib/jsx-runtime';
+import { render, Component, Prompt, Role, ... } from '@pupt/lib';
+import { jsx, jsxs, Fragment } from '@pupt/lib/jsx-runtime';
 ```
 
-The Babel preset (`pupt-lib/babel-preset`) configures JSX transformation for build tools.
+The Babel preset (`@pupt/lib/babel-preset`) configures JSX transformation for build tools.
 
 ## Testing
 

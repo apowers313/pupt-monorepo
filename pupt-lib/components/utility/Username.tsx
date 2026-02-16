@@ -1,16 +1,15 @@
-import { z } from 'zod';
-import { Component } from 'pupt-lib';
-import type { PuptNode, RenderContext } from 'pupt-lib';
+import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
+import { z } from "zod";
 
 export const usernameSchema = z.object({}).passthrough();
 
 type UsernameProps = z.infer<typeof usernameSchema>;
 
 export class Username extends Component<UsernameProps> {
-  static schema = usernameSchema;
+    static schema = usernameSchema;
 
-  render(_props: UsernameProps, _resolvedValue: void, context: RenderContext): PuptNode {
-    // Use the username from runtime config (already handles browser/Node detection)
-    return context.env.runtime.username ?? 'anonymous';
-  }
+    render(_props: UsernameProps, _resolvedValue: undefined, context: RenderContext): PuptNode {
+        // Use the username from runtime config (already handles browser/Node detection)
+        return context.env.runtime.username ?? "anonymous";
+    }
 }

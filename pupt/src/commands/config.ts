@@ -1,8 +1,9 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
+
 import { ConfigManager } from '../config/config-manager.js';
+import { getCacheDir,getConfigDir, getDataDir } from '../config/global-paths.js';
 import { logger } from '../utils/logger.js';
-import { getConfigDir, getDataDir, getCacheDir } from '../config/global-paths.js';
 
 export interface ConfigCommandOptions {
   show?: boolean;
@@ -13,7 +14,7 @@ export interface ConfigCommandOptions {
  */
 async function showConfig(): Promise<void> {
   const result = await ConfigManager.loadWithPath();
-  const config = result.config;
+  const {config} = result;
 
   logger.log(chalk.bold('\nCurrent Configuration'));
   logger.log(chalk.dim('\u2500'.repeat(50)));

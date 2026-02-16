@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { InputIterator, InputRequirement, ValidationResult } from 'pupt-lib';
+import type { InputIterator, InputRequirement, ValidationResult } from '@pupt/lib';
+import { beforeEach,describe, expect, it, vi } from 'vitest';
 
 // Mock @inquirer/prompts
 vi.mock('@inquirer/prompts', () => ({

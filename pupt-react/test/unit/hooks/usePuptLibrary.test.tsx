@@ -2,11 +2,12 @@
  * Unit tests for usePuptLibrary hook
  */
 
-import { describe, it, expect } from "vitest";
-import { renderHook, act, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import React from "react";
-import { usePuptLibrary } from "../../../src/hooks/usePuptLibrary";
+import { describe, expect,it } from "vitest";
+
 import { PuptLibraryProvider } from "../../../src/components/PuptLibraryProvider";
+import { usePuptLibrary } from "../../../src/hooks/usePuptLibrary";
 import { usePuptLibraryContext } from "../../../src/hooks/usePuptLibraryContext";
 
 describe("usePuptLibrary", () => {

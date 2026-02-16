@@ -30,7 +30,7 @@ export function customComponentInjectionPlugin(
     visitor: {
       Program: {
         exit(path) {
-          const opts = (this as unknown as { opts: PluginOptions }).opts;
+          const {opts} = (this as unknown as { opts: PluginOptions });
           const { componentNames, globalKey } = opts;
 
           if (!componentNames || componentNames.length === 0) {

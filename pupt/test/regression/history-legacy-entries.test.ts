@@ -8,14 +8,16 @@
  * This ensures users don't lose access to their existing history when upgrading.
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { historyCommand } from '../../src/commands/history.js';
-import { HistoryManager } from '../../src/history/history-manager.js';
-import { ConfigManager } from '../../src/config/config-manager.js';
-import { logger } from '../../src/utils/logger.js';
-import * as gitInfo from '../../src/utils/git-info.js';
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import fs from 'fs-extra';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { historyCommand } from '../../src/commands/history.js';
+import { ConfigManager } from '../../src/config/config-manager.js';
+import { HistoryManager } from '../../src/history/history-manager.js';
+import * as gitInfo from '../../src/utils/git-info.js';
+import { logger } from '../../src/utils/logger.js';
 
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/history/history-manager.js');
@@ -107,7 +109,7 @@ describe('History Legacy Entries - Command Level Tests', () => {
 
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockImplementation(async (_limit, filterOptions) => {
-          if (!filterOptions) return mockEntries;
+          if (!filterOptions) {return mockEntries;}
 
           return mockEntries.filter(entry => {
             const env = (entry as any).environment;
@@ -125,7 +127,7 @@ describe('History Legacy Entries - Command Level Tests', () => {
           });
         }),
         getTotalCount: vi.fn().mockImplementation(async (filterOptions) => {
-          if (!filterOptions) return mockEntries.length;
+          if (!filterOptions) {return mockEntries.length;}
 
           return mockEntries.filter(entry => {
             const env = (entry as any).environment;
@@ -196,7 +198,7 @@ describe('History Legacy Entries - Command Level Tests', () => {
 
       vi.mocked(HistoryManager).mockImplementation(() => ({
         listHistory: vi.fn().mockImplementation(async (_limit, filterOptions) => {
-          if (!filterOptions) return mockEntries;
+          if (!filterOptions) {return mockEntries;}
 
           return mockEntries.filter(entry => {
             const env = (entry as any).environment;
@@ -213,7 +215,7 @@ describe('History Legacy Entries - Command Level Tests', () => {
           });
         }),
         getTotalCount: vi.fn().mockImplementation(async (filterOptions) => {
-          if (!filterOptions) return mockEntries.length;
+          if (!filterOptions) {return mockEntries.length;}
 
           return mockEntries.filter(entry => {
             const env = (entry as any).environment;

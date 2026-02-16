@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { jsx, jsxs, Fragment } from '../../../src/jsx-runtime';
-import { TYPE, PROPS, CHILDREN } from '../../../src';
+import { describe, expect,it } from 'vitest';
+
+import { CHILDREN,PROPS, TYPE } from '../../../src';
+import { Fragment,jsx, jsxs } from '../../../src/jsx-runtime';
 
 describe('jsx()', () => {
   it('should create element with single child', () => {

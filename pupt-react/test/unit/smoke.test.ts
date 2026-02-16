@@ -2,7 +2,7 @@
  * Smoke tests to verify testing infrastructure is working correctly
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, expect,it } from "vitest";
 
 describe("smoke test", () => {
   it("should run tests", () => {

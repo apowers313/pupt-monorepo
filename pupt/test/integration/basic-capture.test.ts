@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import fs from 'fs-extra';
-import path from 'path';
 import os from 'os';
+import path from 'path';
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
+import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 
 describe('OutputCaptureService - Basic Prompt Sending', () => {
   // Skip on Windows CI due to missing PTY binaries

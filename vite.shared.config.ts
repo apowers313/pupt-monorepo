@@ -7,11 +7,8 @@ import type { UserConfig } from "vite";
 
 // Fixed port assignments to avoid conflicts (ports 9000-9099)
 const PORT_ASSIGNMENTS: Record<string, number> = {
-    "pupt-lib": 9000,
     "@pupt/lib": 9000,
-    pupt: 9010,
     "@pupt/cli": 9010,
-    "pupt-react": 9020,
     "@pupt/react": 9020,
 };
 

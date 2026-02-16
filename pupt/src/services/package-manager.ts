@@ -1,8 +1,10 @@
-import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
-import fs2 from 'fs-extra';
-import { execa } from 'execa';
+import * as path from 'node:path';
+
 import { cosmiconfig } from 'cosmiconfig';
+import { execa } from 'execa';
+import fs2 from 'fs-extra';
+
 import { logger } from '../utils/logger.js';
 
 export interface InstalledPackageInfo {

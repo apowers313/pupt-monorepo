@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { createPromptFromSource } from '../../../src/create-prompt';
-import { render } from '../../../src/render';
-import { jsx, jsxs } from '../../../src/jsx-runtime';
+import { describe, expect,it } from 'vitest';
+
 import { EdgeCases } from '../../../components/structural/EdgeCases';
 import { When } from '../../../components/structural/When';
+import { createPromptFromSource } from '../../../src/create-prompt';
+import { jsx, jsxs } from '../../../src/jsx-runtime';
+import { render } from '../../../src/render';
 
 describe('EdgeCases e2e', () => {
   it('should render When children through .prompt pipeline', async () => {

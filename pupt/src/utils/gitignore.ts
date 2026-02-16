@@ -1,5 +1,6 @@
-import fs from 'fs-extra';
 import path from 'node:path';
+
+import fs from 'fs-extra';
 import simpleGit, { SimpleGit } from 'simple-git';
 
 /**
@@ -74,5 +75,5 @@ export async function addToGitignore(entry: string): Promise<void> {
 
   // Write back to file
   const newContent = lines.join('\n');
-  await fs.writeFile(gitignorePath, newContent.endsWith('\n') ? newContent : newContent + '\n', 'utf-8');
+  await fs.writeFile(gitignorePath, newContent.endsWith('\n') ? newContent : `${newContent  }\n`, 'utf-8');
 }

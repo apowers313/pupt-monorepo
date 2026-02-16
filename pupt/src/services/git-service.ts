@@ -1,4 +1,5 @@
-import simpleGit, { SimpleGit, StatusResult, LogResult } from 'simple-git';
+import simpleGit, { LogResult,SimpleGit, StatusResult } from 'simple-git';
+
 import { errors } from '../utils/errors.js';
 
 interface CloneOptions {

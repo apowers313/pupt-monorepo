@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { promises as fs } from 'node:fs';
-import * as path from 'node:path';
 import os from 'node:os';
+import * as path from 'node:path';
+
 import * as inquirerPrompts from '@inquirer/prompts';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 let testDir: string;
 
@@ -98,7 +99,7 @@ describe('User Input Protection from Handlebars Processing', () => {
         await fs.rm(testDir, { recursive: true, force: true });
         break;
       } catch (error) {
-        if (i === maxRetries - 1) throw error;
+        if (i === maxRetries - 1) {throw error;}
         // Wait a bit before retrying
         await new Promise(resolve => setTimeout(resolve, 100));
       }

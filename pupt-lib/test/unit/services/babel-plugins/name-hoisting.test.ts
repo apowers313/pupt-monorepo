@@ -5,7 +5,8 @@
  * For example:
  *   <Ask.Text name="username" /> → const username = <Ask.Text name="username" />
  */
-import { describe, it, expect } from 'vitest';
+import { describe, expect,it } from 'vitest';
+
 import { Transformer } from '../../../../src/services/transformer';
 
 describe('name-hoisting Babel plugin', () => {

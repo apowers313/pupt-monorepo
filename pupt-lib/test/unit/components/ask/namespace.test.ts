@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
-import { Ask, AskOption, AskLabel } from '../../../../components/ask';
-import { render } from '../../../../src/render';
+import { describe, expect,it } from 'vitest';
+
+import { Ask, AskLabel,AskOption } from '../../../../components/ask';
 import { jsx } from '../../../../src/jsx-runtime/index';
+import { render } from '../../../../src/render';
 import { createInputIterator } from '../../../../src/services/input-iterator';
 
 describe('Ask namespace exports', () => {

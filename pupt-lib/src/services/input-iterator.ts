@@ -1,9 +1,9 @@
-import type { PuptElement, PuptNode, InputRequirement, ValidationResult, RenderContext } from '../types';
+import { Component,isComponentClass } from '../component';
 import { Fragment } from '../jsx-runtime';
-import { isComponentClass, Component } from '../component';
-import { DEFAULT_ENVIRONMENT, createRuntimeConfig } from '../types/context';
-import { TYPE, PROPS, CHILDREN } from '../types/symbols';
-import { isPuptElement, isDeferredRef } from '../types/element';
+import type { InputRequirement, PuptElement, PuptNode, RenderContext,ValidationResult } from '../types';
+import { createRuntimeConfig,DEFAULT_ENVIRONMENT } from '../types/context';
+import { isDeferredRef,isPuptElement } from '../types/element';
+import { CHILDREN,PROPS, TYPE } from '../types/symbols';
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
@@ -220,7 +220,7 @@ export function createInputIterator(
    */
   function followPath(obj: unknown, path: (string | number)[]): unknown {
     return path.reduce((current, key) => {
-      if (current == null) return undefined;
+      if (current == null) {return undefined;}
       return (current as Record<string | number, unknown>)[key];
     }, obj);
   }
@@ -235,7 +235,7 @@ export function createInputIterator(
   function resolveIteratorPropValue(value: unknown): unknown {
     if (isPuptElement(value)) {
       // Direct element reference - look up in values map or get default
-      const elementProps = value[PROPS] as Record<string, unknown>;
+      const elementProps = value[PROPS];
       const elementName = elementProps.name as string | undefined;
       if (elementName && values.has(elementName)) {
         return values.get(elementName);
@@ -250,7 +250,7 @@ export function createInputIterator(
 
     if (isDeferredRef(value)) {
       // Deferred reference - get element's value, then follow path
-      const elementProps = value.element[PROPS] as Record<string, unknown>;
+      const elementProps = value.element[PROPS];
       const elementName = elementProps.name as string | undefined;
       let elementValue: unknown;
       if (elementName && values.has(elementName)) {
@@ -343,9 +343,12 @@ export function createInputIterator(
       const instance = new (type as new () => Component)();
       // Resolve element props to their values before passing to render()
       // This ensures components receive primitive values instead of PuptElement objects
-      const resolvedProps = resolveIteratorProps(props as Record<string, unknown>);
+      const resolvedProps = resolveIteratorProps(props);
       // Pass undefined as resolvedValue since we're only collecting requirements
-      const renderResult = instance.render!({ ...resolvedProps, children }, undefined as never, context);
+      if (!instance.render) {
+        return;
+      }
+      const renderResult = instance.render({ ...resolvedProps, children }, undefined as never, context);
 
       // Handle both sync and async render methods
       const result = renderResult instanceof Promise ? await renderResult : renderResult;
@@ -370,7 +373,7 @@ export function createInputIterator(
 
       const fn = type as FunctionComponent;
       // Resolve element props to their values before passing to render()
-      const resolvedProps = resolveIteratorProps(props as Record<string, unknown>);
+      const resolvedProps = resolveIteratorProps(props);
       const renderResult = fn({ ...resolvedProps, children });
 
       // Handle both sync and async function components
@@ -448,7 +451,7 @@ export function createInputIterator(
       if (!validValues.includes(value as string)) {
         errors.push({
           field: req.name,
-          message: `Invalid option "${value}". Valid options: ${validValues.join(', ')}`,
+          message: `Invalid option "${String(value as string | number)}". Valid options: ${validValues.join(', ')}`,
           code: 'INVALID_OPTION',
         });
       }
@@ -752,7 +755,7 @@ export function createInputIterator(
       if (state === 'NOT_STARTED') {
         throw new Error('Iterator not started. Call start() first.');
       }
-      if (state === 'DONE') return null;
+      if (state === 'DONE') {return null;}
       return requirements[currentIndex];
     },
 

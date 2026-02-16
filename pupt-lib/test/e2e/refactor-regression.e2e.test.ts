@@ -1,15 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../src/render';
-import { jsx } from '../../src/jsx-runtime';
-import { Role } from '../../components/structural/Role';
-import { Task } from '../../components/structural/Task';
-import { Context } from '../../components/structural/Context';
-import { Constraint } from '../../components/structural/Constraint';
-import { Format } from '../../components/structural/Format';
+import { describe, expect,it } from 'vitest';
+
 import { Audience } from '../../components/structural/Audience';
-import { Tone } from '../../components/structural/Tone';
-import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
+import { Constraint } from '../../components/structural/Constraint';
+import { Context } from '../../components/structural/Context';
+import { Format } from '../../components/structural/Format';
+import { Role } from '../../components/structural/Role';
 import { Section } from '../../components/structural/Section';
+import { SuccessCriteria } from '../../components/structural/SuccessCriteria';
+import { Task } from '../../components/structural/Task';
+import { Tone } from '../../components/structural/Tone';
+import { jsx } from '../../src/jsx-runtime';
+import { render } from '../../src/render';
 
 describe('wrapWithDelimiter refactor regression', () => {
   // Role

@@ -1,7 +1,7 @@
 // JSX Runtime for pupt-lib
 
-import type { PuptElement, PuptNode, ComponentType, DeferredRef } from '../types';
-import { TYPE, PROPS, CHILDREN, DEFERRED_REF } from '../types/symbols';
+import type { ComponentType, DeferredRef,PuptElement, PuptNode } from '../types';
+import { CHILDREN, DEFERRED_REF,PROPS, TYPE } from '../types/symbols';
 
 /**
  * Fragment symbol for grouping elements without a wrapper
@@ -114,7 +114,7 @@ function createDeferredRef(element: PuptElement, path: (string | number)[]): Def
       }
       return prop in target;
     },
-  }) as DeferredRef;
+  });
 }
 
 /**

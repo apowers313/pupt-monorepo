@@ -4,9 +4,10 @@
  */
 
 import "@testing-library/jest-dom/vitest";
+
+import type { PuptElement, PuptNode } from "@pupt/lib";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
-import type { PuptElement, PuptNode } from "pupt-lib";
 
 // Define symbol constants for creating mock elements
 // Must match the symbols used in pupt-lib
@@ -31,8 +32,8 @@ function createMockElement(
 
 // Mock createPromptFromSource globally since blob: URL imports have issues in test environment
 // This mock parses source patterns and returns appropriate mock elements
-vi.mock("pupt-lib", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("pupt-lib")>();
+vi.mock("@pupt/lib", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@pupt/lib")>();
 
   // Helper to extract requirements from mock elements
   function extractRequirementsFromElement(element: PuptElement): Array<{
@@ -102,7 +103,7 @@ vi.mock("pupt-lib", async (importOriginal) => {
         currentIndex++;
       }),
       previous: vi.fn(() => {
-        if (currentIndex > 0) currentIndex--;
+        if (currentIndex > 0) {currentIndex--;}
       }),
       goTo: vi.fn((idx: number) => {
         currentIndex = idx;
@@ -174,8 +175,8 @@ vi.mock("pupt-lib", async (importOriginal) => {
     // Handle text children
     const childText = children
       .map((child) => {
-        if (typeof child === "string") return child;
-        if (typeof child === "number") return String(child);
+        if (typeof child === "string") {return child;}
+        if (typeof child === "number") {return String(child);}
         if (child && typeof child === "object" && TYPE in child) {
           return renderMockElement(child as PuptElement, inputs);
         }
@@ -262,7 +263,7 @@ vi.mock("pupt-lib", async (importOriginal) => {
     getTags() {
       const tagSet = new Set<string>();
       for (const p of this._prompts) {
-        for (const t of p.tags) tagSet.add(t);
+        for (const t of p.tags) {tagSet.add(t);}
       }
       return Array.from(tagSet);
     }

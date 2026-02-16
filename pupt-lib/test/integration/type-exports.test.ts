@@ -6,9 +6,9 @@
  * export keywords, making types invisible to TypeScript consumers even though
  * runtime exports work fine.
  */
-import { describe, it, expect, beforeAll } from 'vitest';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync,readFileSync } from 'fs';
 import { resolve } from 'path';
+import { beforeAll,describe, expect, it } from 'vitest';
 
 describe('Type Declaration Exports (issue #17)', () => {
   let dtsContent: string;
@@ -50,7 +50,7 @@ describe('Type Declaration Exports (issue #17)', () => {
       const inner = match[1];
       for (const part of inner.split(',')) {
         const trimmed = part.trim();
-        if (!trimmed) continue;
+        if (!trimmed) {continue;}
         // Handle `Foo as Bar` - take the exported name (Bar)
         const asMatch = trimmed.match(/\w+\s+as\s+(\w+)/);
         names.add(asMatch ? asMatch[1] : trimmed);

@@ -116,7 +116,7 @@ jobs:
                     - pupt-lib-node
                     - pupt-lib-browser
                     - pupt-react
-                    - pupt-sde
+                    - pupt-sde-prompts
                 include:
                     - shard: pupt
                       package: pupt
@@ -134,9 +134,9 @@ jobs:
                       package: pupt-react
                       test-command: cd pupt-react && pnpm exec vitest run --coverage
                       needs-browser: true
-                    - shard: pupt-sde
-                      package: pupt-sde
-                      test-command: cd pupt-sde && pnpm exec vitest run
+                    - shard: pupt-sde-prompts
+                      package: pupt-sde-prompts
+                      test-command: cd pupt-sde-prompts && pnpm exec vitest run
                       needs-browser: false
 
         steps:

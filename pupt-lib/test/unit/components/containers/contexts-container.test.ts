@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '../../../../src/render';
-import { jsx, jsxs } from '../../../../src/jsx-runtime';
-import { Contexts } from '../../../../components/structural/Contexts';
+import { describe, expect,it } from 'vitest';
+
 import { Context } from '../../../../components/structural/Context';
+import { Contexts } from '../../../../components/structural/Contexts';
+import { jsx, jsxs } from '../../../../src/jsx-runtime';
+import { render } from '../../../../src/render';
 
 describe('Contexts container', () => {
   it('should render children contexts', async () => {

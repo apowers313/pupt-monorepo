@@ -1,6 +1,7 @@
-import { runCommand } from '../../src/commands/run.js';
-import { render } from '@inquirer/testing';
 import type { KeyDescriptor } from '@inquirer/testing';
+import { render } from '@inquirer/testing';
+
+import { runCommand } from '../../src/commands/run.js';
 
 export interface TestRunOptions {
   promptName?: string;
@@ -97,9 +98,9 @@ export class TestRunner {
           output: screen.join('\n'),
           historyFile: result as unknown as string
         };
-      } else {
+      } 
         throw new Error('Either promptName or keySequence must be provided');
-      }
+      
     } finally {
       process.chdir(originalCwd);
     }

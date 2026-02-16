@@ -1,6 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import path from 'node:path';
 import os from 'node:os';
+import path from 'node:path';
+
+import { afterEach,beforeEach, describe, expect, it } from 'vitest';
+
 import { migrateConfig, migrations } from '../../src/config/migration.js';
 
 describe('Config Migration v7 → v8', () => {

@@ -3,12 +3,12 @@
  * Supports both .tsx files (with standard imports) and .prompt files (with auto-imports).
  */
 
-import { Transformer, type TransformOptions } from './services/transformer';
-import { evaluateModule } from './services/module-evaluator';
-import { preprocessSource, isPromptFile } from './services/preprocessor';
 import { Fragment } from './jsx-runtime';
-import { TYPE, CHILDREN } from './types/symbols';
-import type { PuptElement, ComponentType, PuptNode } from './types';
+import { evaluateModule } from './services/module-evaluator';
+import { isPromptFile,preprocessSource } from './services/preprocessor';
+import { Transformer, type TransformOptions } from './services/transformer';
+import type { ComponentType, PuptElement } from './types';
+import { CHILDREN,TYPE } from './types/symbols';
 
 /**
  * Custom component registration for browser environments.
@@ -77,7 +77,7 @@ declare global {
  * ```typescript
  * // .tsx file with imports
  * const source = `
- *   import { Prompt, Role } from 'pupt-lib';
+ *   import { Prompt, Role } from '@pupt/lib';
  *   export default (
  *     <Prompt name="test">
  *       <Role>Assistant</Role>
@@ -161,7 +161,7 @@ export async function createPromptFromSource(
     // contain a single child — unwrap it to preserve the expected element
     // tree structure (e.g., Prompt at the root, not Fragment > Prompt).
     if (isPromptFile(filename) && element && element[TYPE] === Fragment) {
-      const children = element[CHILDREN] as PuptNode[];
+      const children = element[CHILDREN];
       // Filter out whitespace-only text nodes that come from newlines
       // between the Fragment tags and the actual content
       const meaningful = children.filter(

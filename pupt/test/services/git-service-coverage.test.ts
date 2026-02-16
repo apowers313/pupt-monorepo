@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { GitService } from '../../src/services/git-service';
 import simpleGit from 'simple-git';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { GitService } from '../../src/services/git-service';
 
 vi.mock('simple-git');
 
@@ -21,7 +22,7 @@ describe('GitService - additional coverage', () => {
       revparse: vi.fn()
     };
 
-    vi.mocked(simpleGit).mockReturnValue(mockGit as any);
+    vi.mocked(simpleGit).mockReturnValue(mockGit);
     service = new GitService();
   });
 
@@ -130,7 +131,7 @@ describe('GitService - additional coverage', () => {
       const newMockGit = {
         checkIsRepo: vi.fn().mockResolvedValue(true)
       };
-      vi.mocked(simpleGit).mockReturnValueOnce(mockGit as any).mockReturnValueOnce(newMockGit as any);
+      vi.mocked(simpleGit).mockReturnValueOnce(mockGit).mockReturnValueOnce(newMockGit as any);
 
       service.setWorkingDirectory('/new/path');
 
@@ -163,7 +164,7 @@ describe('GitService - additional coverage', () => {
       };
       // First call in constructor, second call in isRepository with path
       vi.mocked(simpleGit)
-        .mockReturnValueOnce(mockGit as any)
+        .mockReturnValueOnce(mockGit)
         .mockReturnValueOnce(pathMockGit as any);
 
       service = new GitService();
@@ -179,7 +180,7 @@ describe('GitService - additional coverage', () => {
         checkIsRepo: vi.fn().mockRejectedValue(new Error('Not a repo'))
       };
       vi.mocked(simpleGit)
-        .mockReturnValueOnce(mockGit as any)
+        .mockReturnValueOnce(mockGit)
         .mockReturnValueOnce(pathMockGit as any);
 
       service = new GitService();

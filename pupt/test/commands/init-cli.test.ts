@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
 import path from 'path';
+import { describe, expect,it } from 'vitest';
 
 describe('pt init CLI', () => {
   const cliPath = path.join(process.cwd(), 'dist/cli.js');

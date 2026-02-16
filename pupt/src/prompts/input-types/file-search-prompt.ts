@@ -1,7 +1,7 @@
-import { search } from '@inquirer/prompts';
-import { FileSearchEngine } from 'pupt-lib';
-import type { PartialDeep } from '@inquirer/type';
 import type { Theme } from '@inquirer/core';
+import { search } from '@inquirer/prompts';
+import type { PartialDeep } from '@inquirer/type';
+import { FileSearchEngine } from '@pupt/lib';
 
 export interface FileSearchConfig {
   message: string;

@@ -1,1 +1,1 @@
-exec < /dev/tty && npx cz --hook || true
+if [ -e /dev/tty ]; then npx cz --hook < /dev/tty || true; fi
