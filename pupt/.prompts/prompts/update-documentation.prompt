@@ -1,0 +1,6 @@
+{/* Converted from update-documentation.md */}
+<Prompt name="update-documentation" description="Update Documentation" tags={[]}>
+  <Section>
+    Update our documentation. Review every file in the project to make sure that if it is relevant it is included in the documentation. Update our README.md and ensure that all the information is complete and accurate.
+  </Section>
+</Prompt>

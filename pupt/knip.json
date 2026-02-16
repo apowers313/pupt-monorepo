@@ -1,0 +1,45 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": [
+    "dist/cli.js"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "!src/**/*.test.ts",
+    "!src/**/*.spec.ts"
+  ],
+  "ignore": [
+    "test/**",
+    "docs/**",
+    "dist/**",
+    "coverage/**",
+    "src/commands/init-refactored.ts",
+    "src/scripts/migrate-annotations.ts"
+  ],
+  "ignoreDependencies": [
+    "@semantic-release/*",
+    "@commitlint/config-conventional",
+    "@inquirer/testing",
+    "glob",
+    "pino-pretty",
+    "yaml"
+  ],
+  "ignoreExportsUsedInFile": {
+    "enum": true,
+    "type": true,
+    "interface": true
+  },
+  "exclude": ["enumMembers"],
+  "vitest": {
+    "entry": ["test/**/*.test.ts", "vitest.config.ts"]
+  },
+  "typescript": {
+    "config": ["tsconfig.json", "tsconfig.*.json"]
+  },
+  "eslint": {
+    "config": ["eslint.config.*"]
+  },
+  "prettier": {
+    "config": [".prettierrc*", "prettier.config.*"]
+  }
+}
