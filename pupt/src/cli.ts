@@ -22,9 +22,7 @@ import { configCommand } from './commands/config.js';
 import { cacheCommand } from './commands/cache.js';
 import { logger } from './utils/logger.js';
 import { errors, displayError } from './utils/errors.js';
-import { getDataDir } from './config/global-paths.js';
-import { configureModuleResolution } from './services/module-resolution.js';
-import { resolvePromptDirs } from './utils/prompt-dir-resolver.js';
+import { buildModuleEntries } from './services/module-entry-builder.js';
 
 // Commander.js helper for repeatable options (e.g. -d path1 -d path2)
 function collect(val: string, acc: string[]): string[] {
@@ -35,9 +33,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
-
-// Configure NODE_PATH for global npm packages early
-configureModuleResolution(getDataDir());
 
 // List of valid commands for suggestions
 const VALID_COMMANDS = ['init', 'config', 'cache', 'history', 'add', 'edit', 'run', 'annotate', 'install', 'update', 'uninstall', 'review', 'help'];
@@ -126,16 +121,15 @@ program
       // Capture timestamp at start of prompt processing
       const startTimestamp = new Date();
 
-      // Merge CLI prompt dirs + local .prompts/ + config dirs
-      const effectiveDirs = await resolvePromptDirs({
-        configPromptDirs: config.promptDirs,
+      // Build module entries from config + CLI overrides
+      const modules = await buildModuleEntries({
+        config,
         cliPromptDirs: options.promptDir,
       });
 
       // Discover, select, collect inputs, and render
       const resolved = await resolvePrompt({
-        promptDirs: effectiveDirs,
-        libraries: config.libraries,
+        modules,
         startTimestamp,
         environment: config.environment,
       });

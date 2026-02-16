@@ -4,7 +4,7 @@ import type { ReviewOptions, ReviewData } from '../types/review.js';
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import { logger } from '../utils/logger.js';
-import { resolvePromptDirs } from '../utils/prompt-dir-resolver.js';
+import { buildModuleEntries } from '../services/module-entry-builder.js';
 
 export async function reviewCommand(
   promptName?: string,
@@ -12,10 +12,8 @@ export async function reviewCommand(
 ): Promise<void> {
   try {
     const config = await ConfigManager.load();
-    const effectiveDirs = await resolvePromptDirs({
-      configPromptDirs: config.promptDirs,
-    });
-    const builder = new ReviewDataBuilder({ ...config, promptDirs: effectiveDirs });
+    const modules = await buildModuleEntries({ config });
+    const builder = new ReviewDataBuilder({ ...config, modules });
 
     // Build review data
     const reviewData = await builder.buildReviewData({

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PuptService } from '../../src/services/pupt-service.js';
+import type { ResolvedModuleEntry } from 'pupt-lib';
 import fs from 'fs-extra';
 import path from 'node:path';
 import os from 'node:os';
@@ -34,16 +35,14 @@ describe('PuptService - npm Package Discovery', () => {
     `);
 
     const service = new PuptService({
-      promptDirs: [],
-      libraries: [
+      modules: [
         {
           name: '@acme/prompts',
-          type: 'npm',
-          source: '@acme/prompts',
+          type: 'local',
+          source: path.join(tempDir, 'packages', 'node_modules', '@acme', 'prompts'),
           promptDirs: ['prompts'],
-          installedAt: '2024-01-15T10:30:00.000Z',
           version: '1.0.0',
-        },
+        } satisfies ResolvedModuleEntry,
       ],
     });
     await service.init();
@@ -53,7 +52,7 @@ describe('PuptService - npm Package Discovery', () => {
     expect(prompts[0].name).toBe('npm-prompt');
   });
 
-  it('should resolve paths from {dataDir}/packages/node_modules/{name}/{promptDir}', async () => {
+  it('should resolve paths from npm package structure', async () => {
     const pkgPromptDir = path.join(tempDir, 'packages', 'node_modules', 'my-pkg', 'src', 'prompts');
     await fs.ensureDir(pkgPromptDir);
     await fs.writeFile(path.join(pkgPromptDir, 'test.prompt'), `
@@ -63,25 +62,21 @@ describe('PuptService - npm Package Discovery', () => {
     `);
 
     const service = new PuptService({
-      promptDirs: [],
-      libraries: [
+      modules: [
         {
           name: 'my-pkg',
-          type: 'npm',
-          source: 'my-pkg',
+          type: 'local',
+          source: path.join(tempDir, 'packages', 'node_modules', 'my-pkg'),
           promptDirs: ['src/prompts'],
-          installedAt: '2024-01-15T10:30:00.000Z',
           version: '2.0.0',
-        },
+        } satisfies ResolvedModuleEntry,
       ],
     });
     await service.init();
 
     const prompt = service.getPrompt('resolved-npm');
     expect(prompt).toBeDefined();
-
-    const promptPath = service.getPromptPath('resolved-npm');
-    expect(promptPath).toContain(path.join('packages', 'node_modules', 'my-pkg', 'src', 'prompts'));
+    expect(prompt!.name).toBe('resolved-npm');
   });
 
   it('should discover prompts from both git and npm libraries', async () => {
@@ -104,23 +99,20 @@ describe('PuptService - npm Package Discovery', () => {
     `);
 
     const service = new PuptService({
-      promptDirs: [],
-      libraries: [
+      modules: [
         {
           name: 'git-lib',
-          type: 'git',
-          source: 'https://github.com/user/git-lib',
+          type: 'local',
+          source: path.join(tempDir, 'libraries', 'git-lib'),
           promptDirs: ['prompts'],
-          installedAt: '2024-01-15T10:30:00.000Z',
-        },
+        } satisfies ResolvedModuleEntry,
         {
           name: 'npm-lib',
-          type: 'npm',
-          source: 'npm-lib',
+          type: 'local',
+          source: path.join(tempDir, 'packages', 'node_modules', 'npm-lib'),
           promptDirs: ['prompts'],
-          installedAt: '2024-01-15T10:30:00.000Z',
           version: '1.0.0',
-        },
+        } satisfies ResolvedModuleEntry,
       ],
     });
     await service.init();
@@ -131,16 +123,14 @@ describe('PuptService - npm Package Discovery', () => {
 
   it('should skip npm libraries with missing directories', async () => {
     const service = new PuptService({
-      promptDirs: [],
-      libraries: [
+      modules: [
         {
           name: 'missing-npm-pkg',
-          type: 'npm',
-          source: 'missing-npm-pkg',
+          type: 'local',
+          source: path.join(tempDir, 'packages', 'node_modules', 'missing-npm-pkg'),
           promptDirs: ['prompts'],
-          installedAt: '2024-01-15T10:30:00.000Z',
           version: '1.0.0',
-        },
+        } satisfies ResolvedModuleEntry,
       ],
     });
     await service.init();

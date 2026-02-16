@@ -14,7 +14,7 @@ import { DateFormats } from '../utils/date-formatter.js';
 import type { Config } from '../types/config.js';
 import crypto from 'node:crypto';
 import { isInteractiveTUI, getToolByCommand } from '../utils/tool-detection.js';
-import { resolvePromptDirs } from '../utils/prompt-dir-resolver.js';
+import { buildModuleEntries } from '../services/module-entry-builder.js';
 
 export interface RunOptions {
   historyIndex?: number;
@@ -167,13 +167,12 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     };
   } else {
     // Normal flow - discover, select, collect inputs, render
-    const effectiveDirs = await resolvePromptDirs({
-      configPromptDirs: config.promptDirs,
+    const modules = await buildModuleEntries({
+      config,
       cliPromptDirs: options.promptDirOverrides,
     });
     const resolved = await resolvePrompt({
-      promptDirs: effectiveDirs,
-      libraries: config.libraries,
+      modules,
       promptName: options.promptName,
       noInteractive: options.noInteractive,
       startTimestamp,

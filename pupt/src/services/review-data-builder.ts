@@ -18,15 +18,17 @@ import yaml from 'js-yaml';
 import { AnnotationAnalyzer } from '../annotations/annotation-analyzer.js';
 import type { EnhancedHistoryEntry } from '../types/history.js';
 import { getDataDir } from '../config/global-paths.js';
+import type { ModuleEntry } from 'pupt-lib';
 
 export class ReviewDataBuilder {
   private historyManager: HistoryManager;
   private puptService: PuptService;
   private annotationAnalyzer: AnnotationAnalyzer;
 
-  constructor(private config: Config) {
+  constructor(private config: Config & { modules?: ModuleEntry[] }) {
     this.historyManager = new HistoryManager(config.historyDir || path.join(getDataDir(), 'history'), config.annotationDir);
-    this.puptService = new PuptService({ promptDirs: config.promptDirs || ['./prompts'], libraries: config.libraries, environment: config.environment });
+    const modules = config.modules || [];
+    this.puptService = new PuptService({ modules, environment: config.environment });
     this.annotationAnalyzer = new AnnotationAnalyzer();
   }
 

@@ -14,18 +14,12 @@ vi.mock('../../src/utils/logger.js', () => ({
     write: vi.fn(),
   },
 }));
-vi.mock('fs-extra', () => ({
-  default: {
-    ensureDir: vi.fn().mockResolvedValue(undefined),
-  },
-}));
 
 import { resolvePrompt } from '../../src/services/prompt-resolver.js';
 import { PuptService } from '../../src/services/pupt-service.js';
 import { collectInputs } from '../../src/services/input-collector.js';
 import { InteractiveSearch } from '../../src/ui/interactive-search.js';
 import { logger } from '../../src/utils/logger.js';
-import fs from 'fs-extra';
 
 describe('prompt-resolver coverage', () => {
   beforeEach(() => {
@@ -85,6 +79,8 @@ describe('prompt-resolver coverage', () => {
       getPrompts: vi.fn().mockReturnValue([]),
       getPrompt: vi.fn(),
       getPromptPath: vi.fn(),
+      getWarnings: vi.fn().mockReturnValue([]),
+      wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
     } as unknown as PuptService));
 
     const collectInputsReturn = overrides?.collectInputsReturn ?? new Map([['name', 'World']]);
@@ -127,6 +123,8 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       // After the prompt is selected, _source is used for getInputIterator/render.
@@ -148,7 +146,7 @@ describe('prompt-resolver coverage', () => {
       vi.mocked(collectInputs).mockResolvedValue(inputs);
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'my-prompt',
       });
 
@@ -183,12 +181,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'log-test',
       });
 
@@ -225,13 +225,15 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const timestamp = new Date('2025-01-15T10:00:00Z');
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'ts-test',
         startTimestamp: timestamp,
       });
@@ -249,18 +251,20 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'nonexistent-prompt',
         }),
       ).rejects.toThrow(PromptToolError);
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'nonexistent-prompt',
         }),
       ).rejects.toThrow("Prompt 'nonexistent-prompt' not found");
@@ -274,11 +278,13 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'missing-prompt',
         }),
       ).rejects.toThrow(PromptToolError);
@@ -305,18 +311,20 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'found-prompt',
         }),
       ).rejects.toThrow(PromptToolError);
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'found-prompt',
         }),
       ).rejects.toThrow("Prompt 'found-prompt' not found");
@@ -332,11 +340,13 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts'],
+          modules: [],
           promptName: 'orphan-prompt',
         }),
       ).rejects.toThrow("Prompt 'orphan-prompt' not found");
@@ -365,6 +375,8 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       const mockSelectPrompt = vi.fn().mockResolvedValue(adaptedPrompt);
@@ -375,7 +387,7 @@ describe('prompt-resolver coverage', () => {
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         // no promptName
       });
 
@@ -398,17 +410,19 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts', '/other-prompts'],
+          modules: [],
         }),
       ).rejects.toThrow(PromptToolError);
 
       await expect(
         resolvePrompt({
-          promptDirs: ['/prompts', '/other-prompts'],
+          modules: [],
         }),
       ).rejects.toThrow('No prompts found');
     });
@@ -444,12 +458,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'review-test',
       });
 
@@ -486,12 +502,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'review-fallback',
       });
 
@@ -527,12 +545,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'review-empty',
       });
 
@@ -566,12 +586,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const result = await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'no-post',
       });
 
@@ -579,17 +601,17 @@ describe('prompt-resolver coverage', () => {
     });
   });
 
-  describe('fs.ensureDir and PuptService initialization', () => {
-    it('should call ensureDir for each prompt directory', async () => {
+  describe('PuptService initialization', () => {
+    it('should construct PuptService with modules', async () => {
       const jsxPromptObj = {
-        name: 'ensure-dir-test',
+        name: 'modules-test',
         getInputIterator: vi.fn().mockReturnValue({}),
         render: vi.fn().mockResolvedValue({ text: 'output', postExecution: [] }),
       };
 
       const adaptedPrompt = {
-        title: 'EnsureDir Test',
-        path: '/prompts/ensure.prompt',
+        title: 'Modules Test',
+        path: '/prompts/modules.prompt',
         content: 'content',
         summary: 'summary',
         _source: jsxPromptObj,
@@ -602,22 +624,24 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       await resolvePrompt({
-        promptDirs: ['/dir1', '/dir2', '/dir3'],
-        promptName: 'ensure-dir-test',
+        modules: [],
+        promptName: 'modules-test',
       });
 
-      expect(fs.ensureDir).toHaveBeenCalledTimes(3);
-      expect(fs.ensureDir).toHaveBeenCalledWith('/dir1');
-      expect(fs.ensureDir).toHaveBeenCalledWith('/dir2');
-      expect(fs.ensureDir).toHaveBeenCalledWith('/dir3');
+      expect(PuptService).toHaveBeenCalledWith({
+        modules: [],
+        environment: undefined,
+      });
     });
 
-    it('should pass libraries and environment to PuptService constructor', async () => {
+    it('should pass modules and environment to PuptService constructor', async () => {
       const jsxPromptObj = {
         name: 'config-test',
         getInputIterator: vi.fn().mockReturnValue({}),
@@ -639,21 +663,21 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       const envConfig = { llm: { model: 'gpt-4', provider: 'openai' } };
       await resolvePrompt({
-        promptDirs: ['/prompts'],
-        libraries: ['lib1', 'lib2'],
+        modules: [],
         promptName: 'config-test',
         environment: envConfig,
       });
 
       expect(PuptService).toHaveBeenCalledWith({
-        promptDirs: ['/prompts'],
-        libraries: ['lib1', 'lib2'],
+        modules: [],
         environment: envConfig,
       });
     });
@@ -680,12 +704,14 @@ describe('prompt-resolver coverage', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as unknown as PuptService));
 
       vi.mocked(collectInputs).mockResolvedValue(new Map());
 
       await resolvePrompt({
-        promptDirs: ['/prompts'],
+        modules: [],
         promptName: 'no-input-test',
         noInteractive: true,
       });

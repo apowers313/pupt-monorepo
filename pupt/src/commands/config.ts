@@ -47,6 +47,18 @@ async function showConfig(): Promise<void> {
     logger.log(chalk.gray('  (none)'));
   }
 
+  // Display installed libraries
+  if (config.libraries && config.libraries.length > 0) {
+    logger.log(`\n${chalk.bold('Installed Libraries:')}`);
+    for (const lib of config.libraries) {
+      const version = lib.version ? ` (${lib.version})` : '';
+      logger.log(`  ${chalk.cyan(lib.name)} [${lib.type}]${version}`);
+      for (const dir of lib.promptDirs) {
+        logger.log(chalk.gray(`    prompts: ${dir}`));
+      }
+    }
+  }
+
   // Display history directory
   if (config.historyDir) {
     const exists = await fs.pathExists(config.historyDir);

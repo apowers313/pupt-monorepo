@@ -3,36 +3,34 @@ import { PuptService } from '../services/pupt-service.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { editorLauncher } from '../utils/editor.js';
 import { errors } from '../utils/errors.js';
-import { resolvePromptDirs } from '../utils/prompt-dir-resolver.js';
+import { buildModuleEntries } from '../services/module-entry-builder.js';
 
 export async function editCommand(): Promise<void> {
   // Load configuration
   const config = await ConfigManager.load();
 
-  // Merge local .prompts/ + config dirs
-  const effectiveDirs = await resolvePromptDirs({
-    configPromptDirs: config.promptDirs,
-  });
+  // Build module entries from config
+  const modules = await buildModuleEntries({ config });
 
   // Discover prompts
-  const puptService = new PuptService({ promptDirs: effectiveDirs, libraries: config.libraries, environment: config.environment });
+  const puptService = new PuptService({ modules, environment: config.environment });
   await puptService.init();
   const prompts = puptService.getPromptsAsAdapted();
-  
+
   if (prompts.length === 0) {
-    throw errors.noPromptsFound(effectiveDirs);
+    throw errors.noPromptsFound([]);
   }
-  
+
   // Interactive search
   const search = new InteractiveSearch();
   const selected = await search.selectPrompt(prompts);
-  
+
   // Find an editor
   const editor = await editorLauncher.findEditor();
   if (!editor) {
     throw errors.noEditor();
   }
-  
+
   // Open in editor
   try {
     await editorLauncher.openInEditor(editor, selected.path);

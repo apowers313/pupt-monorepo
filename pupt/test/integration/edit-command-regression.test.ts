@@ -24,8 +24,8 @@ vi.mock('util', () => ({
 vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/services/pupt-service.js');
 vi.mock('../../src/ui/interactive-search.js');
-vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
-  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+vi.mock('../../src/services/module-entry-builder.js', () => ({
+  buildModuleEntries: vi.fn(async () => []),
 }));
 
 describe('Edit Command Regression Test', () => {
@@ -57,6 +57,8 @@ describe('Edit Command Regression Test', () => {
       getPrompts: vi.fn().mockReturnValue(mockPrompts),
       getPrompt: vi.fn(),
       getPromptPath: vi.fn(),
+      getWarnings: vi.fn().mockReturnValue([]),
+      wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
     } as any));
     
     vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -125,6 +127,8 @@ describe('Edit Command Regression Test', () => {
       getPrompts: vi.fn().mockReturnValue(mockPrompts),
       getPrompt: vi.fn(),
       getPromptPath: vi.fn(),
+      getWarnings: vi.fn().mockReturnValue([]),
+      wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
     } as any));
     
     vi.mocked(InteractiveSearch).mockImplementation(() => ({

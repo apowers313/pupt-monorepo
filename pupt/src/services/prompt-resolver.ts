@@ -1,11 +1,11 @@
 import chalk from 'chalk';
-import fs from 'fs-extra';
 import { PuptService } from './pupt-service.js';
 import { collectInputs } from './input-collector.js';
 import { InteractiveSearch } from '../ui/interactive-search.js';
 import { errors } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
-import type { EnvironmentConfig, LibraryEntry } from '../types/config.js';
+import type { ModuleEntry } from 'pupt-lib';
+import type { EnvironmentConfig } from '../types/config.js';
 
 export interface ResolvedPrompt {
   text: string;
@@ -22,8 +22,7 @@ export interface ResolvedPrompt {
 }
 
 export interface ResolvePromptOptions {
-  promptDirs: string[];
-  libraries?: LibraryEntry[];
+  modules: ModuleEntry[];
   promptName?: string;
   noInteractive?: boolean;
   startTimestamp?: Date;
@@ -36,16 +35,16 @@ export interface ResolvePromptOptions {
  * Shared by both the default `pt` action and `pt run`.
  */
 export async function resolvePrompt(options: ResolvePromptOptions): Promise<ResolvedPrompt> {
-  const { promptDirs, libraries, promptName, noInteractive, startTimestamp, environment } = options;
-
-  // Ensure prompt directories exist
-  for (const dir of promptDirs) {
-    await fs.ensureDir(dir);
-  }
+  const { modules, promptName, noInteractive, startTimestamp, environment } = options;
 
   // Discover prompts with environment config
-  const puptService = new PuptService({ promptDirs, libraries, environment });
+  const puptService = new PuptService({ modules, environment });
   await puptService.init();
+
+  // Display any module loading warnings
+  for (const warning of puptService.getWarnings()) {
+    logger.warn(warning);
+  }
 
   let selected;
 
@@ -66,7 +65,7 @@ export async function resolvePrompt(options: ResolvePromptOptions): Promise<Reso
     const prompts = puptService.getPromptsAsAdapted();
 
     if (prompts.length === 0) {
-      throw errors.noPromptsFound(promptDirs);
+      throw errors.noPromptsFound([]);
     }
 
     const search = new InteractiveSearch();
@@ -76,8 +75,8 @@ export async function resolvePrompt(options: ResolvePromptOptions): Promise<Reso
     logger.log(chalk.dim(`Location: ${selected.path}\n`));
   }
 
-  // Collect inputs and render
-  const dp = selected._source!;
+  // Collect inputs and render (wrap with environment if configured)
+  const dp = puptService.wrapWithEnvironment(selected._source!);
   const inputs = await collectInputs(dp.getInputIterator(), noInteractive);
   const renderResult = await dp.render({ inputs });
   const text = renderResult.text;

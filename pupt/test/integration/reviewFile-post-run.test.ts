@@ -46,6 +46,8 @@ vi.mock('../../src/services/pupt-service.js', () => ({
     getPrompts: vi.fn().mockReturnValue([]),
     getPrompt: vi.fn(),
     getPromptPath: vi.fn(),
+    getWarnings: vi.fn().mockReturnValue([]),
+    wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
   })),
 }));
 
@@ -61,8 +63,8 @@ vi.mock('../../src/ui/interactive-search.js', () => ({
   }))
 }));
 
-vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
-  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+vi.mock('../../src/services/module-entry-builder.js', () => ({
+  buildModuleEntries: vi.fn(async () => []),
 }));
 
 import { runCommand } from '../../src/commands/run.js';
@@ -168,6 +170,8 @@ describe('ReviewFile Post-Run Integration Tests', () => {
       getPrompts: vi.fn().mockReturnValue([mockSource]),
       getPrompt: vi.fn(),
       getPromptPath: vi.fn(),
+      getWarnings: vi.fn().mockReturnValue([]),
+      wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
     } as any));
 
     // Mock InteractiveSearch to select the prompt

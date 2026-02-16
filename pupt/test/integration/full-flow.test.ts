@@ -3,6 +3,7 @@ import { execSync } from 'child_process';
 import fs from 'fs-extra';
 import path from 'path';
 import os from 'os';
+import { LocalPromptSource } from 'pupt-lib';
 
 let testDir: string;
 
@@ -60,7 +61,7 @@ describe('Full Integration Flow', () => {
 
       // 3. Verify prompt discovery via PuptService
       const { PuptService } = await import('../../src/services/pupt-service.js');
-      const puptService = new PuptService({ promptDirs: ['./.prompts'] });
+      const puptService = new PuptService({ modules: [new LocalPromptSource(path.resolve('./.prompts'))] });
       await puptService.init();
       const prompts = puptService.getPromptsAsAdapted();
 
@@ -128,7 +129,7 @@ describe('Full Integration Flow', () => {
       await fs.writeFile('./.prompts/simple.prompt', '<Prompt name="simple" description="Simple prompt" tags={[]}><Task>Simple content</Task></Prompt>');
 
       const { PuptService } = await import('../../src/services/pupt-service.js');
-      const puptService = new PuptService({ promptDirs: ['./.prompts'] });
+      const puptService = new PuptService({ modules: [new LocalPromptSource(path.resolve('./.prompts'))] });
       await puptService.init();
       const prompts = puptService.getPromptsAsAdapted();
 
@@ -160,7 +161,7 @@ describe('Full Integration Flow', () => {
       await fs.writeFile('./.prompts/render-test.prompt', '<Prompt name="render-test" description="Render test" tags={[]}><Task>Hello World</Task></Prompt>');
 
       const { PuptService } = await import('../../src/services/pupt-service.js');
-      const puptService = new PuptService({ promptDirs: ['./.prompts'] });
+      const puptService = new PuptService({ modules: [new LocalPromptSource(path.resolve('./.prompts'))] });
       await puptService.init();
 
       const prompt = puptService.findPrompt('render-test');
@@ -185,7 +186,7 @@ describe('Full Integration Flow', () => {
 
       // Test prompt discovery works
       const { PuptService } = await import('../../src/services/pupt-service.js');
-      const puptService = new PuptService({ promptDirs: ['./.prompts'] });
+      const puptService = new PuptService({ modules: [new LocalPromptSource(path.resolve('./.prompts'))] });
       await puptService.init();
       const prompts = puptService.getPromptsAsAdapted();
       expect(prompts).toHaveLength(1);
@@ -209,7 +210,7 @@ describe('Full Integration Flow', () => {
       await fs.writeFile('./templates/template.prompt', '<Prompt name="template" description="Template" tags={[]}><Task>Template content</Task></Prompt>');
 
       // Test discovery from multiple directories
-      const multiPuptService = new PuptService({ promptDirs: ['./.prompts', './templates'] });
+      const multiPuptService = new PuptService({ modules: [new LocalPromptSource(path.resolve('./.prompts')), new LocalPromptSource(path.resolve('./templates'))] });
       await multiPuptService.init();
       const multiPrompts = multiPuptService.getPromptsAsAdapted();
       expect(multiPrompts).toHaveLength(2);

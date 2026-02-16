@@ -21,6 +21,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { fromDiscoveredPrompt } from '../../src/types/prompt.js';
 import type { DiscoveredPromptWithMethods } from 'pupt-lib';
+import { LocalPromptSource } from 'pupt-lib';
 
 describe('Prompt title uses description regression', () => {
   let tempDir: string;
@@ -82,7 +83,7 @@ describe('Prompt title uses description regression', () => {
 </Prompt>`
     );
 
-    const service = new PuptService({ promptDirs: [promptDir] });
+    const service = new PuptService({ modules: [new LocalPromptSource(promptDir)] });
     await service.init();
 
     const prompts = service.getPromptsAsAdapted();

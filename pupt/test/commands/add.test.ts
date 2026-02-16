@@ -27,7 +27,6 @@ vi.mock('../../src/utils/editor.js', () => ({
 vi.mock('../../src/utils/logger.js');
 vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
   findLocalPromptsDir: vi.fn().mockResolvedValue(null),
-  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
 }));
 vi.mock('../../src/utils/project-root.js', () => ({
   findProjectRoot: vi.fn().mockReturnValue(null),

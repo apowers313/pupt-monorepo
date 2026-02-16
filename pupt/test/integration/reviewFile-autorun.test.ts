@@ -55,7 +55,7 @@ vi.mock('../../src/services/input-collector.js', () => ({
 }));
 
 vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
-  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+  findLocalPromptsDir: vi.fn().mockResolvedValue(null),
 }));
 
 import { runCommand } from '../../src/commands/run.js';

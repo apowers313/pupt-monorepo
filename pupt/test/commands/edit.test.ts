@@ -19,8 +19,8 @@ vi.mock('../../src/config/config-manager.js');
 vi.mock('../../src/services/pupt-service.js');
 vi.mock('../../src/ui/interactive-search.js');
 vi.mock('../../src/utils/logger.js');
-vi.mock('../../src/utils/prompt-dir-resolver.js', () => ({
-  resolvePromptDirs: vi.fn(async (opts: any) => opts.configPromptDirs),
+vi.mock('../../src/services/module-entry-builder.js', () => ({
+  buildModuleEntries: vi.fn(async () => []),
 }));
 vi.mock('child_process', () => ({
   spawn: vi.fn(),
@@ -65,6 +65,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
 
       const result = editCommand();
@@ -92,6 +94,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       const mockSelectPrompt = vi.fn().mockResolvedValue(mockPrompts[0]);
@@ -123,6 +127,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       await expect(editCommand()).rejects.toThrow('No prompts found');
@@ -144,6 +150,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -171,6 +179,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -249,6 +259,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -283,6 +295,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -386,6 +400,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
@@ -412,6 +428,8 @@ describe('Edit Command', () => {
         getPrompts: vi.fn().mockReturnValue([]),
         getPrompt: vi.fn(),
         getPromptPath: vi.fn(),
+        getWarnings: vi.fn().mockReturnValue([]),
+        wrapWithEnvironment: vi.fn().mockImplementation((dp: any) => dp),
       } as any));
       
       vi.mocked(InteractiveSearch).mockImplementation(() => ({
