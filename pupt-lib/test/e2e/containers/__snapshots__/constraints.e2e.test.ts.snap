@@ -1,0 +1,82 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Constraints container e2e > should exclude specific defaults when extending 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<constraints>
+<constraint>
+MUST: Be verbose instead
+</constraint>
+
+</constraints>
+<task>
+Write documentation
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Constraints container e2e > should extend default constraints in Prompt pipeline 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<constraints>
+<constraint>
+MUST: Include code examples
+</constraint>
+
+</constraints>
+<task>
+Explain TypeScript generics
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Constraints container e2e > should render standalone Constraints with presets 1`] = `
+"<constraints>
+<constraint>
+SHOULD: Keep responses concise and focused
+</constraint>
+<constraint>
+MUST: Cite sources for factual claims
+</constraint>
+<constraint>
+MUST: Acknowledge when you are uncertain or lack information
+</constraint>
+
+</constraints>"
+`;
+
+exports[`Constraints container e2e > should replace default constraints in Prompt pipeline 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<constraints>
+<constraint>
+MUST: Only this constraint
+</constraint>
+<constraint>
+SHOULD: And this one
+</constraint>
+
+</constraints>
+<task>
+Do a task
+</task>
+<format>
+Output format: markdown
+</format>"
+`;

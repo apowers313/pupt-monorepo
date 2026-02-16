@@ -1,0 +1,3 @@
+<Prompt name="valid-prompt" description="A valid prompt" tags={["test"]}>
+  <Task>Do something useful.</Task>
+</Prompt>

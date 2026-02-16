@@ -1,0 +1,4 @@
+<Prompt name="greeting" description="An alternative greeting" tags={["alt"]}>
+  <Role>You are an alternative assistant.</Role>
+  <Task>Greet the user differently.</Task>
+</Prompt>

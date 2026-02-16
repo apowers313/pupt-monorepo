@@ -1,0 +1,4 @@
+<Prompt name="summarizer" description="A text summarization prompt" tags={["npm", "summarize"]}>
+  <Role>You are a text summarization expert.</Role>
+  <Task>Summarize the provided text concisely.</Task>
+</Prompt>

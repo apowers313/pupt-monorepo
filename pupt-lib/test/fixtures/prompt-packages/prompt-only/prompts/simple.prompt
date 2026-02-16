@@ -1,0 +1,3 @@
+<Prompt name="simple" description="A simple prompt from a prompt-only package" tags={["simple"]}>
+  <Task>Do something simple.</Task>
+</Prompt>

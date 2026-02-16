@@ -1,0 +1,46 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Steps e2e > snapshots > should match snapshot: basic numbered steps 1`] = `
+"Think through this step by step.
+
+<steps>
+1. Parse input
+2. Validate data
+3. Process result
+</steps>"
+`;
+
+exports[`Steps e2e > snapshots > should match snapshot: preset problem-solving 1`] = `
+"Think through this step by step.
+
+<steps>
+1. Define
+2. Explore
+3. Solve
+4. Verify
+</steps>
+
+Show your reasoning process in the output."
+`;
+
+exports[`Steps e2e > snapshots > should match snapshot: steps through Fragment 1`] = `
+"Think through this step by step.
+
+<steps>
+1. Step A
+2. Step B
+</steps>"
+`;
+
+exports[`Steps e2e > snapshots > should match snapshot: steps with verify and selfCritique 1`] = `
+"Think through this step by step.
+
+<steps>
+1. Think
+2. Act
+</steps>
+
+Verify your answer is correct before finalizing.
+
+Review your response and identify any potential issues or improvements."
+`;

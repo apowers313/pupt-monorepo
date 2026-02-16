@@ -1,0 +1,18 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Audience e2e > snapshots > should match snapshot: beginner technical audience 1`] = `
+"<audience>
+Target audience: beginner technical users
+
+Use simple language, avoid jargon, and provide analogies where helpful.
+</audience>"
+`;
+
+exports[`Audience e2e > snapshots > should match snapshot: expert audience with goals 1`] = `
+"<audience>
+Target audience: expert technical users
+Their goals: optimize performance, reduce latency
+
+Communicate as a peer; no need to explain standard concepts.
+</audience>"
+`;

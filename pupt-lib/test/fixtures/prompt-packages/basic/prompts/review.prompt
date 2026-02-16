@@ -1,0 +1,4 @@
+<Prompt name="code-review" description="Code review prompt" tags={["code", "test"]}>
+  <Role>You are a senior code reviewer.</Role>
+  <Task>Review the provided code for quality.</Task>
+</Prompt>

@@ -1,0 +1,4 @@
+<Prompt name="helper" description="A helpful assistant prompt" tags={["npm", "test"]}>
+  <Role>You are a helpful assistant.</Role>
+  <Task>Help the user with their question.</Task>
+</Prompt>

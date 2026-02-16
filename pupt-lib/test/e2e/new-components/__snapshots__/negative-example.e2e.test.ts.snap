@@ -1,0 +1,14 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`NegativeExample e2e > snapshots > should match snapshot: negative example with reason 1`] = `
+"<bad-example>
+I personally think this is a great article that covers many topics...
+Reason this is wrong: Includes personal opinions and is too long
+</bad-example>"
+`;
+
+exports[`NegativeExample e2e > snapshots > should match snapshot: negative example without reason 1`] = `
+"<bad-example>
+Error 404: Article not found
+</bad-example>"
+`;

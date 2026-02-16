@@ -1,0 +1,45 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Constraint e2e > should render all 5 constraint types through pipeline 1`] = `
+"<constraint>
+MUST: Be accurate
+</constraint>
+<constraint>
+SHOULD: Be concise
+</constraint>
+<constraint>
+MAY: Include examples
+</constraint>
+<constraint>
+MUST NOT: Hallucinate
+</constraint>
+<constraint>
+SHOULD NOT: Use jargon
+</constraint>"
+`;
+
+exports[`Constraint e2e > snapshots > should match snapshot: may constraint with markdown delimiter 1`] = `
+"## constraint
+
+MAY: Include examples"
+`;
+
+exports[`Constraint e2e > snapshots > should match snapshot: may constraint with xml delimiter 1`] = `
+"<constraint>
+MAY: Include examples
+</constraint>"
+`;
+
+exports[`Constraint e2e > snapshots > should match snapshot: preset be-concise 1`] = `
+"<constraint>
+SHOULD: Keep responses concise and focused
+</constraint>"
+`;
+
+exports[`Constraint e2e > snapshots > should match snapshot: should-not constraint with none delimiter 1`] = `"SHOULD NOT: Use jargon"`;
+
+exports[`Constraint e2e > snapshots > should match snapshot: should-not constraint with xml delimiter 1`] = `
+"<constraint>
+SHOULD NOT: Use jargon
+</constraint>"
+`;

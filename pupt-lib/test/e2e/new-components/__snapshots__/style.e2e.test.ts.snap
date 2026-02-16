@@ -1,0 +1,10 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Style e2e > snapshots > should match snapshot: academic style with formality 1`] = `
+"<style>
+Writing style: academic
+Use scholarly precision with citations and formal structure.
+Verbosity: verbose
+Formality: formal
+</style>"
+`;

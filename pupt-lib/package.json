@@ -1,0 +1,122 @@
+{
+  "name": "pupt-lib",
+  "version": "1.3.8",
+  "description": "TypeScript library for creating AI prompts using JSX syntax",
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/apowers313/pupt-lib.git"
+  },
+  "bugs": {
+    "url": "https://github.com/apowers313/pupt-lib/issues"
+  },
+  "homepage": "https://github.com/apowers313/pupt-lib#readme",
+  "keywords": [
+    "ai",
+    "prompt",
+    "jsx",
+    "llm",
+    "typescript",
+    "template",
+    "prompt-engineering"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/src/jsx-runtime/index.d.ts",
+      "import": "./dist/jsx-runtime/index.js",
+      "default": "./dist/jsx-runtime/index.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/src/jsx-runtime/jsx-dev-runtime.d.ts",
+      "import": "./dist/jsx-runtime/jsx-dev-runtime.js",
+      "default": "./dist/jsx-runtime/jsx-dev-runtime.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "prompt": "tsx examples/cli.ts",
+    "test": "vitest run",
+    "test:node": "vitest run --project=node",
+    "test:browser": "vitest run --project=browser",
+    "test:watch": "vitest",
+    "test:ci": "vitest run --no-coverage --passWithNoTests",
+    "test:ci:node": "vitest run --project=node --no-coverage --passWithNoTests",
+    "test:ci:browser": "vitest run --project=browser --no-coverage --passWithNoTests",
+    "test:ci:node:cov": "vitest run --project=node --coverage --coverage.reportsDirectory=coverage-node --passWithNoTests",
+    "test:ci:browser:cov": "vitest run --project=browser --coverage --coverage.reportsDirectory=coverage-browser --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src test components && tsc --noEmit && knip",
+    "lint:fix": "eslint src test components --fix",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "npm run docs:build && vitepress preview docs --port 9010",
+    "prepare": "husky",
+    "release": "semantic-release"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "dependencies": {
+    "hyperformula": "^3.1.1"
+  },
+  "devDependencies": {
+    "@babel/standalone": "^7.28.6",
+    "@commitlint/cli": "^19.7.1",
+    "@commitlint/config-conventional": "^19.7.1",
+    "@eslint/js": "^9.19.0",
+    "@inquirer/prompts": "^8.2.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.3",
+    "@semantic-release/npm": "^13.1.0",
+    "@semantic-release/release-notes-generator": "^14.0.3",
+    "@stylistic/eslint-plugin": "^2.13.0",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__standalone": "^7.1.9",
+    "@types/node": "^22.10.10",
+    "@vitest/browser": "^3.0.4",
+    "@vitest/coverage-v8": "^3.0.4",
+    "chalk": "^5.6.2",
+    "commitizen": "^4.3.1",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^9.19.0",
+    "husky": "^9.1.7",
+    "knip": "^5.44.1",
+    "minisearch": "^7.2.0",
+    "msw": "^2.12.7",
+    "playwright": "^1.50.0",
+    "pupt": "^2.2.1",
+    "semantic-release": "^25.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.22.0",
+    "vite": "^6.0.11",
+    "vite-plugin-dts": "^4.5.0",
+    "vitepress": "^1.6.4",
+    "vitest": "^3.0.4",
+    "zod": "^3.22.0"
+  }
+}

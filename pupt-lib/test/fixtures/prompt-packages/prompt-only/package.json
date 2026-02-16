@@ -1,0 +1,9 @@
+{
+  "name": "test-prompt-only-pkg",
+  "version": "1.0.0",
+  "description": "A prompt-only package with no JS entry point",
+  "type": "module",
+  "peerDependencies": {
+    "pupt-lib": "*"
+  }
+}

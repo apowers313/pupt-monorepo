@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`References e2e > snapshots > should match snapshot: references with sources and children 1`] = `
+"<references>
+External API
+URL: https://api.example.com
+<reference>
+Internal Wiki
+Team conventions
+</reference>
+
+</references>"
+`;

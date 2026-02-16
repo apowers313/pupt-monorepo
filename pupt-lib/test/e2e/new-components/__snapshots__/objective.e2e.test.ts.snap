@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Objective e2e > snapshots > should match snapshot: primary only 1`] = `
+"<objective>
+Primary goal: Summarize the document
+</objective>"
+`;
+
+exports[`Objective e2e > snapshots > should match snapshot: primary with secondary goals 1`] = `
+"<objective>
+Primary goal: Build a REST API
+
+Secondary goals:
+- Handle authentication
+- Support pagination
+
+Success metrics:
+- < 200ms response time
+- 99.9% uptime
+</objective>"
+`;

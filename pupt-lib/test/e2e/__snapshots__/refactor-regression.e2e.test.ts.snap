@@ -1,0 +1,155 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`wrapWithDelimiter refactor regression > Audience > should produce identical output with markdown delimiter 1`] = `
+"## audience
+
+Developers."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Audience > should produce identical output with none delimiter 1`] = `"Developers."`;
+
+exports[`wrapWithDelimiter refactor regression > Audience > should produce identical output with xml delimiter 1`] = `
+"<audience>
+Developers.
+</audience>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Constraint > should produce identical output with markdown delimiter 1`] = `
+"## constraint
+
+SHOULD: Be helpful."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Constraint > should produce identical output with must-not type 1`] = `
+"<constraint>
+MUST NOT: Lie.
+</constraint>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Constraint > should produce identical output with none delimiter 1`] = `"MUST: Be safe."`;
+
+exports[`wrapWithDelimiter refactor regression > Constraint > should produce identical output with type prefix 1`] = `
+"<constraint>
+MUST: Be accurate.
+</constraint>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Constraint > should produce identical output with xml delimiter 1`] = `
+"<constraint>
+Be concise.
+</constraint>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Context > should produce identical output with markdown delimiter 1`] = `
+"## context
+
+Background info."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Context > should produce identical output with none delimiter 1`] = `"Background info."`;
+
+exports[`wrapWithDelimiter refactor regression > Context > should produce identical output with xml delimiter 1`] = `
+"<context>
+Background info.
+</context>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Format > should produce identical output with markdown delimiter 1`] = `
+"## format
+
+Output format: json"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Format > should produce identical output with none delimiter 1`] = `"Output format: xml"`;
+
+exports[`wrapWithDelimiter refactor regression > Format > should produce identical output with type and language 1`] = `
+"<format>
+Output format: code (typescript)
+</format>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Format > should produce identical output with type prop 1`] = `
+"<format>
+Output format: json
+
+Output as JSON.
+</format>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Format > should produce identical output with xml delimiter 1`] = `
+"<format>
+Use JSON format.
+</format>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Role > should produce identical output with markdown delimiter 1`] = `
+"## role
+
+You are a helpful assistant."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Role > should produce identical output with none delimiter 1`] = `"You are a helpful assistant."`;
+
+exports[`wrapWithDelimiter refactor regression > Role > should produce identical output with xml delimiter 1`] = `
+"<role>
+You are a helpful assistant.
+</role>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Section > should produce identical output with default (no name) 1`] = `"Generic section."`;
+
+exports[`wrapWithDelimiter refactor regression > Section > should produce identical output with markdown delimiter 1`] = `
+"## custom
+
+Markdown section."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Section > should produce identical output with name 1`] = `
+"<custom>
+Named section.
+</custom>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Section > should produce identical output with none delimiter 1`] = `"No delimiter."`;
+
+exports[`wrapWithDelimiter refactor regression > SuccessCriteria > should produce identical output with markdown delimiter 1`] = `
+"## success-criteria
+
+Criteria met."
+`;
+
+exports[`wrapWithDelimiter refactor regression > SuccessCriteria > should produce identical output with none delimiter 1`] = `"Criteria met."`;
+
+exports[`wrapWithDelimiter refactor regression > SuccessCriteria > should produce identical output with xml delimiter 1`] = `
+"<success-criteria>
+Criteria met.
+</success-criteria>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Task > should produce identical output with markdown delimiter 1`] = `
+"## task
+
+Do the thing."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Task > should produce identical output with none delimiter 1`] = `"Do the thing."`;
+
+exports[`wrapWithDelimiter refactor regression > Task > should produce identical output with xml delimiter 1`] = `
+"<task>
+Do the thing.
+</task>"
+`;
+
+exports[`wrapWithDelimiter refactor regression > Tone > should produce identical output with markdown delimiter 1`] = `
+"## tone
+
+Professional."
+`;
+
+exports[`wrapWithDelimiter refactor regression > Tone > should produce identical output with none delimiter 1`] = `"Professional."`;
+
+exports[`wrapWithDelimiter refactor regression > Tone > should produce identical output with xml delimiter 1`] = `
+"<tone>
+Professional.
+</tone>"
+`;

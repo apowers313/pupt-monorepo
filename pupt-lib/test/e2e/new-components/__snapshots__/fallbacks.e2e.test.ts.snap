@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Fallbacks e2e > snapshots > should match snapshot: fallbacks with children 1`] = `
+"<fallbacks>
+<fallback>
+If unable to complete, then explain why
+</fallback>
+<fallback>
+If missing info, then ask questions
+</fallback>
+
+</fallbacks>"
+`;

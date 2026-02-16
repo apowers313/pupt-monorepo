@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "project": ["src/**/*.ts", "components/**/*.{ts,tsx}"],
+  "ignore": ["dist/**", "test/**"],
+  "ignoreDependencies": [
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/github",
+    "@semantic-release/npm",
+    "@semantic-release/release-notes-generator",
+    "conventional-changelog-conventionalcommits",
+    "pupt"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "exclude": ["duplicates", "types"]
+}

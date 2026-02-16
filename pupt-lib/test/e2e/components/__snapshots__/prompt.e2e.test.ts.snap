@@ -1,0 +1,161 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Prompt defaults e2e > should render bare mode through pipeline 1`] = `
+"<task>
+Summarize this document
+</task>"
+`;
+
+exports[`Prompt defaults e2e > should render role shorthand through pipeline 1`] = `
+"<role>
+You are a helpful Software Engineer. You have expertise in software development, programming, system design.
+</role>
+<task>
+Review code
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > should render role shorthand with expertise through pipeline 1`] = `
+"<role>
+You are a helpful Software Engineer. You have expertise in TypeScript.
+</role>
+<task>
+Review code
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > should render with auto-generated defaults through pipeline 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<task>
+Summarize this document
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: bare mode 1`] = `
+"<task>
+Do the thing
+</task>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: custom constraint child overrides default 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<task>
+Do something
+</task>
+<constraint>
+MUST: Be awesome
+</constraint>
+<format>
+Output format: markdown
+</format>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: custom role child overrides default 1`] = `
+"<role>
+You are an expert in everything
+</role>
+<task>
+Do something
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: defaults object with role disabled 1`] = `
+"<task>
+Do something
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: engineer role shorthand 1`] = `
+"<role>
+You are a helpful Software Engineer. You have expertise in software development, programming, system design.
+</role>
+<task>
+Review code
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: engineer with expertise 1`] = `
+"<role>
+You are a helpful Software Engineer. You have expertise in TypeScript, React.
+</role>
+<task>
+Review code
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`Prompt defaults e2e > snapshots > should match snapshot: minimal prompt with defaults 1`] = `
+"<role>
+You are a helpful Assistant. You have expertise in general help.
+</role>
+<task>
+Do the thing
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;

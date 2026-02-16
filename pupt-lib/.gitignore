@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Test coverage
+coverage/
+coverage-node/
+coverage-browser/
+
+# Browser test failure screenshots
+__screenshots__/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+*.tmp
+*~
+
+# VitePress
+docs/.vitepress/cache/
+
+# PUPT
+.pt-config.json.backup
+.pthistory
+.git-prompts
