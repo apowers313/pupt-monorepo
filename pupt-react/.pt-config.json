@@ -1,0 +1,26 @@
+{
+  "promptDirs": [
+    "${projectRoot}/.prompts",
+    "node_modules/pupt/prompts"
+  ],
+  "historyDir": "${projectRoot}/.pthistory",
+  "defaultCmd": "claude",
+  "defaultCmdArgs": [
+    "--permission-mode",
+    "acceptEdits"
+  ],
+  "defaultCmdOptions": {
+    "Continue with last context?": "--continue"
+  },
+  "autoReview": true,
+  "autoRun": true,
+  "gitPromptDir": "${projectRoot}/.git-prompts",
+  "version": "7.0.0",
+  "outputCapture": {
+    "enabled": true,
+    "directory": "${projectRoot}/.pthistory",
+    "maxSizeMB": 500,
+    "retentionDays": 0
+  },
+  "libraries": []
+}

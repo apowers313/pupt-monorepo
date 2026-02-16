@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+dist-demo/
+
+# Cache and temp files
+.cache/
+*.tsbuildinfo
+.vite/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+.pthistory
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Test artifacts
+__screenshots__/
+
+# Temporary files
+tmp/
+*.tmp
+.playwright-mcp/
