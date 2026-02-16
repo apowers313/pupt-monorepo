@@ -11,7 +11,8 @@ describe('prompt-dir-resolver', () => {
 
   beforeEach(() => {
     clearProjectRootCache();
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-dir-resolver-'));
+    // Use realpathSync to resolve symlinks (e.g., /var -> /private/var on macOS)
+    tempDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'prompt-dir-resolver-')));
     originalCwd = process.cwd();
   });
 

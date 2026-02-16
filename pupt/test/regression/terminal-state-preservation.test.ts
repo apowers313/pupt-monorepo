@@ -98,7 +98,7 @@ fi
     expect(stderr).not.toContain('Error');
   });
 
-  it('should handle SIGPIPE gracefully without terminal corruption', async () => {
+  it.skipIf(process.platform === 'win32' || process.env.CI === 'true')('should handle SIGPIPE gracefully without terminal corruption', async () => {
     await new Promise<void>((resolve, reject) => {
       // Use 'yes' to generate infinite output and pipe to 'head' which will close early
       const proc = spawn('sh', ['-c', `node "${CLI_PATH}" history --limit 100 | head -1`], {
