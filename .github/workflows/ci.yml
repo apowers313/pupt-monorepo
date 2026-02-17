@@ -5,6 +5,15 @@ on:
         branches: [master]
     pull_request:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
 jobs:
     # Lint PR titles with commitlint
     lint-pr:
@@ -82,6 +91,9 @@ jobs:
               if: github.ref == 'refs/heads/master' && github.event_name == 'push'
               run: pnpm exec nx run-many -t lint --parallel=3
 
+            - name: Dead code detection (knip)
+              run: pnpm run lint:knip
+
             - name: Upload pupt-lib build
               uses: actions/upload-artifact@v4
               with:
@@ -120,7 +132,7 @@ jobs:
                 include:
                     - shard: pupt
                       package: pupt
-                      test-command: cd pupt && pnpm exec vitest run --no-coverage
+                      test-command: cd pupt && pnpm exec vitest run --coverage
                       needs-browser: false
                     - shard: pupt-lib-node
                       package: pupt-lib
@@ -195,6 +207,10 @@ jobs:
 
             - name: Run tests
               run: ${{ matrix.test-command }}
+              env:
+                  # Disable per-shard coverage thresholds; thresholds are only
+                  # meaningful when all projects' coverage is merged together.
+                  VITEST_COVERAGE_NO_THRESHOLDS: "true"
 
             - name: Upload coverage
               if: ${{ !cancelled() }}
@@ -205,17 +221,277 @@ jobs:
                   retention-days: 1
                   if-no-files-found: ignore
 
+    # Multi-OS and multi-Node compatibility tests
+    test-compat:
+        name: Compat (${{ matrix.name }})
+        needs: build
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - name: pupt-lib-node / windows
+                      os: windows-latest
+                      node: 22.x
+                      test-command: cd pupt-lib && pnpm exec vitest run --project=node --no-coverage --passWithNoTests
+                      needs-browser: false
+                    - name: pupt-lib-node / macos
+                      os: macos-latest
+                      node: 22.x
+                      test-command: cd pupt-lib && pnpm exec vitest run --project=node --no-coverage --passWithNoTests
+                      needs-browser: false
+                    - name: pupt / windows
+                      os: windows-latest
+                      node: 22.x
+                      test-command: cd pupt && pnpm exec vitest run --no-coverage --passWithNoTests
+                      needs-browser: false
+                    - name: pupt / macos
+                      os: macos-latest
+                      node: 22.x
+                      test-command: cd pupt && pnpm exec vitest run --no-coverage --passWithNoTests
+                      needs-browser: false
+                    - name: pupt-react / node20
+                      os: ubuntu-latest
+                      node: 20.x
+                      test-command: cd pupt-react && pnpm exec vitest run --no-coverage --passWithNoTests
+                      needs-browser: true
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ matrix.node }}
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Download pupt-lib build
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-lib
+                  path: pupt-lib/dist/
+
+            - name: Download pupt build
+              if: contains(matrix.name, 'pupt /')
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt
+                  path: pupt/dist/
+
+            - name: Download pupt-react build
+              if: contains(matrix.name, 'pupt-react')
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-react
+                  path: pupt-react/dist/
+
+            - name: Cache Playwright browsers
+              if: matrix.needs-browser
+              uses: actions/cache@v4
+              id: playwright-cache
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-${{ runner.os }}-node${{ matrix.node }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+            - name: Install Playwright browsers
+              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit != 'true'
+              run: pnpm exec playwright install chromium --with-deps
+
+            - name: Install Playwright deps (if cached)
+              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit == 'true'
+              run: pnpm exec playwright install-deps chromium
+
+            - name: Run tests
+              run: ${{ matrix.test-command }}
+
+    # Merge coverage reports and upload to Coveralls
+    coverage:
+        name: Coverage
+        needs: [test]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Download all coverage artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: coverage-*
+                  path: coverage-artifacts/
+
+            - name: Merge coverage reports
+              run: |
+                  mkdir -p coverage
+                  found=0
+                  for f in coverage-artifacts/*/lcov.info; do
+                    if [ -f "$f" ]; then
+                      cat "$f" >> coverage/lcov.info
+                      echo "Merged: $f"
+                      found=$((found + 1))
+                    fi
+                  done
+                  echo "Merged $found coverage reports"
+                  if [ $found -eq 0 ]; then
+                    echo "No coverage reports found"
+                    exit 1
+                  fi
+
+            - name: Upload coverage to Coveralls
+              uses: coverallsapp/github-action@v2
+              with:
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  file: coverage/lcov.info
+
+    # Build documentation and demo sites
+    docs-build:
+        name: Build Documentation
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.x
+                  cache: "pnpm"
+
+            - name: Setup Pages
+              uses: actions/configure-pages@v4
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Download pupt-lib build
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-lib
+                  path: pupt-lib/dist/
+
+            - name: Download pupt build
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt
+                  path: pupt/dist/
+
+            - name: Download pupt-react build
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-react
+                  path: pupt-react/dist/
+
+            - name: Build pupt-lib documentation
+              run: cd pupt-lib && npm run docs:build
+
+            - name: Build pupt documentation
+              run: cd pupt && npm run docs:build
+
+            - name: Build pupt-react demo
+              run: cd pupt-react && npm run build:demo
+
+            - name: Assemble site
+              run: |
+                  mkdir -p _site
+                  cp -r pupt-lib/docs/.vitepress/dist _site/lib
+                  cp -r pupt/docs/.vitepress/dist _site/cli
+                  cp -r pupt-react/dist-demo _site/demo
+                  # Create landing page
+                  cat > _site/index.html << 'LANDING'
+                  <!DOCTYPE html>
+                  <html lang="en">
+                  <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>PUPT - Powerful Universal Prompt Tool</title>
+                    <style>
+                      body { font-family: system-ui, sans-serif; max-width: 600px; margin: 80px auto; padding: 0 20px; color: #333; }
+                      h1 { margin-bottom: 0.5em; }
+                      p { color: #666; }
+                      ul { list-style: none; padding: 0; }
+                      li { margin: 12px 0; }
+                      a { color: #3451b2; text-decoration: none; font-weight: 500; }
+                      a:hover { text-decoration: underline; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>PUPT</h1>
+                    <p>Powerful Universal Prompt Tool - documentation and demos</p>
+                    <ul>
+                      <li><a href="lib/">@pupt/lib - Core JSX Prompt Library</a></li>
+                      <li><a href="cli/">@pupt/cli - CLI Tool</a></li>
+                      <li><a href="demo/">@pupt/react - Interactive Demo</a></li>
+                    </ul>
+                  </body>
+                  </html>
+                  LANDING
+
+            - name: Upload pages artifact
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: _site
+
+    # Deploy documentation to GitHub Pages (master only)
+    docs-deploy:
+        name: Deploy Documentation
+        needs: [coverage, docs-build]
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
+
     # Gate job - ensures all required checks pass before release
     all-checks:
         name: All Checks Pass
-        needs: [test]
+        needs: [lint-pr, build, test, test-compat, coverage, docs-build]
         if: always()
         runs-on: ubuntu-latest
         steps:
             - name: Check all jobs passed
               run: |
+                  echo "lint-pr: ${{ needs.lint-pr.result }}"
+                  echo "build: ${{ needs.build.result }}"
+                  echo "test: ${{ needs.test.result }}"
+                  echo "test-compat: ${{ needs.test-compat.result }}"
+                  echo "coverage: ${{ needs.coverage.result }}"
+                  echo "docs-build: ${{ needs.docs-build.result }}"
+
+                  # lint-pr only runs on PRs, allow skipped on push
+                  if [[ "${{ needs.lint-pr.result }}" != "success" && "${{ needs.lint-pr.result }}" != "skipped" ]]; then
+                    echo "::error::lint-pr failed"
+                    exit 1
+                  fi
+                  if [[ "${{ needs.build.result }}" != "success" ]]; then
+                    echo "::error::Build failed"
+                    exit 1
+                  fi
                   if [[ "${{ needs.test.result }}" != "success" ]]; then
-                    echo "Test job failed"
+                    echo "::error::Tests failed"
+                    exit 1
+                  fi
+                  if [[ "${{ needs.test-compat.result }}" != "success" ]]; then
+                    echo "::error::Compat tests failed"
+                    exit 1
+                  fi
+                  if [[ "${{ needs.coverage.result }}" != "success" ]]; then
+                    echo "::error::Coverage failed"
+                    exit 1
+                  fi
+                  if [[ "${{ needs.docs-build.result }}" != "success" ]]; then
+                    echo "::error::Docs build failed"
                     exit 1
                   fi
                   echo "All checks passed!"

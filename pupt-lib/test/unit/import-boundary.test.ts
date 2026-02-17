@@ -1,11 +1,11 @@
-import { readFileSync } from 'fs';
-import { globSync } from 'glob';
+import { readdirSync,readFileSync } from 'fs';
 import { relative,resolve } from 'path';
 import { describe, expect,it } from 'vitest';
 
 describe('Import boundary: src/ must not import from components/', () => {
   const srcDir = resolve(__dirname, '../../src');
-  const srcFiles = globSync('**/*.ts', { cwd: srcDir })
+  const srcFiles = readdirSync(srcDir, { recursive: true })
+    .filter(f => typeof f === 'string' && f.endsWith('.ts'))
     .map(f => resolve(srcDir, f));
 
   // src/index.ts is the public barrel file — it re-exports components.

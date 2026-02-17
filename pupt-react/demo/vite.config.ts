@@ -38,7 +38,7 @@ function importMapVersionPlugin(): Plugin {
 
 export default defineConfig({
   root: resolve(__dirname),
-  base: "/pupt-react/",
+  base: "/pupt-monorepo/demo/",
   plugins: [importMapVersionPlugin(), react()],
   resolve: {
     alias: [

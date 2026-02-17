@@ -21,10 +21,10 @@ export default defineConfig({
   ],
   title: 'PUPT',
   description: 'Prompt Utility & Personalization Tool - A powerful CLI for managing AI prompts with advanced templating',
-  base: '/pupt/',
+  base: '/pupt-monorepo/cli/',
 
   head: [
-    ['link', { rel: 'icon', href: '/pupt/pupt.png' }]
+    ['link', { rel: 'icon', href: '/pupt-monorepo/cli/pupt.png' }]
   ],
   
   themeConfig: {
@@ -86,7 +86,7 @@ export default defineConfig({
     ],
     
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/apowers313/pupt' }
+      { icon: 'github', link: 'https://github.com/apowers313/pupt-monorepo' }
     ],
     
     footer: {

@@ -23,9 +23,9 @@ export default defineConfig({
   title: 'pupt-lib',
   description:
     'Write AI prompts that are structured, versioned, and shareable',
-  base: '/pupt-lib/',
+  base: '/pupt-monorepo/lib/',
 
-  head: [['link', { rel: 'icon', href: '/pupt-lib/pupt.png' }]],
+  head: [['link', { rel: 'icon', href: '/pupt-monorepo/lib/pupt.png' }]],
 
   themeConfig: {
     logo: '/pupt.png',
@@ -126,7 +126,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: 'github',
-        link: 'https://github.com/apowers313/pupt-lib',
+        link: 'https://github.com/apowers313/pupt-monorepo',
       },
     ],
 
