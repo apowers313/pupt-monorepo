@@ -1,86 +1,86 @@
 {
-  "name": "@pupt/lib",
-  "version": "1.3.8",
-  "description": "TypeScript library for creating AI prompts using JSX syntax",
-  "license": "MIT",
-  "author": "",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/apowers313/pupt-monorepo.git",
-    "directory": "pupt-lib"
-  },
-  "keywords": [
-    "ai",
-    "prompt",
-    "jsx",
-    "llm",
-    "typescript",
-    "template",
-    "prompt-engineering"
-  ],
-  "engines": {
-    "node": ">=20.0.0"
-  },
-  "files": [
-    "dist/",
-    "README.md",
-    "LICENSE"
-  ],
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+    "name": "@pupt/lib",
+    "version": "1.4.0",
+    "description": "TypeScript library for creating AI prompts using JSX syntax",
+    "license": "MIT",
+    "author": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apowers313/pupt-monorepo.git",
+        "directory": "pupt-lib"
     },
-    "./jsx-runtime": {
-      "types": "./dist/src/jsx-runtime/index.d.ts",
-      "import": "./dist/jsx-runtime/index.js",
-      "default": "./dist/jsx-runtime/index.js"
+    "keywords": [
+        "ai",
+        "prompt",
+        "jsx",
+        "llm",
+        "typescript",
+        "template",
+        "prompt-engineering"
+    ],
+    "engines": {
+        "node": ">=20.0.0"
     },
-    "./jsx-dev-runtime": {
-      "types": "./dist/src/jsx-runtime/jsx-dev-runtime.d.ts",
-      "import": "./dist/jsx-runtime/jsx-dev-runtime.js",
-      "default": "./dist/jsx-runtime/jsx-dev-runtime.js"
+    "files": [
+        "dist/",
+        "README.md",
+        "LICENSE"
+    ],
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/src/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./jsx-runtime": {
+            "types": "./dist/src/jsx-runtime/index.d.ts",
+            "import": "./dist/jsx-runtime/index.js",
+            "default": "./dist/jsx-runtime/index.js"
+        },
+        "./jsx-dev-runtime": {
+            "types": "./dist/src/jsx-runtime/jsx-dev-runtime.d.ts",
+            "import": "./dist/jsx-runtime/jsx-dev-runtime.js",
+            "default": "./dist/jsx-runtime/jsx-dev-runtime.js"
+        }
+    },
+    "scripts": {
+        "build": "vite build",
+        "prompt": "tsx examples/cli.ts",
+        "test": "vitest run",
+        "test:node": "vitest run --project=node",
+        "test:browser": "vitest run --project=browser",
+        "test:watch": "vitest",
+        "test:ci": "vitest run --no-coverage --passWithNoTests",
+        "test:ci:node": "vitest run --project=node --no-coverage --passWithNoTests",
+        "test:ci:browser": "vitest run --project=browser --no-coverage --passWithNoTests",
+        "test:ci:node:cov": "vitest run --project=node --coverage --coverage.reportsDirectory=coverage-node --passWithNoTests",
+        "test:ci:browser:cov": "vitest run --project=browser --coverage --coverage.reportsDirectory=coverage-browser --passWithNoTests",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint src test components && tsc --noEmit",
+        "lint:fix": "eslint src test components --fix",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
+    },
+    "dependencies": {
+        "hyperformula": "^3.1.1"
+    },
+    "devDependencies": {
+        "@babel/standalone": "^7.28.6",
+        "@inquirer/prompts": "^8.2.0",
+        "@types/babel__core": "^7.20.5",
+        "@types/babel__standalone": "^7.1.9",
+        "@types/node": "^22.10.10",
+        "chalk": "^5.6.2",
+        "minisearch": "^7.2.0",
+        "msw": "^2.12.7",
+        "vite-plugin-dts": "^4.5.0",
+        "vitepress": "^1.6.4",
+        "zod": "^3.22.0"
     }
-  },
-  "scripts": {
-    "build": "vite build",
-    "prompt": "tsx examples/cli.ts",
-    "test": "vitest run",
-    "test:node": "vitest run --project=node",
-    "test:browser": "vitest run --project=browser",
-    "test:watch": "vitest",
-    "test:ci": "vitest run --no-coverage --passWithNoTests",
-    "test:ci:node": "vitest run --project=node --no-coverage --passWithNoTests",
-    "test:ci:browser": "vitest run --project=browser --no-coverage --passWithNoTests",
-    "test:ci:node:cov": "vitest run --project=node --coverage --coverage.reportsDirectory=coverage-node --passWithNoTests",
-    "test:ci:browser:cov": "vitest run --project=browser --coverage --coverage.reportsDirectory=coverage-browser --passWithNoTests",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint src test components && tsc --noEmit",
-    "lint:fix": "eslint src test components --fix",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
-  },
-  "dependencies": {
-    "hyperformula": "^3.1.1"
-  },
-  "devDependencies": {
-    "@babel/standalone": "^7.28.6",
-    "@inquirer/prompts": "^8.2.0",
-    "@types/babel__core": "^7.20.5",
-    "@types/babel__standalone": "^7.1.9",
-    "@types/node": "^22.10.10",
-    "chalk": "^5.6.2",
-    "minisearch": "^7.2.0",
-    "msw": "^2.12.7",
-    "vite-plugin-dts": "^4.5.0",
-    "vitepress": "^1.6.4",
-    "zod": "^3.22.0"
-  }
 }

@@ -1,83 +1,83 @@
 {
-  "name": "@pupt/cli",
-  "version": "2.2.1",
-  "description": "Powerful Universal Prompt Tool - your faithful prompt companion",
-  "type": "module",
-  "main": "dist/index.js",
-  "bin": {
-    "pt": "./dist/cli.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "vitest run --no-coverage",
-    "test:verbose": "vitest run --no-coverage --reporter=verbose",
-    "test:ci": "vitest run --no-coverage --passWithNoTests",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "lint": "eslint src test && tsc --noEmit",
-    "prepublishOnly": "npm run build",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
-  },
-  "keywords": [
-    "cli",
-    "claude",
-    "claude code",
-    "prompt",
-    "ai",
-    "template",
-    "handlebars"
-  ],
-  "author": "Adam Powers <apowers@ato.ms>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/apowers313/pupt-monorepo.git",
-    "directory": "pupt"
-  },
-  "publishConfig": {
-    "access": "public",
-    "provenance": true
-  },
-  "files": [
-    "dist",
-    "prompts",
-    "README.md",
-    "LICENSE"
-  ],
-  "devDependencies": {
-    "@types/command-exists": "^1.2.3",
-    "@types/fs-extra": "^11.0.4",
-    "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.2.1",
-    "@vitest/ui": "3.1.4",
-    "vitepress": "^1.6.4"
-  },
-  "dependencies": {
-    "@homebridge/node-pty-prebuilt-multiarch": "^0.11.14",
-    "@inquirer/core": "^10.1.15",
-    "@inquirer/prompts": "^7.8.1",
-    "@inquirer/type": "^3.0.8",
-    "@pupt/lib": "workspace:*",
-    "@types/uuid": "^10.0.0",
-    "boxen": "^8.0.1",
-    "chalk": "^5.5.0",
-    "command-exists": "^1.2.9",
-    "commander": "^14.0.0",
-    "cosmiconfig": "^9.0.0",
-    "env-paths": "^4.0.0",
-    "execa": "^9.6.0",
-    "fs-extra": "^11.3.1",
-    "minisearch": "^7.1.2",
-    "ora": "^8.2.0",
-    "pino": "^9.9.0",
-    "pino-pretty": "^13.1.1",
-    "simple-git": "^3.28.0",
-    "strip-ansi": "^7.1.0",
-    "uuid": "^11.1.0",
-    "zod": "^3.23.8"
-  }
+    "name": "@pupt/cli",
+    "version": "2.3.0",
+    "description": "Powerful Universal Prompt Tool - your faithful prompt companion",
+    "type": "module",
+    "main": "dist/index.js",
+    "bin": {
+        "pt": "./dist/cli.js"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "vitest run --no-coverage",
+        "test:verbose": "vitest run --no-coverage --reporter=verbose",
+        "test:ci": "vitest run --no-coverage --passWithNoTests",
+        "test:watch": "vitest",
+        "test:ui": "vitest --ui",
+        "test:coverage": "vitest run --coverage",
+        "lint": "eslint src test && tsc --noEmit",
+        "prepublishOnly": "npm run build",
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "npm run docs:build && vitepress preview docs --port 9010"
+    },
+    "keywords": [
+        "cli",
+        "claude",
+        "claude code",
+        "prompt",
+        "ai",
+        "template",
+        "handlebars"
+    ],
+    "author": "Adam Powers <apowers@ato.ms>",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apowers313/pupt-monorepo.git",
+        "directory": "pupt"
+    },
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "files": [
+        "dist",
+        "prompts",
+        "README.md",
+        "LICENSE"
+    ],
+    "devDependencies": {
+        "@types/command-exists": "^1.2.3",
+        "@types/fs-extra": "^11.0.4",
+        "@types/js-yaml": "^4.0.9",
+        "@types/node": "^24.2.1",
+        "@vitest/ui": "3.1.4",
+        "vitepress": "^1.6.4"
+    },
+    "dependencies": {
+        "@homebridge/node-pty-prebuilt-multiarch": "^0.11.14",
+        "@inquirer/core": "^10.1.15",
+        "@inquirer/prompts": "^7.8.1",
+        "@inquirer/type": "^3.0.8",
+        "@pupt/lib": "workspace:*",
+        "@types/uuid": "^10.0.0",
+        "boxen": "^8.0.1",
+        "chalk": "^5.5.0",
+        "command-exists": "^1.2.9",
+        "commander": "^14.0.0",
+        "cosmiconfig": "^9.0.0",
+        "env-paths": "^4.0.0",
+        "execa": "^9.6.0",
+        "fs-extra": "^11.3.1",
+        "minisearch": "^7.1.2",
+        "ora": "^8.2.0",
+        "pino": "^9.9.0",
+        "pino-pretty": "^13.1.1",
+        "simple-git": "^3.28.0",
+        "strip-ansi": "^7.1.0",
+        "uuid": "^11.1.0",
+        "zod": "^3.23.8"
+    }
 }
