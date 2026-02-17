@@ -1,16 +1,34 @@
 import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import { resolve } from "path";
+import { resolve, dirname } from "path";
 import { readFileSync } from "fs";
+import { createRequire } from "module";
 
 const nodeShim = resolve(__dirname, "src/shims/node.ts");
+const require = createRequire(resolve(__dirname, "../package.json"));
 
 /**
  * Reads the installed version of a package from node_modules.
+ * Uses createRequire for pnpm-compatible resolution. Resolves the package's
+ * main entry point, then walks up to find the package.json (works even when
+ * the package's exports map doesn't expose package.json directly).
  */
 function getInstalledVersion(pkg: string): string {
-  const pkgPath = resolve(__dirname, `../node_modules/${pkg}/package.json`);
-  return JSON.parse(readFileSync(pkgPath, "utf-8")).version as string;
+  const entryPath = require.resolve(pkg);
+  let dir = dirname(entryPath);
+  while (dir !== dirname(dir)) {
+    try {
+      const pkgJsonPath = resolve(dir, "package.json");
+      const pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf-8")) as { name?: string; version?: string };
+      if (pkgJson.name === pkg) {
+        return pkgJson.version!;
+      }
+    } catch {
+      // no package.json at this level, keep walking up
+    }
+    dir = dirname(dir);
+  }
+  throw new Error(`Could not find package.json for ${pkg}`);
 }
 
 /**
