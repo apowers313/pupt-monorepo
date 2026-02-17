@@ -7,8 +7,8 @@ import { HistoryManager } from '../../src/history/history-manager.js';
 import { OutputCaptureService } from '../../src/services/output-capture-service.js';
 import { PatternDetector } from '../../src/services/pattern-detector.js';
 import { ReviewDataBuilder } from '../../src/services/review-data-builder.js';
+import type { Config } from '../../src/types/config.js';
 import type { EnhancedHistoryEntry } from '../../src/types/history.js';
-import type { Config } from '../../src/types/index.js';
 
 let testDir: string;
 

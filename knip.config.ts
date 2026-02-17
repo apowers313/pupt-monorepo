@@ -25,42 +25,48 @@ const config: KnipConfig = {
                 "@semantic-release/changelog",
                 "@semantic-release/git",
                 "semantic-release",
-                // Coverage provider (used by child packages)
-                "@vitest/coverage-v8",
                 // Commitizen tools (used via git cz / npm run commit)
-                "commitizen",
                 "conventional-changelog-conventionalcommits",
             ],
         },
 
         // @pupt/lib - core JSX prompt library
-        "@pupt/lib": {
+        "pupt-lib": {
             entry: ["src/index.ts", "src/jsx-runtime/index.ts", "test/**/*.test.ts"],
-            project: ["src/**/*.ts", "src/**/*.tsx", "components/**/*.tsx", "test/**/*.ts"],
-            ignore: ["dist/**", "coverage/**", "node_modules/**"],
+            project: ["src/**/*.ts", "components/**/*.tsx", "test/**/*.ts"],
+            ignore: ["dist/**", "coverage/**", "node_modules/**", "test/fixtures/**"],
             ignoreDependencies: [
-                // Playwright for browser tests
-                "playwright",
+                // glob is a root dep used in tests
+                "glob",
+                // Mock package used in tests
+                "fake-npm-package",
             ],
         },
 
         // @pupt/cli - CLI tool
         pupt: {
-            entry: ["src/index.ts", "src/cli.ts", "test/**/*.test.ts"],
+            entry: ["test/**/*.test.ts"],
             project: ["src/**/*.ts", "test/**/*.ts"],
             ignore: ["dist/**", "coverage/**", "node_modules/**"],
+            ignoreDependencies: [
+                // Dynamically loaded by pino as a transport target string
+                "pino-pretty",
+            ],
         },
 
         // @pupt/react - React component library
         "pupt-react": {
-            entry: ["src/index.ts", "test/**/*.test.ts", "test/**/*.test.tsx"],
+            entry: ["test/**/*.test.ts", "test/**/*.test.tsx"],
             project: ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"],
             ignore: ["dist/**", "coverage/**", "node_modules/**", "demo/**"],
             // Disable vite plugin (demo/vite.config.ts has deps not in this workspace)
             vite: false,
             ignoreDependencies: [
-                // Playwright for browser tests
-                "playwright",
+                // Used in demo/ which is excluded from knip
+                "@monaco-editor/react",
+                "@tabler/icons-react",
+                // Used in vite.config.ts
+                "vite-plugin-dts",
             ],
         },
 
@@ -74,6 +80,18 @@ const config: KnipConfig = {
 
     // Global ignore patterns
     ignore: ["**/dist/**", "**/coverage/**", "**/node_modules/**", "**/.nx/**", "**/docs/**"],
+
+    // Exclude issue types that aren't meaningful for this codebase:
+    // - exports/types: libraries expose public API for external consumers
+    // - enumMembers: enum values are part of the API surface
+    exclude: ["exports", "types", "enumMembers"],
+
+    // Don't report exports that are used within the same file
+    ignoreExportsUsedInFile: {
+        enum: true,
+        type: true,
+        interface: true,
+    },
 };
 
 export default config;

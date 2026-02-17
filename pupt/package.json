@@ -60,8 +60,8 @@
     "@homebridge/node-pty-prebuilt-multiarch": "^0.11.14",
     "@inquirer/core": "^10.1.15",
     "@inquirer/prompts": "^7.8.1",
-    "@inquirer/testing": "^2.1.49",
     "@inquirer/type": "^3.0.8",
+    "@pupt/lib": "workspace:*",
     "@types/uuid": "^10.0.0",
     "boxen": "^8.0.1",
     "chalk": "^5.5.0",
@@ -71,16 +71,13 @@
     "env-paths": "^4.0.0",
     "execa": "^9.6.0",
     "fs-extra": "^11.3.1",
-    "glob": "^11.0.3",
     "minisearch": "^7.1.2",
     "ora": "^8.2.0",
     "pino": "^9.9.0",
     "pino-pretty": "^13.1.1",
-    "@pupt/lib": "workspace:*",
     "simple-git": "^3.28.0",
     "strip-ansi": "^7.1.0",
     "uuid": "^11.1.0",
-    "yaml": "^2.8.1",
     "zod": "^3.23.8"
   }
 }
