@@ -561,8 +561,8 @@ export class ModuleLoader {
         try {
             const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref ?? "master"}/index.js`;
             const library = await this.loadUrl(url);
-            components = library.components;
-            dependencies = library.dependencies;
+            ({ components } = library);
+            ({ dependencies } = library);
         } catch {
             // No JS module found — that's fine
         }

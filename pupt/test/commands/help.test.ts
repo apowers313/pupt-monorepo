@@ -153,11 +153,11 @@ describe('help command', () => {
     });
 
     it('should handle unknown commands gracefully', async () => {
-      await expect(helpCommand('unknown-command')).rejects.toThrow('process.exit');
+      expect(() => helpCommand('unknown-command')).toThrow('process.exit');
 
       expect(logger.error).toHaveBeenCalledWith('Unknown command: unknown-command');
       expect(logger.log).toHaveBeenCalledWith('\nAvailable commands:');
-      
+
       // Check that all commands are listed
       mockCommands.forEach(cmd => {
         expect(logger.log).toHaveBeenCalledWith(
@@ -169,7 +169,7 @@ describe('help command', () => {
     });
 
     it('should list available commands when an unknown command is provided', async () => {
-      await expect(helpCommand('nonexistent')).rejects.toThrow('process.exit');
+      expect(() => helpCommand('nonexistent')).toThrow('process.exit');
 
       expect(logger.log).toHaveBeenCalledWith('\nAvailable commands:');
       expect(logger.log).toHaveBeenCalledWith('  init - Initialize a new PUPT configuration');
@@ -215,7 +215,7 @@ describe('help command', () => {
       vi.spyOn(program, 'commands', 'get').mockReturnValue(updatedCommands);
 
       // Try to get help for unknown command to see the list
-      await expect(helpCommand('unknown')).rejects.toThrow('process.exit');
+      expect(() => helpCommand('unknown')).toThrow('process.exit');
 
       expect(logger.log).toHaveBeenCalledWith('  future-command - A future command');
     });

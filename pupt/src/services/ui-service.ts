@@ -106,7 +106,7 @@ export class ConsoleUI {
 
   table(data: unknown[]): void {
     if (this.silent || this.logLevel < LogLevel.INFO) {return;}
-    console.table(data);
+    logger.log(JSON.stringify(data, null, 2));
   }
 
   json(data: unknown, pretty = true): void {
@@ -197,7 +197,7 @@ export class ConsoleUI {
   // Utility methods
   clear(): void {
     if (!this.silent) {
-      console.clear();
+      process.stdout.write('\x1Bc');
     }
   }
 

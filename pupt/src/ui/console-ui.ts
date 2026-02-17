@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import ora from 'ora';
+import ora, { type Ora } from 'ora';
 
 import { logger } from '../utils/logger.js';
 
@@ -58,7 +58,7 @@ export class ConsoleUI {
     logger.log(formatted);
   }
 
-  spinner(text: string) {
+  spinner(text: string): Ora {
     if (this.silent) {
       return {
         start: () => {},
@@ -66,15 +66,14 @@ export class ConsoleUI {
         fail: () => {},
         stop: () => {},
         text: ''
-      };
+      } as Ora;
     }
     return ora(text);
   }
 
   table(data: unknown[]): void {
     if (this.silent || this.logLevel < LogLevel.INFO) {return;}
-    // console.table doesn't have line ending issues, so we keep it
-    console.table(data);
+    logger.log(JSON.stringify(data, null, 2));
   }
 
   json(data: unknown, pretty = true): void {

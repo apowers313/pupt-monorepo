@@ -78,6 +78,8 @@ function extractUsesProps(
       case 'from':
         props.from = value;
         break;
+      default:
+        break;
     }
   }
 

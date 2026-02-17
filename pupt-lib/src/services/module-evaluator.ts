@@ -18,7 +18,7 @@ function isNodeEnvironment(): boolean {
  * Check if we're running in a browser environment.
  */
 function isBrowserEnvironment(): boolean {
-  return typeof window !== 'undefined' && typeof Blob !== 'undefined';
+  return 'document' in globalThis;
 }
 
 export interface EvaluateOptions {

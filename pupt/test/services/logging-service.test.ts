@@ -256,10 +256,6 @@ describe('Logging Service', () => {
 
   describe('enhanceWithLogging', () => {
     class TestCommand extends BaseCommand<void, string> {
-      constructor(context: any, options: any) {
-        super(context, options);
-      }
-      
       protected get name(): string {
         return 'test-command';
       }

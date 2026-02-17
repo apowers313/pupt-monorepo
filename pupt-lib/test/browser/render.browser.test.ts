@@ -179,6 +179,7 @@ describe('Browser: .prompt file transformation', () => {
     // Build and execute the function
     const contextKeys = Object.keys(evalContext);
     const contextValues = Object.values(evalContext);
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
     const evalFn = new Function(...contextKeys, processedCode);
     evalFn(...contextValues);
 

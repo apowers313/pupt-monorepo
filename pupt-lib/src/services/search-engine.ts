@@ -57,9 +57,10 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
     },
 
     search(query, options) {
+      const filterTags = options?.tags;
       const searchResults = miniSearch.search(query, {
-        filter: options?.tags
-          ? (result) => options.tags.every(t => (result.tags as string).includes(t))
+        filter: filterTags
+          ? (result) => filterTags.every(t => (result.tags as string).includes(t))
           : undefined,
       });
 

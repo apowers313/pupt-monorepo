@@ -128,7 +128,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
     promptResult = options.prompt;
     // Use templateInfo if provided
     if (options.templateInfo) {
-      templateInfo = options.templateInfo;
+      ({ templateInfo } = options);
     }
   } else if (options.historyIndex) {
     // Validate history is enabled
@@ -180,8 +180,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
       startTimestamp,
       environment: config.environment,
     });
-    promptResult = resolved.text;
-    templateInfo = resolved.templateInfo;
+    ({ text: promptResult, templateInfo } = resolved);
   }
   
   // Handle coding tool options - always prompt when using default tool with options configured
@@ -230,9 +229,7 @@ export async function runCommand(args: string[], options: RunOptions): Promise<v
         timeStr,
         randomSuffix
       }, isTUI);
-      exitCode = result.exitCode;
-      outputFile = result.outputFile;
-      outputSize = result.outputSize;
+      ({ exitCode, outputFile, outputSize } = result);
     } else {
       exitCode = await executeTool(finalTool, finalArgs, promptResult, isInteractiveTUI(finalTool));
     }
@@ -328,7 +325,7 @@ async function executeTool(tool: string, args: string[], prompt: string, isTUI: 
 
     // Capture stderr for Claude-specific error detection
     if (tool === 'claude' && child.stderr) {
-      child.stderr.on('data', (data) => {
+      child.stderr.on('data', (data: Buffer) => {
         const output = data.toString();
         _stderrData += output;
 

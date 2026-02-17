@@ -61,14 +61,14 @@ export function useAskIterator(options: UseAskIteratorOptions): UseAskIteratorRe
             setCurrentIndex(0);
             setValues(new Map(initialValues));
             completedRef.current = false;
-            return;
+            return undefined;
         }
 
         let cancelled = false;
         setIsLoading(true);
 
         const extractOpts = preSuppliedValues ? { values: preSuppliedValues } : undefined;
-        extractInputRequirements(element, extractOpts).then((reqs) => {
+        void extractInputRequirements(element, extractOpts).then((reqs) => {
             if (!cancelled) {
                 setRequirements(reqs);
                 setCurrentIndex(0);
@@ -98,13 +98,13 @@ export function useAskIterator(options: UseAskIteratorOptions): UseAskIteratorRe
 
     // Submit value for current requirement
     const submit = useCallback(
-        async (value: unknown): Promise<ValidationResult> => {
+        (value: unknown): Promise<ValidationResult> => {
             if (!current) {
-                return {
+                return Promise.resolve({
                     valid: false,
                     errors: [{ field: "", message: "No current requirement", code: "NO_REQUIREMENT" }],
                     warnings: [],
-                };
+                });
             }
 
             const result = validateInput(current, value);
@@ -118,7 +118,7 @@ export function useAskIterator(options: UseAskIteratorOptions): UseAskIteratorRe
                 setCurrentIndex((prev) => prev + 1);
             }
 
-            return result;
+            return Promise.resolve(result);
         },
         [current],
     );

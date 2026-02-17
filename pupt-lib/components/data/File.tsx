@@ -1,8 +1,8 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-// Browser-safe detection
-const isBrowser = typeof window !== "undefined" && typeof window.document !== "undefined";
+// Browser-safe detection (use globalThis to avoid TS2304 without DOM lib)
+const isBrowser = 'document' in globalThis;
 
 export const fileSchema = z
     .object({

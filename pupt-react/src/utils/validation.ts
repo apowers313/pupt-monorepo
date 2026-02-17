@@ -100,6 +100,8 @@ export function validateInput(requirement: InputRequirement, value: unknown): Va
                 }
             }
             break;
+        default:
+            break;
     }
 
     // Required field check (applies to all types)

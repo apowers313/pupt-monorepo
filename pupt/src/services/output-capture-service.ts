@@ -200,7 +200,7 @@ export class OutputCaptureService {
       let resizeListener: (() => void) | null = null;
       const isTTY = process.stdin.isTTY && process.stdout.isTTY;
 
-      const cleanup = () => {
+      const cleanup = (): void => {
         // Kill PTY process if still running
         if (ptyProcess) {
           try {
@@ -256,7 +256,7 @@ export class OutputCaptureService {
         let claudeRawModeError = false;
         
         // Handle data from PTY
-        const dataHandler = (data: string) => {
+        const dataHandler = (data: string): void => {
           // Pass through to terminal (preserving colors)
           process.stdout.write(data);
           // Capture clean version
@@ -307,7 +307,7 @@ export class OutputCaptureService {
           let writeTimeout: NodeJS.Timeout | null = null;
           const maxWriteTime = 5000; // 5 second max for writing all data
           
-          const writeNextChunk = () => {
+          const writeNextChunk = (): void => {
             if (written < prompt.length && ptyProcess) {
               const chunk = prompt.slice(written, written + CHUNK_SIZE);
               

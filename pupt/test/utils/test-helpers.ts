@@ -109,7 +109,7 @@ export function mockEnvironmentVariables(vars: Record<string, string>) {
     // Reset to original state
     Object.keys(vars).forEach(key => {
       if (originalEnv[key] === undefined) {
-        delete process.env[key];
+        Reflect.deleteProperty(process.env, key);
       } else {
         process.env[key] = originalEnv[key];
       }

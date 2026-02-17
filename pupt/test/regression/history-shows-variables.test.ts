@@ -75,7 +75,7 @@ function createAutoSummary(entry: { summary?: string; variables: Record<string, 
   if (varDisplay.length > 0) {
     summary = varDisplay.slice(0, 2).join(', ');
   } else if (entry.summary) {
-    summary = entry.summary;
+    ({ summary } = entry);
   } else {
     summary = entry.finalPrompt.split('\n')[0].trim();
   }

@@ -22,5 +22,7 @@ export function wrapWithDelimiter(
       return [`## ${tag}\n\n`, content];
     case 'none':
       return content;
+    default:
+      return content;
   }
 }

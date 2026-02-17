@@ -74,9 +74,8 @@ describe('Bundle Browser Compatibility', () => {
 
   describe('Browser detection is present', () => {
     it('should include browser detection code', () => {
-      // The bundle should have browser detection logic
-      expect(bundleContent).toContain('typeof window');
-      expect(bundleContent).toContain('window.document');
+      // The bundle should have browser detection logic using globalThis
+      expect(bundleContent).toContain('"document" in globalThis');
     });
 
     it('should have isBrowser check before Node.js specific code', () => {

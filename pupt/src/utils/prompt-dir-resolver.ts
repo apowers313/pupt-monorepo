@@ -8,18 +8,18 @@ const LOCAL_PROMPTS_DIR = '.prompts';
 /**
  * Find the local .prompts/ directory at the project root, if it exists.
  */
-export async function findLocalPromptsDir(startDir?: string): Promise<string | null> {
+export function findLocalPromptsDir(startDir?: string): Promise<string | null> {
   const root = findProjectRoot(startDir ?? process.cwd());
-  if (!root) {return null;}
+  if (!root) {return Promise.resolve(null);}
 
   const localDir = path.join(root, LOCAL_PROMPTS_DIR);
   try {
     const stat = fs.statSync(localDir);
     if (stat.isDirectory()) {
-      return localDir;
+      return Promise.resolve(localDir);
     }
   } catch {
     // .prompts/ doesn't exist
   }
-  return null;
+  return Promise.resolve(null);
 }

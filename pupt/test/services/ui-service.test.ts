@@ -11,14 +11,12 @@ describe('ConsoleUI', () => {
   let loggerLogSpy: any;
   let loggerErrorSpy: any;
   let loggerWarnSpy: any;
-  let consoleTableSpy: any;
 
   beforeEach(() => {
     ui = new ConsoleUI();
     loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
     loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
     loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
-    consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -157,17 +155,17 @@ describe('ConsoleUI', () => {
         { name: 'John', age: 30 },
         { name: 'Jane', age: 25 }
       ];
-      
+
       ui.table(data);
-      
-      expect(consoleTableSpy).toHaveBeenCalledWith(data);
+
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
     });
 
     it('should not display table when silent', () => {
       ui.setSilent(true);
       ui.table([{ test: 'data' }]);
-      
-      expect(consoleTableSpy).not.toHaveBeenCalled();
+
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('test'));
     });
   });
 

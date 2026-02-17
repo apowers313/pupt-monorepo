@@ -16,7 +16,7 @@ export class InteractiveSearch {
 
     const selected = await search<Prompt>({
       message: 'Search for a prompt:',
-      source: async input => {
+      source: input => {
         const results = input ? this.searchEngine.search(input) : prompts;
 
         return results.map(prompt => ({

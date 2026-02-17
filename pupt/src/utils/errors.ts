@@ -85,11 +85,14 @@ export function getErrorCategory(error: unknown): ErrorCategory {
 
 export function displayError(error: PromptToolError | Error): void {
   if (error instanceof PromptToolError) {
-    const prefix = error.severity === ErrorSeverity.FATAL 
-      ? chalk.bgRed.white(' FATAL ERROR: ')
-      : error.severity === ErrorSeverity.WARNING
-      ? chalk.yellow('Warning:')
-      : chalk.red('Error:');
+    let prefix: string;
+    if (error.severity === ErrorSeverity.FATAL) {
+      prefix = chalk.bgRed.white(' FATAL ERROR: ');
+    } else if (error.severity === ErrorSeverity.WARNING) {
+      prefix = chalk.yellow('Warning:');
+    } else {
+      prefix = chalk.red('Error:');
+    }
     
     const displayFn = error.severity === ErrorSeverity.WARNING ? logger.warn.bind(logger) : logger.error.bind(logger);
     

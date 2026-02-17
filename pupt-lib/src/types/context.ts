@@ -4,8 +4,8 @@ import { z } from 'zod';
 
 import type { PostExecutionAction, RenderError } from './render';
 
-// Browser-safe detection
-const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+// Browser-safe detection (use globalThis to avoid TS2304 without DOM lib)
+const isBrowser = 'document' in globalThis;
 
 // ============================================================================
 // Runtime Values Cache (for Node.js)

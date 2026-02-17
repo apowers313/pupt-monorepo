@@ -10,7 +10,6 @@ describe('ConsoleUI - additional coverage', () => {
   let loggerLogSpy: any;
   let loggerErrorSpy: any;
   let loggerWarnSpy: any;
-  let consoleClearSpy: any;
   let consoleTableSpy: any;
 
   beforeEach(() => {
@@ -18,7 +17,6 @@ describe('ConsoleUI - additional coverage', () => {
     loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
     loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
     loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
-    consoleClearSpy = vi.spyOn(console, 'clear').mockImplementation(() => {});
     consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
   });
 
@@ -114,17 +112,23 @@ describe('ConsoleUI - additional coverage', () => {
   });
 
   describe('clear', () => {
-    it('should call console.clear when not silent', () => {
-      ui.clear();
+    let stdoutWriteSpy: any;
 
-      expect(consoleClearSpy).toHaveBeenCalledTimes(1);
+    beforeEach(() => {
+      stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     });
 
-    it('should not call console.clear when silent', () => {
+    it('should write reset sequence to stdout when not silent', () => {
+      ui.clear();
+
+      expect(stdoutWriteSpy).toHaveBeenCalledWith('\x1Bc');
+    });
+
+    it('should not write reset sequence when silent', () => {
       ui.setSilent(true);
       ui.clear();
 
-      expect(consoleClearSpy).not.toHaveBeenCalled();
+      expect(stdoutWriteSpy).not.toHaveBeenCalled();
     });
   });
 

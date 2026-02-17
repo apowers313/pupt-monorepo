@@ -1,5 +1,5 @@
-// Browser-safe detection
-const isBrowser = typeof window !== 'undefined' && typeof window.document !== 'undefined';
+// Browser-safe detection (use globalThis to avoid TS2304 without DOM lib)
+const isBrowser = 'document' in globalThis;
 
 // Node.js module type definitions
 type PathModule = typeof import('path');
@@ -295,25 +295,25 @@ export class FileSearchEngine {
     this.clearCache();
   }
 
-  private async getCandidatePaths(searchPath: string, signal?: AbortSignal): Promise<FileInfo[]> {
+  private getCandidatePaths(searchPath: string, signal?: AbortSignal): Promise<FileInfo[]> {
     const { path: pathMod, fs: fsMod } = getNodeModules();
     const resolvedPath = pathMod.resolve(this.basePath, searchPath);
 
     // Check cache
     const cached = this.getFromCache(resolvedPath);
     if (cached) {
-      return cached;
+      return Promise.resolve(cached);
     }
 
     try {
       if (signal?.aborted) {
-        return [];
+        return Promise.resolve([]);
       }
 
       const entries = fsMod.readdirSync(resolvedPath);
 
       if (signal?.aborted) {
-        return [];
+        return Promise.resolve([]);
       }
 
       const fileInfos: FileInfo[] = [];
@@ -351,9 +351,9 @@ export class FileSearchEngine {
 
       this.addToCache(resolvedPath, fileInfos);
 
-      return fileInfos;
+      return Promise.resolve(fileInfos);
     } catch {
-      return [];
+      return Promise.resolve([]);
     }
   }
 

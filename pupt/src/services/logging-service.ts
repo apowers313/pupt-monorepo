@@ -236,7 +236,7 @@ export function enhanceWithLogging<T extends CommandWithContext>(
 ): CommandConstructor<T> {
   // Type assertion needed due to TypeScript limitation with generic class extension
   return class extends (CommandClass as CommandConstructor<CommandWithContext>) {
-    async execute() {
+    async execute(): Promise<unknown> {
       const start = Date.now();
       const logger = this.context?.logger || getDefaultLogger();
       const commandName = this.name || 'unknown';

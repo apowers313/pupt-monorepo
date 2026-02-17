@@ -2,14 +2,14 @@ import { program } from 'commander';
 
 import { logger } from '../utils/logger.js';
 
-export async function helpCommand(commandName?: string): Promise<void> {
+export function helpCommand(commandName?: string): Promise<void> {
   if (!commandName) {
     // Show general help (same as pt --help)
     program.outputHelp();
   } else {
     // Find the specific command
     const command = program.commands.find(cmd => cmd.name() === commandName);
-    
+
     if (command) {
       // Show help for specific command (same as pt <command> --help)
       command.outputHelp();
@@ -22,4 +22,5 @@ export async function helpCommand(commandName?: string): Promise<void> {
       process.exit(1);
     }
   }
+  return Promise.resolve();
 }

@@ -17,7 +17,7 @@ export class Logger {
     process.stdout.setMaxListeners(process.stdout.getMaxListeners() + 1);
     process.stderr.setMaxListeners(process.stderr.getMaxListeners() + 1);
     
-    const handlePipeError = (error: NodeJS.ErrnoException) => {
+    const handlePipeError = (error: NodeJS.ErrnoException): void => {
       if (error.code === 'EPIPE') {
         // Silently ignore EPIPE errors - this is normal when piping to less/head/etc
         // Don't exit, just stop writing

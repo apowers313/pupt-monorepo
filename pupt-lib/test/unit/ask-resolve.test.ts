@@ -355,6 +355,7 @@ describe('Dual-package resilience (issue #16 comment)', () => {
     // It uses Symbol.for() to get the same global marker symbol.
     class ForeignComponent {
       static [Symbol.for('pupt-lib:component:v1')] = true;
+      render() { return ''; }
     }
     expect(isComponentClass(ForeignComponent)).toBe(true);
   });

@@ -85,7 +85,7 @@ export class ModuleCache {
       if (entry) {
         const cachedFilePath = path.join(this.modulesDir, entry.hash);
         await fs.remove(cachedFilePath);
-        delete manifest.entries[url];
+        Reflect.deleteProperty(manifest.entries, url);
       }
     } else {
       // Clear all
@@ -190,7 +190,7 @@ export class ModuleCache {
   private isVersionedUrl(url: string): boolean {
     // Check for semver patterns in URL path or query params
     // e.g., /v1.2.3/, @1.2.3, ?v=1.2.3
-    const semverPattern = /(?:\/v?\d+\.\d+\.\d+(?:[-+][\w.]+)?[\/]?)|(?:[?&]v(?:ersion)?=\d+\.\d+\.\d+)/;
+    const semverPattern = /(?:\/v?\d+\.\d+\.\d+(?:[-+][\w.]+)?[/]?)|(?:[?&]v(?:ersion)?=\d+\.\d+\.\d+)/;
     return semverPattern.test(url);
   }
 

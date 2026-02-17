@@ -42,7 +42,7 @@ export function PuptLibraryProvider({ children, modules, searchConfig }: PuptLib
 
     const value = useMemo(
         () => library,
-        [library.isLoading, library.error, library.prompts, library.tags, library.modules], // eslint-disable-line react-hooks/exhaustive-deps
+        [library.isLoading, library.error, library.prompts, library.tags, library.modules],
     );
 
     return <PuptLibraryContext.Provider value={value}>{children}</PuptLibraryContext.Provider>;

@@ -22,10 +22,11 @@ export function getConfigPaths(): string[] {
       );
       break;
     case 'linux':
-    default:
+    default: {
       const configHome = process.env.XDG_CONFIG_HOME || path.join(getHomePath(), '.config');
       paths.push(path.join(configHome, 'pupt'));
       break;
+    }
   }
 
   return paths;

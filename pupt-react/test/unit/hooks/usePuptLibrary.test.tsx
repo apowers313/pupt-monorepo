@@ -107,7 +107,7 @@ describe("usePuptLibrary", () => {
     expect(result.current.modules).toEqual([]);
 
     await act(async () => {
-      await result.current.addModule("new-module");
+      result.current.addModule("new-module");
     });
 
     await waitFor(() => {
@@ -128,7 +128,7 @@ describe("usePuptLibrary", () => {
     });
 
     await act(async () => {
-      await result.current.addModule("existing");
+      result.current.addModule("existing");
     });
 
     expect(result.current.modules).toEqual(["existing"]);

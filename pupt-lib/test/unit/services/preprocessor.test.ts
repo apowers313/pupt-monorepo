@@ -207,6 +207,7 @@ export default <Prompt />;
     });
 
     it('should handle JSX with expressions in .prompt files', () => {
+      // eslint-disable-next-line no-template-curly-in-string
       const source = '<Prompt name={`test-${Date.now()}`}><Task>Do {"something"}</Task></Prompt>';
       const result = preprocessSource(source, { filename: 'expr.prompt' });
 

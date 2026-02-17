@@ -65,7 +65,8 @@ export class Pupt {
 
   getPrompts(filter?: { tags?: string[] }): DiscoveredPromptWithMethods[] {
     if (filter?.tags) {
-      return this.prompts.filter(p => filter.tags.every(t => p.tags.includes(t)));
+      const { tags } = filter;
+      return this.prompts.filter(p => tags.every(t => p.tags.includes(t)));
     }
     return [...this.prompts];
   }

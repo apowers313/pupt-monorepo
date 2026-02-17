@@ -163,7 +163,7 @@ describe('AutoRun Feature', () => {
       encoding: 'utf-8',
       cwd: testDir,
       env: { ...process.env, PUPT_CONFIG_DIR: configDir, PUPT_DATA_DIR: dataDir }
-    }).toString();
+    });
 
     expect(output).toContain('No history found');
     expect(output).not.toContain('Running: echo');

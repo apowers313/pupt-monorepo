@@ -141,7 +141,7 @@ describe('Renderer value resolution', () => {
   });
 
   it('should handle resolve() returning undefined', async () => {
-    class UndefinedResolve extends Component<Record<string, unknown>, undefined> {
+    class UndefinedResolve extends Component {
       static schema = z.object({});
 
       resolve(): undefined {

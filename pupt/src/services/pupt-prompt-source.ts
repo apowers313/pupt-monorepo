@@ -19,8 +19,8 @@ class SingleFilePromptSource implements PromptSource {
   ) {
     this.name = originalFilename;
   }
-  async getPrompts(): Promise<DiscoveredPromptFile[]> {
-    return [this.file];
+  getPrompts(): Promise<DiscoveredPromptFile[]> {
+    return Promise.resolve([this.file]);
   }
 }
 

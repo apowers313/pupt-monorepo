@@ -7,8 +7,8 @@ import type { DiscoveredPromptFile } from '../../types/prompt-source';
 export async function decompressGzip(compressed: ArrayBuffer): Promise<ArrayBuffer> {
   const stream = new DecompressionStream('gzip');
   const writer = stream.writable.getWriter();
-  writer.write(new Uint8Array(compressed));
-  writer.close();
+  void writer.write(new Uint8Array(compressed));
+  void writer.close();
 
   const reader = stream.readable.getReader();
   const chunks: Uint8Array[] = [];
@@ -17,8 +17,9 @@ export async function decompressGzip(compressed: ArrayBuffer): Promise<ArrayBuff
   while (true) {
     const { done, value } = await reader.read();
     if (done) {break;}
-    chunks.push(value);
-    totalLength += value.length;
+    const chunk = value as Uint8Array;
+    chunks.push(chunk);
+    totalLength += chunk.length;
   }
 
   const result = new Uint8Array(totalLength);

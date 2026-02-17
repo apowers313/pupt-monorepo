@@ -1,3 +1,5 @@
+import { dirname, resolve } from 'path';
+import { fileURLToPath } from 'url';
 import { beforeEach,describe, expect, it } from 'vitest';
 
 import { Pupt } from '../../../src/api';
@@ -5,16 +7,18 @@ import { ModuleLoader } from '../../../src/services/module-loader';
 import type { ResolvedModuleEntry } from '../../../src/types/module';
 import type { PromptSource } from '../../../src/types/prompt-source';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 const basicEntry: ResolvedModuleEntry = {
   name: 'basic',
   type: 'local',
-  source: './test/fixtures/prompt-packages/basic',
+  source: resolve(__dirname, '../../fixtures/prompt-packages/basic'),
 };
 
 const versionedEntry: ResolvedModuleEntry = {
   name: 'versioned',
   type: 'local',
-  source: './test/fixtures/prompt-packages/versioned',
+  source: resolve(__dirname, '../../fixtures/prompt-packages/versioned'),
 };
 
 describe('prompt metadata', () => {

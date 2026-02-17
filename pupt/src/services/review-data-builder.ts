@@ -357,6 +357,8 @@ export class ReviewDataBuilder {
                 case "failure":
                     failure++;
                     break;
+                default:
+                    break;
             }
         }
 

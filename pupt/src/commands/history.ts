@@ -191,7 +191,7 @@ export async function historyCommand(options: HistoryOptions): Promise<void> {
   if (options.all) {
     limit = undefined;
   } else if (options.limit) {
-    limit = options.limit;
+    ({ limit } = options);
   } else {
     limit = 20; // Default limit
   }

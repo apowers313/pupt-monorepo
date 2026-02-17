@@ -176,7 +176,7 @@ export async function createPromptFromSource(
   } finally {
     // Clean up the global registry
     if (components) {
-      delete globalThis[CUSTOM_COMPONENTS_GLOBAL];
+      Reflect.deleteProperty(globalThis, CUSTOM_COMPONENTS_GLOBAL);
     }
   }
 }

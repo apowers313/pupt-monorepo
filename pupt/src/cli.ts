@@ -77,7 +77,7 @@ function findSimilarCommands(input: string, maxDistance: number = 3): string[] {
 }
 
 // Ensure terminal is restored on exit
-function ensureTerminalCleanup() {
+function ensureTerminalCleanup(): void {
   try {
     if (process.stdin.isTTY && process.stdin.setRawMode) {
       process.stdin.setRawMode(false);

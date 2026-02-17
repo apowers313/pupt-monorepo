@@ -55,7 +55,9 @@ const config: KnipConfig = {
         "pupt-react": {
             entry: ["src/index.ts", "test/**/*.test.ts", "test/**/*.test.tsx"],
             project: ["src/**/*.ts", "src/**/*.tsx", "test/**/*.ts", "test/**/*.tsx"],
-            ignore: ["dist/**", "coverage/**", "node_modules/**"],
+            ignore: ["dist/**", "coverage/**", "node_modules/**", "demo/**"],
+            // Disable vite plugin (demo/vite.config.ts has deps not in this workspace)
+            vite: false,
             ignoreDependencies: [
                 // Playwright for browser tests
                 "playwright",

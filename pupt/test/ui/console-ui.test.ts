@@ -12,19 +12,16 @@ describe('ConsoleUI', () => {
   let loggerLogSpy: any;
   let loggerErrorSpy: any;
   let loggerWarnSpy: any;
-  let consoleTableSpy: any;
   let ui: ConsoleUI;
 
   beforeEach(() => {
     loggerLogSpy = vi.mocked(logger.log).mockImplementation(() => {});
     loggerErrorSpy = vi.mocked(logger.error).mockImplementation(() => {});
     loggerWarnSpy = vi.mocked(logger.warn).mockImplementation(() => {});
-    consoleTableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
     ui = new ConsoleUI();
   });
 
   afterEach(() => {
-    consoleTableSpy.mockRestore();
     vi.clearAllMocks();
   });
 
@@ -195,19 +192,19 @@ describe('ConsoleUI', () => {
     it('should display table data', () => {
       const data = [{ name: 'John', age: 30 }, { name: 'Jane', age: 25 }];
       ui.table(data);
-      expect(consoleTableSpy).toHaveBeenCalledWith(data);
+      expect(loggerLogSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
     });
 
     it('should not display table when silent', () => {
       const ui = new ConsoleUI({ silent: true });
       ui.table([{ a: 1 }]);
-      expect(consoleTableSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('"a"'));
     });
 
     it('should not display table when log level is below INFO', () => {
       const ui = new ConsoleUI({ logLevel: LogLevel.ERROR });
       ui.table([{ a: 1 }]);
-      expect(consoleTableSpy).not.toHaveBeenCalled();
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('"a"'));
     });
   });
 

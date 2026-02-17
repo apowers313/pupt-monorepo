@@ -290,7 +290,7 @@ export interface UsePuptLibraryReturn {
     /** Get all prompts with a specific tag */
     getPromptsByTag: (tag: string) => DiscoveredPromptWithMethods[];
     /** Add a module entry */
-    addModule: (source: ModuleEntry) => Promise<void>;
+    addModule: (source: ModuleEntry) => void;
     /** Remove a module entry */
     removeModule: (source: ModuleEntry) => void;
     /** Currently loaded module entries */

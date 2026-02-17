@@ -43,7 +43,7 @@ export function usePuptLibrary(options: UsePuptLibraryOptions = {}): UsePuptLibr
     useEffect(() => {
         let cancelled = false;
 
-        async function init() {
+        async function init(): Promise<void> {
             setIsLoading(true);
             setError(null);
 
@@ -76,7 +76,7 @@ export function usePuptLibrary(options: UsePuptLibraryOptions = {}): UsePuptLibr
             }
         }
 
-        init();
+        void init();
 
         return () => {
             cancelled = true;
@@ -87,17 +87,17 @@ export function usePuptLibrary(options: UsePuptLibraryOptions = {}): UsePuptLibr
         (name: string): DiscoveredPromptWithMethods | undefined => {
             return puptRef.current?.getPrompt(name);
         },
-        [prompts], // eslint-disable-line react-hooks/exhaustive-deps
+        [prompts],
     );
 
     const getPromptsByTag = useCallback(
         (tag: string): DiscoveredPromptWithMethods[] => {
             return puptRef.current?.getPromptsByTag(tag) ?? [];
         },
-        [prompts], // eslint-disable-line react-hooks/exhaustive-deps
+        [prompts],
     );
 
-    const addModule = useCallback(async (source: ModuleEntry): Promise<void> => {
+    const addModule = useCallback((source: ModuleEntry): void => {
         setModules((prev) => {
             if (prev.includes(source)) {
                 return prev;

@@ -312,7 +312,7 @@ async function renderComponentWithValidation(
   children: PuptNode[],
   state: RenderState,
   renderFn: (resolvedValue: unknown) => PuptNode | Promise<PuptNode>,
-  resolveFn?: () => unknown | Promise<unknown>,
+  resolveFn?: () => unknown,
 ): Promise<string> {
   // Schema is optional - validate props only if schema is provided
   const schema = getSchema(type);
@@ -336,7 +336,7 @@ async function renderComponentWithValidation(
     const result = renderFn(resolvedValue);
     // Handle both sync and async render methods
     const resolvedResult = result instanceof Promise ? await result : result;
-    return renderNode(resolvedResult, state);
+    return await renderNode(resolvedResult, state);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     state.context.errors.push({
@@ -379,7 +379,7 @@ async function renderElement(
       : undefined;
 
     // Create render function
-    const renderFn = (resolvedValue: unknown) => {
+    const renderFn = (resolvedValue: unknown): PuptNode | Promise<PuptNode> => {
       if (instance.render) {
         // Pass resolved value as second argument to render()
         return instance.render({ ...resolvedProps, children }, resolvedValue as never, state.context);

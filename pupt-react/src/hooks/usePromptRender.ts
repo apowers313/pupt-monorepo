@@ -221,7 +221,7 @@ export function usePromptRender(options: UsePromptRenderOptions = {}): UsePrompt
     // Effect: Transform when source changes
     useEffect(() => {
         if (source) {
-            doTransform(source);
+            void doTransform(source);
         } else {
             setElement(null);
             setInputRequirements([]);
@@ -232,14 +232,14 @@ export function usePromptRender(options: UsePromptRenderOptions = {}): UsePrompt
     // Effect: Auto-render when element changes and autoRender is true
     useEffect(() => {
         if (autoRender && element) {
-            doRender(element);
+            void doRender(element);
         }
     }, [autoRender, element, doRender]);
 
     // Effect: Re-render when inputs change
     useEffect(() => {
         if (autoRender && element && inputs) {
-            doRender(element);
+            void doRender(element);
         }
     }, [autoRender, element, inputs, doRender]);
 

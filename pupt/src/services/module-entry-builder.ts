@@ -29,7 +29,7 @@ export async function buildModuleEntries(options: BuildModuleEntriesOptions): Pr
   const seen = new Set<string>();
   const entries: ModuleEntry[] = [];
 
-  async function addLocalDir(dir: string) {
+  async function addLocalDir(dir: string): Promise<void> {
     const resolved = path.resolve(dir);
     if (!seen.has(resolved)) {
       seen.add(resolved);

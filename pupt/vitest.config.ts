@@ -6,7 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     env: {
-      NODE_ENV: 'test'
+      NODE_ENV: 'test',
+      FORCE_COLOR: '0'
     },
     exclude: ['test/scripts/**', 'node_modules/**'],
     setupFiles: ['./test/setup.ts'],

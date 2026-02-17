@@ -392,6 +392,7 @@ vi.mock("@pupt/lib", async (importOriginal) => {
           case "<=": return value <= num;
           case "==": return value === num;
           case "!=": return value !== num;
+          default: break;
         }
       }
       // Handle AND/OR

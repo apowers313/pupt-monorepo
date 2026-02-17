@@ -68,7 +68,7 @@ export function PromptEditor({
                 return;
             }
 
-            const doTransform = async () => {
+            const doTransform = async (): Promise<void> => {
                 timerRef.current = null;
                 if (!mountedRef.current) {
                     return;
@@ -110,7 +110,6 @@ export function PromptEditor({
             scheduleTransform(defaultValue);
         }
         // Only run on mount
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const handleChange = useCallback(

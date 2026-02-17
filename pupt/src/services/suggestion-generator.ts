@@ -123,9 +123,16 @@ Use: "Ensure all unit tests pass (npm test shows 0 failures) and the feature wor
   private calculateExpectedImprovement(pattern: Pattern): string {
     // Estimate improvement based on correlation strength and severity
     const baseImprovement = pattern.correlation_strength * 100;
-    const severityMultiplier = pattern.severity === 'critical' ? 0.9 : 
-                              pattern.severity === 'high' ? 0.7 :
-                              pattern.severity === 'medium' ? 0.5 : 0.3;
+    let severityMultiplier: number;
+    if (pattern.severity === 'critical') {
+      severityMultiplier = 0.9;
+    } else if (pattern.severity === 'high') {
+      severityMultiplier = 0.7;
+    } else if (pattern.severity === 'medium') {
+      severityMultiplier = 0.5;
+    } else {
+      severityMultiplier = 0.3;
+    }
     
     const improvement = Math.round(baseImprovement * severityMultiplier);
     return `${improvement}% reduction in ${pattern.type.replace(/_/g, ' ')} issues`;
@@ -150,6 +157,8 @@ Use: "Ensure all unit tests pass (npm test shows 0 failures) and the feature wor
           break;
         case 'clarity':
           fixes[promptName] = `Clarify ${promptName}: Replace vague objectives with specific, measurable success criteria`;
+          break;
+        default:
           break;
       }
     });

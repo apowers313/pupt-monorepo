@@ -42,7 +42,7 @@ describe('OutputCaptureService', () => {
     expect(() => {
       // In a real test, we'd call captureCommand here
       // For now, we verify the service is properly configured
-      service;
+      void service;
     }).not.toThrow();
   });
 

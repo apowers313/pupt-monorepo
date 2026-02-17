@@ -63,7 +63,12 @@ export function AskHandler({ children, element, onComplete, initialValues }: Ask
         ...(initialValues !== undefined && { initialValues }),
     });
 
-    const progress = totalInputs === 0 ? (isDone ? 100 : 0) : Math.round((currentIndex / totalInputs) * 100);
+    let progress: number;
+    if (totalInputs === 0) {
+        progress = isDone ? 100 : 0;
+    } else {
+        progress = Math.round((currentIndex / totalInputs) * 100);
+    }
 
     const getInputProps = useCallback(
         (name: string): AskInputProps => {
