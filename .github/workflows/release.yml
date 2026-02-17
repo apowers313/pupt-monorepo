@@ -1,12 +1,13 @@
 name: Release
 
 on:
-    workflow_run:
-        workflows: ["CI"]
-        types:
-            - completed
-        branches:
-            - master
+    # workflow_run trigger temporarily disabled for release recovery
+    # workflow_run:
+    #     workflows: ["CI"]
+    #     types:
+    #         - completed
+    #     branches:
+    #         - master
     workflow_dispatch:
         inputs:
             publish-only:
