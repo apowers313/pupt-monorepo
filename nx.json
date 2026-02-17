@@ -19,7 +19,7 @@
                 "createRelease": "github",
                 "file": "CHANGELOG.md",
                 "renderOptions": {
-                    "authors": true,
+                    "authors": false,
                     "commitReferences": true,
                     "versionTitleDate": true
                 }

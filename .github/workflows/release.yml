@@ -7,6 +7,12 @@ on:
             - completed
         branches:
             - master
+    workflow_dispatch:
+        inputs:
+            publish-only:
+                description: "Publish only (skip versioning/changelog). Use when versions are already bumped but npm publish failed."
+                type: boolean
+                default: false
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -15,8 +21,8 @@ jobs:
     release:
         name: Release
         runs-on: ubuntu-latest
-        # Only run if CI workflow succeeded
-        if: ${{ github.event.workflow_run.conclusion == 'success' }}
+        # Only run if CI workflow succeeded (auto trigger) or manual dispatch
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
         permissions:
             contents: write
             issues: write
@@ -47,8 +53,9 @@ jobs:
               env:
                   HUSKY: "0"
 
-            # Download build artifacts from CI workflow instead of rebuilding
+            # Download build artifacts from CI workflow (auto trigger only)
             - name: Download pupt-lib build
+              if: github.event_name != 'workflow_dispatch'
               uses: actions/download-artifact@v4
               with:
                   name: build-pupt-lib
@@ -57,6 +64,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Download pupt build
+              if: github.event_name != 'workflow_dispatch'
               uses: actions/download-artifact@v4
               with:
                   name: build-pupt
@@ -65,12 +73,18 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Download pupt-react build
+              if: github.event_name != 'workflow_dispatch'
               uses: actions/download-artifact@v4
               with:
                   name: build-pupt-react
                   path: pupt-react/dist/
                   run-id: ${{ github.event.workflow_run.id }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
+
+            # Build locally for manual dispatch (no CI artifacts available)
+            - name: Build all packages
+              if: github.event_name == 'workflow_dispatch'
+              run: pnpm exec nx run-many -t build --parallel=3
 
             - name: Configure Git
               run: |
@@ -87,6 +101,7 @@ jobs:
                       nx-${{ runner.os }}-
 
             - name: Version and Release
+              if: ${{ !inputs.publish-only }}
               run: |
                   echo "npm version: $(npm --version)"
                   echo "node version: $(node --version)"
@@ -96,3 +111,14 @@ jobs:
                   NPM_CONFIG_PROVENANCE: true
                   NODE_AUTH_TOKEN: ""
                   HUSKY: "0"
+
+            - name: Publish only
+              if: ${{ inputs.publish-only }}
+              run: |
+                  echo "npm version: $(npm --version)"
+                  echo "node version: $(node --version)"
+                  pnpm exec nx release publish --yes --verbose
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  NPM_CONFIG_PROVENANCE: true
+                  NODE_AUTH_TOKEN: ""
