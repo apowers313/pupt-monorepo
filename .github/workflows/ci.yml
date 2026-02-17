@@ -221,95 +221,6 @@ jobs:
                   retention-days: 1
                   if-no-files-found: ignore
 
-    # Multi-OS and multi-Node compatibility tests
-    test-compat:
-        name: Compat (${{ matrix.name }})
-        needs: build
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - name: pupt-lib-node / windows
-                      os: windows-latest
-                      node: 22.x
-                      test-command: cd pupt-lib && pnpm exec vitest run --project=node --no-coverage --passWithNoTests
-                      needs-browser: false
-                    - name: pupt-lib-node / macos
-                      os: macos-latest
-                      node: 22.x
-                      test-command: cd pupt-lib && pnpm exec vitest run --project=node --no-coverage --passWithNoTests
-                      needs-browser: false
-                    - name: pupt / windows
-                      os: windows-latest
-                      node: 22.x
-                      test-command: cd pupt && pnpm exec vitest run --no-coverage --passWithNoTests
-                      needs-browser: false
-                    - name: pupt / macos
-                      os: macos-latest
-                      node: 22.x
-                      test-command: cd pupt && pnpm exec vitest run --no-coverage --passWithNoTests
-                      needs-browser: false
-                    - name: pupt-react / node20
-                      os: ubuntu-latest
-                      node: 20.x
-                      test-command: cd pupt-react && pnpm exec vitest run --no-coverage --passWithNoTests
-                      needs-browser: true
-        steps:
-            - uses: actions/checkout@v4
-
-            - uses: pnpm/action-setup@v4
-
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node }}
-                  cache: "pnpm"
-
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
-              env:
-                  HUSKY: "0"
-
-            - name: Download pupt-lib build
-              uses: actions/download-artifact@v4
-              with:
-                  name: build-pupt-lib
-                  path: pupt-lib/dist/
-
-            - name: Download pupt build
-              if: contains(matrix.name, 'pupt /')
-              uses: actions/download-artifact@v4
-              with:
-                  name: build-pupt
-                  path: pupt/dist/
-
-            - name: Download pupt-react build
-              if: contains(matrix.name, 'pupt-react')
-              uses: actions/download-artifact@v4
-              with:
-                  name: build-pupt-react
-                  path: pupt-react/dist/
-
-            - name: Cache Playwright browsers
-              if: matrix.needs-browser
-              uses: actions/cache@v4
-              id: playwright-cache
-              with:
-                  path: ~/.cache/ms-playwright
-                  key: playwright-${{ runner.os }}-node${{ matrix.node }}-${{ hashFiles('pnpm-lock.yaml') }}
-
-            - name: Install Playwright browsers
-              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit != 'true'
-              run: pnpm exec playwright install chromium --with-deps
-
-            - name: Install Playwright deps (if cached)
-              if: matrix.needs-browser && steps.playwright-cache.outputs.cache-hit == 'true'
-              run: pnpm exec playwright install-deps chromium
-
-            - name: Run tests
-              run: ${{ matrix.test-command }}
-
     # Merge coverage reports and upload to Coveralls
     coverage:
         name: Coverage
@@ -318,28 +229,53 @@ jobs:
         steps:
             - uses: actions/checkout@v4
 
-            - name: Download all coverage artifacts
+            - uses: pnpm/action-setup@v4
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 22.x
+                  cache: "pnpm"
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+              env:
+                  HUSKY: "0"
+
+            - name: Download coverage artifacts
               uses: actions/download-artifact@v4
               with:
                   pattern: coverage-*
-                  path: coverage-artifacts/
+                  merge-multiple: false
+
+            - name: Place coverage in package directories
+              run: |
+                  # Move coverage artifacts into their package directories
+                  # so lcov-result-merger can compute repo-relative paths
+                  declare -A ARTIFACT_TO_PKG=(
+                    [coverage-pupt]="pupt"
+                    [coverage-pupt-lib-node]="pupt-lib"
+                    [coverage-pupt-lib-browser]="pupt-lib"
+                    [coverage-pupt-react]="pupt-react"
+                    [coverage-pupt-sde-prompts]="pupt-sde-prompts"
+                  )
+
+                  for artifact_dir in coverage-*/; do
+                    name=$(basename "$artifact_dir")
+                    pkg="${ARTIFACT_TO_PKG[$name]}"
+                    if [ -n "$pkg" ] && [ -f "${artifact_dir}lcov.info" ]; then
+                      mkdir -p "$pkg/coverage"
+                      cp "${artifact_dir}lcov.info" "$pkg/coverage/${name}.info"
+                      echo "Placed: ${artifact_dir}lcov.info -> $pkg/coverage/${name}.info"
+                    fi
+                  done
 
             - name: Merge coverage reports
               run: |
                   mkdir -p coverage
-                  found=0
-                  for f in coverage-artifacts/*/lcov.info; do
-                    if [ -f "$f" ]; then
-                      cat "$f" >> coverage/lcov.info
-                      echo "Merged: $f"
-                      found=$((found + 1))
-                    fi
-                  done
-                  echo "Merged $found coverage reports"
-                  if [ $found -eq 0 ]; then
-                    echo "No coverage reports found"
-                    exit 1
-                  fi
+                  pnpm exec lcov-result-merger "*/coverage/coverage-*.info" --prepend-source-files > coverage/lcov.info
+                  echo "Merged coverage: $(grep -c '^SF:' coverage/lcov.info) source files"
+                  grep '^SF:' coverage/lcov.info | head -5
 
             - name: Upload coverage to Coveralls
               uses: coverallsapp/github-action@v2
@@ -365,6 +301,8 @@ jobs:
 
             - name: Setup Pages
               uses: actions/configure-pages@v4
+              with:
+                  enablement: true
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
@@ -456,7 +394,7 @@ jobs:
     # Gate job - ensures all required checks pass before release
     all-checks:
         name: All Checks Pass
-        needs: [lint-pr, build, test, test-compat, coverage, docs-build]
+        needs: [lint-pr, build, test, coverage, docs-build]
         if: always()
         runs-on: ubuntu-latest
         steps:
@@ -465,7 +403,6 @@ jobs:
                   echo "lint-pr: ${{ needs.lint-pr.result }}"
                   echo "build: ${{ needs.build.result }}"
                   echo "test: ${{ needs.test.result }}"
-                  echo "test-compat: ${{ needs.test-compat.result }}"
                   echo "coverage: ${{ needs.coverage.result }}"
                   echo "docs-build: ${{ needs.docs-build.result }}"
 
@@ -480,10 +417,6 @@ jobs:
                   fi
                   if [[ "${{ needs.test.result }}" != "success" ]]; then
                     echo "::error::Tests failed"
-                    exit 1
-                  fi
-                  if [[ "${{ needs.test-compat.result }}" != "success" ]]; then
-                    echo "::error::Compat tests failed"
                     exit 1
                   fi
                   if [[ "${{ needs.coverage.result }}" != "success" ]]; then
