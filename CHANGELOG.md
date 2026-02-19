@@ -1,3 +1,37 @@
+## 2.4.0 (2026-02-19)
+
+### 🚀 Features
+
+- migrate to Zod v4 API, refactor JSX whitespace plugin, add prompt title support ([1b5f527](https://github.com/apowers313/pupt-monorepo/commit/1b5f527))
+
+### 🩹 Fixes
+
+- migrate to zod v4 ([7ceb667](https://github.com/apowers313/pupt-monorepo/commit/7ceb667))
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.0
+
+## 1.7.0 (2026-02-19)
+
+### 🚀 Features
+
+- migrate to Zod v4 API, refactor JSX whitespace plugin, add prompt title support ([1b5f527](https://github.com/apowers313/pupt-monorepo/commit/1b5f527))
+
+### 🩹 Fixes
+
+- migrate to zod v4 ([7ceb667](https://github.com/apowers313/pupt-monorepo/commit/7ceb667))
+
+## 1.3.0 (2026-02-19)
+
+### 🚀 Features
+
+- migrate to Zod v4 API, refactor JSX whitespace plugin, add prompt title support ([1b5f527](https://github.com/apowers313/pupt-monorepo/commit/1b5f527))
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.0
+
 ## 2.3.0 (2026-02-17)
 
 ### 🚀 Features

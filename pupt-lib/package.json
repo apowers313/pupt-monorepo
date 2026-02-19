@@ -1,6 +1,6 @@
 {
     "name": "@pupt/lib",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "description": "TypeScript library for creating AI prompts using JSX syntax",
     "license": "MIT",
     "author": "",
