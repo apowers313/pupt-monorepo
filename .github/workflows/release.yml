@@ -114,7 +114,44 @@ jobs:
               run: |
                   echo "npm version: $(npm --version)"
                   echo "node version: $(node --version)"
-                  pnpm exec nx release --yes --verbose
+
+                  if pnpm exec nx release --yes --verbose; then
+                    echo "Release completed successfully"
+                    exit 0
+                  fi
+
+                  echo ""
+                  echo "::warning::Release had partial failures. Retrying publish in 15s..."
+                  sleep 15
+
+                  # Version bumps are already committed; retry just the publish step.
+                  # Some packages may already be on npm, so ignore the exit code and
+                  # verify final state explicitly.
+                  pnpm exec nx release publish --yes --verbose 2>&1 || true
+                  sleep 10
+
+                  # Verify all non-private packages are published at their expected versions
+                  node -e "
+                    const { execSync } = require('child_process');
+                    const fs = require('fs');
+                    const dirs = fs.readdirSync('.', { withFileTypes: true })
+                      .filter(d => d.isDirectory() && fs.existsSync(d.name + '/package.json'))
+                      .map(d => d.name);
+                    let failed = false;
+                    for (const dir of dirs) {
+                      const pkg = JSON.parse(fs.readFileSync(dir + '/package.json', 'utf8'));
+                      if (pkg.private || !pkg.publishConfig) continue;
+                      try {
+                        execSync('npm view ' + pkg.name + '@' + pkg.version + ' version', { stdio: 'pipe' });
+                        console.log('Verified: ' + pkg.name + '@' + pkg.version);
+                      } catch {
+                        console.error('::error::Missing from npm: ' + pkg.name + '@' + pkg.version);
+                        failed = true;
+                      }
+                    }
+                    if (failed) process.exit(1);
+                    console.log('All packages verified on npm after retry');
+                  "
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NPM_CONFIG_PROVENANCE: true
@@ -126,7 +163,40 @@ jobs:
               run: |
                   echo "npm version: $(npm --version)"
                   echo "node version: $(node --version)"
-                  pnpm exec nx release publish --yes --verbose
+
+                  if pnpm exec nx release publish --yes --verbose; then
+                    echo "Publish completed successfully"
+                    exit 0
+                  fi
+
+                  echo ""
+                  echo "::warning::Publish had failures. Retrying in 15s..."
+                  sleep 15
+                  pnpm exec nx release publish --yes --verbose 2>&1 || true
+                  sleep 10
+
+                  # Verify all non-private packages are published
+                  node -e "
+                    const { execSync } = require('child_process');
+                    const fs = require('fs');
+                    const dirs = fs.readdirSync('.', { withFileTypes: true })
+                      .filter(d => d.isDirectory() && fs.existsSync(d.name + '/package.json'))
+                      .map(d => d.name);
+                    let failed = false;
+                    for (const dir of dirs) {
+                      const pkg = JSON.parse(fs.readFileSync(dir + '/package.json', 'utf8'));
+                      if (pkg.private || !pkg.publishConfig) continue;
+                      try {
+                        execSync('npm view ' + pkg.name + '@' + pkg.version + ' version', { stdio: 'pipe' });
+                        console.log('Verified: ' + pkg.name + '@' + pkg.version);
+                      } catch {
+                        console.error('::error::Missing from npm: ' + pkg.name + '@' + pkg.version);
+                        failed = true;
+                      }
+                    }
+                    if (failed) process.exit(1);
+                    console.log('All packages verified on npm after retry');
+                  "
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
                   NPM_CONFIG_PROVENANCE: true
