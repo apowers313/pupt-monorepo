@@ -1,3 +1,47 @@
+## 2.4.1 (2026-02-19)
+
+### 🚀 Features
+
+- **@pupt/test:** add library for testing prompts (rebased) ([be5afb2](https://github.com/apowers313/pupt-monorepo/commit/be5afb2))
+- **@pupt/test:** add library for testing prompts ([3ea52d0](https://github.com/apowers313/pupt-monorepo/commit/3ea52d0))
+
+### 🩹 Fixes
+
+- bump past phantom npm versions, add publish retry ([5472da3](https://github.com/apowers313/pupt-monorepo/commit/5472da3))
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.1
+
+## 1.7.1 (2026-02-19)
+
+This was a version bump only for @pupt/lib to align it with other projects, there were no code changes.
+
+## 1.3.1 (2026-02-19)
+
+### 🩹 Fixes
+
+- bump past phantom npm versions, add publish retry ([5472da3](https://github.com/apowers313/pupt-monorepo/commit/5472da3))
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.1
+
+## 1.2.1 (2026-02-19)
+
+### 🚀 Features
+
+- **@pupt/test:** add library for testing prompts ([3ea52d0](https://github.com/apowers313/pupt-monorepo/commit/3ea52d0))
+
+### 🩹 Fixes
+
+- bump past phantom npm versions, add publish retry ([5472da3](https://github.com/apowers313/pupt-monorepo/commit/5472da3))
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/test to 1.1.0
+- Updated @pupt/lib to 1.7.1
+
 ## 2.4.0 (2026-02-19)
 
 ### 🚀 Features
