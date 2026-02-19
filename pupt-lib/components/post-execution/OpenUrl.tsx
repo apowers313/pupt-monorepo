@@ -6,7 +6,7 @@ export const openUrlSchema = z
         url: z.string(),
         browser: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type OpenUrlProps = z.infer<typeof openUrlSchema>;
 

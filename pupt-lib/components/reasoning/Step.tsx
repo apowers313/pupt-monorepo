@@ -5,7 +5,7 @@ export const stepSchema = z
     .object({
         number: z.number().optional(),
     })
-    .passthrough();
+    .loose();
 
 type StepProps = z.infer<typeof stepSchema> & { children: PuptNode };
 

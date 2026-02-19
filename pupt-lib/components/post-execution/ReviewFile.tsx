@@ -6,7 +6,7 @@ export const reviewFileSchema = z
         file: z.string(),
         editor: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type ReviewFileProps = z.infer<typeof reviewFileSchema>;
 

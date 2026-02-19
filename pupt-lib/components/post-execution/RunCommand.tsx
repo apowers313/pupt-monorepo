@@ -5,9 +5,9 @@ export const runCommandSchema = z
     .object({
         command: z.string(),
         cwd: z.string().optional(),
-        env: z.record(z.string()).optional(),
+        env: z.object({}).catchall(z.string()).optional(),
     })
-    .passthrough();
+    .loose();
 
 type RunCommandProps = z.infer<typeof runCommandSchema>;
 

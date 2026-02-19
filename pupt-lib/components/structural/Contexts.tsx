@@ -6,7 +6,7 @@ const contextsSchema = z
         extend: z.boolean().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ContextsProps = z.infer<typeof contextsSchema> & { children?: PuptNode };
 

@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import { cosmiconfig } from 'cosmiconfig';
 import fs from 'fs-extra';
-import { z } from 'zod';
 
 import { ConfigFileSchema,ConfigSchema } from '../schemas/config-schema.js';
 import { Config, DEFAULT_CONFIG } from '../types/config.js';
@@ -42,14 +41,15 @@ function validateConfig(config: unknown): void {
 
     // Handle union errors by looking for the most specific error
     let specificIssue = firstIssue;
-    if (firstIssue.code === 'invalid_union' && 'unionErrors' in firstIssue) {
+    if (firstIssue.code === 'invalid_union' && 'errors' in firstIssue) {
       // Try to find a more specific error in union errors
       // Look for errors that match the actual config fields (not old schema fields)
       const cfg = config as Record<string, unknown>;
-      const unionIssue = firstIssue as z.ZodInvalidUnionIssue;
-      for (const unionError of unionIssue.unionErrors) {
-        if (unionError.issues && unionError.issues.length > 0) {
-          const issue = unionError.issues[0];
+      // In zod v4, union issues have `errors` (array of issue arrays)
+      const unionErrors = (firstIssue as { errors: Array<Array<typeof firstIssue>> }).errors;
+      for (const issueGroup of unionErrors) {
+        if (issueGroup.length > 0) {
+          const issue = issueGroup[0];
           if (issue.path && issue.path.length > 0) {
             const fieldName = issue.path[0];
             // Check if this field exists in the actual config

@@ -8,7 +8,7 @@ export const askSecretSchema = askBaseSchema
         default: z.string().optional(),
         validator: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type SecretProps = z.infer<typeof askSecretSchema> & { children?: PuptNode };
 

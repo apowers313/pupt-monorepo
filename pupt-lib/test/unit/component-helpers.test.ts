@@ -10,7 +10,7 @@ describe('Component helper methods', () => {
   describe('getProvider', () => {
     it('should return provider from context', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `provider: ${this.getProvider(context)}`;
         }
@@ -24,7 +24,7 @@ describe('Component helper methods', () => {
 
     it('should return unspecified when no provider is set', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `provider: ${this.getProvider(context)}`;
         }
@@ -36,7 +36,7 @@ describe('Component helper methods', () => {
 
     it('should return google when google provider is set', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `provider: ${this.getProvider(context)}`;
         }
@@ -52,7 +52,7 @@ describe('Component helper methods', () => {
   describe('getDelimiter', () => {
     it('should return markdown when output format is markdown', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `delimiter: ${this.getDelimiter(context)}`;
         }
@@ -66,7 +66,7 @@ describe('Component helper methods', () => {
 
     it('should return xml when output format is xml', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `delimiter: ${this.getDelimiter(context)}`;
         }
@@ -80,7 +80,7 @@ describe('Component helper methods', () => {
 
     it('should return xml when output format is unspecified', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `delimiter: ${this.getDelimiter(context)}`;
         }
@@ -92,7 +92,7 @@ describe('Component helper methods', () => {
 
     it('should return xml for non-markdown formats', async () => {
       class TestComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
           return `delimiter: ${this.getDelimiter(context)}`;
         }

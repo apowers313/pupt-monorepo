@@ -5,7 +5,7 @@ export const askLabelSchema = z
     .object({
         value: z.union([z.number(), z.string()]),
     })
-    .passthrough();
+    .loose();
 
 export type LabelProps = z.infer<typeof askLabelSchema> & { children?: PuptNode };
 

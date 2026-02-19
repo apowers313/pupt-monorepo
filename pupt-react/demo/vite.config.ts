@@ -61,6 +61,10 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@pupt/react", replacement: resolve(__dirname, "../src/index.ts") },
+      // Resolve @pupt/lib from the local worktree dist (pnpm symlinks may point to main worktree)
+      { find: "@pupt/lib/jsx-runtime", replacement: resolve(__dirname, "../../pupt-lib/dist/jsx-runtime/index.js") },
+      { find: "@pupt/lib/jsx-dev-runtime", replacement: resolve(__dirname, "../../pupt-lib/dist/jsx-runtime/jsx-dev-runtime.js") },
+      { find: "@pupt/lib", replacement: resolve(__dirname, "../../pupt-lib/dist/index.js") },
       { find: "fs/promises", replacement: nodeShim },
       { find: "fs", replacement: nodeShim },
       { find: "os", replacement: nodeShim },
@@ -73,6 +77,7 @@ export default defineConfig({
       allow: [
         resolve(__dirname),
         resolve(__dirname, ".."),
+        resolve(__dirname, "../../pupt-lib"),
       ],
     },
     ...(process.env.SERVHERD_HOSTNAME ? { allowedHosts: [process.env.SERVHERD_HOSTNAME] } : {}),

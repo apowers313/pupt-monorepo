@@ -7,7 +7,7 @@ export const whenSchema = z
         then: z.string().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type WhenProps = z.infer<typeof whenSchema> & { children?: PuptNode };
 

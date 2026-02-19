@@ -5,7 +5,7 @@
  * Works in both Node.js and browser environments.
  */
 
-import { customComponentInjectionPlugin,jsxNewlineLiteralPlugin, nameHoistingPlugin, usesToImportPlugin } from './babel-plugins';
+import { customComponentInjectionPlugin, jsxWhitespacePreservePlugin, nameHoistingPlugin, usesToImportPlugin } from './babel-plugins';
 
 // Type for Babel transform interface
 interface BabelStandalone {
@@ -34,8 +34,8 @@ function registerPlugins(Babel: BabelStandalone): void {
   // Register the name-hoisting plugin (transforms name="x" to const x = ...)
   Babel.registerPlugin('name-hoisting', nameHoistingPlugin);
 
-  // Register the JSX newline literal plugin (preserves newlines in multi-line text)
-  Babel.registerPlugin('jsx-newline-literal', jsxNewlineLiteralPlugin);
+  // Register the JSX whitespace preserve plugin (preserves whitespace in JSX text)
+  Babel.registerPlugin('jsx-whitespace-preserve', jsxWhitespacePreservePlugin);
 
   // Register the custom component injection plugin
   Babel.registerPlugin('custom-component-injection', customComponentInjectionPlugin);
@@ -65,8 +65,8 @@ function getTransformOptions(filename: string, options?: TransformOptions): Reco
     'uses-to-import',
     // Hoist named elements to variable declarations (must run before JSX transform)
     'name-hoisting',
-    // Preserve newlines in multi-line JSX text (must run before JSX transform)
-    'jsx-newline-literal',
+    // Preserve whitespace in JSX text (must run before JSX transform)
+    'jsx-whitespace-preserve',
     // Transform JSX to jsx() calls
     ['transform-react-jsx', {
       runtime: 'automatic',

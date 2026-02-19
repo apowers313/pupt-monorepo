@@ -5,7 +5,7 @@ export const dateTimeSchema = z
     .object({
         format: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type DateTimeProps = z.infer<typeof dateTimeSchema>;
 

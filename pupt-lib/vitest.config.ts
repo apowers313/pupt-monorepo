@@ -4,7 +4,7 @@ import { resolve } from 'path';
 // Windows CI can be slow to load large modules like @babel/standalone
 // Use a higher timeout for CI environments
 const isCI = process.env.CI === 'true';
-const testTimeout = isCI ? 30000 : 5000;
+const testTimeout = isCI ? 30000 : 15000;
 const noThresholds = process.env.VITEST_COVERAGE_NO_THRESHOLDS === 'true';
 
 // Self-referencing aliases so components/ can import from '@pupt/lib'
@@ -33,6 +33,11 @@ export default defineConfig({
           environment: 'node',
           testTimeout,
           retry: isCI ? 2 : 0,
+          // Use process forking so each test file gets a fresh module scope.
+          // @babel/standalone registers plugins into a global singleton; without
+          // fork isolation, test-file execution order can produce non-deterministic
+          // failures when threads share or re-initialize that singleton.
+          pool: 'forks',
           include: ['test/**/*.test.ts'],
           exclude: [
             // Browser-specific tests

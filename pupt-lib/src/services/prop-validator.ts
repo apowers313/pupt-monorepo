@@ -1,4 +1,4 @@
-import type { ZodIssue,ZodObject, ZodRawShape } from 'zod';
+import type { ZodObject, ZodRawShape } from 'zod';
 
 import type { RenderError } from '../types/render';
 
@@ -25,7 +25,7 @@ export function validateProps(
     return [];
   }
 
-  return result.error.issues.map((issue: ZodIssue) => ({
+  return result.error.issues.map((issue) => ({
     component: componentName,
     prop: issue.path.length > 0 ? String(issue.path[0]) : null,
     message: issue.message,

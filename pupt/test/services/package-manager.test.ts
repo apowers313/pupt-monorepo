@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import * as nodeFs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -7,9 +8,9 @@ import { afterEach,beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GlobalPackageManager } from '../../src/services/package-manager.js';
 
-// Mock execa
-vi.mock('execa', () => ({
-  execa: vi.fn(),
+// Mock child_process.spawn
+vi.mock('node:child_process', () => ({
+  spawn: vi.fn(),
 }));
 
 // Mock cosmiconfig
@@ -29,20 +30,33 @@ vi.mock('../../src/utils/logger.js', () => ({
   },
 }));
 
+function createMockChildProcess(exitCode = 0): EventEmitter {
+  const child = new EventEmitter();
+  // Emit close on next tick so the promise can be constructed first
+  process.nextTick(() => child.emit('close', exitCode));
+  return child;
+}
+
+function createFailingChildProcess(error: Error): EventEmitter {
+  const child = new EventEmitter();
+  process.nextTick(() => child.emit('error', error));
+  return child;
+}
+
 describe('GlobalPackageManager', () => {
   let testDir: string;
   let packagesDir: string;
   let pm: GlobalPackageManager;
-  let mockExeca: any;
+  let mockSpawn: any;
 
   beforeEach(async () => {
     testDir = await nodeFs.mkdtemp(path.join(os.tmpdir(), 'pupt-pm-test-'));
     packagesDir = path.join(testDir, 'packages');
     pm = new GlobalPackageManager(testDir);
 
-    const execaMod = await import('execa');
-    mockExeca = vi.mocked(execaMod.execa as any);
-    mockExeca.mockResolvedValue({ stdout: '', stderr: '', exitCode: 0 });
+    const cp = await import('node:child_process');
+    mockSpawn = vi.mocked(cp.spawn as any);
+    mockSpawn.mockImplementation(() => createMockChildProcess(0));
   });
 
   afterEach(async () => {
@@ -86,7 +100,7 @@ describe('GlobalPackageManager', () => {
     it('should run npm install in {dataDir}/packages/', async () => {
       await pm.install('some-package');
 
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['install', 'some-package'], {
+      expect(mockSpawn).toHaveBeenCalledWith('npm', ['install', 'some-package'], {
         cwd: packagesDir,
         stdio: 'inherit',
       });
@@ -108,7 +122,7 @@ describe('GlobalPackageManager', () => {
     });
 
     it('should throw on npm install failure', async () => {
-      mockExeca.mockRejectedValue(new Error('npm ERR! 404 Not Found'));
+      mockSpawn.mockImplementation(() => createMockChildProcess(1));
 
       await expect(pm.install('nonexistent')).rejects.toThrow('Failed to install package');
     });
@@ -118,7 +132,7 @@ describe('GlobalPackageManager', () => {
     it('should run npm update for specific package', async () => {
       await pm.update('some-package');
 
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['update', 'some-package'], {
+      expect(mockSpawn).toHaveBeenCalledWith('npm', ['update', 'some-package'], {
         cwd: packagesDir,
         stdio: 'inherit',
       });
@@ -127,14 +141,14 @@ describe('GlobalPackageManager', () => {
     it('should run npm update for all packages when no name given', async () => {
       await pm.update();
 
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['update'], {
+      expect(mockSpawn).toHaveBeenCalledWith('npm', ['update'], {
         cwd: packagesDir,
         stdio: 'inherit',
       });
     });
 
     it('should throw on update failure', async () => {
-      mockExeca.mockRejectedValue(new Error('Network error'));
+      mockSpawn.mockImplementation(() => createFailingChildProcess(new Error('Network error')));
 
       await expect(pm.update('bad-pkg')).rejects.toThrow('Failed to update package "bad-pkg"');
     });
@@ -144,14 +158,14 @@ describe('GlobalPackageManager', () => {
     it('should run npm uninstall in packages dir', async () => {
       await pm.uninstall('some-package');
 
-      expect(mockExeca).toHaveBeenCalledWith('npm', ['uninstall', 'some-package'], {
+      expect(mockSpawn).toHaveBeenCalledWith('npm', ['uninstall', 'some-package'], {
         cwd: packagesDir,
         stdio: 'inherit',
       });
     });
 
     it('should throw on uninstall failure', async () => {
-      mockExeca.mockRejectedValue(new Error('Permission denied'));
+      mockSpawn.mockImplementation(() => createFailingChildProcess(new Error('Permission denied')));
 
       await expect(pm.uninstall('bad-pkg')).rejects.toThrow('Failed to uninstall package "bad-pkg"');
     });

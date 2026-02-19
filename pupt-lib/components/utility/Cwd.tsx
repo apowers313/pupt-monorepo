@@ -1,7 +1,7 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-export const cwdSchema = z.object({}).passthrough();
+export const cwdSchema = z.object({}).loose();
 
 type CwdProps = z.infer<typeof cwdSchema>;
 

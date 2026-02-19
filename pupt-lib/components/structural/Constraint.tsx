@@ -11,7 +11,7 @@ export const constraintSchema = z
         positive: z.string().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ConstraintProps = z.infer<typeof constraintSchema> & { children?: PuptNode };
 

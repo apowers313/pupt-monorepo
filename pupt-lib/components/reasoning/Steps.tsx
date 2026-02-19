@@ -26,7 +26,7 @@ export const stepsSchema = z
         numbered: z.boolean().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type StepsProps = z.infer<typeof stepsSchema> & { children?: PuptNode };
 

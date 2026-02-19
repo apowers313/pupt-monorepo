@@ -5,7 +5,7 @@ export const askOptionSchema = z
     .object({
         value: z.string(),
     })
-    .passthrough();
+    .loose();
 
 export type OptionProps = z.infer<typeof askOptionSchema> & { children?: PuptNode };
 

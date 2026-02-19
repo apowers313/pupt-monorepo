@@ -15,7 +15,7 @@ export const roleSchema = z
         extend: z.boolean().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type RoleProps = z.infer<typeof roleSchema> & { children?: PuptNode };
 

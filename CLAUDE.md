@@ -145,6 +145,10 @@ pupt: 90% lines, 85% functions, 90% statements/branches (higher thresholds)
 | `commitlint.config.js`    | Conventional commit enforcement with package scopes             |
 | `knip.config.ts`          | Dead code detection per workspace                               |
 
+## Development Guidelines
+
+- Fix any errors you find, even if they are pre-existing and unrelated to the current task. This includes build errors, lint errors, type errors, and test failures. Leave the codebase cleaner than you found it.
+
 ## Important Development Notes
 
 ### TypeScript

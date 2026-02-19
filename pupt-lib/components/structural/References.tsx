@@ -14,7 +14,7 @@ export const referencesSchema = z
         style: z.enum(["inline", "footnote", "bibliography"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ReferencesProps = z.infer<typeof referencesSchema> & { children?: PuptNode };
 

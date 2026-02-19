@@ -21,7 +21,7 @@ export const usesSchema = z
         /** Module specifier (npm package, URL, or local path) */
         from: z.string(),
     })
-    .passthrough();
+    .loose();
 
 type UsesProps = z.infer<typeof usesSchema> & { children?: PuptNode };
 

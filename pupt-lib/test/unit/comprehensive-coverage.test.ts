@@ -885,7 +885,7 @@ export default (
     `;
 
     const CustomComp = () => 'Custom component output';
-    CustomComp.schema = z.object({}).passthrough();
+    CustomComp.schema = z.object({}).loose();
 
     const element = await createPromptFromSource(source, 'no-imports.tsx', {
       components: { CustomComp },
@@ -907,7 +907,7 @@ export default (
     `;
 
     const CustomComp = () => 'Custom';
-    CustomComp.schema = z.object({}).passthrough();
+    CustomComp.schema = z.object({}).loose();
 
     const element = await createPromptFromSource(source, 'with-imports.tsx', {
       components: { CustomComp },

@@ -1,7 +1,7 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-export const uuidSchema = z.object({}).passthrough();
+export const uuidSchema = z.object({}).loose();
 
 type UUIDProps = z.infer<typeof uuidSchema>;
 

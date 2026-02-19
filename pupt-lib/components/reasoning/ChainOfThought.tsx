@@ -7,7 +7,7 @@ export const chainOfThoughtSchema = z
         showReasoning: z.boolean().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ChainOfThoughtProps = z.infer<typeof chainOfThoughtSchema> & { children?: PuptNode };
 

@@ -1,7 +1,7 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-export const timestampSchema = z.object({}).passthrough();
+export const timestampSchema = z.object({}).loose();
 
 type TimestampProps = z.infer<typeof timestampSchema>;
 

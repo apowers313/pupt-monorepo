@@ -35,6 +35,7 @@ const promptDefaultsSchema = z.union([promptDefaultsObjectSchema, z.literal("non
 export const promptSchema = z
     .object({
         name: z.string(),
+        title: z.string().optional(),
         version: z.string().optional(),
         description: z.string().optional(),
         tags: z.array(z.string()).optional(),
@@ -52,7 +53,7 @@ export const promptSchema = z
         tone: z.string().optional(),
         slots: z.record(z.string(), z.unknown()).optional(),
     })
-    .passthrough();
+    .loose();
 
 type PromptSlots = {
     role?: ComponentType;

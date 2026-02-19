@@ -10,7 +10,7 @@ export const audienceSchema = z
         goals: z.array(z.string()).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type AudienceProps = z.infer<typeof audienceSchema> & { children?: PuptNode };
 

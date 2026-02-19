@@ -34,7 +34,7 @@ export function PromptSearch() {
       const meta = builtinPromptMeta.get(p.name);
       return {
         name: p.name,
-        title: meta?.title ?? p.name,
+        title: meta?.title ?? p.title ?? p.name,
         description: p.description ?? "",
         library: p.library ?? "unknown",
         tags: p.tags ?? [],

@@ -17,7 +17,7 @@ export const ifSchema = z
         provider: providerOrArray.optional(),
         notProvider: providerOrArray.optional(),
     })
-    .passthrough();
+    .loose();
 
 export type IfProps = z.infer<typeof ifSchema> & { children?: PuptNode };
 

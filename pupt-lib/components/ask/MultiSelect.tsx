@@ -24,7 +24,7 @@ export const multiSelectOptionSchema = z
         value: z.string(),
         label: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export const askMultiSelectSchema = askBaseSchema
     .extend({
@@ -33,7 +33,7 @@ export const askMultiSelectSchema = askBaseSchema
         min: z.number().optional(),
         max: z.number().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type MultiSelectProps = z.infer<typeof askMultiSelectSchema> & { children?: PuptNode };
 

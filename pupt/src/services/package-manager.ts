@@ -1,11 +1,25 @@
+import { spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { cosmiconfig } from 'cosmiconfig';
-import { execa } from 'execa';
 import fs2 from 'fs-extra';
 
 import { logger } from '../utils/logger.js';
+
+function execCommand(command: string, args: string[], options: { cwd: string }): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { cwd: options.cwd, stdio: 'inherit' });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command "${command} ${args.join(' ')}" exited with code ${String(code)}`));
+      }
+    });
+  });
+}
 
 export interface InstalledPackageInfo {
   name: string;
@@ -46,9 +60,8 @@ export class GlobalPackageManager {
     logger.log(`Installing ${packageSpec}...`);
 
     try {
-      await execa('npm', ['install', packageSpec], {
+      await execCommand('npm', ['install', packageSpec], {
         cwd: this.packagesDir,
-        stdio: 'inherit',
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -69,9 +82,8 @@ export class GlobalPackageManager {
       : ['update'];
 
     try {
-      await execa('npm', args, {
+      await execCommand('npm', args, {
         cwd: this.packagesDir,
-        stdio: 'inherit',
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -83,9 +95,8 @@ export class GlobalPackageManager {
     await this.ensureInitialized();
 
     try {
-      await execa('npm', ['uninstall', packageName], {
+      await execCommand('npm', ['uninstall', packageName], {
         cwd: this.packagesDir,
-        stdio: 'inherit',
       });
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);

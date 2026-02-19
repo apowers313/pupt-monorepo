@@ -9,7 +9,7 @@ export const askPathSchema = askBaseSchema
         mustExist: z.boolean().optional(),
         mustBeDirectory: z.boolean().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type PathProps = z.infer<typeof askPathSchema> & { children?: PuptNode };
 

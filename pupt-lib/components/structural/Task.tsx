@@ -13,7 +13,7 @@ export const taskSchema = z
         complexity: z.enum(["simple", "moderate", "complex"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type TaskProps = z.infer<typeof taskSchema> & { children?: PuptNode };
 

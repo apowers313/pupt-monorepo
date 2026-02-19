@@ -8,7 +8,7 @@ export const referenceSchema = z
         description: z.string().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ReferenceProps = z.infer<typeof referenceSchema> & { children?: PuptNode };
 

@@ -15,7 +15,7 @@ export const successCriteriaSchema = z
             .optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type SuccessCriteriaProps = z.infer<typeof successCriteriaSchema> & { children?: PuptNode };
 
