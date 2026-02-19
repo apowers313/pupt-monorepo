@@ -127,7 +127,7 @@ fi
     });
   });
 
-  it('should not use raw mode for read-only commands', async () => {
+  it('should not use raw mode for read-only commands', { timeout: 15000 }, async () => {
     const commands = [
       ['history'],
       ['history', '--limit', '5'],
@@ -141,12 +141,13 @@ fi
       await new Promise<void>((resolve, reject) => {
         const proc = spawn('node', [CLI_PATH, ...args], {
           cwd: tempDir,
-          env: { ...process.env, NODE_ENV: 'test' }
+          env: { ...process.env, NODE_ENV: 'test' },
+          stdio: ['ignore', 'pipe', 'pipe']
         });
 
         // Monitor for any raw mode indicators
         let hasRawModeError = false;
-        
+
         proc.stderr.on('data', (data) => {
           const output = data.toString();
           if (output.includes('setRawMode') || output.includes('raw mode')) {

@@ -4,7 +4,7 @@ export default {
         "scope-enum": [
             2,
             "always",
-            ["pupt", "pupt-lib", "pupt-react", "pupt-sde-prompts", "pupt-test", "deps", "release", "ci", "docs", "tools", "workspace"],
+            ["@pupt/cli", "@pupt/lib", "@pupt/react", "@pupt/sde-prompts", "@pupt/test", "deps", "release", "ci", "docs", "tools", "workspace"],
         ],
     },
 };
