@@ -59,6 +59,7 @@ export default tseslint.config(
                     "./pupt-lib/tsconfig.eslint.json",
                     "./pupt/tsconfig.eslint.json",
                     "./pupt-react/tsconfig.eslint.json",
+                    "./pupt-test/tsconfig.eslint.json",
                     "./tsconfig.base.json",
                 ],
                 tsconfigRootDir: import.meta.dirname,

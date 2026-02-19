@@ -76,6 +76,17 @@ const config: KnipConfig = {
             project: ["test/**/*.mjs"],
             ignore: ["node_modules/**"],
         },
+
+        // @pupt/test - Testing utilities
+        "pupt-test": {
+            entry: ["src/index.ts", "src/suite.ts", "test/**/*.test.ts"],
+            project: ["src/**/*.ts", "test/**/*.ts"],
+            ignore: ["dist/**", "coverage/**", "node_modules/**"],
+            ignoreDependencies: [
+                // Used in vite.config.ts
+                "vite-plugin-dts",
+            ],
+        },
     },
 
     // Global ignore patterns

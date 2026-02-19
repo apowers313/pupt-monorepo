@@ -1,0 +1,6 @@
+<Prompt name="simple-test" description="A simple test prompt">
+  <Ask.Text name="message" label="Message" required silent />
+
+  <Role>You are a helpful assistant.</Role>
+  <Task>Respond to: {message}</Task>
+</Prompt>

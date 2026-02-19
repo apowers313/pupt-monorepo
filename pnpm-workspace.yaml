@@ -3,3 +3,4 @@ packages:
     - "pupt-lib"
     - "pupt-react"
     - "pupt-sde-prompts"
+    - "pupt-test"

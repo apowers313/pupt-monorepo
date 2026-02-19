@@ -277,6 +277,28 @@ importers:
       '@pupt/lib':
         specifier: ^1.3.5
         version: link:../pupt-lib
+    devDependencies:
+      '@pupt/test':
+        specifier: workspace:*
+        version: link:../pupt-test
+
+  pupt-test:
+    devDependencies:
+      '@pupt/lib':
+        specifier: workspace:*
+        version: link:../pupt-lib
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.7
+        version: 6.4.1(@types/node@24.10.13)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
+      vite-plugin-dts:
+        specifier: ^4.5.0
+        version: 4.5.4(@types/node@24.10.13)(rollup@4.57.1)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.13)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2))
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/node@24.10.13)(@vitest/browser@3.2.4)(@vitest/ui@3.1.4)(jiti@2.6.1)(msw@2.12.10(@types/node@24.10.13)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
 packages:
 
@@ -8952,6 +8974,14 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
+  '@microsoft/api-extractor-model@7.32.2(@types/node@24.10.13)':
+    dependencies:
+      '@microsoft/tsdoc': 0.16.0
+      '@microsoft/tsdoc-config': 0.18.0
+      '@rushstack/node-core-library': 5.19.1(@types/node@24.10.13)
+    transitivePeerDependencies:
+      - '@types/node'
+
   '@microsoft/api-extractor@7.56.3(@types/node@22.19.11)':
     dependencies:
       '@microsoft/api-extractor-model': 7.32.2(@types/node@22.19.11)
@@ -8961,6 +8991,25 @@ snapshots:
       '@rushstack/rig-package': 0.6.0
       '@rushstack/terminal': 0.21.0(@types/node@22.19.11)
       '@rushstack/ts-command-line': 5.2.0(@types/node@22.19.11)
+      diff: 8.0.3
+      lodash: 4.17.23
+      minimatch: 10.1.2
+      resolve: 1.22.11
+      semver: 7.5.4
+      source-map: 0.6.1
+      typescript: 5.8.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@microsoft/api-extractor@7.56.3(@types/node@24.10.13)':
+    dependencies:
+      '@microsoft/api-extractor-model': 7.32.2(@types/node@24.10.13)
+      '@microsoft/tsdoc': 0.16.0
+      '@microsoft/tsdoc-config': 0.18.0
+      '@rushstack/node-core-library': 5.19.1(@types/node@24.10.13)
+      '@rushstack/rig-package': 0.6.0
+      '@rushstack/terminal': 0.21.0(@types/node@24.10.13)
+      '@rushstack/ts-command-line': 5.2.0(@types/node@24.10.13)
       diff: 8.0.3
       lodash: 4.17.23
       minimatch: 10.1.2
@@ -9507,9 +9556,26 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.11
 
+  '@rushstack/node-core-library@5.19.1(@types/node@24.10.13)':
+    dependencies:
+      ajv: 8.13.0
+      ajv-draft-04: 1.0.0(ajv@8.13.0)
+      ajv-formats: 3.0.1(ajv@8.13.0)
+      fs-extra: 11.3.3
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.22.11
+      semver: 7.5.4
+    optionalDependencies:
+      '@types/node': 24.10.13
+
   '@rushstack/problem-matcher@0.1.1(@types/node@22.19.11)':
     optionalDependencies:
       '@types/node': 22.19.11
+
+  '@rushstack/problem-matcher@0.1.1(@types/node@24.10.13)':
+    optionalDependencies:
+      '@types/node': 24.10.13
 
   '@rushstack/rig-package@0.6.0':
     dependencies:
@@ -9524,9 +9590,26 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.19.11
 
+  '@rushstack/terminal@0.21.0(@types/node@24.10.13)':
+    dependencies:
+      '@rushstack/node-core-library': 5.19.1(@types/node@24.10.13)
+      '@rushstack/problem-matcher': 0.1.1(@types/node@24.10.13)
+      supports-color: 8.1.1
+    optionalDependencies:
+      '@types/node': 24.10.13
+
   '@rushstack/ts-command-line@5.2.0(@types/node@22.19.11)':
     dependencies:
       '@rushstack/terminal': 0.21.0(@types/node@22.19.11)
+      '@types/argparse': 1.0.38
+      argparse: 1.0.10
+      string-argv: 0.3.2
+    transitivePeerDependencies:
+      - '@types/node'
+
+  '@rushstack/ts-command-line@5.2.0(@types/node@24.10.13)':
+    dependencies:
+      '@rushstack/terminal': 0.21.0(@types/node@24.10.13)
       '@types/argparse': 1.0.38
       argparse: 1.0.10
       string-argv: 0.3.2
@@ -14409,6 +14492,25 @@ snapshots:
       typescript: 5.9.3
     optionalDependencies:
       vite: 6.4.1(@types/node@22.19.11)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
+
+  vite-plugin-dts@4.5.4(@types/node@24.10.13)(rollup@4.57.1)(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.13)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)):
+    dependencies:
+      '@microsoft/api-extractor': 7.56.3(@types/node@24.10.13)
+      '@rollup/pluginutils': 5.3.0(rollup@4.57.1)
+      '@volar/typescript': 2.4.28
+      '@vue/language-core': 2.2.0(typescript@5.9.3)
+      compare-versions: 6.1.1
+      debug: 4.4.3
+      kolorist: 1.8.0
+      local-pkg: 1.1.2
+      magic-string: 0.30.21
+      typescript: 5.9.3
+    optionalDependencies:
+      vite: 6.4.1(@types/node@24.10.13)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.2)
     transitivePeerDependencies:
       - '@types/node'
       - rollup

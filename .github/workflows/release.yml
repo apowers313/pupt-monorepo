@@ -81,6 +81,15 @@ jobs:
                   run-id: ${{ github.event.workflow_run.id }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
+            - name: Download pupt-test build
+              if: github.event_name != 'workflow_dispatch'
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-test
+                  path: pupt-test/dist/
+                  run-id: ${{ github.event.workflow_run.id }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
+
             # Build locally for manual dispatch (no CI artifacts available)
             - name: Build all packages
               if: github.event_name == 'workflow_dispatch'

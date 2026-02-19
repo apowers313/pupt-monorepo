@@ -115,6 +115,13 @@ jobs:
                   path: pupt-react/dist/
                   retention-days: 1
 
+            - name: Upload pupt-test build
+              uses: actions/upload-artifact@v4
+              with:
+                  name: build-pupt-test
+                  path: pupt-test/dist/
+                  retention-days: 1
+
     # Sharded test jobs - run in parallel, collect coverage
     test:
         name: Test (${{ matrix.shard }})
@@ -129,6 +136,7 @@ jobs:
                     - pupt-lib-browser
                     - pupt-react
                     - pupt-sde-prompts
+                    - pupt-test
                 include:
                     - shard: pupt
                       package: pupt
@@ -149,6 +157,10 @@ jobs:
                     - shard: pupt-sde-prompts
                       package: pupt-sde-prompts
                       test-command: cd pupt-sde-prompts && pnpm exec vitest run
+                      needs-browser: false
+                    - shard: pupt-test
+                      package: pupt-test
+                      test-command: cd pupt-test && pnpm exec vitest run
                       needs-browser: false
 
         steps:

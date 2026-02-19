@@ -1,0 +1,56 @@
+{
+    "name": "@pupt/test",
+    "version": "1.0.0",
+    "description": "Testing utilities for pupt prompt packages",
+    "license": "MIT",
+    "author": "",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/apowers313/pupt-monorepo.git",
+        "directory": "pupt-test"
+    },
+    "publishConfig": {
+        "access": "public",
+        "provenance": true
+    },
+    "type": "module",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./suite": {
+            "types": "./dist/suite.d.ts",
+            "import": "./dist/suite.js"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "vite build",
+        "test": "vitest run",
+        "test:ci": "vitest run --no-coverage --passWithNoTests",
+        "test:watch": "vitest",
+        "check": "npm run lint && npm run test",
+        "lint": "eslint src test && tsc --noEmit"
+    },
+    "peerDependencies": {
+        "@pupt/lib": "^1.3.5",
+        "vitest": "^3.0.0"
+    },
+    "peerDependenciesMeta": {
+        "vitest": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@pupt/lib": "workspace:*",
+        "typescript": "^5.7.3",
+        "vite": "^6.0.7",
+        "vite-plugin-dts": "^4.5.0",
+        "vitest": "^3.1.4"
+    }
+}

@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`simple.prompt > matches snapshot 1`] = `
+"<role>
+You are a helpful assistant.
+</role>
+<task>
+Respond to: Hello from suite test
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
+
+exports[`simple.prompt > matches snapshot 2`] = `
+"<role>
+You are a helpful assistant.
+</role>
+<task>
+Respond to: Hello from testAllPrompts
+</task>
+<format>
+Output format: markdown
+</format>
+<constraints>
+- Keep responses concise and focused
+- Be accurate and factual
+- Acknowledge uncertainty when unsure
+</constraints>"
+`;
