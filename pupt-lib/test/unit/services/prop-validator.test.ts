@@ -10,7 +10,7 @@ describe('prop-validator', () => {
       name: z.string(),
       count: z.number().optional(),
       mode: z.enum(['fast', 'slow']).optional(),
-    }).passthrough();
+    }).loose();
 
     it('should return empty array for valid props', () => {
       const errors = validateProps('TestComp', { name: 'hello' }, schema);
@@ -43,7 +43,7 @@ describe('prop-validator', () => {
       const errors = validateProps('TestComp', { name: 'hello', mode: 'turbo' }, schema);
       expect(errors).toHaveLength(1);
       expect(errors[0].prop).toBe('mode');
-      expect(errors[0].code).toBe('invalid_enum_value');
+      expect(errors[0].code).toBe('invalid_value');
     });
 
     it('should strip children before validation', () => {

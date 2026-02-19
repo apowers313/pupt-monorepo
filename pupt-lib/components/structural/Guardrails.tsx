@@ -12,7 +12,7 @@ export const guardrailsSchema = z
         require: z.array(z.string()).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type GuardrailsProps = z.infer<typeof guardrailsSchema> & { children?: PuptNode };
 

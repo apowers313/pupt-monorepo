@@ -9,7 +9,7 @@ export const criterionSchema = z
         metric: z.string().optional(),
         weight: z.enum(["critical", "important", "nice-to-have"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type CriterionProps = z.infer<typeof criterionSchema> & { children: PuptNode };
 

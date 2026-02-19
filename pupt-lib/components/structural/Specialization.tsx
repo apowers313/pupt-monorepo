@@ -7,7 +7,7 @@ export const specializationSchema = z
         level: z.enum(["familiar", "proficient", "expert", "authority"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type SpecializationProps = z.infer<typeof specializationSchema> & { children?: PuptNode };
 

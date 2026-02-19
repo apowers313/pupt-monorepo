@@ -10,7 +10,7 @@ export const fileSchema = z
         language: z.string().optional(),
         encoding: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type FileProps = z.infer<typeof fileSchema> & { encoding?: BufferEncoding };
 

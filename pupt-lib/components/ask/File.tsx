@@ -11,7 +11,7 @@ export const askFileSchema = askBaseSchema
         mustExist: z.boolean().optional(),
         includeContents: z.boolean().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type FileProps = z.infer<typeof askFileSchema> & { children?: PuptNode };
 

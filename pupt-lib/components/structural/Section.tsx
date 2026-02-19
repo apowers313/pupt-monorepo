@@ -6,7 +6,7 @@ export const sectionSchema = z
         name: z.string().optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type SectionProps = z.infer<typeof sectionSchema> & { children: PuptNode };
 

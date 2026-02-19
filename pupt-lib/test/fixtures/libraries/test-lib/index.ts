@@ -8,21 +8,21 @@ import { jsx } from '../../../../src/jsx-runtime';
 
 // Component exports for hasComponent tests
 export class TestComponent extends Component<{ value?: string; children?: unknown }> {
-  static schema = z.object({ value: z.string().optional() }).passthrough();
+  static schema = z.object({ value: z.string().optional() }).loose();
   render(props: { value?: string }): string {
     return `Test: ${props.value ?? 'default'}`;
   }
 }
 
 export class SimpleGreeting extends Component<{ name?: string; children?: unknown }> {
-  static schema = z.object({ name: z.string().optional() }).passthrough();
+  static schema = z.object({ name: z.string().optional() }).loose();
   render(props: { name?: string }): string {
     return `Hello, ${props.name ?? 'World'}!`;
   }
 }
 
 export class SimpleTask extends Component<{ task: string; children?: unknown }> {
-  static schema = z.object({ task: z.string() }).passthrough();
+  static schema = z.object({ task: z.string() }).loose();
   render(props: { task: string }): string {
     return `Please complete the following task: ${props.task}`;
   }

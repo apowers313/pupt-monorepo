@@ -25,7 +25,7 @@ export async function parseBuiltinPrompts(): Promise<ParsedBuiltinPrompts> {
   const prompts: SearchablePrompt[] = [];
   const meta = new Map<string, BuiltinPromptMeta>();
 
-  const results = await Promise.all(
+  const settled = await Promise.allSettled(
     EXAMPLES.map(async (example) => {
       const filename = example.format === "jsx" ? "prompt.tsx" : "prompt.prompt";
 
@@ -45,6 +45,10 @@ export async function parseBuiltinPrompts(): Promise<ParsedBuiltinPrompts> {
       return { name, title, description, tags, source: example.source, format: example.format };
     })
   );
+
+  const results = settled
+    .filter((s): s is PromiseFulfilledResult<{ name: string; title: string; description: string; tags: string[]; source: string; format: ExampleFormat }> => s.status === "fulfilled")
+    .map((s) => s.value);
 
   for (const r of results) {
     prompts.push({

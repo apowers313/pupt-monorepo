@@ -211,7 +211,7 @@ export const runtimeConfigSchema = z.object({
   date: z.string(),
   time: z.string(),
   uuid: z.string(),
-}).passthrough();
+}).loose();
 
 /**
  * Schema for prompt configuration (controls Prompt component default sections)
@@ -231,12 +231,12 @@ export const promptConfigSchema = z.object({
  * Schema for the full environment context
  */
 export const environmentContextSchema = z.object({
-  llm: llmConfigSchema.default({}),
-  output: outputConfigSchema.default({}),
-  code: codeConfigSchema.default({}),
-  user: userConfigSchema.default({}),
-  runtime: runtimeConfigSchema.partial().default({}),
-  prompt: promptConfigSchema.default({}),
+  llm: z.any().default({}).pipe(llmConfigSchema),
+  output: z.any().default({}).pipe(outputConfigSchema),
+  code: z.any().default({}).pipe(codeConfigSchema),
+  user: z.any().default({}).pipe(userConfigSchema),
+  runtime: z.any().default({}).pipe(runtimeConfigSchema.partial()),
+  prompt: z.any().default({}).pipe(promptConfigSchema),
 });
 
 // ============================================================================

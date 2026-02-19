@@ -8,7 +8,7 @@ export const styleSchema = z
         formality: z.enum(["formal", "semi-formal", "informal"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type StyleProps = z.infer<typeof styleSchema> & { children?: PuptNode };
 

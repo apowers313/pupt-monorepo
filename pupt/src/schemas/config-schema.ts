@@ -96,16 +96,16 @@ export const ConfigSchema = z.object({
   annotationDir: z.string().optional(),
   defaultCmd: z.string().optional(),
   defaultCmdArgs: z.array(z.string()).optional(),
-  defaultCmdOptions: z.record(z.string()).optional(),
+  defaultCmdOptions: z.record(z.string(), z.string()).optional(),
   autoReview: z.boolean().optional(),
   autoRun: z.boolean().optional(),
   version: z.string().regex(/^\d+\.\d+\.\d+$/, 'Version must be in semver format (x.y.z)').optional(),
-  helpers: z.record(HelperConfigSchema).optional(),
+  helpers: z.record(z.string(), HelperConfigSchema).optional(),
   outputCapture: OutputCaptureConfigSchema.optional(),
   logLevel: z.string().optional(),
   libraries: z.array(LibraryEntrySchema).optional(),
   environment: EnvironmentConfigSchema.optional(),
-}).passthrough();
+}).loose();
 
 // Partial config for updates
 const _PartialConfigSchema = ConfigSchema.partial();
@@ -128,21 +128,21 @@ const ConfigPreV8Schema = z.object({
   annotationDirectory: z.string().optional(), // v1 field name
   defaultCmd: z.string().optional(),
   defaultCmdArgs: z.array(z.string()).optional(),
-  defaultCmdOptions: z.record(z.string()).optional(),
+  defaultCmdOptions: z.record(z.string(), z.string()).optional(),
   autoReview: z.boolean().optional(),
   autoRun: z.boolean().optional(),
   gitPromptDir: z.string().optional(),
   version: z.string().optional(),
-  helpers: z.record(HelperConfigSchema).optional(),
+  helpers: z.record(z.string(), HelperConfigSchema).optional(),
   outputCapture: OutputCaptureConfigSchema.optional(),
   logLevel: z.string().optional(),
   libraries: z.union([z.array(z.string()), z.array(LibraryEntrySchema)]).optional(),
   environment: EnvironmentConfigSchema.optional(),
   codingTool: z.string().optional(),
   codingToolArgs: z.array(z.string()).optional(),
-  codingToolOptions: z.record(z.string()).optional(),
+  codingToolOptions: z.record(z.string(), z.string()).optional(),
   targetLlm: z.string().optional(),
-}).passthrough();
+}).loose();
 
 // Config file schemas (what's actually in the file)
 // Only includes pre-v8 (for migration from v3-v7) and current v8 schema.

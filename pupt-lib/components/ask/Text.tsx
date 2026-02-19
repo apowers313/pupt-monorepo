@@ -8,7 +8,7 @@ export const askTextSchema = askBaseSchema
         default: z.string().optional(),
         placeholder: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type TextProps = z.infer<typeof askTextSchema> & { children?: PuptNode };
 

@@ -6,7 +6,7 @@ export const dataSchema = z
         name: z.string(),
         format: z.enum(["json", "xml", "text", "csv"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type DataProps = z.infer<typeof dataSchema> & { children: PuptNode };
 

@@ -9,7 +9,7 @@ export const askNumberSchema = askBaseSchema
         min: z.number().optional(),
         max: z.number().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type NumberProps = z.infer<typeof askNumberSchema> & { children?: PuptNode };
 

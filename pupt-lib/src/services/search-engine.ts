@@ -14,7 +14,7 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
   const {
     threshold = 0.3,
     // Match pupt's boosting: title/name (3x), tags (2x), content (1x)
-    weights = { name: 3, description: 1.5, tags: 2, content: 1 },
+    weights = { name: 3, title: 3, description: 1.5, tags: 2, content: 1 },
     fuzzy = true,
     fuzziness = 0.2, // Match pupt's 20% typo tolerance
     prefix = true, // Enable prefix matching (e.g., "ref" matches "refactoring")
@@ -24,13 +24,14 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
   const miniSearch = new MiniSearch<{
     id: number;
     name: string;
+    title: string;
     description: string;
     tags: string;
     content: string;
     library: string;
   }>({
-    fields: ['name', 'description', 'tags', 'content'],
-    storeFields: ['name', 'description', 'tags', 'library'],
+    fields: ['name', 'title', 'description', 'tags', 'content'],
+    storeFields: ['name', 'title', 'description', 'tags', 'library'],
     searchOptions: {
       fuzzy: fuzzy ? fuzziness : false,
       prefix,
@@ -48,6 +49,7 @@ export function createSearchEngine(config?: SearchEngineConfig): SearchEngine {
         prompts.map((p, i) => ({
           id: i + allPrompts.length - prompts.length,
           name: p.name,
+          title: p.title ?? '',
           description: p.description ?? '',
           tags: p.tags.join(' '),
           content: p.content ?? '',

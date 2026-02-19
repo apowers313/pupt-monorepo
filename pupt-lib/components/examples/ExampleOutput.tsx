@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 
-export const exampleOutputSchema = z.object({}).passthrough();
+export const exampleOutputSchema = z.object({}).loose();
 
 type ExampleOutputProps = z.infer<typeof exampleOutputSchema> & { children: PuptNode };
 

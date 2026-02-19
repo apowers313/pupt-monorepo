@@ -13,7 +13,7 @@ import { createEnvironment } from '../../../../src/types/context';
 describe('Prompt slots', () => {
   it('should use custom Role component via slots', async () => {
     class CustomRole extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'CUSTOM ROLE';
       }
@@ -29,7 +29,7 @@ describe('Prompt slots', () => {
 
   it('should use custom Format component via slots', async () => {
     class CustomFormat extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'CUSTOM FORMAT';
       }
@@ -47,7 +47,7 @@ describe('Prompt slots', () => {
 
   it('should use custom Constraints component via slots', async () => {
     class CustomConstraints extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'CUSTOM CONSTRAINTS';
       }
@@ -65,7 +65,7 @@ describe('Prompt slots', () => {
 
   it('should not use slot when explicit child of that type is provided', async () => {
     class CustomRole extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'CUSTOM ROLE FROM SLOT';
       }
@@ -86,13 +86,13 @@ describe('Prompt slots', () => {
 
   it('should support multiple slots at once', async () => {
     class CustomRole extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'SLOT ROLE';
       }
     }
     class CustomFormat extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'SLOT FORMAT';
       }
@@ -109,7 +109,7 @@ describe('Prompt slots', () => {
 
   it('should not use slots when bare mode is enabled', async () => {
     class CustomRole extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(): PuptNode {
         return 'SLOT ROLE';
       }
@@ -128,7 +128,7 @@ describe('Prompt slots', () => {
 
   it('slot component should receive context', async () => {
     class ContextAwareRole extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_props: Record<string, unknown>, _resolvedValue: void, context: RenderContext): PuptNode {
         const provider = this.getProvider(context);
         return `Role for provider: ${provider}`;

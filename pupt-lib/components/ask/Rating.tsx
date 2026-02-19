@@ -20,7 +20,7 @@ export const askRatingSchema = askBaseSchema
         max: z.number().optional(),
         labels: z.record(z.string(), z.string()).optional(),
     })
-    .passthrough();
+    .loose();
 
 export type RatingProps = z.infer<typeof askRatingSchema> & { children?: PuptNode };
 

@@ -10,7 +10,7 @@ const constraintsSchema = z
         presets: z.array(z.string()).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ConstraintsProps = z.infer<typeof constraintsSchema> & { children?: PuptNode };
 

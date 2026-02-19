@@ -9,7 +9,7 @@ import type { PuptNode,RenderContext } from '../../src/types';
 describe('RenderContext.metadata', () => {
   it('should provide a metadata Map on context', async () => {
     class MetadataWriter extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_props: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
         context.metadata.set('test.key', 'test.value');
         return 'written';
@@ -22,7 +22,7 @@ describe('RenderContext.metadata', () => {
 
   it('should allow parent component to read metadata set by itself', async () => {
     class MetadataRoundTrip extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_props: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
         context.metadata.set('message', 'hello from metadata');
         const value = context.metadata.get('message');
@@ -36,7 +36,7 @@ describe('RenderContext.metadata', () => {
 
   it('should have an empty metadata Map by default', async () => {
     class MetadataChecker extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_props: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
         return `size: ${context.metadata.size}`;
       }
@@ -48,14 +48,14 @@ describe('RenderContext.metadata', () => {
 
   it('should persist metadata across the render context', async () => {
     class Writer extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
         context.metadata.set('written', true);
         return 'writer';
       }
     }
     class Reader extends Component {
-      static schema = z.object({}).passthrough();
+      static schema = z.object({}).loose();
       render(_p: Record<string, unknown>, _rv: void, context: RenderContext): PuptNode {
         const value = context.metadata.get('written');
         return `reader:${value}`;

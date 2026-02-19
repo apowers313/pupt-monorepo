@@ -10,7 +10,7 @@ export const askDateSchema = askBaseSchema
         minDate: z.string().optional(),
         maxDate: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type DateProps = z.infer<typeof askDateSchema> & { children?: PuptNode };
 

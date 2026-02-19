@@ -28,6 +28,7 @@ export interface CompiledPrompt {
     element: PuptElement;
     id: string;
     name: string;
+    title?: string;
     description: string;
     tags: string[];
     version?: string;
@@ -293,6 +294,7 @@ export class ModuleLoader {
         for (const [exportName, element] of Object.entries(detectedPrompts)) {
             const props = element[PROPS] as {
                 name?: string;
+                title?: string;
                 description?: string;
                 tags?: string[];
                 version?: string;
@@ -302,6 +304,7 @@ export class ModuleLoader {
                 element,
                 id: crypto.randomUUID(),
                 name,
+                title: props?.title,
                 description: props?.description ?? "",
                 tags: props?.tags ?? [],
                 version: props?.version,
@@ -331,6 +334,7 @@ export class ModuleLoader {
             const element = await createPromptFromSource(file.content, file.filename);
             const props = element[PROPS] as {
                 name?: string;
+                title?: string;
                 description?: string;
                 tags?: string[];
                 version?: string;
@@ -340,6 +344,7 @@ export class ModuleLoader {
                 element,
                 id: crypto.randomUUID(),
                 name,
+                title: props?.title,
                 description: props?.description ?? "",
                 tags: props?.tags ?? [],
                 version: props?.version,

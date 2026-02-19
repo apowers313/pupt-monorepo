@@ -5,6 +5,7 @@
  */
 export interface SearchablePrompt {
   name: string;
+  title?: string;
   description?: string;
   tags: string[];
   library: string;
@@ -49,6 +50,7 @@ export interface SearchEngineConfig {
   /** Field weights for scoring (default: name=3, tags=2, description=1.5, content=1) */
   weights?: {
     name?: number;
+    title?: number;
     description?: number;
     tags?: number;
     content?: number;

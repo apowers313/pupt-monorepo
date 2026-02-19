@@ -14,14 +14,14 @@ export const choiceOptionSchema = z
         label: z.string(),
         description: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export const askChoiceSchema = askBaseSchema
     .extend({
         default: z.string().optional(),
         options: z.array(choiceOptionSchema).length(2),
     })
-    .passthrough();
+    .loose();
 
 export type ChoiceProps = z.infer<typeof askChoiceSchema> & { children?: PuptNode };
 

@@ -371,7 +371,7 @@ describe('Dual-package resilience (issue #16 comment)', () => {
         name: z.string(),
         label: z.string(),
         silent: z.boolean().optional(),
-      }).passthrough();
+      }).loose();
 
       resolve(props: { name: string; default?: boolean }, context: { inputs: Map<string, unknown> }): boolean {
         const value = context.inputs.get(props.name);

@@ -9,7 +9,7 @@ export const edgeCasesSchema = z
         preset: z.enum(["standard", "minimal"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type EdgeCasesProps = z.infer<typeof edgeCasesSchema> & { children?: PuptNode };
 

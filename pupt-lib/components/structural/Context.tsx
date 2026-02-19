@@ -15,7 +15,7 @@ export const contextSchema = z
         maxTokens: z.number().optional(),
         preserveFormatting: z.boolean().optional(),
     })
-    .passthrough();
+    .loose();
 
 type ContextProps = z.infer<typeof contextSchema> & { children?: PuptNode };
 

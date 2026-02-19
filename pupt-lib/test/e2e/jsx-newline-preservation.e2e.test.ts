@@ -148,6 +148,72 @@ This review follows established code review methodologies:
     expect(result.text).toContain('explicit string');
   });
 
+  it('should preserve text before an inline element', async () => {
+    const source = `
+<Prompt name="text-before-inline" bare>
+  <Task>
+    Plan a trip to
+    <Ask.Text name="destination" label="Where?" default="Hawaii" />
+  </Task>
+</Prompt>
+`;
+    const element = await createPromptFromSource(source, 'text-before-inline.prompt');
+    const result = await render(element, { inputs: { destination: 'Hawaii' } });
+    expect(result.ok).toBe(true);
+    expect(result.text).toContain('Plan a trip to\nHawaii');
+  });
+
+  it('should preserve text between inline elements', async () => {
+    const source = `
+<Prompt name="text-between-inline" bare>
+  <Task>
+    <Ask.Text name="traveler" label="Who?" default="Bob" />
+    Travel dates:
+    <Ask.Text name="dates" label="When?" default="next week" />
+  </Task>
+</Prompt>
+`;
+    const element = await createPromptFromSource(source, 'text-between-inline.prompt');
+    const result = await render(element, { inputs: { traveler: 'Bob', dates: 'next week' } });
+    expect(result.ok).toBe(true);
+    expect(result.text).toContain('Bob');
+    expect(result.text).toContain('Travel dates:');
+    expect(result.text).toContain('next week');
+  });
+
+  it('should preserve inline text without newlines between expressions', async () => {
+    const source = `
+<Prompt name="inline-no-newlines" bare>
+  <Task>{"Go from"} point A to {"point B"}</Task>
+</Prompt>
+`;
+    const element = await createPromptFromSource(source, 'inline-no-newlines.prompt');
+    const result = await render(element);
+    expect(result.ok).toBe(true);
+    expect(result.text).toContain('point A to');
+  });
+
+  it('should handle multiple Ask elements in one block', async () => {
+    const source = `
+<Prompt name="multi-ask" bare>
+  <Task>
+    Traveler: <Ask.Text name="name" label="Name" default="Alice" />
+    Destination: <Ask.Text name="dest" label="Destination" default="Paris" />
+    Dates: <Ask.Text name="dates" label="Dates" default="June" />
+  </Task>
+</Prompt>
+`;
+    const element = await createPromptFromSource(source, 'multi-ask.prompt');
+    const result = await render(element, { inputs: { name: 'Alice', dest: 'Paris', dates: 'June' } });
+    expect(result.ok).toBe(true);
+    expect(result.text).toContain('Traveler:');
+    expect(result.text).toContain('Alice');
+    expect(result.text).toContain('Destination:');
+    expect(result.text).toContain('Paris');
+    expect(result.text).toContain('Dates:');
+    expect(result.text).toContain('June');
+  });
+
   it('should handle text with varying indentation levels', async () => {
     const source = `
 <Prompt name="indent-levels" bare>

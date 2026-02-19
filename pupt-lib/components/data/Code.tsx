@@ -6,7 +6,7 @@ export const codeSchema = z
         language: z.string().optional(),
         filename: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type CodeProps = z.infer<typeof codeSchema> & { children: PuptNode };
 

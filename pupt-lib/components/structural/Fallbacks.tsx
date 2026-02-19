@@ -9,7 +9,7 @@ export const fallbacksSchema = z
         preset: z.enum(["standard"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type FallbacksProps = z.infer<typeof fallbacksSchema> & { children?: PuptNode };
 

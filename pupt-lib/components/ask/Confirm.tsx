@@ -7,7 +7,7 @@ export const askConfirmSchema = askBaseSchema
     .extend({
         default: z.boolean().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type ConfirmProps = z.infer<typeof askConfirmSchema> & { children?: PuptNode };
 

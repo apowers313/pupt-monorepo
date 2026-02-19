@@ -24,7 +24,7 @@ export const toneSchema = z
         avoidTones: z.array(z.string()).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ToneProps = z.infer<typeof toneSchema> & { children?: PuptNode };
 

@@ -8,7 +8,7 @@ export const askEditorSchema = askBaseSchema
         default: z.string().optional(),
         language: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type EditorProps = z.infer<typeof askEditorSchema> & { children?: PuptNode };
 

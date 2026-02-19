@@ -44,7 +44,7 @@ export function fromDiscoveredPrompt(
     path: resolvedPath,
     relativePath,
     filename,
-    title: dp.description || dp.name, // Use human-friendly description as title, fall back to name
+    title: dp.title || dp.description || dp.name, // Use human-friendly title, fall back to description then name
     tags: dp.tags,
     content: dp.description,
     frontmatter: {},

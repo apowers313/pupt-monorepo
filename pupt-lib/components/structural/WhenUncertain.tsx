@@ -6,7 +6,7 @@ export const whenUncertainSchema = z
         action: z.enum(["acknowledge", "ask", "decline", "estimate"]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type WhenUncertainProps = z.infer<typeof whenUncertainSchema> & { children?: PuptNode };
 

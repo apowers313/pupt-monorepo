@@ -5,7 +5,7 @@ import { Component } from '../../src/component';
 import { Fragment,jsx } from '../../src/jsx-runtime';
 import { render } from '../../src/render';
 
-const emptySchema = z.object({}).passthrough();
+const emptySchema = z.object({}).loose();
 
 describe('render()', () => {
   it('should render string nodes', async () => {
@@ -27,7 +27,7 @@ describe('render()', () => {
   });
 
   it('should render Component instances', async () => {
-    const greetingSchema = z.object({ name: z.string() }).passthrough();
+    const greetingSchema = z.object({ name: z.string() }).loose();
     class Greeting extends Component<{ name: string }> {
       static schema = greetingSchema;
       render({ name }: { name: string }) {
@@ -62,7 +62,7 @@ describe('render()', () => {
 
   it('should render function components directly', async () => {
     const Greeting = ({ name }: { name: string }) => `Hello, ${name}!`;
-    (Greeting as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).passthrough();
+    (Greeting as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).loose();
 
     const element = jsx(Greeting, { name: 'World' });
     const result = await render(element);
@@ -180,7 +180,7 @@ describe('render()', () => {
     });
 
     it('should return ok: false with errors for invalid props', async () => {
-      const testSchema = z.object({ name: z.string() }).passthrough();
+      const testSchema = z.object({ name: z.string() }).loose();
       class Strict extends Component<{ name: string }> {
         static schema = testSchema;
         render({ name }: { name: string }) { return `Hello ${name}`; }
@@ -198,7 +198,7 @@ describe('render()', () => {
     });
 
     it('should fall back to rendering children on validation failure', async () => {
-      const testSchema = z.object({ name: z.string() }).passthrough();
+      const testSchema = z.object({ name: z.string() }).loose();
       class Strict extends Component<{ name: string }> {
         static schema = testSchema;
         render({ name }: { name: string }) { return `Hello ${name}`; }
@@ -254,7 +254,7 @@ describe('render()', () => {
   describe('async rendering', () => {
     it('should handle async component render', async () => {
       class AsyncGreeting extends Component<{ name: string }> {
-        static schema = z.object({ name: z.string() }).passthrough();
+        static schema = z.object({ name: z.string() }).loose();
         async render({ name }: { name: string }) {
           // Simulate async operation
           await new Promise(resolve => setTimeout(resolve, 10));
@@ -270,14 +270,14 @@ describe('render()', () => {
 
     it('should handle mixed sync and async components', async () => {
       class SyncComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         render() {
           return 'Sync';
         }
       }
 
       class AsyncComponent extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         async render() {
           await Promise.resolve();
           return 'Async';
@@ -298,7 +298,7 @@ describe('render()', () => {
 
     it('should handle nested async components', async () => {
       class Inner extends Component<{ value: string }> {
-        static schema = z.object({ value: z.string() }).passthrough();
+        static schema = z.object({ value: z.string() }).loose();
         async render({ value }: { value: string }) {
           await Promise.resolve();
           return `[${value}]`;
@@ -306,7 +306,7 @@ describe('render()', () => {
       }
 
       class Outer extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         async render() {
           await Promise.resolve();
           return jsx(Inner, { value: 'nested' });
@@ -322,7 +322,7 @@ describe('render()', () => {
         await Promise.resolve();
         return `Hello, ${name}!`;
       };
-      (AsyncFn as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).passthrough();
+      (AsyncFn as unknown as { schema: unknown }).schema = z.object({ name: z.string() }).loose();
 
       const element = jsx(AsyncFn, { name: 'World' });
       const result = await render(element);
@@ -332,7 +332,7 @@ describe('render()', () => {
 
     it('should capture errors from async component render', async () => {
       class AsyncThrows extends Component {
-        static schema = z.object({}).passthrough();
+        static schema = z.object({}).loose();
         async render() {
           await Promise.resolve();
           throw new Error('async boom');
@@ -355,7 +355,7 @@ describe('render()', () => {
       const endTimes: number[] = [];
 
       class TimedComponent extends Component<{ id: number }> {
-        static schema = z.object({ id: z.number() }).passthrough();
+        static schema = z.object({ id: z.number() }).loose();
         async render({ id }: { id: number }) {
           startTimes.push(Date.now());
           await new Promise(resolve => setTimeout(resolve, 50));

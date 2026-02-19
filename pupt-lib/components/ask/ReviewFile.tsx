@@ -9,7 +9,7 @@ export const askReviewFileSchema = askBaseSchema
         extensions: z.array(z.string()).optional(),
         editor: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 export type ReviewFileProps = z.infer<typeof askReviewFileSchema> & { children?: PuptNode };
 

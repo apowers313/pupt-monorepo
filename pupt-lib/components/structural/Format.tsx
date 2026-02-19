@@ -7,7 +7,7 @@ export const formatSchema = z
     .object({
         type: z.enum(["json", "markdown", "xml", "text", "code", "yaml", "csv", "list", "table"]).optional(),
         language: z.string().optional(),
-        schema: z.union([z.string(), z.record(z.unknown())]).optional(),
+        schema: z.union([z.string(), z.object({}).catchall(z.unknown())]).optional(),
         template: z.string().optional(),
         example: z.string().optional(),
         strict: z.boolean().optional(),
@@ -16,7 +16,7 @@ export const formatSchema = z
         minLength: z.union([z.string(), z.number()]).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type FormatProps = z.infer<typeof formatSchema> & { children?: PuptNode };
 

@@ -5,7 +5,7 @@ export const xmlSchema = z
     .object({
         root: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type XmlProps = z.infer<typeof xmlSchema> & { children: PuptNode };
 

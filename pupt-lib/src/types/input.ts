@@ -1,6 +1,6 @@
 // Input-related types for pupt-lib
 
-import type { ZodSchema } from 'zod';
+import type { ZodType } from 'zod';
 
 /**
  * Describes a required input for a prompt
@@ -12,7 +12,7 @@ export interface InputRequirement {
   type: 'string' | 'number' | 'boolean' | 'object' | 'array' | 'select' | 'multiselect' | 'date' | 'secret' | 'file' | 'path' | 'rating';
   required: boolean;
   default?: unknown;
-  schema?: ZodSchema;
+  schema?: ZodType;
   min?: number;
   max?: number;
   options?: Array<{

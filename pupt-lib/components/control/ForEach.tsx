@@ -6,7 +6,7 @@ export const forEachSchema = z
         items: z.array(z.unknown()),
         as: z.string(),
     })
-    .passthrough();
+    .loose();
 
 export type ForEachProps<T = unknown> = {
     items: T[];

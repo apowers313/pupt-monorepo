@@ -1,7 +1,7 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-export const postExecutionSchema = z.object({}).passthrough();
+export const postExecutionSchema = z.object({}).loose();
 
 type PostExecutionProps = z.infer<typeof postExecutionSchema> & { children: PuptNode };
 

@@ -8,7 +8,7 @@ export const objectiveSchema = z
         metrics: z.array(z.string()).optional(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type ObjectiveProps = z.infer<typeof objectiveSchema> & { children?: PuptNode };
 

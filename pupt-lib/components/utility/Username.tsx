@@ -1,7 +1,7 @@
 import { Component, type PuptNode, type RenderContext } from "@pupt/lib";
 import { z } from "zod";
 
-export const usernameSchema = z.object({}).passthrough();
+export const usernameSchema = z.object({}).loose();
 
 type UsernameProps = z.infer<typeof usernameSchema>;
 

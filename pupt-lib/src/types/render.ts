@@ -28,7 +28,7 @@ export interface RenderError {
   /** Error code (Zod issue code or 'runtime_error' / 'missing_schema') */
   code: string;
   /** Path within the props object */
-  path: (string | number)[];
+  path: PropertyKey[];
   /** The value that was received */
   received?: unknown;
   /** The expected type or constraint */

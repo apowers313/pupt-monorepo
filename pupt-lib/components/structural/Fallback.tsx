@@ -7,7 +7,7 @@ export const fallbackSchema = z
         then: z.string(),
         delimiter: z.enum(["xml", "markdown", "none"]).optional(),
     })
-    .passthrough();
+    .loose();
 
 type FallbackProps = z.infer<typeof fallbackSchema> & { children?: PuptNode };
 

@@ -5,7 +5,7 @@ export const negativeExampleSchema = z
     .object({
         reason: z.string().optional(),
     })
-    .passthrough();
+    .loose();
 
 type NegativeExampleProps = z.infer<typeof negativeExampleSchema> & { children: PuptNode };
 

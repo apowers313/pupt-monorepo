@@ -22,6 +22,7 @@ import { PROPS } from './types/symbols';
 export interface DiscoveredPromptWithMethods {
   id: string;
   name: string;
+  title?: string;
   description: string;
   tags: string[];
   library: string;
@@ -54,6 +55,7 @@ export class Pupt {
     this.searchEngine.index(
       this.prompts.map(p => ({
         name: p.name,
+        title: p.title,
         description: p.description,
         tags: p.tags,
         library: p.library,
@@ -118,6 +120,7 @@ export class Pupt {
           const prompt = this.createDiscoveredPrompt(
             compiled.id,
             compiled.name,
+            compiled.title,
             compiled.description,
             compiled.tags,
             library.name,
@@ -192,6 +195,7 @@ export class Pupt {
   private createDiscoveredPrompt(
     id: string,
     name: string,
+    title: string | undefined,
     description: string,
     tags: string[],
     library: string,
@@ -200,6 +204,7 @@ export class Pupt {
     return {
       id,
       name,
+      title,
       description,
       tags,
       library,

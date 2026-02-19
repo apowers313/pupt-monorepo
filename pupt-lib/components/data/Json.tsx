@@ -5,7 +5,7 @@ export const jsonSchema = z
     .object({
         indent: z.number().optional(),
     })
-    .passthrough();
+    .loose();
 
 type JsonProps = z.infer<typeof jsonSchema> & { children: unknown };
 
