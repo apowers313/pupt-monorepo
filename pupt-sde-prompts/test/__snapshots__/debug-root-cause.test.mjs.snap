@@ -52,7 +52,9 @@ Application crashes on login with null pointer exception
 </context>
 <context>
 [Analysis Parameters]
-Focus areas: Bug severity: unknownSystem-wide context: Enabled - search for related patterns and similar vulnerabilities across the codebase
+Focus areas: 
+Bug severity: unknown
+System-wide context: Enabled - search for related patterns and similar vulnerabilities across the codebase
 </context>
 <context>
 [Debugging Methodology]

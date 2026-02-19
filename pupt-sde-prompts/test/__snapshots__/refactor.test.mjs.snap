@@ -34,7 +34,13 @@ Success metrics:
 - Public interface preservation (zero changes for pure refactoring)
 </objective>
 <task>
-Focus on readability as the primary refactoring goal. Apply proven refactoring techniques from Martin Fowler's catalog, ensuring every transformation is safe, incremental, and verifiable. The cardinal rule of refactoring: the code must behave identically before and after every transformation. Behavioral equivalence is not optional -- it is the defining constraint that separates refactoring from rewriting. Each step must be small enough that correctness can be verified by inspection or testing.
+Focus on readability as the primary refactoring goal. Apply proven refactoring techniques from
+Martin Fowler's catalog, ensuring every transformation is safe, incremental, and verifiable.
+
+The cardinal rule of refactoring: the code must behave identically before and after every
+transformation. Behavioral equivalence is not optional -- it is the defining constraint that
+separates refactoring from rewriting. Each step must be small enough that correctness can be
+verified by inspection or testing.
 </task>
 <context>
 [Code to Refactor]
@@ -43,11 +49,15 @@ function foo() { var x = 1; var y = 2; return x + y; }
 </context>
 <context>
 [Language Context]
-Programming language: {language}Apply language-specific refactoring patterns, idioms, and conventions for {language}. Use language-appropriate tooling references when suggesting verification approaches.
+Programming language: {language}
+Apply language-specific refactoring patterns, idioms, and conventions for {language}.
+Use language-appropriate tooling references when suggesting verification approaches.
 </context>
 <context>
 [Refactoring Goal]
-Primary goal: readabilityAdditional focus areas: 
+Primary goal: readability
+
+Additional focus areas: 
 </context>
 <context>
 [may be truncated]

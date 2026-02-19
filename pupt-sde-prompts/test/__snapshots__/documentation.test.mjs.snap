@@ -31,7 +31,9 @@ Success metrics:
 - Target audience can accomplish their goals using only the documentation produced
 </objective>
 <task>
-First audit the provided content for documentation completeness. Then generate api documentation that fills identified gaps, optimized for the selected audience(s): developers.
+First audit the provided content for documentation completeness.
+Then generate api documentation that fills identified gaps,
+optimized for the selected audience(s): developers.
 </task>
 <context>
 [Content to Document]
@@ -40,7 +42,9 @@ export function fetchUser(id: string): Promise<User> {}
 </context>
 <context>
 [Programming Language]
-Language: {language}Adapt documentation conventions to this language's ecosystem:
+Language: {language}
+
+Adapt documentation conventions to this language's ecosystem:
 - JavaScript: JSDoc with @param, @returns, @throws, @example tags
 - TypeScript: TSDoc (standardized JSDoc for TS) with @param, @returns, @throws, @example; omit type annotations redundant with the type system
 - Python: Google-style or NumPy-style docstrings with type hints

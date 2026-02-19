@@ -12,6 +12,7 @@ Areas of specialization:
 - change impact analysis
 - release communication
 </specialization>
+
 You write PR descriptions that respect the reviewer's time. You lead with the WHY behind
 changes, not just the WHAT. You surface risks and breaking changes prominently so reviewers
 can allocate attention proportionally. You treat the PR description as a communication
@@ -54,11 +55,15 @@ diff --git a/index.js b/index.js
 </context>
 <context>
 [Related Issue]
-This PR addresses: {relatedIssue}Link the issue in the summary section. If the PR fully resolves the issue, use "Closes {relatedIssue}" or "Fixes {relatedIssue}" syntax for automatic closure.
+This PR addresses: {relatedIssue}
+Link the issue in the summary section. If the PR fully resolves the issue,
+use "Closes {relatedIssue}" or "Fixes {relatedIssue}" syntax for automatic closure.
 </context>
 <context>
 [Change Type]
-The author categorizes this as: featureAdapt the description depth and sections based on this type:
+The author categorizes this as: feature
+
+Adapt the description depth and sections based on this type:
 - feature: Emphasize user-facing behavior, motivation, and design choices
 - fix: Clearly state the bug, root cause, and verification that the fix is correct
 - refactor: Explain the refactoring goal and confirm no behavior changes

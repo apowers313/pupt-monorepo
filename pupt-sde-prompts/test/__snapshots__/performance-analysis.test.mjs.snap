@@ -45,7 +45,9 @@ for (let i = 0; i < arr.length; i++) { arr.includes(i); }
 </context>
 <context>
 [Performance Requirements]
-Target performance requirements: {performanceTarget}Evaluate the code against these specific targets. For each bottleneck, calculate whether achieving the target is feasible with the proposed optimization. Flag any targets that appear unreachable without architectural changes.
+Target performance requirements: {performanceTarget}
+
+Evaluate the code against these specific targets. For each bottleneck, calculate whether achieving the target is feasible with the proposed optimization. Flag any targets that appear unreachable without architectural changes.
 </context>
 <context>
 [Performance Analysis Foundations]
