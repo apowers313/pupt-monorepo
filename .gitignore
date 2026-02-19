@@ -89,3 +89,10 @@ playwright-report/
 
 # Jupyter
 .ipynb_checkpoints/
+
+
+# PUPT
+./.pthistory
+
+# git worktrees
+.worktrees/

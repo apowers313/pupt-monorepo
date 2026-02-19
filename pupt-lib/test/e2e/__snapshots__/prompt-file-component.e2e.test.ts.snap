@@ -16,6 +16,22 @@ MUST: Be constructive in feedback.
 </constraint>"
 `;
 
+exports[`.prompt file component rendering e2e > should render a full prompt with multiple sections as .prompt 2`] = `
+"<role>
+You are a code reviewer.
+</role>
+<task>
+Review the provided code for bugs and improvements.
+</task>
+<context>
+[Guidelines]
+Follow SOLID principles.
+</context>
+<constraint>
+MUST: Be constructive in feedback.
+</constraint>"
+`;
+
 exports[`.prompt file component rendering e2e > should render a simple declarative .prompt file 1`] = `
 "<when-uncertain>
 If you are unsure, ask clarifying questions before proceeding.

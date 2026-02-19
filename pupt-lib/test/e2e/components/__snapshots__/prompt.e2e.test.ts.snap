@@ -6,6 +6,12 @@ Summarize this document
 </task>"
 `;
 
+exports[`Prompt defaults e2e > should render bare mode through pipeline 2`] = `
+"<task>
+Summarize this document
+</task>"
+`;
+
 exports[`Prompt defaults e2e > should render role shorthand through pipeline 1`] = `
 "<role>
 You are a helpful Software Engineer. You have expertise in software development, programming, system design.

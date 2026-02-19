@@ -18,6 +18,24 @@ SHOULD NOT: Use jargon
 </constraint>"
 `;
 
+exports[`Constraint e2e > should render may constraint through pipeline 1`] = `
+"<constraint>
+MUST: Be accurate
+</constraint>
+<constraint>
+SHOULD: Be concise
+</constraint>
+<constraint>
+MAY: Include examples
+</constraint>
+<constraint>
+MUST NOT: Hallucinate
+</constraint>
+<constraint>
+SHOULD NOT: Use jargon
+</constraint>"
+`;
+
 exports[`Constraint e2e > snapshots > should match snapshot: may constraint with markdown delimiter 1`] = `
 "## constraint
 
