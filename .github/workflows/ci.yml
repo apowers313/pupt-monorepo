@@ -201,6 +201,13 @@ jobs:
                   name: build-pupt-react
                   path: pupt-react/dist/
 
+            - name: Download pupt-test build
+              if: matrix.shard == 'pupt-sde-prompts'
+              uses: actions/download-artifact@v4
+              with:
+                  name: build-pupt-test
+                  path: pupt-test/dist/
+
             - name: Cache Playwright browsers
               if: matrix.needs-browser
               uses: actions/cache@v4
