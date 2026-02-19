@@ -19,8 +19,6 @@ const config: KnipConfig = {
             ignoreDependencies: [
                 // Nx plugins are used dynamically
                 "@nx/eslint",
-                // Coverage merging (used in tools/merge-coverage.sh via pnpm exec)
-                "lcov-result-merger",
                 // Semantic release plugins (used by nx release and child packages)
                 "@semantic-release/changelog",
                 "@semantic-release/git",
@@ -36,8 +34,6 @@ const config: KnipConfig = {
             project: ["src/**/*.ts", "components/**/*.tsx", "test/**/*.ts"],
             ignore: ["dist/**", "coverage/**", "node_modules/**", "test/fixtures/**"],
             ignoreDependencies: [
-                // glob is a root dep used in tests
-                "glob",
                 // Mock package used in tests
                 "fake-npm-package",
             ],
@@ -79,12 +75,12 @@ const config: KnipConfig = {
 
         // @pupt/test - Testing utilities
         "pupt-test": {
-            entry: ["src/index.ts", "src/suite.ts", "test/**/*.test.ts"],
+            entry: ["test/**/*.test.ts"],
             project: ["src/**/*.ts", "test/**/*.ts"],
             ignore: ["dist/**", "coverage/**", "node_modules/**"],
             ignoreDependencies: [
-                // Used in vite.config.ts
-                "vite-plugin-dts",
+                // vitest is an optional peer dep - suite.ts imports it for consumers
+                "vitest",
             ],
         },
     },
