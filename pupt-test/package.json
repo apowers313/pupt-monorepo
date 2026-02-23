@@ -1,6 +1,6 @@
 {
     "name": "@pupt/test",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "Testing utilities for pupt prompt packages",
     "license": "MIT",
     "author": "",

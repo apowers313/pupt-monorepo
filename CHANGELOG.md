@@ -1,3 +1,34 @@
+## 2.4.2 (2026-02-23)
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.2
+
+## 1.7.2 (2026-02-23)
+
+### 🩹 Fixes
+
+- fix globalThis concurrency issue, inefficient hyper formulas, duplicative follow path code ([99b773f](https://github.com/apowers313/pupt-monorepo/commit/99b773f))
+
+## 1.1.1 (2026-02-23)
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.2
+
+## 1.3.2 (2026-02-23)
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/lib to 1.7.2
+
+## 1.2.2 (2026-02-23)
+
+### 🧱 Updated Dependencies
+
+- Updated @pupt/test to 1.1.1
+- Updated @pupt/lib to 1.7.2
+
 ## 2.4.1 (2026-02-19)
 
 ### 🚀 Features

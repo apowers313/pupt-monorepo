@@ -1,6 +1,6 @@
 {
     "name": "@pupt/cli",
-    "version": "2.4.1",
+    "version": "2.4.2",
     "description": "Powerful Universal Prompt Tool - your faithful prompt companion",
     "type": "module",
     "main": "dist/index.js",
