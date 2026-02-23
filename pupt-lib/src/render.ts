@@ -6,6 +6,7 @@ import { createRuntimeConfig,DEFAULT_ENVIRONMENT } from './types/context';
 import { isDeferredRef,isPuptElement } from './types/element';
 import { isWarningCode } from './types/render';
 import { CHILDREN,PROPS, TYPE } from './types/symbols';
+import { followPath } from './utils/path';
 
 /** Type for function components - context is passed as optional second argument */
 type FunctionComponent<P = Record<string, unknown>> = (props: P & { children?: PuptNode }, context?: RenderContext) => PuptNode | Promise<PuptNode>;
@@ -19,20 +20,6 @@ interface RenderState {
   resolvedValues: Map<PuptElement, unknown>;
   /** Track pending resolutions to avoid duplicate concurrent resolution of the same element */
   pendingResolutions: Map<PuptElement, Promise<string>>;
-}
-
-/**
- * Follow a property path on an object to retrieve a nested value.
- *
- * @param obj - The object to traverse
- * @param path - Array of property keys/indices to follow
- * @returns The value at the path, or undefined if not found
- */
-function followPath(obj: unknown, path: (string | number)[]): unknown {
-  return path.reduce((current, key) => {
-    if (current == null) {return undefined;}
-    return (current as Record<string | number, unknown>)[key];
-  }, obj);
 }
 
 /**

@@ -203,4 +203,39 @@ describe('evaluateFormula', () => {
       expect(evaluateFormula('=ABS(negative)=5', inputs)).toBe(true);
     });
   });
+
+  describe('instance caching', () => {
+    it('should work without a cache (backward compatible)', () => {
+      const inputs = new Map<string, unknown>([['x', 10]]);
+      expect(evaluateFormula('=x>5', inputs)).toBe(true);
+      expect(evaluateFormula('=x>5', inputs, undefined)).toBe(true);
+    });
+
+    it('should reuse a cached instance across calls', () => {
+      const cache = new Map<string, unknown>();
+      const inputs = new Map<string, unknown>([['n', 7]]);
+
+      evaluateFormula('=n>5', inputs, cache);
+      // The cache should now contain the HyperFormula instance
+      expect(cache.size).toBe(1);
+
+      // Second call reuses the cached instance
+      const result = evaluateFormula('=n<10', inputs, cache);
+      expect(result).toBe(true);
+      // Cache size unchanged -- same key
+      expect(cache.size).toBe(1);
+    });
+
+    it('should not leak state between cached calls', () => {
+      const cache = new Map<string, unknown>();
+
+      const inputs1 = new Map<string, unknown>([['a', 100]]);
+      expect(evaluateFormula('=a>50', inputs1, cache)).toBe(true);
+
+      // Different inputs on the next call
+      const inputs2 = new Map<string, unknown>([['b', 3]]);
+      expect(evaluateFormula('=b<5', inputs2, cache)).toBe(true);
+      expect(evaluateFormula('=b>100', inputs2, cache)).toBe(false);
+    });
+  });
 });

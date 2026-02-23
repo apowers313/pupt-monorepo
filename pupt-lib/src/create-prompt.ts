@@ -47,17 +47,10 @@ export interface CreatePromptOptions {
 }
 
 /**
- * Global key used for injecting custom components.
+ * Prefix used for per-invocation globalThis keys.
  * @internal
  */
-export const CUSTOM_COMPONENTS_GLOBAL = '__PUPT_CUSTOM_COMPONENTS__';
-
-/**
- * Declare the global type for TypeScript
- */
-declare global {
-  var __PUPT_CUSTOM_COMPONENTS__: Record<string, ComponentType> | undefined;
-}
+export const CUSTOM_COMPONENTS_PREFIX = '__PUPT_CC_';
 
 /**
  * Create a PuptElement from a TSX source string.
@@ -124,25 +117,30 @@ export async function createPromptFromSource(
   // preprocessSource is smart enough to return source unchanged if no preprocessing needed
   const processedSource = preprocessSource(source, { filename });
 
+  // Generate a unique globalThis key per invocation to avoid race conditions
+  // when multiple concurrent calls provide different custom components.
+  const globalKey = components && Object.keys(components).length > 0
+    ? `${CUSTOM_COMPONENTS_PREFIX}${crypto.randomUUID().replace(/-/g, '')}__`
+    : undefined;
+
   // If custom components are provided, inject them via globalThis.
   // The custom-component-injection Babel plugin handles inserting the
   // destructuring declaration at the AST level, avoiding regex-based
   // string matching that could be confused by import-like prompt content.
-  if (components && Object.keys(components).length > 0) {
-    globalThis[CUSTOM_COMPONENTS_GLOBAL] = components;
+  if (globalKey && components) {
+    (globalThis as Record<string, unknown>)[globalKey] = components;
   }
 
   // Build extra plugins for the Babel transform
-  const extraPlugins: TransformOptions['extraPlugins'] =
-    components && Object.keys(components).length > 0
-      ? [['custom-component-injection', {
-        componentNames: Object.keys(components),
-        globalKey: CUSTOM_COMPONENTS_GLOBAL,
-      }]]
-      : undefined;
+  const extraPlugins: TransformOptions['extraPlugins'] = globalKey && components
+    ? [['custom-component-injection', {
+      componentNames: Object.keys(components),
+      globalKey,
+    }]]
+    : undefined;
 
   try {
-    // Transform with Babel (TypeScript + JSX + Uses→import plugin + optional custom components)
+    // Transform with Babel (TypeScript + JSX + Uses->import plugin + optional custom components)
     const transformer = new Transformer();
     const code = await transformer.transformSourceAsync(processedSource, filename, { extraPlugins });
 
@@ -158,7 +156,7 @@ export async function createPromptFromSource(
     // The preprocessor wraps .prompt file content in a Fragment (<>...</>)
     // to allow multiple top-level elements (including <Uses>). After the
     // uses-to-import plugin removes <Uses> elements, the Fragment may
-    // contain a single child — unwrap it to preserve the expected element
+    // contain a single child -- unwrap it to preserve the expected element
     // tree structure (e.g., Prompt at the root, not Fragment > Prompt).
     if (isPromptFile(filename) && element && element[TYPE] === Fragment) {
       const children = element[CHILDREN];
@@ -174,9 +172,9 @@ export async function createPromptFromSource(
 
     return element;
   } finally {
-    // Clean up the global registry
-    if (components) {
-      Reflect.deleteProperty(globalThis, CUSTOM_COMPONENTS_GLOBAL);
+    // Clean up the per-invocation global key
+    if (globalKey) {
+      Reflect.deleteProperty(globalThis, globalKey);
     }
   }
 }

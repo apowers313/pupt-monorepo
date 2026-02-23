@@ -45,7 +45,7 @@ export class If extends Component<IfProps> {
             condition = when;
         } else if (typeof when === "string") {
             // Evaluate Excel formula
-            condition = evaluateFormula(when, context.inputs);
+            condition = evaluateFormula(when, context.inputs, context.metadata);
         } else {
             condition = Boolean(when);
         }

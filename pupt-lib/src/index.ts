@@ -71,6 +71,7 @@ export { render } from './render';
 // Export utilities
 export { findChildrenOfType, isElementOfType,partitionChildren } from './utils/children';
 export { wrapWithDelimiter } from './utils/delimiter';
+export { followPath } from './utils/path';
 // Component preset data (re-exported from components/presets/ for public API)
 export type { ProviderAdaptations } from '../components/presets';
 export type { RolePresetConfig } from '../components/presets';

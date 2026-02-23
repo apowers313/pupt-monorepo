@@ -4,6 +4,7 @@ import type { InputRequirement, PuptElement, PuptNode, RenderContext,ValidationR
 import { createRuntimeConfig,DEFAULT_ENVIRONMENT } from '../types/context';
 import { isDeferredRef,isPuptElement } from '../types/element';
 import { CHILDREN,PROPS, TYPE } from '../types/symbols';
+import { followPath } from '../utils/path';
 
 type IteratorState = 'NOT_STARTED' | 'ITERATING' | 'SUBMITTED' | 'DONE';
 
@@ -208,21 +209,6 @@ export function createInputIterator(
       }
     }
     return reqs.length; // All filled
-  }
-
-  /**
-   * Follow a property path on an object to retrieve a nested value.
-   * Used for resolving deferred references like {user.name}.
-   *
-   * @param obj - The object to traverse
-   * @param path - Array of property keys/indices to follow
-   * @returns The value at the path, or undefined if not found
-   */
-  function followPath(obj: unknown, path: (string | number)[]): unknown {
-    return path.reduce((current, key) => {
-      if (current == null) {return undefined;}
-      return (current as Record<string | number, unknown>)[key];
-    }, obj);
   }
 
   /**

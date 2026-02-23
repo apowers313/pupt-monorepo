@@ -4,9 +4,14 @@ import { afterAll,beforeAll, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
 import { Component } from '../../src/component';
-import { createPrompt, createPromptFromSource, CUSTOM_COMPONENTS_GLOBAL } from '../../src/create-prompt';
+import { createPrompt, createPromptFromSource, CUSTOM_COMPONENTS_PREFIX } from '../../src/create-prompt';
 import type { PuptElement,PuptNode, RenderContext } from '../../src/types';
 import { CHILDREN,PROPS, TYPE } from '../../src/types/symbols';
+
+/** Helper: return all globalThis keys that match the per-invocation prefix */
+function getPuptCCKeys(): string[] {
+  return Object.keys(globalThis).filter(k => k.startsWith(CUSTOM_COMPONENTS_PREFIX));
+}
 
 /**
  * Get the type name from an element's type property.
@@ -316,15 +321,15 @@ describe('createPromptFromSource', () => {
       </Prompt>
     `;
 
-    // Before: global should not exist
-    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+    // Before: no per-invocation keys should exist
+    expect(getPuptCCKeys()).toHaveLength(0);
 
     await createPromptFromSource(source, 'test.prompt', {
       components: { TempComponent },
     });
 
-    // After: global should be cleaned up
-    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+    // After: per-invocation key should be cleaned up
+    expect(getPuptCCKeys()).toHaveLength(0);
   });
 
   it('should clean up custom components global even on error', async () => {
@@ -341,8 +346,8 @@ describe('createPromptFromSource', () => {
       </Prompt>
     `;
 
-    // Before: global should not exist
-    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+    // Before: no per-invocation keys should exist
+    expect(getPuptCCKeys()).toHaveLength(0);
 
     // This will throw because the source has a syntax issue with ErrorComponent
     // The component is defined but the JSX will fail to evaluate
@@ -354,8 +359,49 @@ describe('createPromptFromSource', () => {
       // Expected to throw
     }
 
-    // After: global should still be cleaned up
-    expect(globalThis[CUSTOM_COMPONENTS_GLOBAL]).toBeUndefined();
+    // After: per-invocation key should still be cleaned up
+    expect(getPuptCCKeys()).toHaveLength(0);
+  });
+
+  it('should handle concurrent calls with different custom components', async () => {
+    class CompA extends Component<{ children?: PuptNode }> {
+      static schema = z.object({ children: z.any().optional() });
+      render(props: { children?: PuptNode }): PuptNode {
+        return props.children ?? '';
+      }
+    }
+
+    class CompB extends Component<{ children?: PuptNode }> {
+      static schema = z.object({ children: z.any().optional() });
+      render(props: { children?: PuptNode }): PuptNode {
+        return props.children ?? '';
+      }
+    }
+
+    const sourceA = `
+      <Prompt name="concurrent-a">
+        <CompA>Alpha</CompA>
+      </Prompt>
+    `;
+
+    const sourceB = `
+      <Prompt name="concurrent-b">
+        <CompB>Beta</CompB>
+      </Prompt>
+    `;
+
+    // Run two calls concurrently with different custom components
+    const [elementA, elementB] = await Promise.all([
+      createPromptFromSource(sourceA, 'a.prompt', { components: { CompA } }),
+      createPromptFromSource(sourceB, 'b.prompt', { components: { CompB } }),
+    ]);
+
+    // Each should get its own component
+    expect(getTypeName(getType(getChildren(elementA)[0] as PuptElement))).toBe('CompA');
+    expect(getTypeName(getType(getChildren(elementB)[0] as PuptElement))).toBe('CompB');
+
+    // All per-invocation keys should be cleaned up
+    expect(getPuptCCKeys()).toHaveLength(0);
   });
 });
 

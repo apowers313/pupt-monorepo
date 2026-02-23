@@ -1,15 +1,24 @@
 import HyperFormula, { type RawCellContent } from 'hyperformula';
 
+/** @internal Cache key for storing a HyperFormula instance in a metadata map */
+const HF_CACHE_KEY = '__pupt_hyperformula__';
+
 /**
  * Evaluate an Excel-style formula with the given inputs.
  *
  * @param formula - The formula to evaluate (e.g., "=count>5", "=AND(a>1, b<10)")
  * @param inputs - Map of variable names to their values
+ * @param cache - Optional map used to cache the HyperFormula instance across
+ *   calls within the same render pass. When provided, the instance is created
+ *   once and reused, avoiding the overhead of construction/destruction on every
+ *   `<If>` evaluation. The caller is responsible for discarding the map (and
+ *   thereby the cached instance) when the render pass completes.
  * @returns The boolean result of the formula evaluation
  */
 export function evaluateFormula(
   formula: string,
   inputs: Map<string, unknown>,
+  cache?: Map<string, unknown>,
 ): boolean {
   // If not a formula (doesn't start with =), return as truthy check
   if (!formula.startsWith('=')) {
@@ -19,13 +28,26 @@ export function evaluateFormula(
   // Strip the leading = for processing
   const formulaBody = formula.slice(1);
 
-  // Create a HyperFormula instance
-  const hf = HyperFormula.buildEmpty({
-    licenseKey: 'gpl-v3',
-  });
+  // Obtain (or create) a HyperFormula instance
+  let hf: HyperFormula;
+  let owned: boolean; // whether we created the instance and must destroy it
 
-  // Add a sheet
-  hf.addSheet('Sheet1');
+  if (cache && cache.has(HF_CACHE_KEY)) {
+    hf = cache.get(HF_CACHE_KEY) as HyperFormula;
+    owned = false;
+
+    // Clear the existing sheet so we start fresh
+    hf.removeSheet(0);
+    hf.addSheet('Sheet1');
+  } else {
+    hf = HyperFormula.buildEmpty({ licenseKey: 'gpl-v3' });
+    hf.addSheet('Sheet1');
+    owned = !cache; // if no cache, we own the instance
+
+    if (cache) {
+      cache.set(HF_CACHE_KEY, hf);
+    }
+  }
 
   // Create named expressions for each input variable
   const inputArray = Array.from(inputs.entries());
@@ -59,8 +81,10 @@ export function evaluateFormula(
 
   const result = hf.getCellValue(resultAddress);
 
-  // Clean up
-  hf.destroy();
+  // Clean up only if we own the instance (no cache provided)
+  if (owned) {
+    hf.destroy();
+  }
 
   // Convert result to boolean
   if (typeof result === 'boolean') {
